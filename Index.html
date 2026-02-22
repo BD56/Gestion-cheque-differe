@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 0; min-height: 100vh; box-sizing: border-box; }
+      .container { background-color: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 100%; max-width: 450px; position: relative; margin-top: 20px; }
+      
+      .header-app { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f3f4; padding-bottom: 15px; margin-bottom: 20px; }
+      .header-app h2 { margin: 0; color: #3c4043; font-size: 22px; }
+      
+      /* Modification ici pour aligner les deux boutons en haut à droite */
+      .header-buttons { display: flex; gap: 10px; }
+      .btn-settings { background: none; border: none; font-size: 24px; cursor: pointer; color: #5f6368; transition: transform 0.2s; padding: 5px; }
+      .btn-settings:hover { transform: scale(1.1); }
+      
+      .subtitle { text-align: left; color: #70757a; font-size: 13px; margin-top: -12px; margin-bottom: 20px; }
+      
+      .input-group { margin-bottom: 15px; }
+      label { display: block; font-weight: bold; margin-bottom: 6px; color: #5f6368; font-size: 14px; }
+      input { width: 100%; padding: 12px; font-size: 16px; border: 2px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+      input:focus { border-color: #1a73e8; outline: none; }
+      .btn-submit { width: 100%; padding: 15px; font-size: 18px; font-weight: bold; margin-top: 10px; color: white; background-color: #1a73e8; border: none; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+      
+      #boxConfirmation { display: none; margin-top: 20px; padding: 15px; border-radius: 8px; border: 2px solid; }
+      .doublon-titre { font-weight: bold; font-size: 18px; margin-bottom: 10px; }
+      .message-alerte { font-weight: bold; font-size: 15px; margin-bottom: 15px; line-height: 1.4; }
+      .doublon-carte { background: white; padding: 12px; border-radius: 6px; margin-bottom: 10px; border-left: 4px solid #5f6368; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); line-height: 1.6; }
+      
+      .btn-force { background-color: #f2994a; color: white; padding: 12px; width: 48%; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+      .btn-cancel { background-color: #5f6368; color: white; padding: 12px; width: 48%; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+      .btn-retour-bloquant { background-color: #d93025; color: white; padding: 12px; width: 100%; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 15px; }
+      .flex-btn { display: flex; justify-content: space-between; margin-top: 15px; }
+
+      #statusMessage { margin-top: 20px; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; display: none; }
+      .success { background-color: #d4edda; color: #155724; }
+      .error { background-color: #f8d7da; color: #721c24; }
+
+      .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+      .modal-content { background-color: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); position: relative; max-height: 90vh; overflow-y: auto; }
+      .btn-close-modal { position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; cursor: pointer; color: #5f6368; }
+      
+      .btn-action { width: 100%; padding: 12px; margin-bottom: 10px; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; font-size: 15px; }
+      .print-row { display: flex; gap: 10px; margin-bottom: 10px; }
+      .input-date { flex: 1; padding: 10px; border: 2px solid #ccc; border-radius: 8px; font-size: 14px; text-align: center; }
+      .btn-print-jour { flex: 2; background-color: #1a73e8; margin-bottom: 0; }
+      .btn-print-offre { background-color: #34a853; }
+      .btn-mode-signaler { background-color: #f2994a; }
+      .btn-mode-bloquant { background-color: #d93025; }
+      .btn-archive { background-color: #d93025; margin-top: 20px; }
+      .btn-open-sheet { background-color: #0f9d58; }
+
+      .footer-legal { margin-top: 20px; text-align: center; width: 100%; max-width: 450px; }
+      .footer-legal a { color: #9aa0a6; font-size: 12px; text-decoration: none; transition: color 0.2s; cursor: pointer; }
+      .footer-legal a:hover { color: #5f6368; text-decoration: underline; }
+      .texte-mentions { text-align: justify; font-size: 13px; line-height: 1.5; color: #3c4043; }
+      .texte-mentions p { margin-bottom: 12px; }
+
+      /* NOUVEAU : CSS spécifique pour formater le texte de l'aide */
+      .texte-aide { text-align: left; font-size: 14px; line-height: 1.5; color: #3c4043; }
+      .texte-aide ul { margin-top: 5px; padding-left: 20px; margin-bottom: 15px; }
+      .texte-aide li { margin-bottom: 6px; }
+
+      #zoneImpression { display: none; }
+      @page { size: landscape; margin: 1cm; }
+      @media print {
+        html, body { height: auto !important; min-height: auto !important; overflow: visible !important; }
+        body { background-color: white !important; display: block !important; padding: 0 !important; margin: 0 !important; }
+        .container, .footer-legal { display: none !important; }
+        #modalParametres, #modalMentions, #modalAide { display: none !important; }
+        #zoneImpression { display: block !important; width: 100%; }
+        .table-print { width: 100%; border-collapse: collapse; font-family: sans-serif; font-size: 12px; }
+        .table-print th, .table-print td { border: 1px solid #000; padding: 8px; text-align: left; }
+        .table-print th { background-color: #e0e0e0 !important; -webkit-print-color-adjust: exact; color-adjust: exact; }
+        .titre-print { text-align: center; margin-bottom: 20px; font-family: sans-serif; font-size: 18px; }
+      }
+    </style>
+  </head>
+  <body>
+    
+    <div class="container">
+      <div class="header-app">
+        <h2>📝 Saisie Client</h2>
+        <div class="header-buttons">
+          <button class="btn-settings" onclick="ouvrirAide()" title="Aide et consignes">❓</button>
+          <button class="btn-settings" onclick="ouvrirPanneau()" title="Panneau de contrôle">⚙️</button>
+        </div>
+      </div>
+      <div class="subtitle">Gestion Chèques Reportés</div>
+      
+      <div id="formulaireSaisie">
+        <div class="input-group">
+          <label>Nom *</label>
+          <input type="text" id="nom" placeholder="Ex: DUPONT" autocomplete="off">
+        </div>
+        <div class="input-group">
+          <label>Prénom *</label>
+          <input type="text" id="prenom" placeholder="Ex: JEAN" autocomplete="off">
+        </div>
+        <div class="input-group">
+          <label>N° de Pièce *</label>
+          <input type="text" id="piece" placeholder="Saisir le numéro..." autocomplete="off">
+        </div>
+        <div class="input-group">
+          <label>Montant (€) *</label>
+          <input type="text" id="montant" placeholder="Ex: 150,50" autocomplete="off">
+        </div>
+        <div class="input-group">
+          <label>Notes ou Infos (numéro caisse, etc...)</label>
+          <input type="text" id="notes" placeholder="Commentaire..." autocomplete="off">
+        </div>
+        <button class="btn-submit" id="btnValider" onclick="envoyerSaisie()">VÉRIFIER ET VALIDER</button>
+      </div>
+
+      <div id="boxConfirmation">
+        <div class="doublon-titre" id="titreDoublon"></div>
+        <div class="message-alerte" id="messageAlerte"></div>
+        <div id="listeDoublons"></div>
+        
+        <div id="actionSignaler">
+          <div class="flex-btn">
+            <button class="btn-cancel" onclick="annulerSaisie()">ABANDONNER</button>
+            <button class="btn-force" onclick="forcerAjout()">FORCER L'AJOUT</button>
+          </div>
+        </div>
+        <div id="actionBloquant" style="display: none;">
+          <button class="btn-retour-bloquant" onclick="annulerSaisie()">RETOUR À LA SAISIE</button>
+        </div>
+      </div>
+      
+      <div id="statusMessage"></div>
+    </div>
+
+    <div class="footer-legal">
+      <a onclick="ouvrirMentions()">© 2026 DESJARDINS Bryan - Mentions légales</a>
+    </div>
+
+    <div id="modalAide" class="modal-overlay">
+      <div class="modal-content" style="max-width: 550px;">
+        <button class="btn-close-modal" onclick="fermerAide()">✖</button>
+        <h2 style="margin-top:0; text-align:center; font-size:18px;">❓ Guide d'utilisation et Aide</h2>
+        <hr style="border: 0; height: 1px; background: #ddd; margin: 15px 0;">
+        
+        <div class="texte-aide">
+          <p><strong>1️⃣ La Saisie Classique</strong></p>
+          <ul>
+            <li>Remplissez obligatoirement le Nom, le Prénom, le N° de Pièce et le <strong>Montant</strong>.</li>
+            <li>Fiez-vous toujours à la pièce d'identité physique. Le système nettoie automatiquement les espaces et les tirets.</li>
+            <li>Cliquez sur <strong>VÉRIFIER ET VALIDER</strong>. Si le message est vert (✅), la saisie est enregistrée !</li>
+          </ul>
+
+          <p><strong>2️⃣ Les Modes de Sécurité</strong></p>
+          <p style="margin-top: 0;">Selon le mode actuellement activé (visible dans les paramètres ⚙️), le système réagit différemment aux fraudes :</p>
+          <ul>
+            <li>🛡️ <strong>Mode SIGNALER :</strong> Le système vous alerte en cas de doublon, mais vous laisse toujours la possibilité de cliquer sur "Forcer l'ajout".</li>
+            <li>🛑 <strong>Mode BLOQUANT :</strong> Le système bloque totalement la saisie pour les fraudes évidentes. Le bouton "Forcer l'ajout" disparaît.</li>
+          </ul>
+
+          <p><strong>3️⃣ Comprendre les Alertes Anti-Fraude</strong></p>
+          <ul>
+            <li>🔴 <strong>ALERTE ROUGE (Doublon ou Usurpation) :</strong> Ce client ou ce numéro de pièce a déjà été enregistré. <em>(Bloqué en mode Bloquant)</em>.</li>
+            <li>🟠 <strong>ALERTE ORANGE (Homonyme Possible) :</strong> Le système a trouvé le même nom, mais avec une pièce différente.
+              <ul style="margin-bottom: 0;"><li><em>Action requise :</em> Demandez une 2ème pièce d'identité. Si c'est bien une personne différente, vous pourrez "FORCER L'AJOUT".</li></ul>
+            </li>
+          </ul>
+
+          <p><strong>4️⃣ Que faire en cas d'erreur ?</strong></p>
+          <ul>
+            <li>Si vous avez validé une saisie avec une faute de frappe, ou forcé un ajout par erreur, pas de panique !</li>
+            <li>Cliquez sur l'engrenage <strong>(⚙️)</strong> en haut à droite, puis sur le bouton <strong>"OUVRIR GOOGLE SHEETS"</strong>. Vous pourrez y retrouver la ligne correspondante pour la corriger ou la supprimer directement dans le tableau.</li>
+          </ul>
+
+          <p><strong>5️⃣ Impressions et Clôture</strong></p>
+          <ul>
+            <li>Le bouton <strong>(⚙️)</strong> vous permet également d'imprimer la liste des clients passés aujourd'hui (ou à une date précise).</li>
+            <li>⚠️ <em>Attention : Ne cliquez sur "Clôturer l'offre" qu'à la toute fin de l'opération promotionnelle.</em></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div id="modalParametres" class="modal-overlay">
+      <div class="modal-content">
+        <button class="btn-close-modal" onclick="fermerPanneau()">✖</button>
+        <h2 style="margin-top:0;">⚙️ Paramètres</h2>
+        <hr style="border: 0; height: 1px; background: #ddd; margin: 15px 0;">
+        
+        <button class="btn-action btn-print-jour" onclick="preparerImpression('jour', 'aujourdhui', 'Impression du Jour')">🖨️ IMPRIMER AUJOURD'HUI</button>
+        
+        <div style="background: #f1f3f4; padding: 15px; border-radius: 8px; margin-bottom: 10px; text-align: center;">
+          <label style="font-size: 13px; color: #5f6368; margin-bottom: 8px;">📅 Imprimer un jour précédent :</label>
+          <div class="print-row">
+            <input type="date" id="dateImpression" class="input-date">
+            <button class="btn-action" style="flex: 1; background-color: #5f6368; margin-bottom: 0;" onclick="preparerImpressionAncien()">IMPRIMER</button>
+          </div>
+        </div>
+
+        <button class="btn-action btn-print-offre" onclick="preparerImpression('offre', '', 'Impression Offre Complète')">📚 TOUTE L'OFFRE</button>
+        
+        <hr style="border: 0; height: 1px; background: #ddd; margin: 20px 0;">
+        
+        <button class="btn-action" id="btnMode" onclick="changerMode()">⏳ Chargement Mode...</button>
+        <button class="btn-action btn-open-sheet" onclick="ouvrirFichierSouche()">OUVRIR GOOGLE SHEETS</button>
+        <button class="btn-action btn-archive" onclick="cloturerOffre()">⚠️ CLÔTURER L'OFFRE</button>
+      </div>
+    </div>
+
+    <div id="modalMentions" class="modal-overlay">
+      <div class="modal-content" style="max-width: 500px;">
+        <button class="btn-close-modal" onclick="fermerMentions()">✖</button>
+        <h2 style="margin-top:0; text-align:center; font-size:18px;">⚖️ Mentions Légales</h2>
+        <hr style="border: 0; height: 1px; background: #ddd; margin: 15px 0;">
+        
+        <div class="texte-mentions">
+          <p><strong>© 2026 DESJARDINS Bryan - Tous droits réservés.</strong><br>
+          L'autorisation d'utiliser cette application est accordée exclusivement à l'<strong>Hypermarché Carrefour Vannes</strong>. Toute reproduction, copie, modification ou déploiement de cet outil vers une autre structure est strictement interdite sans l'accord préalable de l'auteur.</p>
+          
+          <p><strong>Confidentialité et Données :</strong> Cet outil a été pensé et conçu pour un usage strictement interne, dédié à la prévention des fraudes. Les données saisies (Identités, N° de pièces, Montants) sont stockées et archivées de manière sécurisée à des fins de traçabilité de l'offre, et ne sont en aucun cas prévues pour être cédées ou transmises à des tiers.</p>
+          
+          <p><strong>Responsabilité :</strong> L'auteur fournit uniquement l'infrastructure technique de cette application. La responsabilité quant à l'utilisation conforme de l'outil et au traitement légal des données collectées (respect du RGPD) incombe exclusivement à la direction de l'établissement utilisateur. L'auteur décline toute responsabilité en cas d'usage abusif, détourné ou négligent de ces informations par l'établissement.</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="zoneImpression"></div>
+
+    <script>
+      var memNom = "", memPrenom = "", memPiece = "", memMontant = "", memNotes = "";
+      var memMessageErreur = "", memFlags = {};
+      var lienFichierSouche = "";
+
+      window.onload = function() {
+        var auj = new Date();
+        var annee = auj.getFullYear();
+        var mois = ("0" + (auj.getMonth() + 1)).slice(-2);
+        var jour = ("0" + auj.getDate()).slice(-2);
+        document.getElementById("dateImpression").value = annee + "-" + mois + "-" + jour;
+        
+        google.script.run.withSuccessHandler(function(infos) {
+          if (infos.success) { 
+            lienFichierSouche = infos.urlFichier; 
+            majAffichageMode(infos.mode); 
+          } else {
+            document.getElementById('btnMode').innerHTML = "⚠️ ERREUR Serveur";
+          }
+        }).getInfosPanneau();
+      };
+
+      // NOUVEAU : Fonctions pour ouvrir et fermer l'aide
+      function ouvrirAide() { document.getElementById('modalAide').style.display = "flex"; }
+      function fermerAide() { document.getElementById('modalAide').style.display = "none"; }
+
+      function ouvrirPanneau() { document.getElementById('modalParametres').style.display = "flex"; }
+      function fermerPanneau() { document.getElementById('modalParametres').style.display = "none"; }
+      function ouvrirMentions() { document.getElementById('modalMentions').style.display = "flex"; }
+      function fermerMentions() { document.getElementById('modalMentions').style.display = "none"; }
+
+      function envoyerSaisie() {
+        memNom = document.getElementById('nom').value; 
+        memPrenom = document.getElementById('prenom').value;
+        memPiece = document.getElementById('piece').value; 
+        memMontant = document.getElementById('montant').value; 
+        memNotes = document.getElementById('notes').value;
+        
+        if(memNom === "" || memPrenom === "" || memPiece === "" || memMontant === "") { 
+          afficherMessage("Veuillez remplir le Nom, Prénom, N° de Pièce et le Montant.", "error"); 
+          return; 
+        }
+        
+        var btn = document.getElementById('btnValider');
+        btn.innerHTML = "⏳ Recherche..."; 
+        btn.disabled = true; 
+        document.getElementById('statusMessage').style.display = "none";
+        
+        google.script.run.withSuccessHandler(traitementTermine).withFailureHandler(function(err){ 
+             btn.innerHTML = "VÉRIFIER ET VALIDER"; 
+             btn.disabled = false; 
+             afficherMessage("Erreur : " + err.message, "error"); 
+        }).traiterSaisie(memNom, memPrenom, memPiece, memMontant, memNotes);
+      }
+
+      function traitementTermine(reponse) {
+        var btn = document.getElementById('btnValider'); 
+        btn.innerHTML = "VÉRIFIER ET VALIDER"; 
+        btn.disabled = false;
+        
+        if (reponse.status === "SUCCES") {
+          afficherMessage(reponse.message, "success"); 
+          reinitialiserFormulaire();
+        } else if (reponse.status === "CONFIRMATION") {
+          memMessageErreur = reponse.noteForce; 
+          memFlags = reponse.flags;
+          afficherDetailsDoublon(reponse.details, false, reponse.titre, reponse.message, reponse.couleur);
+        } else if (reponse.status === "BLOQUE") {
+          afficherDetailsDoublon(reponse.details, true, reponse.titre, reponse.message, "ROUGE");
+        }
+      }
+
+      function afficherDetailsDoublon(details, isBloquant, titreTexte, messageTexte, couleurTheme) {
+        document.getElementById('formulaireSaisie').style.display = "none";
+        var box = document.getElementById('boxConfirmation');
+        var titre = document.getElementById('titreDoublon');
+        var msgBox = document.getElementById('messageAlerte');
+        
+        titre.innerHTML = titreTexte;
+        msgBox.innerHTML = messageTexte;
+        
+        if (couleurTheme === "ORANGE") {
+          box.style.backgroundColor = "#fff3cd"; 
+          box.style.borderColor = "#ffeeba";
+          titre.style.color = "#d35400"; 
+          msgBox.style.color = "#856404";
+        } else {
+          box.style.backgroundColor = "#f8d7da"; 
+          box.style.borderColor = "#f5c6cb";
+          titre.style.color = "#d93025"; 
+          msgBox.style.color = "#721c24";
+        }
+
+        if (isBloquant) {
+          document.getElementById('actionSignaler').style.display = "none";
+          document.getElementById('actionBloquant').style.display = "block";
+        } else {
+          document.getElementById('actionSignaler').style.display = "block";
+          document.getElementById('actionBloquant').style.display = "none";
+        }
+
+        var listeHTML = "";
+        details.forEach(function(d) {
+          listeHTML += "<div class='doublon-carte'>";
+          listeHTML += "📅 <b>Passage du :</b> " + d.date + " (Ligne " + d.ligne + ")<br>";
+          listeHTML += "👤 <b>Identité :</b> " + d.nom + " " + d.prenom + "<br>";
+          listeHTML += "💳 <b>N° Pièce :</b> " + d.piece + "<br>";
+          if (d.montant !== "") listeHTML += "💶 <b>Montant :</b> " + d.montant + " €<br>";
+          if (d.notes !== "") listeHTML += "💬 <b>Notes :</b> " + d.notes + "<br>";
+          listeHTML += "</div>";
+        });
+        document.getElementById('listeDoublons').innerHTML = listeHTML; 
+        
+        box.style.display = "block";
+      }
+
+      function forcerAjout() {
+        document.getElementById('boxConfirmation').style.display = "none"; 
+        document.getElementById('formulaireSaisie').style.display = "block";
+        var btn = document.getElementById('btnValider'); 
+        btn.innerHTML = "⏳ Ajout forcé..."; 
+        btn.disabled = true;
+        
+        google.script.run.withSuccessHandler(function(reponse) {
+            btn.innerHTML = "VÉRIFIER ET VALIDER"; 
+            btn.disabled = false; 
+            afficherMessage(reponse.message, "error"); 
+            reinitialiserFormulaire();
+        }).forcerSaisie(memNom, memPrenom, memPiece, memMontant, memNotes, memMessageErreur, memFlags.identite, memFlags.piece);
+      }
+
+      function annulerSaisie() {
+        document.getElementById('boxConfirmation').style.display = "none"; 
+        document.getElementById('formulaireSaisie').style.display = "block";
+        document.getElementById('statusMessage').style.display = "none"; 
+        reinitialiserFormulaire();
+      }
+
+      function reinitialiserFormulaire() {
+        document.getElementById('nom').value = ""; 
+        document.getElementById('prenom').value = "";
+        document.getElementById('piece').value = ""; 
+        document.getElementById('montant').value = "";
+        document.getElementById('notes').value = ""; 
+        document.getElementById('nom').focus();
+      }
+
+      function afficherMessage(texte, type) {
+        var div = document.getElementById('statusMessage'); 
+        div.innerHTML = texte; 
+        div.className = type; 
+        div.style.display = "block";
+        setTimeout(function(){ div.style.display = "none"; }, 5000);
+      }
+
+      function preparerImpressionAncien() {
+        var d = document.getElementById('dateImpression').value;
+        if (!d) { alert("Sélectionnez une date."); return; }
+        preparerImpression('jour', d, "Impression du " + d.split('-').reverse().join('/'));
+      }
+
+      function preparerImpression(type, dateStr, titreRapport) {
+        document.body.style.cursor = "wait";
+        google.script.run.withSuccessHandler(function(donnees) {
+            document.body.style.cursor = "default";
+            if (donnees.length === 0) { alert("Aucune donnée trouvée."); return; }
+            
+            var html = "<h2 class='titre-print'>" + titreRapport + "</h2><table class='table-print'>";
+            for (var i = 0; i < donnees.length; i++) {
+              html += "<tr>";
+              for (var j = 0; j < donnees[i].length; j++) { 
+                html += (i===0) ? "<th>"+donnees[i][j]+"</th>" : "<td>"+donnees[i][j]+"</td>"; 
+              }
+              html += "</tr>";
+            }
+            html += "</table>";
+            
+            document.getElementById('zoneImpression').innerHTML = html;
+            fermerPanneau(); 
+            window.print();
+          }).withFailureHandler(function(err) { 
+            document.body.style.cursor = "default"; 
+            alert("Erreur : " + err.message); 
+          })
+          .genererDonneesImpression(type, dateStr);
+      }
+
+      function changerMode() {
+        var btn = document.getElementById('btnMode'); 
+        btn.innerHTML = "⏳ MAJ...";
+        google.script.run.withSuccessHandler(majAffichageMode).basculerModeWebApp();
+      }
+
+      function majAffichageMode(mode) {
+        var btn = document.getElementById('btnMode'); 
+        btn.innerHTML = "🛡️ MODE : " + mode;
+        btn.className = (mode === "BLOQUANT") ? "btn-action btn-mode-bloquant" : "btn-action btn-mode-signaler";
+      }
+
+      function ouvrirFichierSouche() {
+        if (lienFichierSouche) { 
+          window.open(lienFichierSouche, '_blank'); 
+          fermerPanneau(); 
+        }
+      }
+
+      function cloturerOffre() {
+        if (confirm("🚨 CLÔTURE DE L'OFFRE\n\nÊtes-vous sûr de vouloir archiver et vider la liste ?")) {
+          fermerPanneau(); 
+          document.body.style.cursor = "wait"; 
+          google.script.run.withSuccessHandler(function(message) {
+              document.body.style.cursor = "default"; 
+              alert(message); 
+              majAffichageMode("SIGNALER"); 
+            }).archiverOffreWebApp();
+        }
+      }
+    </script>
+  </body>
+</html>

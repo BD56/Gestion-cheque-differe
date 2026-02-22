@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      body { font-family: 'Segoe UI', Tahoma, sans-serif; padding: 15px; background-color: #f8f9fa; margin: 0; }
+      h3 { text-align: center; color: #3c4043; margin-top: 0; font-size: 18px; }
+      
+      .btn { width: 100%; padding: 12px; margin-bottom: 12px; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; font-size: 14px; transition: 0.2s; }
+      .btn:hover { opacity: 0.9; }
+      .btn-print { background-color: #1a73e8; }
+      .btn-offre { background-color: #34a853; }
+      .btn-mode-signaler { background-color: #f2994a; }
+      .btn-mode-bloquant { background-color: #d93025; }
+      .btn-archive { background-color: #d93025; margin-top: 20px; }
+      
+      .date-box { background: #e8eaed; padding: 12px; border-radius: 8px; margin-bottom: 12px; text-align: center; border: 1px solid #dadce0; }
+      label { font-size: 12px; color: #5f6368; display: block; margin-bottom: 8px; font-weight: bold; }
+      input[type="date"] { width: 90%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+      hr { border: 0; height: 1px; background: #ddd; margin: 20px 0; }
+      
+      /* NOUVEAU : La boîte de légende pour l'historique */
+      .legend-box { background: #fff3cd; padding: 12px; border-radius: 8px; border: 1px solid #ffeeba; margin-bottom: 15px; font-size: 12px; color: #856404; }
+      .legend-box h4 { margin: 0 0 8px 0; font-size: 13px; text-align: center; color: #d35400; }
+      .legend-box p { margin: 4px 0; line-height: 1.4; }
+    </style>
+  </head>
+  <body>
+    <h3>⚙️ Paramètres</h3>
+
+    <button class="btn btn-print" onclick="imprimerAuj()">🖨️ VOIR JOUR (AUJ)</button>
+
+    <div class="date-box">
+      <label>📅 Voir un jour précédent :</label>
+      <input type="date" id="dateImpression">
+      <button class="btn" style="background-color: #5f6368; margin-bottom: 0;" onclick="imprimerAncien()">VOIR CE JOUR</button>
+    </div>
+
+    <button class="btn btn-offre" onclick="voirOffre()">📚 TOUTE L'OFFRE</button>
+
+    <hr>
+    
+    <div class="legend-box">
+      <h4>📖 Légende des Notes</h4>
+      <p><strong>Cas A :</strong> Vrai doublon <em>(Nom & Pièce identiques)</em></p>
+      <p><strong>Cas B :</strong> Anomalie / Usurpation <em>(Nom différent, Même Pièce)</em></p>
+      <p><strong>Cas C :</strong> Homonyme <em>(Même Nom, Pièce différente)</em></p>
+    </div>
+
+    <button class="btn" id="btnMode" onclick="changerMode()">⏳ Chargement Mode...</button>
+    <button class="btn btn-archive" onclick="cloturer()">⚠️ CLÔTURER L'OFFRE</button>
+
+    <script>
+      window.onload = function() {
+        var auj = new Date();
+        var annee = auj.getFullYear();
+        var mois = ("0" + (auj.getMonth() + 1)).slice(-2);
+        var jour = ("0" + auj.getDate()).slice(-2);
+        document.getElementById("dateImpression").value = annee + "-" + mois + "-" + jour;
+
+        google.script.run.withSuccessHandler(majMode).getInfosPanneau();
+      };
+
+      function imprimerAuj() { google.script.run.allerVersImpression("aujourdhui"); }
+      function imprimerAncien() {
+        var d = document.getElementById('dateImpression').value;
+        if(d) google.script.run.allerVersImpression(d);
+      }
+      function voirOffre() { google.script.run.allerVersOffre(); }
+
+      function changerMode() {
+        document.getElementById('btnMode').innerHTML = "⏳ MAJ...";
+        google.script.run.withSuccessHandler(majMode).basculerModeWebApp();
+      }
+
+      function majMode(infosOuMode) {
+        var mode = (typeof infosOuMode === 'string') ? infosOuMode : infosOuMode.mode;
+        var btn = document.getElementById('btnMode');
+        btn.innerHTML = "🛡️ MODE : " + mode;
+        btn.className = (mode === "BLOQUANT") ? "btn btn-mode-bloquant" : "btn btn-mode-signaler";
+      }
+
+      function cloturer() {
+        if(confirm("🚨 CLÔTURE DE L'OFFRE\n\nÊtes-vous sûr de vouloir archiver et vider la liste ?")) {
+          google.script.run.withSuccessHandler(function(msg){
+              alert(msg); changerMode(); 
+          }).archiverOffreWebApp();
+        }
+      }
+    </script>
+  </body>
+</html>

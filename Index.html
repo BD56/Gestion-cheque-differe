@@ -93,6 +93,8 @@
         </div>
       </div>
       <div class="subtitle">Gestion Chèques Reportés</div>
+
+      <div id="sousTitreOperation" style="text-align: center; color: #555; font-size: 16px; font-weight: bold; margin-top: -10px; margin-bottom: 20px;">⏳ Chargement des dates...</div>
       
       <div id="formulaireSaisie">
         <div class="input-group">
@@ -212,7 +214,20 @@
         
         <button class="btn-action" id="btnMode" onclick="changerMode()">⏳ Chargement Mode...</button>
         <button class="btn-action btn-open-sheet" onclick="ouvrirFichierSouche()">OUVRIR GOOGLE SHEETS</button>
-        <button class="btn-action btn-archive" onclick="cloturerOffre()">⚠️ CLÔTURER L'OFFRE</button>
+        <hr style="border: 0; height: 1px; background: #ddd; margin: 20px 0;">
+        <h3 style="text-align: center; margin-top: 0;">📅 Opération en cours</h3>
+        <div style="display: flex; justify-content: space-around; margin-bottom: 15px;">
+          <div>
+            <label style="font-weight: bold; font-size: 13px;">Début :</label>
+            <input type="date" id="modalDateDebut" style="padding: 8px; font-size: 14px; border-radius: 5px; border: 1px solid #ccc; width: 130px;">
+          </div>
+          <div>
+            <label style="font-weight: bold; font-size: 13px;">Fin :</label>
+            <input type="date" id="modalDateFin" style="padding: 8px; font-size: 14px; border-radius: 5px; border: 1px solid #ccc; width: 130px;">
+          </div>
+        </div>
+        <button class="btn-action" style="background-color: #34a853;" onclick="sauvegarderDatesTablette()">METTRE À JOUR LES DATES</button>
+        <div id="msgRetourModal" style="text-align: center; font-weight: bold; margin-top: 10px; font-size: 13px;"></div>
       </div>
     </div>
 
@@ -467,6 +482,80 @@
       });
     }
 
+    // --- GESTION DE L'AFFICHAGE ET DU VERROUILLAGE ---
+      function formaterDateAffichage(dateString) {
+        if (!dateString) return "";
+        var parts = dateString.split('-');
+        return (parts.length === 3) ? parts[2] + "/" + parts[1] : dateString;
+      }
+
+      function chargerDatesAffichage() {
+        google.script.run.withSuccessHandler(function(dates) {
+          var affichage = document.getElementById('sousTitreOperation');
+          var formulaire = document.getElementById('formulaireSaisie');
+          var isVerrouille = true;
+          var dateJour = new Date(); dateJour.setHours(0,0,0,0);
+
+          if (dates.debut && dates.fin) {
+            var strDebut = formaterDateAffichage(dates.debut);
+            var strFin = formaterDateAffichage(dates.fin);
+            var debutObj = new Date(dates.debut); debutObj.setHours(0,0,0,0);
+            var finObj = new Date(dates.fin); finObj.setHours(0,0,0,0);
+
+            if (dateJour >= debutObj && dateJour <= finObj) {
+              affichage.innerHTML = "Opération du " + strDebut + " au " + strFin;
+              affichage.style.color = "#000000";
+              isVerrouille = false; // On est dans les dates, on déverrouille !
+            } else if (dateJour > finObj) {
+              affichage.innerHTML = "🛑 Opération terminée (du " + strDebut + " au " + strFin + ")";
+              affichage.style.color = "#cc0000";
+            } else {
+              affichage.innerHTML = "⏳ Opération à venir (du " + strDebut + " au " + strFin + ")";
+              affichage.style.color = "#f2994a";
+            }
+          } else {
+            affichage.innerHTML = "🛑 Aucune opération en cours";
+            affichage.style.color = "#cc0000";
+          }
+
+          // Verrouillage/Déverrouillage visuel du formulaire
+          if (formulaire) {
+            formulaire.style.display = isVerrouille ? "none" : "block";
+          }
+
+          // Mise à jour des cases dans la modale
+          if (document.getElementById('modalDateDebut')) {
+            document.getElementById('modalDateDebut').value = dates.debut;
+            document.getElementById('modalDateFin').value = dates.fin;
+          }
+        }).getDatesOperation();
+      }
+
+      function sauvegarderDatesTablette() {
+        var debut = document.getElementById('modalDateDebut').value;
+        var fin = document.getElementById('modalDateFin').value;
+        var msg = document.getElementById('msgRetourModal');
+        var dateFinObj = new Date(fin); 
+        var dateJour = new Date(); dateJour.setHours(0,0,0,0);
+
+        if (fin !== "" && dateFinObj < dateJour) {
+           if (!confirm("⚠️ ATTENTION : La date de fin est déjà passée !\nSi vous validez, l'opération sera clôturée cette nuit.\nVoulez-vous vraiment continuer ?")) return;
+        }
+        
+        msg.style.color = "orange"; 
+        msg.innerHTML = "Mise à jour en cours...";
+        
+        google.script.run.withSuccessHandler(function(reponse) {
+           msg.style.color = "green"; 
+           msg.innerHTML = "✅ Dates mises à jour !";
+           chargerDatesAffichage();
+           setTimeout(function(){ msg.innerHTML = ""; }, 3000);
+        }).setDatesOperation(debut, fin);
+      }
+
+      // Lance la vérification au démarrage de l'application
+      window.addEventListener('load', chargerDatesAffichage);
+      
     </script>
   </body>
 </html>

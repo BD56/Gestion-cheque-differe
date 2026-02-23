@@ -47,6 +47,14 @@
       <p><strong>Cas C :</strong> Homonyme <em>(Même Nom, Pièce différente)</em></p>
     </div>
 
+    <hr>
+    <div class="date-box">
+      <label>📅 Opération en cours :</label>
+      <input type="date" id="dateDebut" title="Date de début">
+      <input type="date" id="dateFin" title="Date de fin">
+      <button class="btn btn-offre" style="margin-bottom: 0;" onclick="sauvegarderDatesPC()">METTRE À JOUR</button>
+      <div id="msgDates" style="font-size: 11px; font-weight: bold; margin-top: 5px;"></div>
+    </div>
     <button class="btn" id="btnMode" onclick="changerMode()">⏳ Chargement Mode...</button>
     <button class="btn btn-archive" onclick="cloturer()">⚠️ CLÔTURER L'OFFRE</button>
 
@@ -86,6 +94,23 @@
               alert(msg); changerMode(); 
           }).archiverOffreWebApp();
         }
+      }
+
+      // Au chargement, on récupère les dates
+      google.script.run.withSuccessHandler(function(dates) {
+        document.getElementById('dateDebut').value = dates.debut;
+        document.getElementById('dateFin').value = dates.fin;
+      }).getDatesOperation();
+
+      function sauvegarderDatesPC() {
+        var debut = document.getElementById('dateDebut').value;
+        var fin = document.getElementById('dateFin').value;
+        var msg = document.getElementById('msgDates');
+        msg.style.color = "orange"; msg.innerHTML = "Enregistrement...";
+        google.script.run.withSuccessHandler(function(rep) {
+          msg.style.color = "green"; msg.innerHTML = rep;
+          setTimeout(function(){ msg.innerHTML = ""; }, 3000);
+        }).setDatesOperation(debut, fin);
       }
     </script>
   </body>

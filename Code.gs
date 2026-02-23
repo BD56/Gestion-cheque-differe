@@ -366,3 +366,22 @@ function verificationClotureNocturne() {
     setDatesOperation("", ""); 
   }
 }
+
+// =================================================================
+// --- GESTION DES DATES DE L'OPÉRATION (MÉMOIRE SECRÈTE) ---
+// =================================================================
+
+function getDatesOperation() {
+  var memoire = PropertiesService.getDocumentProperties();
+  return {
+    debut: memoire.getProperty('DATE_DEBUT') || '',
+    fin: memoire.getProperty('DATE_FIN') || ''
+  };
+}
+
+function setDatesOperation(dateDebut, dateFin) {
+  var memoire = PropertiesService.getDocumentProperties();
+  memoire.setProperty('DATE_DEBUT', dateDebut);
+  memoire.setProperty('DATE_FIN', dateFin);
+  return "Dates enregistrées avec succès !";
+}

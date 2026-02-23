@@ -6,8 +6,8 @@ function doGet(e) {
 
 function traiterSaisie(nom, prenom, piece, montant, notes) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var feuille = ss.getSheetByName("Saisies_test");
-  if (!feuille) return { status: "BLOQUE", titre: "Erreur Serveur", message: "La feuille 'Saisies_test' est introuvable." };
+  var feuille = ss.getSheetByName("Saisies");
+  if (!feuille) return { status: "BLOQUE", titre: "Erreur Serveur", message: "La feuille 'Saisies' est introuvable." };
 
   var modeSecurite = feuille.getRange("Z1").getValue() || "SIGNALER";
   
@@ -111,7 +111,7 @@ function traiterSaisie(nom, prenom, piece, montant, notes) {
 
 function forcerSaisie(nom, prenom, piece, montant, notes, messageErreur, flagIdentite, flagPiece) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var feuille = ss.getSheetByName("Saisies_test");
+  var feuille = ss.getSheetByName("Saisies");
   
   nom = nom.toString().toUpperCase().trim(); 
   prenom = prenom.toString().toUpperCase().trim();
@@ -145,14 +145,14 @@ function forcerSaisie(nom, prenom, piece, montant, notes, messageErreur, flagIde
 // --- FONCTIONS SECONDAIRES ---
 function getInfosPanneau() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var f = ss.getSheetByName("Saisies_test");
+  var f = ss.getSheetByName("Saisies");
   var mode = f.getRange("Z1").getValue() || "SIGNALER";
   return { success: true, mode: mode, urlFichier: ss.getUrl() };
 }
 
 function genererDonneesImpression(type, dateChoisieStr) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var feuille = (type === 'jour') ? ss.getSheetByName("A_IMPRIMER_test") : ss.getSheetByName("OFFRE_COMPLETE_test");
+  var feuille = (type === 'jour') ? ss.getSheetByName("A_IMPRIMER") : ss.getSheetByName("OFFRE_COMPLETE");
   if (!feuille) return [];
   if (type === 'jour') {
     if (dateChoisieStr === "aujourdhui") feuille.getRange("Z1").clearContent();
@@ -164,7 +164,7 @@ function genererDonneesImpression(type, dateChoisieStr) {
 }
 
 function basculerModeWebApp() {
-  var feuille = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Saisies_test");
+  var feuille = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Saisies");
   var modeActuel = feuille.getRange("Z1").getValue() || "SIGNALER";
   var nouveauMode = (modeActuel === "SIGNALER") ? "BLOQUANT" : "SIGNALER";
   feuille.getRange("Z1").setValue(nouveauMode); return nouveauMode;
@@ -172,9 +172,9 @@ function basculerModeWebApp() {
 
 function archiverOffreWebApp() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var feuilleSaisies = ss.getSheetByName("Saisies_test");
+  var feuilleSaisies = ss.getSheetByName("Saisies");
   var dateFin = Utilities.formatDate(new Date(), "Europe/Paris", "dd-MM-yyyy_HH-mm"); 
-  var archive = ss.insertSheet('Archives_' + dateFin + '_test');
+  var archive = ss.insertSheet('Archives_' + dateFin);
   feuilleSaisies.getDataRange().copyTo(archive.getRange(1, 1));
   archive.setFrozenRows(1);
   var derniereLigne = feuilleSaisies.getLastRow();
@@ -198,7 +198,7 @@ function afficherPanneau() {
 
 function allerVersImpression(dateChoisieStr) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var f = ss.getSheetByName("A_IMPRIMER_test");
+  var f = ss.getSheetByName("A_IMPRIMER");
   if (!f) return;
   if (dateChoisieStr === "aujourdhui") f.getRange("Z1").clearContent();
   else f.getRange("Z1").setValue("'" + dateChoisieStr);
@@ -207,7 +207,7 @@ function allerVersImpression(dateChoisieStr) {
 
 function allerVersOffre() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var f = ss.getSheetByName("OFFRE_COMPLETE_test");
+  var f = ss.getSheetByName("OFFRE_COMPLETE");
   if (f) ss.setActiveSheet(f);
 }
 
@@ -335,25 +335,34 @@ function onEdit(e) {
 }
 
 
+
+
 // =================================================================
-// --- GESTION DES DATES DE L'OPÉRATION (MÉMOIRE SECRÈTE) ---
+// --- ROBOT DE NUIT : CLÔTURE AUTOMATIQUE ---
 // =================================================================
 
-// Fonction pour récupérer les dates actuelles
-function getDatesOperation() {
-  var memoire = PropertiesService.getDocumentProperties();
-  return {
-    debut: memoire.getProperty('DATE_DEBUT') || '',
-    fin: memoire.getProperty('DATE_FIN') || ''
-  };
+function verificationClotureNocturne() {
+  var dates = getDatesOperation();
+  
+  // S'il n'y a pas de date de fin enregistrée, le robot se rendort
+  if (!dates.fin || dates.fin === "") {
+    return; 
+  }
+  
+  var dateFinObj = new Date(dates.fin);
+  var dateJour = new Date();
+  
+  // On compare les jours (sans prendre en compte l'heure exacte)
+  dateFinObj.setHours(0,0,0,0);
+  dateJour.setHours(0,0,0,0);
+  
+  // Si la date d'aujourd'hui est STRICTEMENT supérieure à la date de fin
+  // Ça veut dire que l'offre s'est terminée hier. On archive !
+  if (dateJour > dateFinObj) {
+    // On appelle ta fonction d'archivage existante
+    archiverOffreWebApp(); 
+    
+    // On efface les dates en mémoire pour verrouiller la tablette le matin
+    setDatesOperation("", ""); 
+  }
 }
-
-// Fonction pour enregistrer les nouvelles dates
-function setDatesOperation(dateDebut, dateFin) {
-  var memoire = PropertiesService.getDocumentProperties();
-  memoire.setProperty('DATE_DEBUT', dateDebut);
-  memoire.setProperty('DATE_FIN', dateFin);
-  return "Dates enregistrées avec succès !";
-}
-
-

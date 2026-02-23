@@ -56,10 +56,16 @@
       .texte-mentions { text-align: justify; font-size: 13px; line-height: 1.5; color: #3c4043; }
       .texte-mentions p { margin-bottom: 12px; }
 
-      /* NOUVEAU : CSS spécifique pour formater le texte de l'aide */
-      .texte-aide { text-align: left; font-size: 14px; line-height: 1.5; color: #3c4043; }
-      .texte-aide ul { margin-top: 5px; padding-left: 20px; margin-bottom: 15px; }
-      .texte-aide li { margin-bottom: 6px; }
+      /* --- CSS ACCORDÉON AIDE --- */
+      .texte-aide { text-align: left; font-size: 14px; color: #3c4043; }
+      .accordion { background-color: #f1f3f4; color: #3c4043; cursor: pointer; padding: 14px; width: 100%; border: none; text-align: left; outline: none; font-size: 15px; font-weight: bold; border-radius: 8px; margin-bottom: 6px; transition: 0.3s; display: flex; justify-content: space-between; align-items: center; }
+      .accordion.active, .accordion:hover { background-color: #e8eaed; }
+      .accordion:after { content: '\002B'; color: #5f6368; font-weight: bold; font-size: 18px; }
+      .accordion.active:after { content: "\2212"; }
+      .panel { padding: 0 15px; background-color: white; max-height: 0; overflow: hidden; transition: max-height 0.2s ease-out; margin-bottom: 5px; border-radius: 0 0 8px 8px; }
+      .panel p { margin-top: 10px; margin-bottom: 5px; }
+      .panel ul { padding-left: 20px; margin-top: 5px; margin-bottom: 15px; }
+      .panel li { margin-bottom: 8px; line-height: 1.4; }
 
       #zoneImpression { display: none; }
       @page { size: landscape; margin: 1cm; }
@@ -87,9 +93,6 @@
         </div>
       </div>
       <div class="subtitle">Gestion Chèques Reportés</div>
-      <div id="sousTitreOperation" style="text-align: center; color: #555; font-size: 18px; font-weight: bold; margin-top: -10px; margin-bottom: 20px;">
-        ⏳ Chargement des dates...
-      </div>
       
       <div id="formulaireSaisie">
         <div class="input-group">
@@ -145,39 +148,44 @@
         <hr style="border: 0; height: 1px; background: #ddd; margin: 15px 0;">
         
         <div class="texte-aide">
-          <p><strong>1️⃣ La Saisie Classique</strong></p>
-          <ul>
-            <li>Remplissez obligatoirement le Nom, le Prénom, le N° de Pièce et le <strong>Montant</strong>.</li>
-            <li>Fiez-vous toujours à la pièce d'identité physique. Le système nettoie automatiquement les espaces et les tirets.</li>
-            <li>Cliquez sur <strong>VÉRIFIER ET VALIDER</strong>. Si le message est vert (✅), la saisie est enregistrée !</li>
-          </ul>
+          
+          <button class="accordion">📝 1. Saisie d'un chèque et Alertes</button>
+          <div class="panel">
+            <ul>
+              <li><strong>Comment faire :</strong> Remplissez les informations du formulaire, puis cliquez sur <strong>Valider</strong>.</li>
+              <li>🟢 <strong>Bandeau Vert :</strong> Saisie acceptée et enregistrée. Aucun doublon détecté.</li>
+              <li>🟠 <strong>Bandeau Orange (Homonyme possible) :</strong> Le système a détecté le <strong>même Nom</strong>, mais avec une <strong>Pièce d'identité différente</strong>.</li>
+              <li>🔴 <strong>Bandeau Rouge (Doublon ou Usurpation) :</strong> Ce <strong>Numéro de Pièce</strong> a déjà été enregistré (soit par le même client, soit sous un nom différent).</li>
+            </ul>
+          </div>
 
-          <p><strong>2️⃣ Les Modes de Sécurité</strong></p>
-          <p style="margin-top: 0;">Selon le mode actuellement activé (visible dans les paramètres ⚙️), le système réagit différemment aux fraudes :</p>
-          <ul>
-            <li>🛡️ <strong>Mode SIGNALER :</strong> Le système vous alerte en cas de doublon, mais vous laisse toujours la possibilité de cliquer sur "Forcer l'ajout".</li>
-            <li>🛑 <strong>Mode BLOQUANT :</strong> Le système bloque totalement la saisie pour les fraudes évidentes. Le bouton "Forcer l'ajout" disparaît.</li>
-          </ul>
+          <button class="accordion">🚦 2. Les Modes de Sécurité (Bouton ⚙️)</button>
+          <div class="panel">
+            <p>Dans le panneau de contrôle, vous définissez la rigueur du système :</p>
+            <ul>
+              <li>🟡 <strong>Mode SIGNALER :</strong> Souple. L'application vous alerte (Orange ou Rouge) mais vous laisse le bouton pour "Forcer" la validation manuellement.</li>
+              <li>🔴 <strong>Mode BLOQUANT :</strong> Strict. En cas d'alerte Rouge, l'application verrouille le bouton de validation. Aucune saisie n'est techniquement possible.</li>
+            </ul>
+          </div>
 
-          <p><strong>3️⃣ Comprendre les Alertes Anti-Fraude</strong></p>
-          <ul>
-            <li>🔴 <strong>ALERTE ROUGE (Doublon ou Usurpation) :</strong> Ce client ou ce numéro de pièce a déjà été enregistré. <em>(Bloqué en mode Bloquant)</em>.</li>
-            <li>🟠 <strong>ALERTE ORANGE (Homonyme Possible) :</strong> Le système a trouvé le même nom, mais avec une pièce différente.
-              <ul style="margin-bottom: 0;"><li><em>Action requise :</em> Demandez une 2ème pièce d'identité. Si c'est bien une personne différente, vous pourrez "FORCER L'AJOUT".</li></ul>
-            </li>
-          </ul>
+          <button class="accordion">📅 3. Dates de l'offre et Clôture automatique</button>
+          <div class="panel">
+            <ul>
+              <li><strong>Lancer ou modifier :</strong> Cliquez sur ⚙️ et saisissez vos dates. S'il y a une erreur ou une prolongation, modifiez simplement la date de fin ici.</li>
+              <li><strong>Fin de l'offre (Auto-Pilote) :</strong> Vous n'avez rien à faire ! L'opération se clôture, s'archive et verrouille la tablette <strong>toute seule</strong> la nuit suivant le dernier jour.</li>
+            </ul>
+          </div>
 
-          <p><strong>4️⃣ Que faire en cas d'erreur ?</strong></p>
-          <ul>
-            <li>Si vous avez validé une saisie avec une faute de frappe, ou forcé un ajout par erreur, pas de panique !</li>
-            <li>Cliquez sur l'engrenage <strong>(⚙️)</strong> en haut à droite, puis sur le bouton <strong>"OUVRIR GOOGLE SHEETS"</strong>. Vous pourrez y retrouver la ligne correspondante pour la corriger ou la supprimer directement dans le tableau.</li>
-          </ul>
+          <button class="accordion">🖨️ 4. Corrections, Impressions et Archives</button>
+          <div class="panel">
+            <ul>
+              <li><strong>Corriger une erreur :</strong> Cliquez sur ⚙️ puis sur <strong>Ouvrir Google Sheets</strong>. Trouvez la ligne dans le tableau sur l'ordinateur et corrigez ou supprimez-la directement.</li>
+              <li><strong>Imprimer le jour actuel :</strong> Cliquez sur ⚙️ puis sur le bouton bleu <strong>🖨️ IMPRIMER AUJOURD'HUI</strong> pour sortir la liste des saisies du jour.</li>
+              <li><strong>Imprimer un jour oublié :</strong> Toujours dans ⚙️, utilisez le calendrier <em>"Imprimer un jour précédent"</em> pour sortir la liste d'une journée passée.</li>
+              <li><strong>Imprimer une ancienne offre clôturée :</strong> Cliquez sur <strong>Ouvrir Google Sheets</strong>, allez dans l'onglet <em>Archives</em> (en bas du tableau Excel), et imprimez depuis l'ordinateur.</li>
+            </ul>
+          </div>
 
-          <p><strong>5️⃣ Impressions et Clôture</strong></p>
-          <ul>
-            <li>Le bouton <strong>(⚙️)</strong> vous permet également d'imprimer la liste des clients passés aujourd'hui (ou à une date précise).</li>
-            <li>⚠️ <em>Attention : Ne cliquez sur "Clôturer l'offre" qu'à la toute fin de l'opération promotionnelle.</em></li>
-          </ul>
         </div>
       </div>
     </div>
@@ -444,37 +452,21 @@
             }).archiverOffreWebApp();
         }
       }
-      // --- GESTION DE L'AFFICHAGE DES DATES ---
-    
-    // Petite fonction pour transformer "2026-11-10" en "10/11"
-    function formaterDateAffichage(dateString) {
-      if (!dateString) return "";
-      var parts = dateString.split('-');
-      if (parts.length === 3) {
-        return parts[2] + "/" + parts[1]; // Prend le jour et le mois
-      }
-      return dateString;
-    }
 
-    // Demande les dates au Google Sheets dès le chargement de la page
-    function chargerDatesAffichage() {
-      google.script.run.withSuccessHandler(function(dates) {
-        var affichage = document.getElementById('sousTitreOperation');
-        
-        if (dates.debut && dates.fin) {
-          var debut = formaterDateAffichage(dates.debut);
-          var fin = formaterDateAffichage(dates.fin);
-          affichage.innerHTML = "Opération du " + debut + " au " + fin;
-          affichage.style.color = "#000000"; // Texte en noir si tout va bien
+      // --- ANIMATION DE L'ACCORDÉON (AIDE) ---
+    var accordions = document.getElementsByClassName("accordion");
+    for (var i = 0; i < accordions.length; i++) {
+      accordions[i].addEventListener("click", function() {
+        this.classList.toggle("active");
+        var panel = this.nextElementSibling;
+        if (panel.style.maxHeight) {
+          panel.style.maxHeight = null;
         } else {
-          affichage.innerHTML = "🛑 Aucune opération en cours";
-          affichage.style.color = "#cc0000"; // Texte en rouge pour alerter
+          panel.style.maxHeight = panel.scrollHeight + "px";
         }
-      }).getDatesOperation();
+      });
     }
 
-    // On lance la fonction au démarrage
-    window.addEventListener('load', chargerDatesAffichage);
     </script>
   </body>
 </html>

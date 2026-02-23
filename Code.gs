@@ -174,7 +174,7 @@ function archiverOffreWebApp() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var feuilleSaisies = ss.getSheetByName("Saisies");
   var dateFin = Utilities.formatDate(new Date(), "Europe/Paris", "dd-MM-yyyy_HH-mm"); 
-  var archive = ss.insertSheet('Archives_' + dateFin);
+  var archive = ss.insertSheet('Archives_' + dateFin, ss.getNumSheets());
   feuilleSaisies.getDataRange().copyTo(archive.getRange(1, 1));
   archive.setFrozenRows(1);
   var derniereLigne = feuilleSaisies.getLastRow();

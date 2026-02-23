@@ -87,6 +87,9 @@
         </div>
       </div>
       <div class="subtitle">Gestion Chèques Reportés</div>
+      <div id="sousTitreOperation" style="text-align: center; color: #555; font-size: 18px; font-weight: bold; margin-top: -10px; margin-bottom: 20px;">
+        ⏳ Chargement des dates...
+      </div>
       
       <div id="formulaireSaisie">
         <div class="input-group">
@@ -441,6 +444,37 @@
             }).archiverOffreWebApp();
         }
       }
+      // --- GESTION DE L'AFFICHAGE DES DATES ---
+    
+    // Petite fonction pour transformer "2026-11-10" en "10/11"
+    function formaterDateAffichage(dateString) {
+      if (!dateString) return "";
+      var parts = dateString.split('-');
+      if (parts.length === 3) {
+        return parts[2] + "/" + parts[1]; // Prend le jour et le mois
+      }
+      return dateString;
+    }
+
+    // Demande les dates au Google Sheets dès le chargement de la page
+    function chargerDatesAffichage() {
+      google.script.run.withSuccessHandler(function(dates) {
+        var affichage = document.getElementById('sousTitreOperation');
+        
+        if (dates.debut && dates.fin) {
+          var debut = formaterDateAffichage(dates.debut);
+          var fin = formaterDateAffichage(dates.fin);
+          affichage.innerHTML = "Opération du " + debut + " au " + fin;
+          affichage.style.color = "#000000"; // Texte en noir si tout va bien
+        } else {
+          affichage.innerHTML = "🛑 Aucune opération en cours";
+          affichage.style.color = "#cc0000"; // Texte en rouge pour alerter
+        }
+      }).getDatesOperation();
+    }
+
+    // On lance la fonction au démarrage
+    window.addEventListener('load', chargerDatesAffichage);
     </script>
   </body>
 </html>

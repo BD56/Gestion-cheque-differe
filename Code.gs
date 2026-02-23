@@ -333,3 +333,27 @@ function onEdit(e) {
     if (notes !== notePropre) rangeNotes.setValue(notePropre);
   }
 }
+
+
+// =================================================================
+// --- GESTION DES DATES DE L'OPÉRATION (MÉMOIRE SECRÈTE) ---
+// =================================================================
+
+// Fonction pour récupérer les dates actuelles
+function getDatesOperation() {
+  var memoire = PropertiesService.getDocumentProperties();
+  return {
+    debut: memoire.getProperty('DATE_DEBUT') || '',
+    fin: memoire.getProperty('DATE_FIN') || ''
+  };
+}
+
+// Fonction pour enregistrer les nouvelles dates
+function setDatesOperation(dateDebut, dateFin) {
+  var memoire = PropertiesService.getDocumentProperties();
+  memoire.setProperty('DATE_DEBUT', dateDebut);
+  memoire.setProperty('DATE_FIN', dateFin);
+  return "Dates enregistrées avec succès !";
+}
+
+

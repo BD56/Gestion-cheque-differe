@@ -90,3 +90,46 @@
     </script>
   </body>
 </html>
+
+
+
+
+
+
+
+<hr>
+    <h3>📅 Opération en cours</h3>
+    <div style="margin-bottom: 10px;">
+      <label>Date de début :</label><br>
+      <input type="date" id="dateDebut" style="width: 100%; padding: 5px; margin-top: 5px;">
+    </div>
+    <div style="margin-bottom: 10px;">
+      <label>Date de fin :</label><br>
+      <input type="date" id="dateFin" style="width: 100%; padding: 5px; margin-top: 5px;">
+    </div>
+    <button onclick="sauvegarderDates()" style="width: 100%; padding: 8px; background-color: #4285F4; color: white; border: none; border-radius: 4px; cursor: pointer;">
+      Enregistrer les dates
+    </button>
+    <p id="msgDates" style="color: green; font-size: 12px; margin-top: 5px;"></p>
+
+    <script>
+      // Quand le panneau s'ouvre, on charge les dates existantes
+      google.script.run.withSuccessHandler(function(dates) {
+        document.getElementById('dateDebut').value = dates.debut;
+        document.getElementById('dateFin').value = dates.fin;
+      }).getDatesOperation();
+
+      // Quand on clique sur le bouton "Enregistrer"
+      function sauvegarderDates() {
+        var debut = document.getElementById('dateDebut').value;
+        var fin = document.getElementById('dateFin').value;
+        var msg = document.getElementById('msgDates');
+        
+        msg.innerHTML = "Enregistrement...";
+        
+        google.script.run.withSuccessHandler(function(reponse) {
+          msg.innerHTML = reponse;
+          setTimeout(function() { msg.innerHTML = ""; }, 3000); // Efface le message après 3s
+        }).setDatesOperation(debut, fin);
+      }
+    </script>

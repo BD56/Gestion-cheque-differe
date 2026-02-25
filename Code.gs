@@ -173,13 +173,20 @@ function basculerModeWebApp() {
 function archiverOffreWebApp() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var feuilleSaisies = ss.getSheetByName("Saisies");
-  var dateFin = Utilities.formatDate(new Date(), "Europe/Paris", "dd-MM-yyyy_HH-mm"); 
+  var dateFin = Utilities.formatDate(new Date(), "Europe/Paris", "dd-MM-yyyy_HH-mm");
+  
   var archive = ss.insertSheet('Archives_' + dateFin, ss.getNumSheets());
   feuilleSaisies.getDataRange().copyTo(archive.getRange(1, 1));
   archive.setFrozenRows(1);
+  
   var derniereLigne = feuilleSaisies.getLastRow();
   if (derniereLigne > 1) feuilleSaisies.getRange(2, 1, derniereLigne - 1, 7).clearContent().setBackground(null);
-  feuilleSaisies.getRange("Z1").setValue("SIGNALER"); 
+  
+  feuilleSaisies.getRange("Z1").setValue("SIGNALER");
+  
+  // 🧹 NOUVEAU : On efface les dates en mémoire pour verrouiller les tablettes
+  setDatesOperation("", "");
+
   return "✅ L'offre a été clôturée et archivée avec succès !";
 }
 
@@ -220,7 +227,7 @@ function onEdit(e) {
   var feuille = e.range.getSheet();
   
   // On ne déclenche la magie que sur la bonne feuille
-  if (feuille.getName() !== "Saisies_test") return;
+  if (feuille.getName() !== "Saisies") return;
   
   var ligneEdit = e.range.getRow();
   var colEdit = e.range.getColumn();

@@ -555,7 +555,17 @@
 
       // Lance la vérification au démarrage de l'application
       window.addEventListener('load', chargerDatesAffichage);
-      
+      // --- FORMATAGE AUTOMATIQUE DU MONTANT ---
+      document.getElementById('montant').addEventListener('blur', function() {
+        var valeur = this.value.trim();
+        // Si la case n'est pas vide et ne contient pas déjà le symbole €
+        if (valeur !== "" && !valeur.includes('€')) {
+          // Remplace un éventuel point par une virgule (format français)
+          valeur = valeur.replace('.', ',');
+          // Ajoute l'espace et le symbole €
+          this.value = valeur + " €";
+        }
+      });
     </script>
   </body>
 </html>

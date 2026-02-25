@@ -91,7 +91,13 @@
       function cloturer() {
         if(confirm("🚨 CLÔTURE DE L'OFFRE\n\nÊtes-vous sûr de vouloir archiver et vider la liste ?")) {
           google.script.run.withSuccessHandler(function(msg){
-              alert(msg); changerMode(); 
+              alert(msg); 
+              changerMode(); 
+              
+              // NOUVEAU : Met à jour l'affichage des dates sur le panneau (ça les vide)
+              document.getElementById('dateDebut').value = "";
+              document.getElementById('dateFin').value = "";
+              
           }).archiverOffreWebApp();
         }
       }

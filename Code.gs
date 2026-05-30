@@ -218,7 +218,7 @@ function ajouterLog(action, details) {
   
   feuilleLogs.appendRow([
     new Date(),
-    "Responsable_Caisses", // Peut être dynamisé plus tard si authentification
+    Session.getActiveUser().getEmail(), // Email du compte Google actuellement connecté
     action,
     JSON.stringify(details)
   ]);

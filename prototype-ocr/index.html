@@ -281,30 +281,20 @@
         tessedit_pageseg_mode: '6'
       });
 
-      // ROTATION AUTO : on essaie plusieurs orientations et on garde la première
-      // dont les check digits valident. Sinon on garde le meilleur résultat exploitable.
-      const orientations = [0, 180, 90, 270];
-      let choisi = null, repli = null;
-      const tentatives = [];
-      for (let k = 0; k < orientations.length; k++) {
-        const angle = orientations[k];
-        $('status').textContent = "Lecture OCR — orientation " + angle + "° (" + (k + 1) + "/4)…";
-        $('progBar').style.width = '0%';
-        // Le rognage s'applique APRÈS rotation : la MRZ d'une image redressée est
-        // toujours en bas, donc on rogne pour toutes les orientations (zoom = lisibilité).
-        const { data } = await worker.recognize(buildCanvas(angle));
-        const lignes = extraireLignes(data.text);
-        const r = lignes.length ? tenterParse(lignes) : null;
-        const candidat = { texte: data.text, lignes, r, angle };
-        tentatives.push(candidat);
-        if (r && r.valid) { choisi = candidat; break; } // succès : on s'arrête
-        if (!repli || (r && !repli.r)) repli = candidat; // garde le meilleur à défaut
-      }
+      // OPTION B : on analyse UNIQUEMENT l'image affichée (orientée à la main via
+      // le bouton « Pivoter »). Pas de recherche automatique d'orientation.
+      $('status').textContent = "Lecture OCR…";
+      $('progBar').style.width = '0%';
+      const { data } = await worker.recognize(buildCanvas(0));
       await worker.terminate();
 
-      derniere = { tentatives, modele, crop: $('optCrop').checked, bin: $('optBin').checked };
+      const lignes = extraireLignes(data.text);
+      const r = lignes.length ? tenterParse(lignes) : null;
+      const candidat = { texte: data.text, lignes, r };
+
+      derniere = { tentatives: [candidat], modele, crop: $('optCrop').checked, bin: $('optBin').checked };
       $('diag').classList.add('hidden');
-      afficher(choisi || repli, modele);
+      afficher(candidat, modele);
     } catch (e) {
       $('status').textContent = "❌ Erreur OCR : " + e.message;
     } finally {
@@ -374,7 +364,7 @@
     let out = '=== DIAGNOSTIC ANONYMISE ===\n';
     out += 'modele: ' + o.modele + ' | rognage: ' + (o.crop ? 'on' : 'off') + ' | binarisation: ' + (o.bin ? 'on' : 'off') + '\n\n';
     o.tentatives.forEach(t => {
-      out += '--- orientation ' + t.angle + 'deg | format=' + (t.r ? t.r.format : '(aucun)') + ' | valide=' + (t.r ? t.r.valid : false) + ' ---\n';
+      out += '--- format=' + (t.r ? t.r.format : '(aucun)') + ' | valide=' + (t.r ? t.r.valid : false) + ' ---\n';
       out += 'lignes MRZ retenues:\n' + (t.lignes.length ? t.lignes.map(masquer).join('\n') : '(aucune)') + '\n';
       out += 'OCR brut:\n' + masquer(t.texte) + '\n\n';
     });
@@ -389,24 +379,23 @@
   };
 
   function afficher(res, modele) {
-    const { texte, lignes, r, angle } = res;
-    $('rawText').textContent = (texte || '(vide)') + '\n\n[modèle : ' + modele + ' · orientation retenue : ' + angle + '°]';
+    const { texte, lignes, r } = res;
+    $('rawText').textContent = (texte || '(vide)') + '\n\n[modèle : ' + modele + ']';
     $('mrzLines').textContent = lignes.length ? lignes.join('\n') : '(aucune ligne de type MRZ détectée)';
     $('resCard').classList.remove('hidden');
 
     if (!r) {
       $('validity').innerHTML = '<span class="badge ko">❌ Aucune MRZ exploitable</span> '
-        + '<span style="font-size:13px;color:#5f6368;">Vérifie le cadrage / la netteté, ou décoche le rognage.</span>';
+        + '<span style="font-size:13px;color:#5f6368;">Vérifie le cadrage / la netteté, pivote l\'image si besoin, ou décoche le rognage.</span>';
       $('fieldsTable').querySelector('tbody').innerHTML = '';
       setMap('—', '—', '—');
       return;
     }
 
-    // Badge de validité (basé sur les check digits) + orientation utilisée
-    const ori = ' · ' + angle + '°';
+    // Badge de validité (basé sur les check digits)
     $('validity').innerHTML = r.valid
-      ? '<span class="badge ok">✅ MRZ valide (check digits OK) — ' + r.format + ori + '</span>'
-      : '<span class="badge ko">⚠️ Lecture incertaine (check digits KO) — ' + r.format + ori + '</span>';
+      ? '<span class="badge ok">✅ MRZ valide (check digits OK) — ' + r.format + '</span>'
+      : '<span class="badge ko">⚠️ Lecture incertaine (check digits KO) — ' + r.format + '</span>';
 
     // Numéro de document COMPLET : la lib expose le n° complet à la racine
     // (r.documentNumber). Pour l'ancienne CNI il est reconstitué sur 12 caractères,

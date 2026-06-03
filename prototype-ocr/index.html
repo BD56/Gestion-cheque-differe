@@ -196,17 +196,20 @@
     return rot;
   }
 
-  function buildCanvas(angle) {
+  function buildCanvas(angle, cropOverride) {
     const rot = canvasRotation(angle || 0); // 1) orientation
     const w = rot.width, h = rot.height;
 
-    // 2) Rognage optionnel du bas (après rotation, la MRZ est en bas)
-    const crop = $('optCrop').checked;
+    // 2) Rognage optionnel du bas (après rotation, la MRZ est en bas).
+    //    cropOverride permet de forcer (ex: désactivé pour 90°/270° où la
+    //    position de la MRZ est moins prévisible).
+    const crop = (cropOverride === undefined) ? $('optCrop').checked : cropOverride;
     const sy = crop ? Math.floor(h * 0.62) : 0;
     const sh = crop ? h - sy : h;
 
-    // 3) Upscale pour aider l'OCR (cible ~1800px de large)
-    const scale = Math.min(4, Math.max(1, 1800 / w));
+    // 3) Upscale pour aider l'OCR (plus de résolution si on ne rogne pas)
+    const targetW = crop ? 1800 : 2200;
+    const scale = Math.min(4, Math.max(1, targetW / w));
     const c = $('canvas');
     c.width = Math.round(w * scale);
     c.height = Math.round(sh * scale);
@@ -272,7 +275,9 @@
         const angle = orientations[k];
         $('status').textContent = "Lecture OCR — orientation " + angle + "° (" + (k + 1) + "/4)…";
         $('progBar').style.width = '0%';
-        const { data } = await worker.recognize(buildCanvas(angle));
+        // Pour 90°/270°, on n'utilise pas le rognage du bas (position MRZ moins fiable)
+        const cropOverride = (angle === 90 || angle === 270) ? false : undefined;
+        const { data } = await worker.recognize(buildCanvas(angle, cropOverride));
         const lignes = extraireLignes(data.text);
         const r = lignes.length ? tenterParse(lignes) : null;
         const candidat = { texte: data.text, lignes, r, angle };
@@ -349,22 +354,26 @@
       ? '<span class="badge ok">✅ MRZ valide (check digits OK) — ' + r.format + ori + '</span>'
       : '<span class="badge ko">⚠️ Lecture incertaine (check digits KO) — ' + r.format + ori + '</span>';
 
-    // Tableau des champs
+    // Numéro de document COMPLET : la lib expose le n° complet à la racine
+    // (r.documentNumber). Pour l'ancienne CNI il est reconstitué sur 12 caractères,
+    // alors que fields.documentNumber n'en contient qu'une sous-partie (5 car.).
     const f = r.fields;
+    const numComplet = r.documentNumber || f.documentNumber || '';
     const labels = {
       documentCode:'Type', issuingState:'État émetteur', lastName:'Nom', firstName:'Prénom(s)',
-      documentNumber:'N° document', nationality:'Nationalité', birthDate:'Naissance (AAMMJJ)',
+      documentNumber:'N° document (complet)', nationality:'Nationalité', birthDate:'Naissance (AAMMJJ)',
       sex:'Sexe', expirationDate:'Expiration (AAMMJJ)', personalNumber:'N° personnel'
     };
     const tb = $('fieldsTable').querySelector('tbody');
     tb.innerHTML = '';
     for (const [k, lbl] of Object.entries(labels)) {
-      if (f[k] != null && f[k] !== '') {
-        tb.insertAdjacentHTML('beforeend', `<tr><th>${lbl}</th><td>${f[k]}</td></tr>`);
+      const val = (k === 'documentNumber') ? numComplet : f[k];
+      if (val != null && val !== '') {
+        tb.insertAdjacentHTML('beforeend', `<tr><th>${lbl}</th><td>${val}</td></tr>`);
       }
     }
 
-    setMap(f.lastName || '—', f.firstName || '—', f.documentNumber || '—');
+    setMap(f.lastName || '—', f.firstName || '—', numComplet || '—');
   }
 
   function setMap(nom, prenom, piece) {

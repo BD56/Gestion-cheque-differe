@@ -87,6 +87,10 @@
 
     <h3 style="font-size:14px;">Texte OCR brut</h3>
     <pre id="rawText">—</pre>
+
+    <button class="action" id="btnDiag" style="margin-top:8px; background:#5f6368;">📋 Générer un diagnostic anonymisé</button>
+    <p style="font-size:12px; color:#5f6368;">Sans aucune donnée réelle (lettres → X, chiffres → 9). Copie-le pour me l'envoyer.</p>
+    <pre id="diag" class="hidden"></pre>
   </div>
 </div>
 
@@ -99,6 +103,7 @@
 
   const $ = (id) => document.getElementById(id);
   let currentImage = null; // ImageBitmap / HTMLImageElement source à analyser
+  let derniere = null;     // dernière analyse (toutes orientations) pour le diagnostic
   let stream = null;
 
   // ---------- Bascule des onglets ----------
@@ -271,6 +276,7 @@
       // dont les check digits valident. Sinon on garde le meilleur résultat exploitable.
       const orientations = [0, 180, 90, 270];
       let choisi = null, repli = null;
+      const tentatives = [];
       for (let k = 0; k < orientations.length; k++) {
         const angle = orientations[k];
         $('status').textContent = "Lecture OCR — orientation " + angle + "° (" + (k + 1) + "/4)…";
@@ -281,11 +287,14 @@
         const lignes = extraireLignes(data.text);
         const r = lignes.length ? tenterParse(lignes) : null;
         const candidat = { texte: data.text, lignes, r, angle };
+        tentatives.push(candidat);
         if (r && r.valid) { choisi = candidat; break; } // succès : on s'arrête
         if (!repli || (r && !repli.r)) repli = candidat; // garde le meilleur à défaut
       }
       await worker.terminate();
 
+      derniere = { tentatives, modele, crop: $('optCrop').checked, bin: $('optBin').checked };
+      $('diag').classList.add('hidden');
       afficher(choisi || repli, modele);
     } catch (e) {
       $('status').textContent = "❌ Erreur OCR : " + e.message;
@@ -344,6 +353,31 @@
     }
     return r.documentNumber || f.documentNumber || '';
   }
+
+  // ---------- Diagnostic anonymisé (aucune donnée réelle) ----------
+  // Lettres -> X, chiffres -> 9 ; on garde < et la structure (longueurs, sauts de ligne).
+  function masquer(s) {
+    return (s || '').replace(/[A-Za-z]/g, 'X').replace(/[0-9]/g, '9');
+  }
+  function construireDiag() {
+    if (!derniere) return '(lance d\'abord une analyse)';
+    const o = derniere;
+    let out = '=== DIAGNOSTIC ANONYMISE ===\n';
+    out += 'modele: ' + o.modele + ' | rognage: ' + (o.crop ? 'on' : 'off') + ' | binarisation: ' + (o.bin ? 'on' : 'off') + '\n\n';
+    o.tentatives.forEach(t => {
+      out += '--- orientation ' + t.angle + 'deg | format=' + (t.r ? t.r.format : '(aucun)') + ' | valide=' + (t.r ? t.r.valid : false) + ' ---\n';
+      out += 'lignes MRZ retenues:\n' + (t.lignes.length ? t.lignes.map(masquer).join('\n') : '(aucune)') + '\n';
+      out += 'OCR brut:\n' + masquer(t.texte) + '\n\n';
+    });
+    return out;
+  }
+  $('btnDiag').onclick = () => {
+    const txt = construireDiag();
+    const pre = $('diag');
+    pre.textContent = txt;
+    pre.classList.remove('hidden');
+    if (navigator.clipboard) navigator.clipboard.writeText(txt).catch(() => {});
+  };
 
   function afficher(res, modele) {
     const { texte, lignes, r, angle } = res;

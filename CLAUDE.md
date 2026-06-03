@@ -58,6 +58,17 @@ Sheets via `onEdit` (+ horodatage auto et mise en majuscules des colonnes B–D)
 - `verificationClotureNocturne` — doit être branché sur un trigger temporel (nuit).
 - `onEdit` / `onOpen` — triggers simples, automatiques.
 
+## prototype-ocr/ — banc d'essai OCR MRZ (hors app)
+
+Prototype **isolé** pour lire la bande MRZ des pièces d'identité françaises
+(passeport TD3, nouvelle CNI / titre de séjour TD1, ancienne CNI au format français
+non-ICAO). 100 % navigateur (RGPD) : capture caméra OU import photo → OCR
+**Tesseract.js** → parsing/validation via la librairie **`mrz`** (check digits) →
+mapping Nom / Prénom / N° pièce. Exclu du `clasp push` via `.claspignore` ;
+versionné dans Git uniquement. But : valider la fiabilité OCR avant intégration
+dans `Index.html`. Pistes d'amélioration : traineddata MRZ/OCR-B, recadrage auto
+via `mrz-detection`.
+
 ## Synchronisation (3 emplacements)
 
 Le projet vit à 3 endroits **maintenus identiques** :

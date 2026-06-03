@@ -1,0 +1,4 @@
+# Fichiers poussés vers Apps Script = tout SAUF ce qui est listé ici.
+# Le prototype OCR vit dans le repo Git mais ne doit JAMAIS partir sur Apps Script.
+prototype-ocr/**
+**/*.md

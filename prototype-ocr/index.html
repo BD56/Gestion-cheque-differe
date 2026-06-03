@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Prototype OCR MRZ — Pièces d'identité françaises</title>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, sans-serif; background:#f4f7f6; margin:0; padding:16px; color:#3c4043; }
+    .wrap { max-width:760px; margin:0 auto; }
+    h1 { font-size:20px; }
+    .card { background:#fff; border-radius:12px; padding:16px; margin-bottom:16px; box-shadow:0 2px 8px rgba(0,0,0,.08); }
+    .tabs { display:flex; gap:8px; margin-bottom:12px; }
+    .tab { flex:1; padding:10px; border:2px solid #ccc; border-radius:8px; background:#fff; cursor:pointer; font-weight:bold; font-size:14px; }
+    .tab.active { border-color:#1a73e8; color:#1a73e8; }
+    button.action { width:100%; padding:14px; font-size:16px; font-weight:bold; color:#fff; background:#1a73e8; border:none; border-radius:8px; cursor:pointer; }
+    button.action:disabled { background:#9aa0a6; cursor:not-allowed; }
+    video, #preview { width:100%; border-radius:8px; background:#000; display:block; margin-bottom:10px; }
+    #preview { background:#eee; }
+    input[type=file] { width:100%; font-size:15px; }
+    label.opt { display:flex; align-items:center; gap:8px; font-size:14px; margin:10px 0; }
+    .status { font-size:14px; color:#5f6368; margin-top:10px; min-height:20px; }
+    .progress { height:6px; background:#e0e0e0; border-radius:3px; overflow:hidden; margin-top:8px; }
+    .progress > div { height:100%; width:0; background:#1a73e8; transition:width .2s; }
+    pre { background:#f1f3f4; padding:10px; border-radius:8px; overflow-x:auto; font-size:13px; white-space:pre-wrap; word-break:break-all; }
+    table { width:100%; border-collapse:collapse; font-size:14px; }
+    td, th { border:1px solid #e0e0e0; padding:8px; text-align:left; }
+    th { background:#f1f3f4; width:42%; }
+    .badge { display:inline-block; padding:4px 10px; border-radius:12px; font-weight:bold; font-size:13px; }
+    .ok { background:#d4edda; color:#155724; }
+    .ko { background:#f8d7da; color:#721c24; }
+    .map { background:#e8f0fe; border-radius:8px; padding:12px; margin-top:12px; }
+    .map div { margin:4px 0; font-size:15px; }
+    .hidden { display:none; }
+    .note { font-size:13px; color:#856404; background:#fff3cd; border:1px solid #ffeeba; border-radius:8px; padding:10px; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🪪 Prototype OCR — bande MRZ</h1>
+  <p style="font-size:14px; color:#5f6368;">Passeport · nouvelle CNI · ancienne CNI · titre de séjour. Tout se passe <b>dans le navigateur</b> (aucune image envoyée ailleurs).</p>
+
+  <div class="card">
+    <div class="tabs">
+      <button class="tab active" id="tabCam">📷 Caméra</button>
+      <button class="tab" id="tabFile">🖼️ Importer / Photo</button>
+    </div>
+
+    <!-- Mode caméra -->
+    <div id="paneCam">
+      <video id="video" playsinline autoplay muted></video>
+      <button class="action" id="btnCapture">📸 Capturer</button>
+      <div id="camErr" class="note hidden" style="margin-top:10px;"></div>
+    </div>
+
+    <!-- Mode fichier -->
+    <div id="paneFile" class="hidden">
+      <input type="file" id="file" accept="image/*" capture="environment">
+    </div>
+
+    <label class="opt"><input type="checkbox" id="optCrop" checked> Rogner le bas de l'image (zone MRZ) — désactive si la MRZ n'est pas captée</label>
+
+    <canvas id="canvas" class="hidden"></canvas>
+    <img id="preview" class="hidden" alt="aperçu">
+
+    <button class="action" id="btnAnalyse" disabled>🔍 Analyser la MRZ</button>
+    <div class="progress hidden" id="progWrap"><div id="progBar"></div></div>
+    <div class="status" id="status"></div>
+  </div>
+
+  <div class="card hidden" id="resCard">
+    <h2 style="font-size:16px;">Résultat</h2>
+    <div id="validity"></div>
+
+    <div class="map" id="mapBox">
+      <b>➡️ Pré-remplissage du formulaire</b>
+      <div>Nom : <b id="mNom">—</b></div>
+      <div>Prénom : <b id="mPrenom">—</b></div>
+      <div>N° de pièce : <b id="mPiece">—</b></div>
+    </div>
+
+    <h3 style="font-size:14px; margin-top:16px;">Champs extraits</h3>
+    <table id="fieldsTable"><tbody></tbody></table>
+
+    <h3 style="font-size:14px; margin-top:16px;">Lignes MRZ retenues</h3>
+    <pre id="mrzLines">—</pre>
+
+    <h3 style="font-size:14px;">Texte OCR brut</h3>
+    <pre id="rawText">—</pre>
+  </div>
+</div>
+
+<!-- Tesseract.js (OCR, global window.Tesseract) -->
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+<script type="module">
+  // Librairie de parsing MRZ (gère TD1 / TD3 / ancienne CNI française), en module ESM
+  import { parse } from 'https://esm.sh/mrz@3';
+
+  const $ = (id) => document.getElementById(id);
+  let currentImage = null; // ImageBitmap / HTMLImageElement source à analyser
+  let stream = null;
+
+  // ---------- Bascule des onglets ----------
+  $('tabCam').onclick  = () => switchMode('cam');
+  $('tabFile').onclick = () => switchMode('file');
+
+  function switchMode(mode) {
+    const cam = mode === 'cam';
+    $('tabCam').classList.toggle('active', cam);
+    $('tabFile').classList.toggle('active', !cam);
+    $('paneCam').classList.toggle('hidden', !cam);
+    $('paneFile').classList.toggle('hidden', cam);
+    if (cam) startCamera(); else stopCamera();
+  }
+
+  // ---------- Caméra live (getUserMedia) ----------
+  async function startCamera() {
+    $('camErr').classList.add('hidden');
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' } }, audio: false
+      });
+      $('video').srcObject = stream;
+    } catch (e) {
+      // Cas fréquent : iframe sandboxé (Apps Script) ou contexte non sécurisé (file://)
+      $('camErr').textContent = "⚠️ Caméra indisponible (" + e.name + "). "
+        + "Causes possibles : page ouverte en file:// (il faut https/localhost), "
+        + "permission refusée, ou iframe sans autorisation caméra. → Utilise l'onglet « Importer / Photo ».";
+      $('camErr').classList.remove('hidden');
+    }
+  }
+  function stopCamera() {
+    if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+  }
+
+  $('btnCapture').onclick = async () => {
+    const v = $('video');
+    if (!v.videoWidth) return;
+    const c = document.createElement('canvas');
+    c.width = v.videoWidth; c.height = v.videoHeight;
+    c.getContext('2d').drawImage(v, 0, 0);
+    setSource(c);
+  };
+
+  // ---------- Import / photo ----------
+  $('file').onchange = (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const img = new Image();
+    img.onload = () => setSource(img);
+    img.src = URL.createObjectURL(f);
+  };
+
+  // ---------- Source commune ----------
+  function setSource(imgOrCanvas) {
+    currentImage = imgOrCanvas;
+    const url = imgOrCanvas.tagName === 'CANVAS' ? imgOrCanvas.toDataURL() : imgOrCanvas.src;
+    $('preview').src = url;
+    $('preview').classList.remove('hidden');
+    $('btnAnalyse').disabled = false;
+    $('status').textContent = "Image prête. Clique sur « Analyser ».";
+  }
+
+  // ---------- Préparation de l'image pour l'OCR ----------
+  function buildCanvas() {
+    const src = currentImage;
+    const w = src.videoWidth || src.naturalWidth || src.width;
+    const h = src.videoHeight || src.naturalHeight || src.height;
+
+    // Rognage optionnel du bas (la MRZ est en bas du document)
+    const crop = $('optCrop').checked;
+    const sy = crop ? Math.floor(h * 0.62) : 0;
+    const sh = crop ? h - sy : h;
+
+    // Upscale pour aider l'OCR (cible ~1400px de large)
+    const scale = Math.min(3, Math.max(1, 1400 / w));
+    const c = $('canvas');
+    c.width = Math.round(w * scale);
+    c.height = Math.round(sh * scale);
+    const ctx = c.getContext('2d');
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(src, 0, sy, w, sh, 0, 0, c.width, c.height);
+
+    // Passage en niveaux de gris + binarisation simple (seuil) pour contraster la MRZ
+    const img = ctx.getImageData(0, 0, c.width, c.height);
+    const d = img.data;
+    for (let i = 0; i < d.length; i += 4) {
+      const g = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
+      const v = g > 130 ? 255 : 0;
+      d[i] = d[i+1] = d[i+2] = v;
+    }
+    ctx.putImageData(img, 0, 0);
+    return c;
+  }
+
+  // ---------- Lancement OCR + parsing ----------
+  $('btnAnalyse').onclick = async () => {
+    if (!currentImage) return;
+    $('btnAnalyse').disabled = true;
+    $('resCard').classList.add('hidden');
+    $('progWrap').classList.remove('hidden');
+    $('status').textContent = "Chargement du moteur OCR…";
+
+    try {
+      const canvas = buildCanvas();
+      const worker = await Tesseract.createWorker('eng', 1, {
+        logger: m => {
+          if (m.status === 'recognizing text') {
+            $('progBar').style.width = Math.round(m.progress * 100) + '%';
+            $('status').textContent = "Lecture OCR… " + Math.round(m.progress * 100) + '%';
+          } else {
+            $('status').textContent = m.status + '…';
+          }
+        }
+      });
+      // Restreindre au jeu de caractères MRZ + traiter comme un bloc de texte
+      await worker.setParameters({
+        tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<',
+        tessedit_pageseg_mode: '6'
+      });
+      const { data } = await worker.recognize(canvas);
+      await worker.terminate();
+
+      $('rawText').textContent = data.text || '(vide)';
+      analyser(data.text);
+    } catch (e) {
+      $('status').textContent = "❌ Erreur OCR : " + e.message;
+    } finally {
+      $('progWrap').classList.add('hidden');
+      $('btnAnalyse').disabled = false;
+    }
+  };
+
+  // ---------- Nettoyage + extraction des lignes MRZ ----------
+  function extraireLignes(texte) {
+    return texte.toUpperCase().split('\n')
+      .map(l => l.replace(/ /g, '<').replace(/[^A-Z0-9<]/g, ''))
+      .filter(l => l.length >= 28);
+  }
+
+  // Normalise une ligne à une longueur cible (pad avec < ou tronque)
+  function ajuster(ligne, len) {
+    if (ligne.length === len) return ligne;
+    if (ligne.length > len) return ligne.slice(0, len);
+    return ligne + '<'.repeat(len - ligne.length);
+  }
+
+  // Essaie les combinaisons de format MRZ et renvoie le 1er parse réussi/valide
+  function tenterParse(lignes) {
+    const n = lignes.length;
+    const dernieres = (k) => lignes.slice(Math.max(0, n - k));
+    const essais = [];
+
+    if (n >= 3) { // TD1 : nouvelle CNI / titre de séjour (3 × 30)
+      essais.push(dernieres(3).map(l => ajuster(l, 30)));
+    }
+    if (n >= 2) {
+      essais.push(dernieres(2).map(l => ajuster(l, 44))); // TD3 : passeport (2 × 44)
+      essais.push(dernieres(2).map(l => ajuster(l, 36))); // ancienne CNI FR (2 × 36)
+    }
+
+    let dernierResultat = null;
+    for (const lignesEssai of essais) {
+      try {
+        const r = parse(lignesEssai);
+        if (r.valid) return r;        // parfait : check digits OK
+        dernierResultat = dernierResultat || r; // garde le 1er à défaut
+      } catch (_) { /* format non reconnu pour cette combinaison */ }
+    }
+    return dernierResultat;
+  }
+
+  function analyser(texte) {
+    const lignes = extraireLignes(texte);
+    $('mrzLines').textContent = lignes.length ? lignes.join('\n') : '(aucune ligne de type MRZ détectée)';
+
+    const r = lignes.length ? tenterParse(lignes) : null;
+    $('resCard').classList.remove('hidden');
+
+    if (!r) {
+      $('validity').innerHTML = '<span class="badge ko">❌ Aucune MRZ exploitable</span> '
+        + '<span style="font-size:13px;color:#5f6368;">Vérifie le cadrage / la netteté, ou décoche le rognage.</span>';
+      $('fieldsTable').querySelector('tbody').innerHTML = '';
+      setMap('—', '—', '—');
+      return;
+    }
+
+    // Badge de validité (basé sur les check digits)
+    $('validity').innerHTML = r.valid
+      ? '<span class="badge ok">✅ MRZ valide (check digits OK) — ' + r.format + '</span>'
+      : '<span class="badge ko">⚠️ Lecture incertaine (check digits KO) — ' + r.format + '</span>';
+
+    // Tableau des champs
+    const f = r.fields;
+    const labels = {
+      documentCode:'Type', issuingState:'État émetteur', lastName:'Nom', firstName:'Prénom(s)',
+      documentNumber:'N° document', nationality:'Nationalité', birthDate:'Naissance (AAMMJJ)',
+      sex:'Sexe', expirationDate:'Expiration (AAMMJJ)', personalNumber:'N° personnel'
+    };
+    const tb = $('fieldsTable').querySelector('tbody');
+    tb.innerHTML = '';
+    for (const [k, lbl] of Object.entries(labels)) {
+      if (f[k] != null && f[k] !== '') {
+        tb.insertAdjacentHTML('beforeend', `<tr><th>${lbl}</th><td>${f[k]}</td></tr>`);
+      }
+    }
+
+    setMap(f.lastName || '—', f.firstName || '—', f.documentNumber || '—');
+  }
+
+  function setMap(nom, prenom, piece) {
+    $('mNom').textContent = nom;
+    $('mPrenom').textContent = prenom;
+    $('mPiece').textContent = piece;
+  }
+
+  // Démarrage en mode caméra
+  switchMode('cam');
+</script>
+</body>
+</html>

@@ -173,69 +173,6 @@ function forcerSaisie(nom, prenom, piece, montant, notes, messageErreur, flagIde
   }
 }
 
-// =================================================================
-// --- BACKUP AUTOMATIQUE ---
-// =================================================================
-
-function backupQuotidien() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var feuille = ss.getSheetByName("Saisies");
-  if (!feuille) return;
-  
-  var donnees = feuille.getDataRange().getValues();
-  var dateAujourdhui = Utilities.formatDate(new Date(), "Europe/Paris", "yyyy-MM-dd");
-  var nomFichier = "Backup_Saisies_" + dateAujourdhui + ".csv";
-  
-  // Créer le CSV
-  var csv = donnees.map(row => row.join(",")).join("\n");
-  
-  // Sauvegarder dans Drive
-  try {
-    var dossierBackup = DriveApp.getFolderById("1-NkbqbClefnfwqam0upKKUXV2UYFc-o9");
-    if (dossierBackup) {
-      dossierBackup.createFile(nomFichier, csv, "text/csv");
-    }
-  } catch (e) {
-    // Si le dossier n'existe pas ou erreur, on ignore (backup Google Sheet reste)
-  }
-  
-  // Sauvegarder aussi dans un second Google Sheet (redondance)
-  try {
-    var ssBackup = SpreadsheetApp.openById("1pxUEFKc2MMW61p5NW1J0mK5R3EVo_CwkL1jXH8RsNpY");
-    if (ssBackup) {
-      var feuilleBackup = ssBackup.getSheetByName("Saisies") || ssBackup.insertSheet("Saisies");
-      feuilleBackup.clear();
-      feuilleBackup.getRange(1, 1, donnees.length, donnees[0].length).setValues(donnees);
-    }
-  } catch (e) {
-    // Si le Google Sheet backup n'existe pas, on ignore
-  }
-}
-
-// Créer un trigger pour le backup quotidien
-function creerTriggerBackup() {
-  // Supprimer les triggers existants pour éviter les doublons
-  var triggers = ScriptApp.getProjectTriggers();
-  for (var i = 0; i < triggers.length; i++) {
-    if (triggers[i].getHandlerFunction() === "backupQuotidien") {
-      ScriptApp.deleteTrigger(triggers[i]);
-    }
-  }
-  
-  // Créer un nouveau trigger à 20h tous les jours
-  ScriptApp.newTrigger('backupQuotidien')
-    .timeBased()
-    .everyDays(1)
-    .atHour(20)
-    .create();
-}
-
-// Fonction pour créer manuellement un backup
-function backupManuel() {
-  backupQuotidien();
-  return "✅ Backup manuel effectué !";
-}
-
 // --- FONCTIONS SECONDAIRES ---
 function getInfosPanneau() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();

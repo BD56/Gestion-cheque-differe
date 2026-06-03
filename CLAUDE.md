@@ -46,8 +46,6 @@ Sheets via `onEdit` (+ horodatage auto et mise en majuscules des colonnes B–D)
 - `traiterSaisie` / `forcerSaisie` — saisie depuis la web app (protégées par
   `LockService` pour l'atomicité).
 - `onEdit` — détection + formatage sur édition manuelle du tableur.
-- `backupQuotidien` — trigger quotidien (20h) : CSV dans Drive + copie dans un 2ᵉ
-  Google Sheet (redondance). Voir « points d'attention » plus bas.
 - `getDatesOperation` / `setDatesOperation` — dates d'offre dans `PropertiesService`
   (DocumentProperties).
 - `verificationClotureNocturne` — robot de nuit : archive et verrouille
@@ -57,7 +55,6 @@ Sheets via `onEdit` (+ horodatage auto et mise en majuscules des colonnes B–D)
 
 ## Triggers à configurer dans le projet Apps Script
 
-- `creerTriggerBackup()` — à exécuter une fois pour planifier `backupQuotidien` à 20h.
 - `verificationClotureNocturne` — doit être branché sur un trigger temporel (nuit).
 - `onEdit` / `onOpen` — triggers simples, automatiques.
 
@@ -73,14 +70,18 @@ Workflow : modifier en local → `clasp push` (vers Apps Script) + `git push` (v
 GitHub). Si modifié en ligne, faire `clasp pull` avant de retravailler en local.
 `.clasp.json` est volontairement ignoré par git (config locale).
 
-## Points d'attention connus
+## Sécurité des données
 
-- **IDs en dur** dans `backupQuotidien` (dossier Drive + Sheet de backup) :
-  fragiles si ces ressources changent. Candidats à externaliser dans les
-  Propriétés du script.
-- **Backup CSV** via `row.join(",")` : pas d'échappement, donc une note contenant
-  une virgule ou un retour à la ligne décale le CSV.
+Pas de système de backup applicatif : on s'appuie sur l'**historique des versions
+natif de Google Sheets** (Fichier → Historique des versions) pour restaurer toute
+suppression/modif accidentelle, et sur les feuilles `Archives_<date>` pour les
+offres clôturées.
 
-> Note : un système de logs d'audit (feuille « Logs » + `ajouterLog`) a existé puis
-> a été retiré — redondant avec « Saisies » qui est déjà horodaté et marque les
-> ajouts forcés. Ne pas le réintroduire sans raison nouvelle.
+## Historique des choix (ne pas réintroduire sans raison nouvelle)
+
+- **Logs d'audit** (feuille « Logs » + `ajouterLog`) — retiré : redondant avec
+  « Saisies », déjà horodaté et marquant les ajouts forcés.
+- **Backup automatique** (`backupQuotidien`, `creerTriggerBackup`, `backupManuel`,
+  CSV Drive + 2ᵉ Sheet) — retiré : redondant avec l'historique des versions natif ;
+  reposait sur des IDs en dur et un trigger à maintenir, et ne protégeait pas
+  réellement contre la perte totale du classeur (backups dans le même compte).

@@ -34,6 +34,23 @@ puis ouvre `http://localhost:8000` et utilise l'onglet **« Caméra »**.
 - Si la MRZ n'est pas captée, **décocher « Rogner le bas »** et recadrer.
 - Le badge ✅ / ⚠️ indique si les *check digits* valident la lecture.
 
+## Test sur mobile/tablette (web app Apps Script)
+
+Le prototype est aussi déployé en **web app Apps Script séparée** pour tester sur un
+vrai appareil (URL HTTPS publique). Projet de test situé **hors du repo** :
+`/Users/bryan/Desktop/Projets/OCR-MRZ-Prototype/` (Code.gs = doGet, Page.html =
+copie de `index.html` avec `<base target="_top">`).
+
+- URL : `https://script.google.com/macros/s/AKfycbwj7Q90PEiIWqL8wW3zANoLfI_q2TwbBBK9CMPj3MPp7X5mohtK1ZjFquD6xVpCW_fE/exec`
+- Accès : `ANYONE_ANONYMOUS` (pas de login).
+- ⚠️ Dans l'iframe sandboxé d'Apps Script, le **scan caméra live (`getUserMedia`)
+  est bloqué** par la Permissions Policy → seul l'onglet **« Importer / Photo »**
+  fonctionne. C'est aussi la contrainte de l'app de prod (même iframe), donc la
+  capture en production sera la photo.
+- Mettre à jour : éditer la source canonique `prototype-ocr/index.html`, recopier
+  vers `OCR-MRZ-Prototype/Page.html` (en gardant `<base target="_top">`), puis
+  `clasp push` + `clasp redeploy <deploymentId>` depuis ce dossier.
+
 ## Limites connues (prototype)
 
 - Précision OCR moyenne avec le modèle `eng` par défaut. Levier d'amélioration

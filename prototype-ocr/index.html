@@ -181,17 +181,31 @@
     return thr;
   }
 
-  function buildCanvas() {
+  // Tourne l'image source de `angle` degrés et renvoie un canvas plein
+  function canvasRotation(angle) {
     const src = currentImage;
-    const w = src.videoWidth || src.naturalWidth || src.width;
-    const h = src.videoHeight || src.naturalHeight || src.height;
+    const sw = src.videoWidth || src.naturalWidth || src.width;
+    const sh = src.videoHeight || src.naturalHeight || src.height;
+    const rot = document.createElement('canvas');
+    if (angle === 90 || angle === 270) { rot.width = sh; rot.height = sw; }
+    else { rot.width = sw; rot.height = sh; }
+    const ctx = rot.getContext('2d');
+    ctx.translate(rot.width / 2, rot.height / 2);
+    ctx.rotate(angle * Math.PI / 180);
+    ctx.drawImage(src, -sw / 2, -sh / 2);
+    return rot;
+  }
 
-    // Rognage optionnel du bas (la MRZ est en bas du document)
+  function buildCanvas(angle) {
+    const rot = canvasRotation(angle || 0); // 1) orientation
+    const w = rot.width, h = rot.height;
+
+    // 2) Rognage optionnel du bas (après rotation, la MRZ est en bas)
     const crop = $('optCrop').checked;
     const sy = crop ? Math.floor(h * 0.62) : 0;
     const sh = crop ? h - sy : h;
 
-    // Upscale pour aider l'OCR (cible ~1800px de large)
+    // 3) Upscale pour aider l'OCR (cible ~1800px de large)
     const scale = Math.min(4, Math.max(1, 1800 / w));
     const c = $('canvas');
     c.width = Math.round(w * scale);
@@ -199,7 +213,7 @@
     const ctx = c.getContext('2d');
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
-    ctx.drawImage(src, 0, sy, w, sh, 0, 0, c.width, c.height);
+    ctx.drawImage(rot, 0, sy, w, sh, 0, 0, c.width, c.height);
 
     // Niveaux de gris (le modèle LSTM s'en sort mieux sur du gris propre que sur
     // une binarisation brutale). Binarisation Otsu seulement si l'utilisateur l'active.
@@ -239,14 +253,8 @@
     $('status').textContent = "Chargement du moteur OCR…";
 
     try {
-      const canvas = buildCanvas();
       const logger = m => {
-        if (m.status === 'recognizing text') {
-          $('progBar').style.width = Math.round(m.progress * 100) + '%';
-          $('status').textContent = "Lecture OCR… " + Math.round(m.progress * 100) + '%';
-        } else {
-          $('status').textContent = m.status + '…';
-        }
+        if (m.status === 'recognizing text') $('progBar').style.width = Math.round(m.progress * 100) + '%';
       };
       $('status').textContent = "Chargement du modèle MRZ (~11 Mo au 1er lancement, mis en cache ensuite)…";
       const { worker, modele } = await creerWorker(logger);
@@ -255,11 +263,25 @@
         tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<',
         tessedit_pageseg_mode: '6'
       });
-      const { data } = await worker.recognize(canvas);
+
+      // ROTATION AUTO : on essaie plusieurs orientations et on garde la première
+      // dont les check digits valident. Sinon on garde le meilleur résultat exploitable.
+      const orientations = [0, 180, 90, 270];
+      let choisi = null, repli = null;
+      for (let k = 0; k < orientations.length; k++) {
+        const angle = orientations[k];
+        $('status').textContent = "Lecture OCR — orientation " + angle + "° (" + (k + 1) + "/4)…";
+        $('progBar').style.width = '0%';
+        const { data } = await worker.recognize(buildCanvas(angle));
+        const lignes = extraireLignes(data.text);
+        const r = lignes.length ? tenterParse(lignes) : null;
+        const candidat = { texte: data.text, lignes, r, angle };
+        if (r && r.valid) { choisi = candidat; break; } // succès : on s'arrête
+        if (!repli || (r && !repli.r)) repli = candidat; // garde le meilleur à défaut
+      }
       await worker.terminate();
 
-      $('rawText').textContent = (data.text || '(vide)') + '\n\n[modèle OCR utilisé : ' + modele + ']';
-      analyser(data.text);
+      afficher(choisi || repli, modele);
     } catch (e) {
       $('status').textContent = "❌ Erreur OCR : " + e.message;
     } finally {
@@ -307,11 +329,10 @@
     return dernierResultat;
   }
 
-  function analyser(texte) {
-    const lignes = extraireLignes(texte);
+  function afficher(res, modele) {
+    const { texte, lignes, r, angle } = res;
+    $('rawText').textContent = (texte || '(vide)') + '\n\n[modèle : ' + modele + ' · orientation retenue : ' + angle + '°]';
     $('mrzLines').textContent = lignes.length ? lignes.join('\n') : '(aucune ligne de type MRZ détectée)';
-
-    const r = lignes.length ? tenterParse(lignes) : null;
     $('resCard').classList.remove('hidden');
 
     if (!r) {
@@ -322,10 +343,11 @@
       return;
     }
 
-    // Badge de validité (basé sur les check digits)
+    // Badge de validité (basé sur les check digits) + orientation utilisée
+    const ori = ' · ' + angle + '°';
     $('validity').innerHTML = r.valid
-      ? '<span class="badge ok">✅ MRZ valide (check digits OK) — ' + r.format + '</span>'
-      : '<span class="badge ko">⚠️ Lecture incertaine (check digits KO) — ' + r.format + '</span>';
+      ? '<span class="badge ok">✅ MRZ valide (check digits OK) — ' + r.format + ori + '</span>'
+      : '<span class="badge ko">⚠️ Lecture incertaine (check digits KO) — ' + r.format + ori + '</span>';
 
     // Tableau des champs
     const f = r.fields;

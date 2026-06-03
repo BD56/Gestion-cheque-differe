@@ -118,15 +118,6 @@ function traiterSaisie(nom, prenom, piece, montant, notes) {
       }
 
       var notePourSheet = "⚠️ Ajout forcé (Cas " + pireCas + ")";
-      
-      // Ajouter un log pour traçabilité
-      ajouterLog("DOUBLON_DETECTE", {
-        nom: nom,
-        prenom: prenom,
-        piece: piece,
-        pireCas: pireCas,
-        details: detailsDoublons
-      });
 
       if (isBloque) {
         return { status: "BLOQUE", titre: msgTitre, message: msgAlerte, details: detailsDoublons };
@@ -135,16 +126,6 @@ function traiterSaisie(nom, prenom, piece, montant, notes) {
       }
     } else {
       feuille.appendRow([new Date(), nom, prenom, piece, montant, notes, ""]);
-      
-      // Ajouter un log pour traçabilité
-      ajouterLog("SAISIE", {
-        nom: nom,
-        prenom: prenom,
-        piece: piece,
-        montant: montant,
-        notes: notes
-      });
-      
       return { status: "SUCCES", message: "✅ Saisie enregistrée !" };
     }
   } finally {
@@ -185,43 +166,11 @@ function forcerSaisie(nom, prenom, piece, montant, notes, messageErreur, flagIde
     feuille.getRange(indexLigne, 6).setBackground("#f4cccc");
     if (flagIdentite) feuille.getRange(indexLigne, 2, 1, 2).setBackground("#f4cccc");
     if (flagPiece) feuille.getRange(indexLigne, 4).setBackground("#f4cccc");
-    
-    // Ajouter un log pour traçabilité
-    ajouterLog("SAISIE_FORCEE", {
-      nom: nom,
-      prenom: prenom,
-      piece: piece,
-      montant: montant,
-      notes: noteFinale,
-      messageErreur: messageErreur,
-      flags: { identite: flagIdentite, piece: flagPiece }
-    });
-    
+
     return { status: "SUCCES", message: "⚠️ Saisie forcée et enregistrée en rouge." };
   } finally {
     lock.releaseLock(); // Libérer le verrou dans tous les cas
   }
-}
-
-// =================================================================
-// --- FONCTIONS DE LOG POUR TRACABILITÉ ---
-// =================================================================
-
-function ajouterLog(action, details) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var feuilleLogs = ss.getSheetByName("Logs") || ss.insertSheet("Logs");
-  
-  // Si la feuille est nouvelle, ajouter les en-têtes
-  if (feuilleLogs.getLastRow() === 0) {
-    feuilleLogs.appendRow(["Date", "Utilisateur", "Action", "Détails"]);
-  }
-  
-  feuilleLogs.appendRow([
-    new Date(),
-    Session.getActiveUser().getEmail(), // Email du compte Google actuellement connecté
-    action,
-    JSON.stringify(details)
-  ]);
 }
 
 // =================================================================
@@ -248,7 +197,6 @@ function backupQuotidien() {
     }
   } catch (e) {
     // Si le dossier n'existe pas ou erreur, on ignore (backup Google Sheet reste)
-    ajouterLog("ERREUR_BACKUP_DRIVE", { erreur: e.toString() });
   }
   
   // Sauvegarder aussi dans un second Google Sheet (redondance)
@@ -261,14 +209,7 @@ function backupQuotidien() {
     }
   } catch (e) {
     // Si le Google Sheet backup n'existe pas, on ignore
-    ajouterLog("ERREUR_BACKUP_SHEET", { erreur: e.toString() });
   }
-  
-  // Ajouter un log pour traçabilité
-  ajouterLog("BACKUP_QUOTIDIEN", {
-    date: dateAujourdhui,
-    nombreLignes: donnees.length - 1 // -1 pour l'en-tête
-  });
 }
 
 // Créer un trigger pour le backup quotidien
@@ -339,13 +280,7 @@ function archiverOffreWebApp() {
   
   // 🧹 NOUVEAU : On efface les dates en mémoire pour verrouiller les tablettes
   setDatesOperation("", "");
-  
-  // Ajouter un log pour traçabilité
-  ajouterLog("ARCHIVAGE_OFFRE", {
-    dateFin: dateFin,
-    nombreLignesArchivees: derniereLigne - 1
-  });
-  
+
   return "✅ L'offre a été clôturée et archivée avec succès !";
 }
 
@@ -491,16 +426,7 @@ function onEdit(e) {
     var alerteTexte = "⚠️ Ajout forcé (Cas " + pireCas + ")";
     var noteFinale = (notePropre === "") ? alerteTexte : notePropre + "\n" + alerteTexte;
     if (notes !== noteFinale) rangeNotes.setValue(noteFinale);
-    
-    // Ajouter un log pour traçabilité
-    ajouterLog("DOUBLON_DETECTE_MANUEL", {
-      ligne: ligneEdit,
-      nom: rowData[1],
-      prenom: rowData[2],
-      piece: rowData[3],
-      pireCas: pireCas
-    });
-    
+
   } else {
     // 🟢 AUCUN DOUBLON (ou vous venez de le corriger)
     rangeLigne.setBackground(null);
@@ -555,12 +481,6 @@ function setDatesOperation(dateDebut, dateFin) {
   var memoire = PropertiesService.getDocumentProperties();
   memoire.setProperty('DATE_DEBUT', dateDebut);
   memoire.setProperty('DATE_FIN', dateFin);
-  
-  // Ajouter un log pour traçabilité
-  ajouterLog("CHANGEMENT_DATES", {
-    dateDebut: dateDebut,
-    dateFin: dateFin
-  });
-  
+
   return "Dates enregistrées avec succès !";
 }

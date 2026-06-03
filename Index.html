@@ -88,6 +88,7 @@
       <div class="header-app">
         <h2>📝 Saisie Client</h2>
         <div class="header-buttons">
+          <button class="btn-settings" id="btnScan" title="Scanner la pièce">📷</button>
           <button class="btn-settings" onclick="ouvrirAide()" title="Aide et consignes">❓</button>
           <button class="btn-settings" onclick="ouvrirPanneau()" title="Panneau de contrôle">⚙️</button>
         </div>
@@ -97,11 +98,8 @@
       <div id="sousTitreOperation" style="text-align: center; color: #555; font-size: 16px; font-weight: bold; margin-top: -10px; margin-bottom: 20px;">⏳ Chargement des dates...</div>
       
       <div id="formulaireSaisie">
-        <div class="input-group">
-          <button type="button" class="btn-submit" id="btnScan" style="background:#34a853; margin-top:0;">📷 Scanner la pièce</button>
-          <input type="file" id="ocrFile" accept="image/*" capture="environment" style="display:none;">
-          <div id="ocrStatus" style="margin-top:8px; font-size:13px; text-align:center; min-height:18px; color:#5f6368;"></div>
-        </div>
+        <input type="file" id="ocrFile" accept="image/*" capture="environment" style="display:none;">
+        <div id="ocrStatus" style="font-size:13px; text-align:center; min-height:18px; color:#5f6368; margin-bottom:10px;"></div>
         <div class="input-group">
           <label>Nom *</label>
           <input type="text" id="nom" placeholder="Ex: DUPONT" autocomplete="off">

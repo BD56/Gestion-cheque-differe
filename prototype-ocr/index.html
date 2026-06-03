@@ -63,7 +63,6 @@
     <canvas id="canvas" class="hidden"></canvas>
     <img id="preview" class="hidden" alt="aperçu">
 
-    <button class="action" id="btnRotate" disabled style="background:#5f6368; margin-bottom:8px;">🔄 Pivoter l'image 90°</button>
     <button class="action" id="btnAnalyse" disabled>🔍 Analyser la MRZ</button>
     <div class="progress hidden" id="progWrap"><div id="progBar"></div></div>
     <div class="status" id="status"></div>
@@ -165,16 +164,8 @@
     $('preview').src = url;
     $('preview').classList.remove('hidden');
     $('btnAnalyse').disabled = false;
-    $('btnRotate').disabled = false;
     $('status').textContent = "Image prête. Clique sur « Analyser ».";
   }
-
-  // Rotation manuelle : pivote l'image courante de 90° et la rend la nouvelle source
-  $('btnRotate').onclick = () => {
-    if (!currentImage) return;
-    setSource(canvasRotation(90));
-    $('status').textContent = "Image pivotée. Clique sur « Analyser ».";
-  };
 
   // ---------- Préparation de l'image pour l'OCR ----------
   // Seuil automatique d'Otsu (binarisation robuste)
@@ -386,7 +377,7 @@
 
     if (!r) {
       $('validity').innerHTML = '<span class="badge ko">❌ Aucune MRZ exploitable</span> '
-        + '<span style="font-size:13px;color:#5f6368;">Vérifie le cadrage / la netteté, pivote l\'image si besoin, ou décoche le rognage.</span>';
+        + '<span style="font-size:13px;color:#5f6368;">Vérifie le cadrage / la netteté, ou décoche le rognage.</span>';
       $('fieldsTable').querySelector('tbody').innerHTML = '';
       setMap('—', '—', '—');
       return;

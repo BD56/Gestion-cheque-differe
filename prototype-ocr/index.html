@@ -281,9 +281,9 @@
         const angle = orientations[k];
         $('status').textContent = "Lecture OCR — orientation " + angle + "° (" + (k + 1) + "/4)…";
         $('progBar').style.width = '0%';
-        // Pour 90°/270°, on n'utilise pas le rognage du bas (position MRZ moins fiable)
-        const cropOverride = (angle === 90 || angle === 270) ? false : undefined;
-        const { data } = await worker.recognize(buildCanvas(angle, cropOverride));
+        // Le rognage s'applique APRÈS rotation : la MRZ d'une image redressée est
+        // toujours en bas, donc on rogne pour toutes les orientations (zoom = lisibilité).
+        const { data } = await worker.recognize(buildCanvas(angle));
         const lignes = extraireLignes(data.text);
         const r = lignes.length ? tenterParse(lignes) : null;
         const candidat = { texte: data.text, lignes, r, angle };

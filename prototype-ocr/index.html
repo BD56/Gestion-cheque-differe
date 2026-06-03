@@ -334,6 +334,17 @@
     return dernierResultat;
   }
 
+  // Numéro de document complet (indépendant de la version de la lib mrz).
+  // Ancienne CNI : le n° imprimé (12 car.) = issueDate + administrativeCode2 +
+  // documentNumber (= les 12 premiers caractères de la 2e ligne MRZ).
+  function numeroComplet(r) {
+    const f = r.fields;
+    if (r.format === 'FRENCH_NATIONAL_ID') {
+      return (f.issueDate || '') + (f.administrativeCode2 || '') + (f.documentNumber || '');
+    }
+    return r.documentNumber || f.documentNumber || '';
+  }
+
   function afficher(res, modele) {
     const { texte, lignes, r, angle } = res;
     $('rawText').textContent = (texte || '(vide)') + '\n\n[modèle : ' + modele + ' · orientation retenue : ' + angle + '°]';
@@ -358,7 +369,7 @@
     // (r.documentNumber). Pour l'ancienne CNI il est reconstitué sur 12 caractères,
     // alors que fields.documentNumber n'en contient qu'une sous-partie (5 car.).
     const f = r.fields;
-    const numComplet = r.documentNumber || f.documentNumber || '';
+    const numComplet = numeroComplet(r);
     const labels = {
       documentCode:'Type', issuingState:'État émetteur', lastName:'Nom', firstName:'Prénom(s)',
       documentNumber:'N° document (complet)', nationality:'Nationalité', birthDate:'Naissance (AAMMJJ)',

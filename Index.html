@@ -88,6 +88,7 @@
       <div class="header-app">
         <h2>📝 Saisie Client</h2>
         <div class="header-buttons">
+          <button class="btn-settings" id="btnScan" title="Scanner la pièce">📷</button>
           <button class="btn-settings" onclick="ouvrirAide()" title="Aide et consignes">❓</button>
           <button class="btn-settings" onclick="ouvrirPanneau()" title="Panneau de contrôle">⚙️</button>
         </div>
@@ -97,6 +98,8 @@
       <div id="sousTitreOperation" style="text-align: center; color: #555; font-size: 16px; font-weight: bold; margin-top: -10px; margin-bottom: 20px;">⏳ Chargement des dates...</div>
       
       <div id="formulaireSaisie">
+        <input type="file" id="ocrFile" accept="image/*" capture="environment" style="display:none;">
+        <div id="ocrStatus" style="font-size:13px; text-align:center; min-height:18px; color:#5f6368; margin-bottom:10px;"></div>
         <div class="input-group">
           <label>Nom *</label>
           <input type="text" id="nom" placeholder="Ex: DUPONT" autocomplete="off">
@@ -251,6 +254,33 @@
     <div id="zoneImpression"></div>
 
     <script>
+      // === SHIM DE TEST LOCAL (inerte sous Apps Script) ===
+      // Permet d'ouvrir Index.html dans un navigateur hors Google : on simule
+      // google.script.run pour que la page s'initialise et que le formulaire
+      // s'affiche, afin de tester le scan. En production, google.script.run
+      // existe -> ce bloc est ignoré.
+      if (typeof google === 'undefined' || !(google.script && google.script.run)) {
+        var __mock = {
+          getInfosPanneau: { success: true, mode: 'SIGNALER', urlFichier: '#' },
+          getDatesOperation: { debut: '2000-01-01', fin: '2099-12-31' }
+        };
+        function __makeRunner() {
+          var onOk = function(){};
+          var b = {
+            withSuccessHandler: function(fn){ onOk = fn || onOk; return b; },
+            withFailureHandler: function(){ return b; }
+          };
+          return new Proxy(b, {
+            get: function(t, p){
+              if (p in t) return t[p];
+              return function(){ var v = __mock[p]; setTimeout(function(){ onOk(v); }, 30); };
+            }
+          });
+        }
+        window.google = { script: { get run(){ return __makeRunner(); } } };
+        console.warn('[DEV] Mode test local : google.script.run simulé.');
+      }
+
       var memNom = "", memPrenom = "", memPiece = "", memMontant = "", memNotes = "";
       var memMessageErreur = "", memFlags = {};
       var lienFichierSouche = "";
@@ -566,6 +596,100 @@
           this.value = valeur + " €";
         }
       });
+    </script>
+
+    <!-- ===== SCAN MRZ (lecture de la pièce d'identité) ===== -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script type="module">
+      import { parse } from 'https://esm.sh/mrz@3';
+
+      const MRZ_LANGPATH = 'https://raw.githubusercontent.com/DoubangoTelecom/tesseractMRZ/master/tessdata_best';
+      const $id = (i) => document.getElementById(i);
+      const statut = (t) => { $id('ocrStatus').textContent = t; };
+
+      $id('btnScan').addEventListener('click', () => $id('ocrFile').click());
+      $id('ocrFile').addEventListener('change', (e) => {
+        const f = e.target.files[0];
+        if (!f) return;
+        const img = new Image();
+        img.onload = () => lireMRZ(img);
+        img.src = URL.createObjectURL(f);
+        e.target.value = ''; // autorise un nouveau scan du même fichier
+      });
+
+      // Rogne le bas (zone MRZ), agrandit, passe en niveaux de gris
+      function prepCanvas(img) {
+        const w = img.naturalWidth, h = img.naturalHeight;
+        const sy = Math.floor(h * 0.62), sh = h - sy;
+        const scale = Math.min(4, Math.max(1, 1800 / w));
+        const c = document.createElement('canvas');
+        c.width = Math.round(w * scale);
+        c.height = Math.round(sh * scale);
+        const ctx = c.getContext('2d');
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, 0, sy, w, sh, 0, 0, c.width, c.height);
+        const im = ctx.getImageData(0, 0, c.width, c.height), d = im.data;
+        for (let i = 0; i < d.length; i += 4) {
+          const g = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
+          d[i] = d[i+1] = d[i+2] = g;
+        }
+        ctx.putImageData(im, 0, 0);
+        return c;
+      }
+
+      function extraireLignes(t) {
+        return t.toUpperCase().split('\n')
+          .map(l => l.replace(/ /g, '<').replace(/[^A-Z0-9<]/g, ''))
+          .filter(l => l.length >= 28);
+      }
+      function ajuster(l, n) { return l.length === n ? l : (l.length > n ? l.slice(0, n) : l + '<'.repeat(n - l.length)); }
+      function tenterParse(lignes) {
+        const n = lignes.length, der = (k) => lignes.slice(Math.max(0, n - k));
+        const essais = [];
+        if (n >= 3) essais.push(der(3).map(l => ajuster(l, 30)));            // TD1 (nouvelle CNI / titre de séjour)
+        if (n >= 2) { essais.push(der(2).map(l => ajuster(l, 44)));          // TD3 (passeport)
+                      essais.push(der(2).map(l => ajuster(l, 36))); }        // ancienne CNI / TD2
+        let repli = null;
+        for (const e of essais) { try { const r = parse(e); if (r.valid) return r; repli = repli || r; } catch (_) {} }
+        return repli;
+      }
+      function numeroComplet(r) {
+        const f = r.fields;
+        if (r.format === 'FRENCH_NATIONAL_ID') return (f.issueDate || '') + (f.administrativeCode2 || '') + (f.documentNumber || '');
+        return r.documentNumber || f.documentNumber || '';
+      }
+
+      async function lireMRZ(img) {
+        $id('btnScan').disabled = true;
+        statut('⏳ Chargement du lecteur (1er scan : ~11 Mo, mis en cache ensuite)…');
+        try {
+          let worker;
+          try { worker = await Tesseract.createWorker('mrz', 1, { langPath: MRZ_LANGPATH, gzip: false }); }
+          catch (_) { worker = await Tesseract.createWorker('eng', 1); }
+          await worker.setParameters({
+            tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<',
+            tessedit_pageseg_mode: '6'
+          });
+          statut('🔍 Lecture de la pièce…');
+          const { data } = await worker.recognize(prepCanvas(img));
+          await worker.terminate();
+
+          const lignes = extraireLignes(data.text);
+          const r = lignes.length ? tenterParse(lignes) : null;
+          if (r && r.valid) {
+            $id('nom').value = r.fields.lastName || '';
+            $id('prenom').value = r.fields.firstName || '';
+            $id('piece').value = numeroComplet(r);
+            statut('✅ Pièce lue — vérifiez les champs, puis saisissez le montant.');
+          } else {
+            statut('⚠️ Lecture impossible. Reprenez la photo (à plat, nette, MRZ en bas) ou saisissez à la main.');
+          }
+        } catch (e) {
+          statut('❌ Erreur lecture : ' + e.message);
+        } finally {
+          $id('btnScan').disabled = false;
+        }
+      }
     </script>
   </body>
 </html>

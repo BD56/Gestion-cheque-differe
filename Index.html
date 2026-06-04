@@ -153,8 +153,21 @@
         <hr style="border: 0; height: 1px; background: #ddd; margin: 15px 0;">
         
         <div class="texte-aide">
-          
-          <button class="accordion">📝 1. Saisie d'un chèque et Alertes</button>
+
+          <button class="accordion">📷 1. Scanner une pièce d'identité</button>
+          <div class="panel">
+            <ul>
+              <li><strong>Quelle face ?</strong> Le côté qui porte la <strong>bande de symboles &lt;&lt;&lt;</strong> (en bas du document). Sur les <strong>cartes</strong> (CNI, titre de séjour), c'est en général <strong>le dos</strong> ; sur le <strong>passeport</strong>, la <strong>page avec la photo</strong>.</li>
+              <li><strong>Comment faire :</strong> touchez <strong>📷</strong> (en haut), photographiez <strong>cette bande</strong> bien à plat → le <strong>Nom</strong>, le <strong>Prénom</strong> et le <strong>N° de pièce</strong> se remplissent tout seuls.</li>
+              <li><strong>Pièces reconnues :</strong> Passeport, Nouvelle carte d'identité, Ancienne carte d'identité, Titre de séjour. <em>(Ne fonctionne pas avec la Carte Vitale ni le permis de conduire.)</em></li>
+              <li><strong>Pour une bonne lecture :</strong> la bande doit <strong>remplir la largeur</strong>, être <strong>nette</strong>, <strong>bien éclairée</strong>, <strong>sans reflet</strong>, et dans le <strong>sens de lecture</strong>.</li>
+              <li style="background:#fff3cd; border:1px solid #ffeeba; border-radius:6px; padding:8px; list-style:none; margin-left:-20px;">⚠️ <strong>Vérifiez toujours :</strong> relisez le <strong>Nom</strong>, le <strong>Prénom</strong> et le <strong>N° de pièce</strong>, et corrigez si besoin <strong>avant de valider</strong>.</li>
+              <li><strong>Si ça ne marche pas :</strong> reprenez la photo ou <strong>saisissez à la main</strong>. Le scan est une aide, pas une obligation.</li>
+              <li><strong>1ᵉʳ usage :</strong> le tout premier scan prend quelques secondes (chargement du lecteur), ensuite c'est rapide.</li>
+            </ul>
+          </div>
+
+          <button class="accordion">📝 2. Saisie d'un chèque et Alertes</button>
           <div class="panel">
             <ul>
               <li><strong>Comment faire :</strong> Remplissez les informations du formulaire, puis cliquez sur <strong>Valider</strong>.</li>
@@ -164,7 +177,7 @@
             </ul>
           </div>
 
-          <button class="accordion">🚦 2. Les Modes de Sécurité (Bouton ⚙️)</button>
+          <button class="accordion">🚦 3. Les Modes de Sécurité (Bouton ⚙️)</button>
           <div class="panel">
             <p>Dans le panneau de contrôle, vous définissez la rigueur du système :</p>
             <ul>
@@ -173,7 +186,7 @@
             </ul>
           </div>
 
-          <button class="accordion">📅 3. Dates de l'offre et Clôture automatique</button>
+          <button class="accordion">📅 4. Dates de l'offre et Clôture automatique</button>
           <div class="panel">
             <ul>
               <li><strong>Lancer ou modifier :</strong> Cliquez sur ⚙️ et saisissez vos dates. S'il y a une erreur ou une prolongation, modifiez simplement la date de fin ici.</li>
@@ -181,7 +194,7 @@
             </ul>
           </div>
 
-          <button class="accordion">🖨️ 4. Corrections, Impressions et Archives</button>
+          <button class="accordion">🖨️ 5. Corrections, Impressions et Archives</button>
           <div class="panel">
             <ul>
               <li><strong>Corriger une erreur :</strong> Cliquez sur ⚙️ puis sur <strong>Ouvrir Google Sheets</strong>. Trouvez la ligne dans le tableau sur l'ordinateur et corrigez ou supprimez-la directement.</li>
@@ -245,6 +258,8 @@
           L'autorisation d'utiliser cette application est accordée exclusivement à l'<strong>Hypermarché Carrefour Vannes</strong>. Toute reproduction, copie, modification ou déploiement de cet outil vers une autre structure est strictement interdite sans l'accord préalable de l'auteur.</p>
           
           <p><strong>Confidentialité et Données :</strong> Cet outil a été pensé et conçu pour un usage strictement interne, dédié à la prévention des fraudes. Les données saisies (Identités, N° de pièces, Montants) sont stockées et archivées de manière sécurisée à des fins de traçabilité de l'offre, et ne sont en aucun cas prévues pour être cédées ou transmises à des tiers.</p>
+
+          <p><strong>Lecture assistée des pièces (OCR) :</strong> lorsqu'une pièce est scannée, la photographie est analysée <strong>localement, dans le navigateur de la tablette</strong>, uniquement pour lire la zone de lecture automatique (MRZ). <strong>L'image n'est ni enregistrée ni transmise</strong> à aucun serveur ; seules les informations reportées dans le formulaire, après vérification par l'hôtesse, sont conservées.</p>
           
           <p><strong>Responsabilité :</strong> L'auteur fournit uniquement l'infrastructure technique de cette application. La responsabilité quant à l'utilisation conforme de l'outil et au traitement légal des données collectées (respect du RGPD) incombe exclusivement à la direction de l'établissement utilisateur. L'auteur décline toute responsabilité en cas d'usage abusif, détourné ou négligent de ces informations par l'établissement.</p>
         </div>

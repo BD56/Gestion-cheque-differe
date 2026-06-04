@@ -254,33 +254,6 @@
     <div id="zoneImpression"></div>
 
     <script>
-      // === SHIM DE TEST LOCAL (inerte sous Apps Script) ===
-      // Permet d'ouvrir Index.html dans un navigateur hors Google : on simule
-      // google.script.run pour que la page s'initialise et que le formulaire
-      // s'affiche, afin de tester le scan. En production, google.script.run
-      // existe -> ce bloc est ignoré.
-      if (typeof google === 'undefined' || !(google.script && google.script.run)) {
-        var __mock = {
-          getInfosPanneau: { success: true, mode: 'SIGNALER', urlFichier: '#' },
-          getDatesOperation: { debut: '2000-01-01', fin: '2099-12-31' }
-        };
-        function __makeRunner() {
-          var onOk = function(){};
-          var b = {
-            withSuccessHandler: function(fn){ onOk = fn || onOk; return b; },
-            withFailureHandler: function(){ return b; }
-          };
-          return new Proxy(b, {
-            get: function(t, p){
-              if (p in t) return t[p];
-              return function(){ var v = __mock[p]; setTimeout(function(){ onOk(v); }, 30); };
-            }
-          });
-        }
-        window.google = { script: { get run(){ return __makeRunner(); } } };
-        console.warn('[DEV] Mode test local : google.script.run simulé.');
-      }
-
       var memNom = "", memPrenom = "", memPiece = "", memMontant = "", memNotes = "";
       var memMessageErreur = "", memFlags = {};
       var lienFichierSouche = "";

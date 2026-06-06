@@ -88,7 +88,7 @@
       <div class="header-app">
         <h2>📝 Saisie Client</h2>
         <div class="header-buttons">
-          <button class="btn-settings" id="btnScan" title="Scanner la pièce">📷</button>
+          <button class="btn-settings" id="btnScan" title="Scanner la pièce" style="display:none;">📷</button>
           <button class="btn-settings" onclick="ouvrirAide()" title="Aide et consignes">❓</button>
           <button class="btn-settings" onclick="ouvrirPanneau()" title="Panneau de contrôle">⚙️</button>
         </div>
@@ -154,7 +154,8 @@
         
         <div class="texte-aide">
 
-          <button class="accordion">📷 1. Scanner une pièce d'identité</button>
+          <div id="aideOCR" style="display:none;">
+          <button class="accordion">📷 Scanner une pièce d'identité</button>
           <div class="panel">
             <ul>
               <li><strong>Quelle face ?</strong> Le côté qui porte la <strong>bande de symboles &lt;&lt;&lt;</strong> (en bas du document). Sur les <strong>cartes</strong> (CNI, titre de séjour), c'est en général <strong>le dos</strong> ; sur le <strong>passeport</strong>, la <strong>page avec la photo</strong>.</li>
@@ -166,8 +167,9 @@
               <li><strong>1ᵉʳ usage :</strong> le tout premier scan prend quelques secondes (chargement du lecteur), ensuite c'est rapide.</li>
             </ul>
           </div>
+          </div>
 
-          <button class="accordion">📝 2. Saisie d'un chèque et Alertes</button>
+          <button class="accordion">📝 Saisie d'un chèque et Alertes</button>
           <div class="panel">
             <ul>
               <li><strong>Comment faire :</strong> Remplissez les informations du formulaire, puis cliquez sur <strong>Valider</strong>.</li>
@@ -177,7 +179,7 @@
             </ul>
           </div>
 
-          <button class="accordion">🚦 3. Les Modes de Sécurité (Bouton ⚙️)</button>
+          <button class="accordion">🚦 Les Modes de Sécurité (Bouton ⚙️)</button>
           <div class="panel">
             <p>Dans le panneau de contrôle, vous définissez la rigueur du système :</p>
             <ul>
@@ -186,7 +188,7 @@
             </ul>
           </div>
 
-          <button class="accordion">📅 4. Dates de l'offre et Clôture automatique</button>
+          <button class="accordion">📅 Dates de l'offre et Clôture automatique</button>
           <div class="panel">
             <ul>
               <li><strong>Lancer ou modifier :</strong> Cliquez sur ⚙️ et saisissez vos dates. S'il y a une erreur ou une prolongation, modifiez simplement la date de fin ici.</li>
@@ -194,7 +196,7 @@
             </ul>
           </div>
 
-          <button class="accordion">🖨️ 5. Corrections, Impressions et Archives</button>
+          <button class="accordion">🖨️ Corrections, Impressions et Archives</button>
           <div class="panel">
             <ul>
               <li><strong>Corriger une erreur :</strong> Cliquez sur ⚙️ puis sur <strong>Ouvrir Google Sheets</strong>. Trouvez la ligne dans le tableau sur l'ordinateur et corrigez ou supprimez-la directement.</li>
@@ -259,7 +261,7 @@
           
           <p><strong>Confidentialité et Données :</strong> Cet outil a été pensé et conçu pour un usage strictement interne, dédié à la prévention des fraudes. Les données saisies (Identités, N° de pièces, Montants) sont stockées et archivées de manière sécurisée à des fins de traçabilité de l'offre, et ne sont en aucun cas prévues pour être cédées ou transmises à des tiers.</p>
 
-          <p><strong>Lecture assistée des pièces (OCR) :</strong> lorsqu'une pièce est scannée, la photographie est analysée <strong>localement, dans le navigateur de la tablette</strong>, uniquement pour lire la zone de lecture automatique (MRZ). <strong>L'image n'est ni enregistrée ni transmise</strong> à aucun serveur ; seules les informations reportées dans le formulaire, après vérification par l'hôtesse, sont conservées.</p>
+          <p id="mentionOCR" style="display:none;"><strong>Lecture assistée des pièces (OCR) :</strong> lorsqu'une pièce est scannée, la photographie est analysée <strong>localement, dans le navigateur de la tablette</strong>, uniquement pour lire la zone de lecture automatique (MRZ). <strong>L'image n'est ni enregistrée ni transmise</strong> à aucun serveur ; seules les informations reportées dans le formulaire, après vérification par l'hôtesse, sont conservées.</p>
           
           <p><strong>Responsabilité :</strong> L'auteur fournit uniquement l'infrastructure technique de cette application. La responsabilité quant à l'utilisation conforme de l'outil et au traitement légal des données collectées (respect du RGPD) incombe exclusivement à la direction de l'établissement utilisateur. L'auteur décline toute responsabilité en cas d'usage abusif, détourné ou négligent de ces informations par l'établissement.</p>
         </div>
@@ -586,96 +588,122 @@
       });
     </script>
 
-    <!-- ===== SCAN MRZ (lecture de la pièce d'identité) ===== -->
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <!-- ===== SCAN MRZ (OCR) — DORMANT, piloté par OCR_ACTIF ===== -->
     <script type="module">
-      import { parse } from 'https://esm.sh/mrz@3';
+      // OCR (lecture de la pièce d'identité) DÉSACTIVÉ par décision de la direction.
+      // Repasser ce seul drapeau à true réactive TOUT : bouton 📷, section d'aide,
+      // mention légale OCR, et le scan (les librairies ne se chargent qu'au 1er scan).
+      const OCR_ACTIF = false;
 
-      const MRZ_LANGPATH = 'https://raw.githubusercontent.com/DoubangoTelecom/tesseractMRZ/master/tessdata_best';
       const $id = (i) => document.getElementById(i);
-      const statut = (t) => { $id('ocrStatus').textContent = t; };
 
-      $id('btnScan').addEventListener('click', () => $id('ocrFile').click());
-      $id('ocrFile').addEventListener('change', (e) => {
-        const f = e.target.files[0];
-        if (!f) return;
-        const img = new Image();
-        img.onload = () => lireMRZ(img);
-        img.src = URL.createObjectURL(f);
-        e.target.value = ''; // autorise un nouveau scan du même fichier
-      });
+      if (OCR_ACTIF) {
+        // Révèle les éléments OCR (masqués par défaut dans le HTML)
+        ['btnScan', 'aideOCR', 'mentionOCR'].forEach((id) => {
+          const el = $id(id); if (el) el.style.display = '';
+        });
 
-      // Rogne le bas (zone MRZ), agrandit, passe en niveaux de gris
-      function prepCanvas(img) {
-        const w = img.naturalWidth, h = img.naturalHeight;
-        const sy = Math.floor(h * 0.62), sh = h - sy;
-        const scale = Math.min(4, Math.max(1, 1800 / w));
-        const c = document.createElement('canvas');
-        c.width = Math.round(w * scale);
-        c.height = Math.round(sh * scale);
-        const ctx = c.getContext('2d');
-        ctx.imageSmoothingQuality = 'high';
-        ctx.drawImage(img, 0, sy, w, sh, 0, 0, c.width, c.height);
-        const im = ctx.getImageData(0, 0, c.width, c.height), d = im.data;
-        for (let i = 0; i < d.length; i += 4) {
-          const g = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
-          d[i] = d[i+1] = d[i+2] = g;
-        }
-        ctx.putImageData(im, 0, 0);
-        return c;
-      }
+        const MRZ_LANGPATH = 'https://raw.githubusercontent.com/DoubangoTelecom/tesseractMRZ/master/tessdata_best';
+        const statut = (t) => { $id('ocrStatus').textContent = t; };
 
-      function extraireLignes(t) {
-        return t.toUpperCase().split('\n')
-          .map(l => l.replace(/ /g, '<').replace(/[^A-Z0-9<]/g, ''))
-          .filter(l => l.length >= 28);
-      }
-      function ajuster(l, n) { return l.length === n ? l : (l.length > n ? l.slice(0, n) : l + '<'.repeat(n - l.length)); }
-      function tenterParse(lignes) {
-        const n = lignes.length, der = (k) => lignes.slice(Math.max(0, n - k));
-        const essais = [];
-        if (n >= 3) essais.push(der(3).map(l => ajuster(l, 30)));            // TD1 (nouvelle CNI / titre de séjour)
-        if (n >= 2) { essais.push(der(2).map(l => ajuster(l, 44)));          // TD3 (passeport)
-                      essais.push(der(2).map(l => ajuster(l, 36))); }        // ancienne CNI / TD2
-        let repli = null;
-        for (const e of essais) { try { const r = parse(e); if (r.valid) return r; repli = repli || r; } catch (_) {} }
-        return repli;
-      }
-      function numeroComplet(r) {
-        const f = r.fields;
-        if (r.format === 'FRENCH_NATIONAL_ID') return (f.issueDate || '') + (f.administrativeCode2 || '') + (f.documentNumber || '');
-        return r.documentNumber || f.documentNumber || '';
-      }
-
-      async function lireMRZ(img) {
-        $id('btnScan').disabled = true;
-        statut('⏳ Chargement du lecteur (1er scan : ~11 Mo, mis en cache ensuite)…');
-        try {
-          let worker;
-          try { worker = await Tesseract.createWorker('mrz', 1, { langPath: MRZ_LANGPATH, gzip: false }); }
-          catch (_) { worker = await Tesseract.createWorker('eng', 1); }
-          await worker.setParameters({
-            tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<',
-            tessedit_pageseg_mode: '6'
+        // Chargement des librairies À LA DEMANDE : rien n'est téléchargé tant qu'on ne scanne pas.
+        let _libs = null;
+        async function chargerLibs() {
+          if (_libs) return _libs;
+          await new Promise((resolve, reject) => {
+            const s = document.createElement('script');
+            s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+            s.onload = resolve; s.onerror = reject;
+            document.head.appendChild(s);
           });
-          statut('🔍 Lecture de la pièce…');
-          const { data } = await worker.recognize(prepCanvas(img));
-          await worker.terminate();
+          const mrz = await import('https://esm.sh/mrz@3');
+          _libs = { Tesseract: window.Tesseract, parse: mrz.parse };
+          return _libs;
+        }
 
-          const lignes = extraireLignes(data.text);
-          const r = lignes.length ? tenterParse(lignes) : null;
-          if (r && r.valid) {
-            $id('nom').value = r.fields.lastName || '';
-            $id('prenom').value = r.fields.firstName || '';
-            $id('piece').value = numeroComplet(r);
-            statut('✅ Pièce lue — vérifiez les champs, puis saisissez le montant.');
-          } else {
-            statut('⚠️ Lecture impossible. Reprenez la photo (à plat, nette, MRZ en bas) ou saisissez à la main.');
+        $id('btnScan').addEventListener('click', () => $id('ocrFile').click());
+        $id('ocrFile').addEventListener('change', (e) => {
+          const f = e.target.files[0];
+          if (!f) return;
+          const img = new Image();
+          img.onload = () => lireMRZ(img);
+          img.src = URL.createObjectURL(f);
+          e.target.value = ''; // autorise un nouveau scan du même fichier
+        });
+
+        // Rogne le bas (zone MRZ), agrandit, passe en niveaux de gris
+        function prepCanvas(img) {
+          const w = img.naturalWidth, h = img.naturalHeight;
+          const sy = Math.floor(h * 0.62), sh = h - sy;
+          const scale = Math.min(4, Math.max(1, 1800 / w));
+          const c = document.createElement('canvas');
+          c.width = Math.round(w * scale);
+          c.height = Math.round(sh * scale);
+          const ctx = c.getContext('2d');
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(img, 0, sy, w, sh, 0, 0, c.width, c.height);
+          const im = ctx.getImageData(0, 0, c.width, c.height), d = im.data;
+          for (let i = 0; i < d.length; i += 4) {
+            const g = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
+            d[i] = d[i+1] = d[i+2] = g;
           }
-        } catch (e) {
-          statut('❌ Erreur lecture : ' + e.message);
-        } finally {
-          $id('btnScan').disabled = false;
+          ctx.putImageData(im, 0, 0);
+          return c;
+        }
+
+        function extraireLignes(t) {
+          return t.toUpperCase().split('\n')
+            .map(l => l.replace(/ /g, '<').replace(/[^A-Z0-9<]/g, ''))
+            .filter(l => l.length >= 28);
+        }
+        function ajuster(l, n) { return l.length === n ? l : (l.length > n ? l.slice(0, n) : l + '<'.repeat(n - l.length)); }
+        function tenterParse(parse, lignes) {
+          const n = lignes.length, der = (k) => lignes.slice(Math.max(0, n - k));
+          const essais = [];
+          if (n >= 3) essais.push(der(3).map(l => ajuster(l, 30)));            // TD1 (nouvelle CNI / titre de séjour)
+          if (n >= 2) { essais.push(der(2).map(l => ajuster(l, 44)));          // TD3 (passeport)
+                        essais.push(der(2).map(l => ajuster(l, 36))); }        // ancienne CNI / TD2
+          let repli = null;
+          for (const e of essais) { try { const r = parse(e); if (r.valid) return r; repli = repli || r; } catch (_) {} }
+          return repli;
+        }
+        function numeroComplet(r) {
+          const f = r.fields;
+          if (r.format === 'FRENCH_NATIONAL_ID') return (f.issueDate || '') + (f.administrativeCode2 || '') + (f.documentNumber || '');
+          return r.documentNumber || f.documentNumber || '';
+        }
+
+        async function lireMRZ(img) {
+          $id('btnScan').disabled = true;
+          statut('⏳ Chargement du lecteur (1er scan : ~11 Mo, mis en cache ensuite)…');
+          try {
+            const { Tesseract, parse } = await chargerLibs();
+            let worker;
+            try { worker = await Tesseract.createWorker('mrz', 1, { langPath: MRZ_LANGPATH, gzip: false }); }
+            catch (_) { worker = await Tesseract.createWorker('eng', 1); }
+            await worker.setParameters({
+              tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<',
+              tessedit_pageseg_mode: '6'
+            });
+            statut('🔍 Lecture de la pièce…');
+            const { data } = await worker.recognize(prepCanvas(img));
+            await worker.terminate();
+
+            const lignes = extraireLignes(data.text);
+            const r = lignes.length ? tenterParse(parse, lignes) : null;
+            if (r && r.valid) {
+              $id('nom').value = r.fields.lastName || '';
+              $id('prenom').value = r.fields.firstName || '';
+              $id('piece').value = numeroComplet(r);
+              statut('✅ Pièce lue — vérifiez les champs, puis saisissez le montant.');
+            } else {
+              statut('⚠️ Lecture impossible. Reprenez la photo (à plat, nette, MRZ en bas) ou saisissez à la main.');
+            }
+          } catch (e) {
+            statut('❌ Erreur lecture : ' + e.message);
+          } finally {
+            $id('btnScan').disabled = false;
+          }
         }
       }
     </script>

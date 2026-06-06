@@ -96,3 +96,10 @@ offres clôturées.
   CSV Drive + 2ᵉ Sheet) — retiré : redondant avec l'historique des versions natif ;
   reposait sur des IDs en dur et un trigger à maintenir, et ne protégeait pas
   réellement contre la perte totale du classeur (backups dans le même compte).
+- **Scan OCR MRZ dans l'app** (bouton 📷 + lecture MRZ dans `Index.html`) —
+  intégré mais **DORMANT** par décision de la direction. Piloté par le drapeau
+  `const OCR_ACTIF = false;` (dans le `<script type="module">` en bas d'`Index.html`).
+  Quand `false` : bouton masqué, aucun écouteur, librairies (Tesseract + mrz)
+  **non chargées**, section d'aide « Scanner une pièce » et paragraphe légal OCR
+  masqués. Passer le drapeau à `true` réactive tout (libs chargées à la demande au
+  1er scan). Le banc d'essai reste dans `prototype-ocr/`.

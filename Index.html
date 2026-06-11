@@ -101,16 +101,16 @@
         <input type="file" id="ocrFile" accept="image/*" capture="environment" style="display:none;">
         <div id="ocrStatus" style="font-size:13px; text-align:center; min-height:18px; color:#5f6368; margin-bottom:10px;"></div>
         <div class="input-group">
+          <label>N° de Pièce *</label>
+          <input type="text" id="piece" placeholder="Saisir le numéro..." autocomplete="off">
+        </div>
+        <div class="input-group">
           <label>Nom *</label>
           <input type="text" id="nom" placeholder="Ex: DUPONT" autocomplete="off">
         </div>
         <div class="input-group">
           <label>Prénom *</label>
           <input type="text" id="prenom" placeholder="Ex: JEAN" autocomplete="off">
-        </div>
-        <div class="input-group">
-          <label>N° de Pièce *</label>
-          <input type="text" id="piece" placeholder="Saisir le numéro..." autocomplete="off">
         </div>
         <div class="input-group">
           <label>Montant (€) *</label>
@@ -414,7 +414,7 @@
         document.getElementById('piece').value = ""; 
         document.getElementById('montant').value = "";
         document.getElementById('notes').value = ""; 
-        document.getElementById('nom').focus();
+        document.getElementById('piece').focus();
       }
 
       function afficherMessage(texte, type) {
@@ -586,6 +586,24 @@
           this.value = valeur + " €";
         }
       });
+
+      // --- ENTRÉE → CHAMP SUIVANT (Nom, Prénom, N° Pièce, Montant ; Notes exclu) ---
+      (function () {
+        var ordre = ['piece', 'nom', 'prenom', 'montant'];
+        ordre.forEach(function (id, i) {
+          var champ = document.getElementById(id);
+          if (!champ) return;
+          champ.addEventListener('keydown', function (e) {
+            if (e.key !== 'Enter') return;
+            e.preventDefault(); // évite toute soumission implicite du formulaire
+            // Champ suivant ; après le dernier (Montant), on cible le bouton Valider
+            var suivant = (i + 1 < ordre.length)
+              ? document.getElementById(ordre[i + 1])
+              : document.getElementById('btnValider');
+            if (suivant) suivant.focus();
+          });
+        });
+      })();
     </script>
 
     <!-- ===== SCAN MRZ (OCR) — DORMANT, piloté par OCR_ACTIF ===== -->

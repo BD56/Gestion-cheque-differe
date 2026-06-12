@@ -88,19 +88,20 @@ n'est pas un problème** : la latence ressentie vient de l'**infrastructure** (a
 retour réseau + runtime Apps Script + appels Sheets), pas de la taille des données ni
 de l'algorithme. **Inutile d'« optimiser la recherche » côté données/algo.**
 
-## Pistes discutées (saisie 100 % manuelle, OCR écarté)
-Améliorations « confort » classées par valeur/risque :
-- **Niveau 1 — ergonomie de saisie** *(sûr, sans RGPD — prochaine étape recommandée)* :
-  MAJUSCULES instantanées côté client, `Entrée` → champ suivant, clavier numérique.
-- **Niveau 2 — alerte temps réel** : au `blur` du champ N° de pièce, **une seule
-  requête serveur** indique si la pièce est déjà sur l'offre en cours (alerte via
-  **modale** légère, sans remplacer la validation finale).
-- **Niveau 3 — annuaire inter-offres (auto-complétion)** *(conditionné à un feu vert
-  RGPD)* : pièce → Nom/Prénom des offres passées. Conception retenue : **feuille cachée
-  `_Annuaire`** dans le **même** classeur (pas d'ID externe), **dérivée/reconstructible
-  depuis les archives**, **purge glissante** (durée à valider, plutôt courte). Store
-  **non autoritaire** (ne bloque jamais — règle métier : profiter à **chaque** offre est
-  autorisé). **À présenter à la direction/RGPD avant de construire.**
+## Aides à la saisie (Niveaux 1/2/3 — IMPLÉMENTÉS)
+- **Niveau 1 — ergonomie** *(fait)* : `Entrée` → champ suivant (Pièce→Nom→Prénom→Montant,
+  Notes exclu), **N° de Pièce en 1er champ**. (MAJUSCULES client + clavier numérique :
+  abandonnés — déjà géré serveur / compat tablette.)
+- **Niveau 2 — alerte temps réel** *(fait)* : au `blur` du N°, `verifierPiece` (lecture
+  seule) → modale si la pièce est **déjà sur l'offre en cours**. Non autoritaire.
+- **Niveau 3 — annuaire inter-offres** *(fait, ACTIF)* : feuille cachée **`_Annuaire`**
+  (pièce → Nom/Prénom + dernière vue), **reconstructible** via `reconstruireAnnuaire()`,
+  **purge glissante 3 ans** (`purgerAnnuaire`, à mettre sur trigger). Auto-complétion au
+  `blur` si la pièce est connue d'une **offre passée** : option **C** (pré-remplissage
+  doux, défaut) ou **B** (modale-question), réglable dans le Panneau (`MODE_ANNUAIRE` en
+  `PropertiesService`). **Store NON autoritaire** (la décision A/B/C reste sur
+  « Saisies »). Kill-switch : `ANNUAIRE_ACTIF` (Code.gs). Mention légale ajoutée.
+  → **Après activation : lancer `reconstruireAnnuaire()` une fois.**
 
 ## Historique des choix (ne pas réintroduire sans raison nouvelle)
 - **Logs d'audit** — retirés (redondants avec « Saisies » déjà horodaté).

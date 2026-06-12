@@ -734,6 +734,9 @@
       window.addEventListener('load', rechargerCacheVerif);
       // Rafraîchir au retour sur la page (réveil tablette, retour d'une autre app)
       document.addEventListener('visibilitychange', function () { if (!document.hidden) rechargerCacheVerif(); });
+      // Re-synchroniser au DÉBUT de chaque saisie (focus du N°) : l'appel chevauche la
+      // frappe du numéro -> cache frais au moment du blur, sans latence perçue.
+      document.getElementById('piece').addEventListener('focus', rechargerCacheVerif);
 
       function normPieceJS(p) { return (p || "").toString().toUpperCase().replace(/[\s-]/g, ''); }
 

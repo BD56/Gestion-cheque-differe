@@ -126,6 +126,7 @@ function traiterSaisie(nom, prenom, piece, montant, notes) {
       }
     } else {
       feuille.appendRow([new Date(), nom, prenom, piece, montant, notes, ""]);
+      majAnnuaire_(nom, prenom, piece);
       return { status: "SUCCES", message: "✅ Saisie enregistrée !" };
     }
   } finally {
@@ -167,6 +168,7 @@ function forcerSaisie(nom, prenom, piece, montant, notes, messageErreur, flagIde
     if (flagIdentite) feuille.getRange(indexLigne, 2, 1, 2).setBackground("#f4cccc");
     if (flagPiece) feuille.getRange(indexLigne, 4).setBackground("#f4cccc");
 
+    majAnnuaire_(nom, prenom, piece);
     return { status: "SUCCES", message: "⚠️ Saisie forcée et enregistrée en rouge." };
   } finally {
     lock.releaseLock(); // Libérer le verrou dans tous les cas
@@ -202,7 +204,119 @@ function verifierPiece(piece) {
       });
     }
   }
-  return { trouve: matches.length > 0, mode: mode, matches: matches };
+  var result = { trouve: matches.length > 0, mode: mode, matches: matches };
+  // Niveau 3 : si la pièce n'est PAS sur l'offre en cours, on regarde l'annuaire.
+  if (ANNUAIRE_ACTIF && matches.length === 0) {
+    var connu = chercherAnnuaire_(pieceNorm);
+    if (connu) { result.annuaire = connu; result.modeAnnuaire = getModeAnnuaire(); }
+  }
+  return result;
+}
+
+// =================================================================
+// --- ANNUAIRE INTER-OFFRES (Niveau 3) — DORMANT (ANNUAIRE_ACTIF=false) ---
+//     Index pièce -> Nom/Prénom des offres passées, pour pré-remplir la saisie.
+//     Tant que dormant : rien n'est écrit, lu ni affiché. Réactivable en
+//     passant ANNUAIRE_ACTIF à true (après feu vert direction / RGPD).
+//     Store NON autoritaire : la décision A/B/C reste sur « Saisies ».
+// =================================================================
+var ANNUAIRE_ACTIF = false;
+var ANNUAIRE_RETENTION_ANS = 3;   // purge après X ans d'inactivité (dernière vue)
+var ANNUAIRE_FEUILLE = "_Annuaire";
+
+function _feuilleAnnuaire_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var f = ss.getSheetByName(ANNUAIRE_FEUILLE);
+  if (!f) {
+    f = ss.insertSheet(ANNUAIRE_FEUILLE);
+    f.appendRow(["Piece", "Nom", "Prenom", "DerniereVue"]);
+    f.hideSheet();
+  }
+  return f;
+}
+
+function _normPiece_(p) {
+  return p ? p.toString().toUpperCase().replace(/[\s-]/g, '') : "";
+}
+
+// Upsert (appelé après une saisie réussie) : met à jour Nom/Prénom + date de vue.
+function majAnnuaire_(nom, prenom, piece) {
+  if (!ANNUAIRE_ACTIF) return;
+  var pieceNorm = _normPiece_(piece);
+  if (pieceNorm === "") return;
+  var f = _feuilleAnnuaire_();
+  var data = f.getDataRange().getValues();
+  for (var i = 1; i < data.length; i++) {
+    if (_normPiece_(data[i][0]) === pieceNorm) {
+      f.getRange(i + 1, 1, 1, 4).setValues([[pieceNorm, nom, prenom, new Date()]]);
+      return;
+    }
+  }
+  f.appendRow([pieceNorm, nom, prenom, new Date()]);
+}
+
+// Recherche -> { nom, prenom } ou null
+function chercherAnnuaire_(pieceNorm) {
+  if (!ANNUAIRE_ACTIF || !pieceNorm) return null;
+  var f = _feuilleAnnuaire_();
+  var data = f.getDataRange().getValues();
+  for (var i = 1; i < data.length; i++) {
+    if (_normPiece_(data[i][0]) === pieceNorm) {
+      return { nom: data[i][1] ? data[i][1].toString() : "", prenom: data[i][2] ? data[i][2].toString() : "" };
+    }
+  }
+  return null;
+}
+
+// Réglage du comportement d'auto-complétion : 'C' (doux) ou 'B' (modale-question).
+function getModeAnnuaire() {
+  return PropertiesService.getDocumentProperties().getProperty('MODE_ANNUAIRE') || 'C';
+}
+function basculerModeAnnuaire() {
+  var m = (getModeAnnuaire() === 'C') ? 'B' : 'C';
+  PropertiesService.getDocumentProperties().setProperty('MODE_ANNUAIRE', m);
+  return m;
+}
+
+// Reconstruit l'annuaire depuis « Saisies » + toutes les feuilles Archives_*
+// (manuel, à lancer une fois avant activation). Garde la dernière occurrence.
+function reconstruireAnnuaire() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var f = _feuilleAnnuaire_();
+  f.clearContents();
+  f.appendRow(["Piece", "Nom", "Prenom", "DerniereVue"]);
+  var index = {};
+  var feuilles = ss.getSheets();
+  for (var s = 0; s < feuilles.length; s++) {
+    var nomF = feuilles[s].getName();
+    if (nomF !== "Saisies" && nomF.indexOf("Archives_") !== 0) continue;
+    var data = feuilles[s].getDataRange().getValues();
+    for (var i = 1; i < data.length; i++) {
+      var pieceNorm = _normPiece_(data[i][3]);
+      if (pieceNorm === "") continue;
+      var d = (data[i][0] instanceof Date) ? data[i][0] : new Date(0);
+      if (!index[pieceNorm] || d > index[pieceNorm].date) {
+        index[pieceNorm] = { nom: data[i][1], prenom: data[i][2], date: d };
+      }
+    }
+  }
+  var rows = [];
+  for (var p in index) rows.push([p, index[p].nom, index[p].prenom, index[p].date]);
+  if (rows.length) f.getRange(2, 1, rows.length, 4).setValues(rows);
+  return "Annuaire reconstruit : " + rows.length + " pièces.";
+}
+
+// Purge des entrées inactives depuis ANNUAIRE_RETENTION_ANS ans (à mettre sur trigger).
+function purgerAnnuaire() {
+  if (!ANNUAIRE_ACTIF) return;
+  var f = _feuilleAnnuaire_();
+  var data = f.getDataRange().getValues();
+  var limite = new Date();
+  limite.setFullYear(limite.getFullYear() - ANNUAIRE_RETENTION_ANS);
+  for (var i = data.length - 1; i >= 1; i--) {
+    var d = (data[i][3] instanceof Date) ? data[i][3] : null;
+    if (!d || d < limite) f.deleteRow(i + 1);
+  }
 }
 
 // --- FONCTIONS SECONDAIRES ---
@@ -210,7 +324,7 @@ function getInfosPanneau() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var f = ss.getSheetByName("Saisies");
   var mode = f.getRange("Z1").getValue() || "SIGNALER";
-  return { success: true, mode: mode, urlFichier: ss.getUrl() };
+  return { success: true, mode: mode, urlFichier: ss.getUrl(), annuaireActif: ANNUAIRE_ACTIF, modeAnnuaire: getModeAnnuaire() };
 }
 
 function genererDonneesImpression(type, dateChoisieStr) {

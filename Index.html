@@ -100,6 +100,7 @@
       <div id="formulaireSaisie">
         <input type="file" id="ocrFile" accept="image/*" capture="environment" style="display:none;">
         <div id="ocrStatus" style="font-size:13px; text-align:center; min-height:18px; color:#5f6368; margin-bottom:10px;"></div>
+        <div id="indiceAnnuaire" style="display:none; font-size:13px; text-align:center; color:#188038; background:#e6f4ea; border-radius:6px; padding:6px; margin-bottom:10px;">⤷ Nom/Prénom pré-remplis depuis l'historique — vérifiez.</div>
         <div class="input-group">
           <label>N° de Pièce *</label>
           <input type="text" id="piece" placeholder="Saisir le numéro..." autocomplete="off">
@@ -231,6 +232,7 @@
         <hr style="border: 0; height: 1px; background: #ddd; margin: 20px 0;">
         
         <button class="btn-action" id="btnMode" onclick="changerMode()">⏳ Chargement Mode...</button>
+        <button class="btn-action" id="btnModeAnnuaire" style="display:none; background-color:#5f6368;" onclick="changerModeAnnuaire()"></button>
         <button class="btn-action btn-open-sheet" onclick="ouvrirFichierSouche()">OUVRIR GOOGLE SHEETS</button>
         <hr style="border: 0; height: 1px; background: #ddd; margin: 20px 0;">
         <h3 style="text-align: center; margin-top: 0;">📅 Opération en cours</h3>
@@ -277,6 +279,17 @@
       </div>
     </div>
 
+    <div id="modalAnnuaire" class="modal-overlay">
+      <div class="modal-content">
+        <h2 style="margin-top:0; color:#1a73e8; font-size:18px;">👤 Client connu</h2>
+        <p id="msgAnnuaire" style="font-size:14px;"></p>
+        <div class="flex-btn">
+          <button class="btn-cancel" onclick="ignorerAnnuaire()">IGNORER</button>
+          <button class="btn-force" style="background:#34a853;" onclick="utiliserAnnuaire()">UTILISER</button>
+        </div>
+      </div>
+    </div>
+
     <div id="zoneImpression"></div>
 
     <script>
@@ -292,9 +305,10 @@
         document.getElementById("dateImpression").value = annee + "-" + mois + "-" + jour;
         
         google.script.run.withSuccessHandler(function(infos) {
-          if (infos.success) { 
-            lienFichierSouche = infos.urlFichier; 
-            majAffichageMode(infos.mode); 
+          if (infos.success) {
+            lienFichierSouche = infos.urlFichier;
+            majAffichageMode(infos.mode);
+            if (infos.annuaireActif) majAffichageModeAnnuaire(infos.modeAnnuaire);
           } else {
             document.getElementById('btnMode').innerHTML = "⚠️ ERREUR Serveur";
           }
@@ -422,7 +436,9 @@
         document.getElementById('prenom').value = "";
         document.getElementById('piece').value = ""; 
         document.getElementById('montant').value = "";
-        document.getElementById('notes').value = ""; 
+        document.getElementById('notes').value = "";
+        var ind = document.getElementById('indiceAnnuaire');
+        if (ind) ind.style.display = "none";
         document.getElementById('piece').focus();
       }
 
@@ -626,26 +642,73 @@
       });
 
       function afficherVerifPiece(res) {
-        if (!res || !res.trouve) return; // rien trouvé -> rien ne se passe
-        var msg = "Ce numéro est déjà enregistré sur cette offre.";
-        if (res.mode === "BLOQUANT") msg += " (sera refusé à la validation)";
-        document.getElementById('msgDoublonPiece').innerHTML = msg;
-
-        var html = "";
-        (res.matches || []).forEach(function (d) {
-          html += "<div class='doublon-carte'>";
-          html += "📅 " + d.date + " (Ligne " + d.ligne + ")<br>";
-          html += "👤 " + d.nom + " " + d.prenom;
-          if (d.montant !== "") html += "<br>💶 " + d.montant + " €";
-          html += "</div>";
-        });
-        document.getElementById('listeDoublonPiece').innerHTML = html;
-        document.getElementById('modalDoublonPiece').style.display = "flex";
+        if (!res) return;
+        if (res.trouve) {
+          // Niveau 2 : doublon sur l'offre en cours -> modale d'avertissement (prioritaire)
+          var msg = "Ce numéro est déjà enregistré sur cette offre.";
+          if (res.mode === "BLOQUANT") msg += " (sera refusé à la validation)";
+          document.getElementById('msgDoublonPiece').innerHTML = msg;
+          var html = "";
+          (res.matches || []).forEach(function (d) {
+            html += "<div class='doublon-carte'>";
+            html += "📅 " + d.date + " (Ligne " + d.ligne + ")<br>";
+            html += "👤 " + d.nom + " " + d.prenom;
+            if (d.montant !== "") html += "<br>💶 " + d.montant + " €";
+            html += "</div>";
+          });
+          document.getElementById('listeDoublonPiece').innerHTML = html;
+          document.getElementById('modalDoublonPiece').style.display = "flex";
+          return;
+        }
+        // Niveau 3 (dormant) : pièce connue d'une offre passée, pas sur l'offre en cours
+        if (res.annuaire) {
+          if (res.modeAnnuaire === 'B') proposerAnnuaire(res.annuaire);
+          else remplirAnnuaire(res.annuaire); // 'C' = pré-remplissage doux (défaut)
+        }
       }
 
       function fermerDoublonPiece() {
         document.getElementById('modalDoublonPiece').style.display = "none";
         document.getElementById('nom').focus(); // on continue la saisie
+      }
+
+      // --- NIVEAU 3 : auto-complétion depuis l'annuaire inter-offres ---
+      // Option C : pré-remplissage doux (remplit si vide + indice discret).
+      function remplirAnnuaire(a) {
+        var n = document.getElementById('nom'), p = document.getElementById('prenom');
+        if (n.value.trim() === "") n.value = a.nom || "";
+        if (p.value.trim() === "") p.value = a.prenom || "";
+        var ind = document.getElementById('indiceAnnuaire');
+        if (ind) ind.style.display = "block";
+      }
+      // Option B : modale qui demande la confirmation.
+      function proposerAnnuaire(a) {
+        var m = document.getElementById('modalAnnuaire');
+        m.dataset.nom = a.nom || "";
+        m.dataset.prenom = a.prenom || "";
+        document.getElementById('msgAnnuaire').innerHTML =
+          "Client connu d'une offre précédente : <b>" + (a.nom || "") + " " + (a.prenom || "") +
+          "</b>.<br>Pré-remplir le Nom et le Prénom ?";
+        m.style.display = "flex";
+      }
+      function utiliserAnnuaire() {
+        var m = document.getElementById('modalAnnuaire');
+        remplirAnnuaire({ nom: m.dataset.nom, prenom: m.dataset.prenom });
+        m.style.display = "none";
+      }
+      function ignorerAnnuaire() {
+        document.getElementById('modalAnnuaire').style.display = "none";
+      }
+
+      // Réglage B/C dans le Panneau (visible seulement si l'annuaire est actif)
+      function majAffichageModeAnnuaire(mode) {
+        var btn = document.getElementById('btnModeAnnuaire');
+        btn.style.display = "block";
+        btn.innerHTML = "🪪 Auto-complétion : " + (mode === 'B' ? "Demander (modale)" : "Auto (doux)");
+      }
+      function changerModeAnnuaire() {
+        document.getElementById('btnModeAnnuaire').innerHTML = "⏳ MAJ...";
+        google.script.run.withSuccessHandler(majAffichageModeAnnuaire).basculerModeAnnuaire();
       }
     </script>
 

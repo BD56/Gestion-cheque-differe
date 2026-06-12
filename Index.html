@@ -335,27 +335,44 @@
       function fermerMentions() { document.getElementById('modalMentions').style.display = "none"; }
 
       function envoyerSaisie() {
-        memNom = document.getElementById('nom').value; 
+        memNom = document.getElementById('nom').value;
         memPrenom = document.getElementById('prenom').value;
-        memPiece = document.getElementById('piece').value; 
-        memMontant = document.getElementById('montant').value; 
+        memPiece = document.getElementById('piece').value;
+        memMontant = document.getElementById('montant').value;
         memNotes = document.getElementById('notes').value;
-        
-        if(memNom === "" || memPrenom === "" || memPiece === "" || memMontant === "") { 
-          afficherMessage("Veuillez remplir le Nom, Prénom, N° de Pièce et le Montant.", "error"); 
-          return; 
+
+        if (memNom === "" || memPrenom === "" || memPiece === "" || memMontant === "") {
+          afficherMessage("Veuillez remplir le Nom, Prénom, N° de Pièce et le Montant.", "error");
+          return;
         }
-        
-        var btn = document.getElementById('btnValider');
-        btn.innerHTML = "⏳ Recherche..."; 
-        btn.disabled = true; 
         document.getElementById('statusMessage').style.display = "none";
-        
-        google.script.run.withSuccessHandler(traitementTermine).withFailureHandler(function(err){ 
-             btn.innerHTML = "VÉRIFIER ET VALIDER"; 
-             btn.disabled = false; 
-             afficherMessage("Erreur : " + err.message, "error"); 
-        }).traiterSaisie(memNom, memPrenom, memPiece, memMontant, memNotes);
+
+        if (!cacheVerif) {
+          // Cache pas encore prêt -> repli serveur (ancien flux, avec attente)
+          var btn = document.getElementById('btnValider');
+          btn.innerHTML = "⏳ Recherche...";
+          btn.disabled = true;
+          google.script.run.withSuccessHandler(traitementTermine).withFailureHandler(function (err) {
+            btn.innerHTML = "VÉRIFIER ET VALIDER";
+            btn.disabled = false;
+            afficherMessage("Erreur : " + err.message, "error");
+          }).traiterSaisie(memNom, memPrenom, memPiece, memMontant, memNotes);
+          return;
+        }
+
+        // Contrôle A/B/C EN LOCAL -> feedback instantané
+        var reponse = analyserDoublonLocal(memNom, memPrenom, memPiece);
+        if (reponse.status === "SUCCES") {
+          ajoutOptimisteCache(memNom, memPrenom, memPiece, memMontant, memNotes);
+          afficherMessage("✅ Saisie enregistrée !", "success");
+          reinitialiserFormulaire();
+          // Écriture autoritaire en arrière-plan : le serveur reconfirme ET écrit.
+          google.script.run.withSuccessHandler(confirmerEnregistrement).withFailureHandler(echecEnregistrement)
+            .traiterSaisie(memNom, memPrenom, memPiece, memMontant, memNotes);
+        } else {
+          // Doublon détecté en local -> modale (réutilise l'affichage existant)
+          traitementTermine(reponse);
+        }
       }
 
       function traitementTermine(reponse) {
@@ -421,19 +438,81 @@
       }
 
       function forcerAjout() {
-        document.getElementById('boxConfirmation').style.display = "none"; 
+        document.getElementById('boxConfirmation').style.display = "none";
         document.getElementById('formulaireSaisie').style.display = "block";
-        var btn = document.getElementById('btnValider'); 
-        btn.innerHTML = "⏳ Ajout forcé..."; 
-        btn.disabled = true;
-        
-        google.script.run.withSuccessHandler(function(reponse) {
-            btn.innerHTML = "VÉRIFIER ET VALIDER"; 
-            btn.disabled = false; 
-            afficherMessage(reponse.message, "error");
-            reinitialiserFormulaire();
-            rechargerCacheVerif();
-        }).forcerSaisie(memNom, memPrenom, memPiece, memMontant, memNotes, memMessageErreur, memFlags.identite, memFlags.piece);
+        ajoutOptimisteCache(memNom, memPrenom, memPiece, memMontant, memNotes);
+        afficherMessage("⚠️ Saisie forcée et enregistrée en rouge.", "error");
+        reinitialiserFormulaire();
+        // Écriture forcée en arrière-plan
+        google.script.run.withSuccessHandler(function () {}).withFailureHandler(echecEnregistrement)
+          .forcerSaisie(memNom, memPrenom, memPiece, memMontant, memNotes, memMessageErreur, memFlags.identite, memFlags.piece);
+      }
+
+      // --- Contrôle A/B/C EN LOCAL (miroir de traiterSaisie, pour feedback instantané) ---
+      // ⚠️ Garder synchro avec Code.gs::traiterSaisie. Le serveur reste autoritaire (il
+      //    reconfirme à l'écriture en arrière-plan) -> aucun faux négatif même si bug ici.
+      function analyserDoublonLocal(nom, prenom, piece) {
+        var mode = (cacheVerif && cacheVerif.mode) || "SIGNALER";
+        var nomN = normPieceJS(nom), prenomN = normPieceJS(prenom), pieceN = normPieceJS(piece);
+        var rows = (cacheVerif && cacheVerif.offre) || [];
+        var pireCas = null, details = [];
+        for (var i = 0; i < rows.length; i++) {
+          var r = rows[i];
+          var nomH = normPieceJS(r.nom), prenomH = normPieceJS(r.prenom);
+          var pieceH = r.pieceNorm || normPieceJS(r.piece || "");
+          if (!nomH && !pieceH) continue;
+          var memeId = (nomN !== "" && prenomN !== "" && nomH === nomN && prenomH === prenomN);
+          var memePiece = (pieceN !== "" && pieceH === pieceN);
+          if (!memeId && !memePiece) continue;
+          var t = (memeId && memePiece) ? 'A' : (memePiece ? 'B' : 'C');
+          if (t === 'A') pireCas = 'A';
+          else if (t === 'B' && pireCas !== 'A') pireCas = 'B';
+          else if (t === 'C' && pireCas !== 'A' && pireCas !== 'B') pireCas = 'C';
+          details.push({ ligne: r.ligne, type: t, date: r.date, nom: r.nom, prenom: r.prenom, piece: r.piece || "", montant: r.montant || "", notes: r.notes || "" });
+          if (t === 'A') break;
+        }
+        if (!pireCas) return { status: "SUCCES", message: "✅ Saisie enregistrée !" };
+
+        var isBloque = false, titre = "", msg = "", couleur = "ROUGE";
+        if (mode === "BLOQUANT") {
+          if (pireCas === 'A') { isBloque = true; titre = "🛑 SAISIE REFUSÉE"; msg = "Ce client a déjà profité de l'offre."; }
+          else if (pireCas === 'B') { isBloque = true; titre = "🛑 SAISIE REFUSÉE"; msg = "Ce numéro de pièce d'identité est déjà associé à un autre client."; }
+          else { couleur = "ORANGE"; titre = "⚠️ HOMONYME DÉTECTÉ"; msg = "Un client porte ce nom avec une autre pièce. Demandez une 2ème pièce d'identité pour confirmer qu'il s'agit bien d'une personne différente avant de forcer l'ajout."; }
+        } else {
+          if (pireCas === 'A') { titre = "🛑 ALERTE FRAUDE"; msg = "Ce client a déjà été enregistré avec ce numéro de pièce d'identité."; }
+          else if (pireCas === 'B') { titre = "🛑 ANOMALIE GRAVE"; msg = "Ce numéro de pièce d'identité est déjà utilisé dans la base sous un autre nom !"; }
+          else { couleur = "ORANGE"; titre = "⚠️ HOMONYME DÉTECTÉ"; msg = "Un client porte ce nom avec une autre pièce. Demandez une 2ème pièce d'identité pour confirmer qu'il s'agit bien d'une personne différente avant de forcer l'ajout."; }
+        }
+        if (isBloque) return { status: "BLOQUE", titre: titre, message: msg, details: details };
+        return { status: "CONFIRMATION", titre: titre, message: msg, couleur: couleur, details: details,
+                 noteForce: "⚠️ Ajout forcé (Cas " + pireCas + ")",
+                 flags: { identite: (pireCas === 'A' || pireCas === 'C'), piece: (pireCas === 'A' || pireCas === 'B') } };
+      }
+
+      // Ajoute la saisie au cache local TOUT DE SUITE (optimiste) -> la suivante est correcte
+      function ajoutOptimisteCache(nom, prenom, piece, montant, notes) {
+        if (!cacheVerif) return;
+        var pn = normPieceJS(piece);
+        cacheVerif.offre.push({
+          pieceNorm: pn, ligne: -1, date: "à l'instant",
+          nom: (nom || "").toUpperCase().trim(), prenom: (prenom || "").toUpperCase().trim(),
+          piece: (piece || "").toUpperCase().trim(), montant: (montant || "").toString(), notes: (notes || "").toString()
+        });
+        if (cacheVerif.annuaireActif && pn) {
+          cacheVerif.annuaire[pn] = { nom: (nom || "").toUpperCase().trim(), prenom: (prenom || "").toUpperCase().trim() };
+        }
+      }
+
+      // Réponse du serveur à l'écriture en arrière-plan
+      function confirmerEnregistrement(rep) {
+        if (rep && rep.status === "SUCCES") return; // tout va bien (silencieux)
+        // Cas rare : le serveur a détecté un doublon manqué en local -> non écrit
+        afficherMessage("⚠️ Le serveur a refusé la dernière saisie (doublon). Elle n'a PAS été enregistrée — à ressaisir.", "error");
+        rechargerCacheVerif();
+      }
+      function echecEnregistrement(err) {
+        afficherMessage("⚠️ Échec d'enregistrement (réseau). La dernière saisie n'est PAS garantie — à ressaisir.", "error");
+        rechargerCacheVerif();
       }
 
       function annulerSaisie() {

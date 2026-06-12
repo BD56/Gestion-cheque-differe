@@ -338,7 +338,9 @@ function chargerCacheVerif() {
         date: (donnees[i][0] instanceof Date) ? Utilities.formatDate(donnees[i][0], "Europe/Paris", "dd/MM/yyyy HH:mm") : (donnees[i][0] ? donnees[i][0].toString() : ""),
         nom: donnees[i][1] ? donnees[i][1].toString() : "",
         prenom: donnees[i][2] ? donnees[i][2].toString() : "",
-        montant: donnees[i][4] ? donnees[i][4].toString() : ""
+        piece: donnees[i][3] ? donnees[i][3].toString() : "",
+        montant: donnees[i][4] ? donnees[i][4].toString() : "",
+        notes: donnees[i][5] ? donnees[i][5].toString() : ""
       });
     }
   }

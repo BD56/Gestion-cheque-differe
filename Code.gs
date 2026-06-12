@@ -214,13 +214,12 @@ function verifierPiece(piece) {
 }
 
 // =================================================================
-// --- ANNUAIRE INTER-OFFRES (Niveau 3) — DORMANT (ANNUAIRE_ACTIF=false) ---
+// --- ANNUAIRE INTER-OFFRES (Niveau 3) — ACTIF (kill-switch: ANNUAIRE_ACTIF) ---
 //     Index pièce -> Nom/Prénom des offres passées, pour pré-remplir la saisie.
-//     Tant que dormant : rien n'est écrit, lu ni affiché. Réactivable en
-//     passant ANNUAIRE_ACTIF à true (après feu vert direction / RGPD).
+//     Passer ANNUAIRE_ACTIF à false coupe tout (écriture, lecture, affichage).
 //     Store NON autoritaire : la décision A/B/C reste sur « Saisies ».
 // =================================================================
-var ANNUAIRE_ACTIF = false;
+var ANNUAIRE_ACTIF = true;
 var ANNUAIRE_RETENTION_ANS = 3;   // purge après X ans d'inactivité (dernière vue)
 var ANNUAIRE_FEUILLE = "_Annuaire";
 

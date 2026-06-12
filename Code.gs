@@ -318,6 +318,44 @@ function purgerAnnuaire() {
   }
 }
 
+// Données pré-chargées au démarrage pour la vérif IMMÉDIATE (locale) au blur :
+// pièces de l'offre en cours (N2) + annuaire (N3). Rafraîchi au retour sur la page
+// et après chaque saisie. NE remplace PAS la validation finale (toujours serveur).
+function chargerCacheVerif() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var feuille = ss.getSheetByName("Saisies");
+  var mode = feuille ? (feuille.getRange("Z1").getValue() || "SIGNALER") : "SIGNALER";
+
+  var offre = [];
+  if (feuille) {
+    var donnees = feuille.getDataRange().getValues();
+    for (var i = 1; i < donnees.length; i++) {
+      var pn = _normPiece_(donnees[i][3]);
+      if (pn === "") continue;
+      offre.push({
+        pieceNorm: pn,
+        ligne: i + 1,
+        date: (donnees[i][0] instanceof Date) ? Utilities.formatDate(donnees[i][0], "Europe/Paris", "dd/MM/yyyy HH:mm") : (donnees[i][0] ? donnees[i][0].toString() : ""),
+        nom: donnees[i][1] ? donnees[i][1].toString() : "",
+        prenom: donnees[i][2] ? donnees[i][2].toString() : "",
+        montant: donnees[i][4] ? donnees[i][4].toString() : ""
+      });
+    }
+  }
+
+  var annuaire = {};
+  if (ANNUAIRE_ACTIF) {
+    var fa = _feuilleAnnuaire_();
+    var ad = fa.getDataRange().getValues();
+    for (var j = 1; j < ad.length; j++) {
+      var p = _normPiece_(ad[j][0]);
+      if (p !== "") annuaire[p] = { nom: ad[j][1] ? ad[j][1].toString() : "", prenom: ad[j][2] ? ad[j][2].toString() : "" };
+    }
+  }
+
+  return { mode: mode, offre: offre, annuaire: annuaire, annuaireActif: ANNUAIRE_ACTIF, modeAnnuaire: getModeAnnuaire() };
+}
+
 // --- FONCTIONS SECONDAIRES ---
 function getInfosPanneau() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();

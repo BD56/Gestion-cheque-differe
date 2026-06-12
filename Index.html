@@ -364,8 +364,9 @@
         btn.disabled = false;
         
         if (reponse.status === "SUCCES") {
-          afficherMessage(reponse.message, "success"); 
+          afficherMessage(reponse.message, "success");
           reinitialiserFormulaire();
+          rechargerCacheVerif();
         } else if (reponse.status === "CONFIRMATION") {
           memMessageErreur = reponse.noteForce; 
           memFlags = reponse.flags;
@@ -429,8 +430,9 @@
         google.script.run.withSuccessHandler(function(reponse) {
             btn.innerHTML = "VÉRIFIER ET VALIDER"; 
             btn.disabled = false; 
-            afficherMessage(reponse.message, "error"); 
+            afficherMessage(reponse.message, "error");
             reinitialiserFormulaire();
+            rechargerCacheVerif();
         }).forcerSaisie(memNom, memPrenom, memPiece, memMontant, memNotes, memMessageErreur, memFlags.identite, memFlags.piece);
       }
 
@@ -642,13 +644,37 @@
 
       // --- NIVEAU 2 : VÉRIFICATION IMMÉDIATE DU N° DE PIÈCE (au blur) ---
       // Pré-avertissement non bloquant : ce N° est-il déjà sur l'offre en cours ?
+      // Cache pré-chargé (offre en cours + annuaire) pour une vérif LOCALE instantanée.
+      var cacheVerif = null;
+      function rechargerCacheVerif() {
+        google.script.run
+          .withSuccessHandler(function (c) { cacheVerif = c; })
+          .withFailureHandler(function () {})
+          .chargerCacheVerif();
+      }
+      window.addEventListener('load', rechargerCacheVerif);
+      // Rafraîchir au retour sur la page (réveil tablette, retour d'une autre app)
+      document.addEventListener('visibilitychange', function () { if (!document.hidden) rechargerCacheVerif(); });
+
+      function normPieceJS(p) { return (p || "").toString().toUpperCase().replace(/[\s-]/g, ''); }
+
       document.getElementById('piece').addEventListener('blur', function () {
         var val = this.value.trim();
         if (val === "") return; // champ vide -> rien
-        google.script.run
-          .withSuccessHandler(afficherVerifPiece)
-          .withFailureHandler(function () {}) // en cas d'échec réseau : silencieux
-          .verifierPiece(val);
+        if (!cacheVerif) {
+          // cache pas encore chargé -> repli serveur (rare)
+          google.script.run.withSuccessHandler(afficherVerifPiece).withFailureHandler(function () {}).verifierPiece(val);
+          return;
+        }
+        // Vérif 100% locale (instantanée)
+        var pn = normPieceJS(val);
+        if (pn === "") return;
+        var matches = cacheVerif.offre.filter(function (d) { return d.pieceNorm === pn; });
+        if (matches.length) {
+          afficherVerifPiece({ trouve: true, mode: cacheVerif.mode, matches: matches });
+        } else if (cacheVerif.annuaireActif && cacheVerif.annuaire[pn]) {
+          afficherVerifPiece({ trouve: false, annuaire: cacheVerif.annuaire[pn], modeAnnuaire: cacheVerif.modeAnnuaire });
+        }
       });
 
       function afficherVerifPiece(res) {

@@ -268,6 +268,15 @@
       </div>
     </div>
 
+    <div id="modalDoublonPiece" class="modal-overlay">
+      <div class="modal-content">
+        <h2 style="margin-top:0; color:#d93025; font-size:18px;">⚠️ N° de pièce déjà enregistré</h2>
+        <p id="msgDoublonPiece" style="font-size:14px; font-weight:bold; color:#721c24;"></p>
+        <div id="listeDoublonPiece"></div>
+        <button class="btn-action" style="background:#1a73e8; margin-top:10px;" onclick="fermerDoublonPiece()">OK</button>
+      </div>
+    </div>
+
     <div id="zoneImpression"></div>
 
     <script>
@@ -604,6 +613,40 @@
           });
         });
       })();
+
+      // --- NIVEAU 2 : VÉRIFICATION IMMÉDIATE DU N° DE PIÈCE (au blur) ---
+      // Pré-avertissement non bloquant : ce N° est-il déjà sur l'offre en cours ?
+      document.getElementById('piece').addEventListener('blur', function () {
+        var val = this.value.trim();
+        if (val === "") return; // champ vide -> rien
+        google.script.run
+          .withSuccessHandler(afficherVerifPiece)
+          .withFailureHandler(function () {}) // en cas d'échec réseau : silencieux
+          .verifierPiece(val);
+      });
+
+      function afficherVerifPiece(res) {
+        if (!res || !res.trouve) return; // rien trouvé -> rien ne se passe
+        var msg = "Ce numéro est déjà enregistré sur cette offre.";
+        if (res.mode === "BLOQUANT") msg += " (sera refusé à la validation)";
+        document.getElementById('msgDoublonPiece').innerHTML = msg;
+
+        var html = "";
+        (res.matches || []).forEach(function (d) {
+          html += "<div class='doublon-carte'>";
+          html += "📅 " + d.date + " (Ligne " + d.ligne + ")<br>";
+          html += "👤 " + d.nom + " " + d.prenom;
+          if (d.montant !== "") html += "<br>💶 " + d.montant + " €";
+          html += "</div>";
+        });
+        document.getElementById('listeDoublonPiece').innerHTML = html;
+        document.getElementById('modalDoublonPiece').style.display = "flex";
+      }
+
+      function fermerDoublonPiece() {
+        document.getElementById('modalDoublonPiece').style.display = "none";
+        document.getElementById('nom').focus(); // on continue la saisie
+      }
     </script>
 
     <!-- ===== SCAN MRZ (OCR) — DORMANT, piloté par OCR_ACTIF ===== -->

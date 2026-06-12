@@ -173,6 +173,38 @@ function forcerSaisie(nom, prenom, piece, montant, notes, messageErreur, flagIde
   }
 }
 
+// =================================================================
+// --- VÉRIFICATION IMMÉDIATE DU N° DE PIÈCE (Niveau 2, lecture seule) ---
+//     Pré-avertissement au blur du champ N° : ce numéro est-il déjà sur
+//     l'offre en cours ? Ne bloque rien, ne réécrit rien, ne décide rien
+//     (la décision A/B/C reste à traiterSaisie, à la validation).
+// =================================================================
+function verifierPiece(piece) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var feuille = ss.getSheetByName("Saisies");
+  if (!feuille) return { trouve: false };
+
+  var mode = feuille.getRange("Z1").getValue() || "SIGNALER";
+  var pieceNorm = piece ? piece.toString().toUpperCase().replace(/[\s-]/g, '') : "";
+  if (pieceNorm === "") return { trouve: false, mode: mode };
+
+  var donnees = feuille.getDataRange().getValues();
+  var matches = [];
+  for (var i = 1; i < donnees.length; i++) {
+    var pieceHisto = donnees[i][3] ? donnees[i][3].toString().toUpperCase().replace(/[\s-]/g, '') : "";
+    if (pieceHisto !== "" && pieceHisto === pieceNorm) {
+      matches.push({
+        ligne: i + 1,
+        date: (donnees[i][0] instanceof Date) ? Utilities.formatDate(donnees[i][0], "Europe/Paris", "dd/MM/yyyy HH:mm") : (donnees[i][0] ? donnees[i][0].toString() : ""),
+        nom: donnees[i][1] ? donnees[i][1].toString() : "",
+        prenom: donnees[i][2] ? donnees[i][2].toString() : "",
+        montant: donnees[i][4] ? donnees[i][4].toString() : ""
+      });
+    }
+  }
+  return { trouve: matches.length > 0, mode: mode, matches: matches };
+}
+
 // --- FONCTIONS SECONDAIRES ---
 function getInfosPanneau() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();

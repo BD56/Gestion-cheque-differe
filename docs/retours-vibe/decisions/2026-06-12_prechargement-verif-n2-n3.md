@@ -26,3 +26,11 @@ l'aller-retour Apps Script, pas des données).
 - Ne pas confondre **cache de vérif** (confort, non autoritaire) et **décision A/B/C**
   (toujours serveur, sur « Saisies »).
 - Déployé en prod le 2026-06-12 (même URL, @32).
+
+## Addendum (même jour, @34) — re-synchro au focus du N°
+Après la « validation instantanée », le cache n'était plus re-fetché entre deux saisies
+(seulement **ajout optimiste local**) → il ne captait pas un changement **externe** (ex.
+édition directe dans le Sheet). Ajout d'un **fetch au `focus` du champ N°** : le cache se
+**re-synchronise au début de chaque saisie**, l'appel chevauchant la frappe (pas de
+latence perçue). Rappel : la sécurité reste garantie par le **recontrôle serveur à
+l'écriture**, indépendamment de la fraîcheur du cache.

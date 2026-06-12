@@ -776,6 +776,8 @@
           });
           document.getElementById('listeDoublonPiece').innerHTML = html;
           document.getElementById('modalDoublonPiece').style.display = "flex";
+          // On connaît la personne (doublon de l'offre) -> pré-remplir Nom/Prénom si vides
+          if (res.matches && res.matches.length) remplirAnnuaire({ nom: res.matches[0].nom, prenom: res.matches[0].prenom });
           return;
         }
         // Niveau 3 (dormant) : pièce connue d'une offre passée, pas sur l'offre en cours

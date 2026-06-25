@@ -547,6 +547,14 @@
         preparerImpression('jour', d, "Impression du " + d.split('-').reverse().join('/'));
       }
 
+      // Convertit un montant texte ("150,50 €", "150.50"...) en nombre
+      function parseMontant(s) {
+        if (s === null || s === undefined) return 0;
+        var t = s.toString().replace(/[^0-9.,-]/g, '').replace(',', '.');
+        var v = parseFloat(t);
+        return isNaN(v) ? 0 : v;
+      }
+
       function preparerImpression(type, dateStr, titreRapport) {
         document.body.style.cursor = "wait";
         google.script.run.withSuccessHandler(function(donnees) {
@@ -554,13 +562,24 @@
             if (donnees.length === 0) { alert("Aucune donnée trouvée."); return; }
             
             var html = "<h2 class='titre-print'>" + titreRapport + "</h2><table class='table-print'>";
+            var idxMontant = 4; // colonnes A=0 (Date) ... E=4 (Montant) ... F=5 (Notes)
+            var totalMontant = 0;
             for (var i = 0; i < donnees.length; i++) {
               html += "<tr>";
-              for (var j = 0; j < donnees[i].length; j++) { 
-                html += (i===0) ? "<th>"+donnees[i][j]+"</th>" : "<td>"+donnees[i][j]+"</td>"; 
+              for (var j = 0; j < donnees[i].length; j++) {
+                html += (i===0) ? "<th>"+donnees[i][j]+"</th>" : "<td>"+donnees[i][j]+"</td>";
               }
               html += "</tr>";
+              if (i > 0) totalMontant += parseMontant(donnees[i][idxMontant]);
             }
+            // Ligne TOTAL (somme de la colonne Montant)
+            var nbCol = (donnees[0] || []).length || 6;
+            var totalStr = totalMontant.toFixed(2).replace('.', ',') + " €";
+            html += "<tr>";
+            html += "<td colspan='" + idxMontant + "' style='text-align:right; font-weight:bold;'>TOTAL</td>";
+            html += "<td style='font-weight:bold;'>" + totalStr + "</td>";
+            for (var k = idxMontant + 1; k < nbCol; k++) html += "<td></td>";
+            html += "</tr>";
             html += "</table>";
             
             document.getElementById('zoneImpression').innerHTML = html;

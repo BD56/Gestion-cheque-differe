@@ -34,6 +34,159 @@ function getConfig() {
   return cfg;
 }
 
+// Enregistre les réglages (espace responsable). Seules les clés connues sont
+// acceptées ; les libellés principaux ne peuvent pas être vides.
+function setConfig(valeurs, jeton) {
+  exigerAdmin_(jeton);
+  var obligatoires = ["NOM_STRUCTURE", "NOM_OFFRE", "TITRE_APP", "LIBELLE_MONTANT", "LIBELLE_NOTES"];
+  var aEcrire = {};
+  for (var k in CONFIG_DEFAUTS) {
+    if (!valeurs || !(k in valeurs)) continue;
+    var v = (valeurs[k] === null || valeurs[k] === undefined) ? "" : valeurs[k].toString().trim();
+    if (k === "MONTANT_OBLIGATOIRE") v = (v === "NON") ? "NON" : "OUI";
+    if (v.length > 100) throw new Error("« " + k + " » : 100 caractères maximum.");
+    if (obligatoires.indexOf(k) !== -1 && v === "") throw new Error("« " + k + " » ne peut pas être vide.");
+    aEcrire['CFG_' + k] = v;
+  }
+  PropertiesService.getDocumentProperties().setProperties(aEcrire);
+  return getConfig();
+}
+
+// =================================================================
+// --- ESPACE RESPONSABLE : CODE PIN (vérifié côté serveur) ---
+//     Protège réglages, mode, dates, clôture, archives, corrections.
+//     La saisie et l'impression restent libres.
+//     - Le code n'est jamais stocké en clair (empreinte SHA-256 + sel).
+//     - Code juste -> jeton de session (CacheService), valable 10 min
+//       d'inactivité. Chaque action protégée exige un jeton valide.
+//     - 5 codes faux -> blocage 15 min.
+//     - Le panneau du Sheet (secours) passe sans code : réservé aux
+//       éditeurs du classeur. Il permet aussi de réinitialiser le code.
+// =================================================================
+var ADMIN_PIN_REGEX = /^\d{4,8}$/;
+var ADMIN_ESSAIS_MAX = 5;
+var ADMIN_BLOCAGE_MIN = 15;
+var ADMIN_SESSION_SEC = 600;
+
+function empreintePin_(sel, pin) {
+  var octets = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, sel + ":" + pin, Utilities.Charset.UTF_8);
+  return Utilities.base64Encode(octets);
+}
+
+function etatAdmin() {
+  return { pinDefini: !!PropertiesService.getDocumentProperties().getProperty('ADMIN_PIN_HASH') };
+}
+
+function creerJetonAdmin_() {
+  var jeton = Utilities.getUuid();
+  CacheService.getScriptCache().put('ADM_' + jeton, '1', ADMIN_SESSION_SEC);
+  return jeton;
+}
+
+function jetonValide_(jeton) {
+  if (!jeton || typeof jeton !== 'string') return false;
+  var cache = CacheService.getScriptCache();
+  if (cache.get('ADM_' + jeton) !== '1') return false;
+  cache.put('ADM_' + jeton, '1', ADMIN_SESSION_SEC); // prolonge (10 min d'inactivité)
+  return true;
+}
+
+// L'utilisateur courant est-il propriétaire/éditeur du classeur ? (panneau du Sheet)
+// Dans la web app, l'e-mail du visiteur n'est en général pas disponible -> false.
+function estEditeurDuClasseur_() {
+  try {
+    var email = Session.getActiveUser().getEmail();
+    if (!email) return false;
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var proprio = ss.getOwner();
+    if (proprio && proprio.getEmail() === email) return true;
+    return ss.getEditors().some(function (u) { return u.getEmail() === email; });
+  } catch (e) {
+    return false;
+  }
+}
+
+function exigerAdmin_(jeton) {
+  if (jetonValide_(jeton) || estEditeurDuClasseur_()) return;
+  throw new Error("ADMIN_REQUIS : code responsable requis (session expirée ?)");
+}
+
+// Code juste -> { ok:true, jeton } ; sinon { ok:false, message }
+function ouvrirSessionAdmin(pin) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    var props = PropertiesService.getDocumentProperties();
+    var hash = props.getProperty('ADMIN_PIN_HASH');
+    if (!hash) return { ok: false, message: "Aucun code défini : créez-le d'abord." };
+    var bloque = Number(props.getProperty('ADMIN_BLOQUE_JUSQUA') || 0);
+    if (bloque > Date.now()) {
+      return { ok: false, message: "Trop d'essais. Réessayez dans " + Math.ceil((bloque - Date.now()) / 60000) + " min." };
+    }
+    if (empreintePin_(props.getProperty('ADMIN_PIN_SEL'), (pin || "").toString()) === hash) {
+      props.setProperty('ADMIN_ECHECS', '0');
+      return { ok: true, jeton: creerJetonAdmin_() };
+    }
+    var echecs = Number(props.getProperty('ADMIN_ECHECS') || 0) + 1;
+    if (echecs >= ADMIN_ESSAIS_MAX) {
+      props.setProperties({ ADMIN_ECHECS: '0', ADMIN_BLOQUE_JUSQUA: String(Date.now() + ADMIN_BLOCAGE_MIN * 60000) });
+      return { ok: false, message: "Code faux. Trop d'essais : bloqué " + ADMIN_BLOCAGE_MIN + " min." };
+    }
+    props.setProperty('ADMIN_ECHECS', String(echecs));
+    return { ok: false, message: "Code faux (" + (ADMIN_ESSAIS_MAX - echecs) + " essai(s) restant(s))." };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// Création (si aucun code) ou changement (session responsable requise).
+function definirPin(nouveauPin, jeton) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    var props = PropertiesService.getDocumentProperties();
+    if (props.getProperty('ADMIN_PIN_HASH')) exigerAdmin_(jeton);
+    nouveauPin = (nouveauPin || "").toString();
+    if (!ADMIN_PIN_REGEX.test(nouveauPin)) return { ok: false, message: "Le code doit contenir 4 à 8 chiffres." };
+    var sel = Utilities.getUuid();
+    props.setProperties({
+      ADMIN_PIN_SEL: sel,
+      ADMIN_PIN_HASH: empreintePin_(sel, nouveauPin),
+      ADMIN_ECHECS: '0',
+      ADMIN_BLOQUE_JUSQUA: '0'
+    });
+    return { ok: true, jeton: (jeton && jetonValide_(jeton)) ? jeton : creerJetonAdmin_() };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function fermerSessionAdmin(jeton) {
+  if (jeton && typeof jeton === 'string') CacheService.getScriptCache().remove('ADM_' + jeton);
+}
+
+// Secours (panneau du Sheet, éditeurs uniquement) : efface le code. Le prochain
+// passage dans l'espace responsable demandera d'en créer un nouveau.
+function reinitialiserPinPanneau() {
+  if (!estEditeurDuClasseur_()) throw new Error("Réservé aux éditeurs du classeur.");
+  var props = PropertiesService.getDocumentProperties();
+  ['ADMIN_PIN_HASH', 'ADMIN_PIN_SEL', 'ADMIN_ECHECS', 'ADMIN_BLOQUE_JUSQUA'].forEach(function (k) { props.deleteProperty(k); });
+  return "✅ Code responsable effacé. Il sera redemandé (création) dans l'application.";
+}
+
+// Tout ce qu'affiche l'espace responsable, en un appel.
+function getInfosAdmin(jeton) {
+  exigerAdmin_(jeton);
+  var f = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Saisies");
+  return {
+    mode: f ? (f.getRange("Z1").getValue() || "SIGNALER") : "SIGNALER",
+    dates: getDatesOperation(),
+    annuaireActif: ANNUAIRE_ACTIF,
+    modeAnnuaire: getModeAnnuaire(),
+    config: getConfig()
+  };
+}
+
 // =================================================================
 // --- FONCTIONS PRINCIPALES AVEC LOCKSERVICE POUR ATOMICITÉ ---
 // =================================================================
@@ -301,7 +454,8 @@ function chercherAnnuaire_(pieceNorm) {
 function getModeAnnuaire() {
   return PropertiesService.getDocumentProperties().getProperty('MODE_ANNUAIRE') || 'C';
 }
-function basculerModeAnnuaire() {
+function basculerModeAnnuaire(jeton) {
+  exigerAdmin_(jeton);
   var m = (getModeAnnuaire() === 'C') ? 'B' : 'C';
   PropertiesService.getDocumentProperties().setProperty('MODE_ANNUAIRE', m);
   return m;
@@ -437,14 +591,32 @@ function genererDonneesImpression(type, dateChoisieStr) {
   return lignes.length ? [entete].concat(lignes) : [];
 }
 
-function basculerModeWebApp() {
+function basculerModeWebApp(jeton) {
+  exigerAdmin_(jeton);
   var feuille = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Saisies");
   var modeActuel = feuille.getRange("Z1").getValue() || "SIGNALER";
   var nouveauMode = (modeActuel === "SIGNALER") ? "BLOQUANT" : "SIGNALER";
   feuille.getRange("Z1").setValue(nouveauMode); return nouveauMode;
 }
 
-function archiverOffreWebApp() {
+function archiverOffreWebApp(jeton) {
+  exigerAdmin_(jeton);
+  return archiverOffre_();
+}
+
+// Clôture réelle (sans contrôle d'accès : appelée aussi par le robot de nuit).
+// Sous verrou : aucune saisie ne peut s'intercaler entre la copie et le vidage.
+function archiverOffre_() {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    return archiverOffreSousVerrou_();
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function archiverOffreSousVerrou_() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var feuilleSaisies = ss.getSheetByName("Saisies");
   var dateFin = Utilities.formatDate(new Date(), "Europe/Paris", "dd-MM-yyyy_HH-mm");
@@ -459,7 +631,7 @@ function archiverOffreWebApp() {
   feuilleSaisies.getRange("Z1").setValue("SIGNALER");
   
   // 🧹 NOUVEAU : On efface les dates en mémoire pour verrouiller les tablettes
-  setDatesOperation("", "");
+  enregistrerDates_("", "");
 
   return "✅ L'offre a été clôturée et archivée avec succès !";
 }
@@ -638,10 +810,10 @@ function verificationClotureNocturne() {
   // Ça veut dire que l'offre s'est terminée hier. On archive !
   if (dateJour > dateFinObj) {
     // On appelle ta fonction d'archivage existante
-    archiverOffreWebApp(); 
+    archiverOffre_(); 
     
     // On efface les dates en mémoire pour verrouiller la tablette le matin
-    setDatesOperation("", ""); 
+    enregistrerDates_("", ""); 
   }
 }
 
@@ -657,7 +829,12 @@ function getDatesOperation() {
   };
 }
 
-function setDatesOperation(dateDebut, dateFin) {
+function setDatesOperation(dateDebut, dateFin, jeton) {
+  exigerAdmin_(jeton);
+  return enregistrerDates_(dateDebut, dateFin);
+}
+
+function enregistrerDates_(dateDebut, dateFin) {
   var memoire = PropertiesService.getDocumentProperties();
   memoire.setProperty('DATE_DEBUT', dateDebut);
   memoire.setProperty('DATE_FIN', dateFin);

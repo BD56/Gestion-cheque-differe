@@ -57,6 +57,7 @@
     </div>
     <button class="btn" id="btnMode" onclick="changerMode()">⏳ Chargement Mode...</button>
     <button class="btn btn-archive" onclick="cloturer()">⚠️ CLÔTURER L'OFFRE</button>
+    <button class="btn" style="background-color: #5f6368;" onclick="reinitialiserPin()">🔑 RÉINITIALISER LE CODE RESPONSABLE</button>
 
     <script>
       window.onload = function() {
@@ -69,6 +70,17 @@
         google.script.run.withSuccessHandler(majMode).getInfosPanneau();
       };
 
+      // Les actions sensibles sont réservées aux éditeurs du classeur (contrôle serveur).
+      function echec(err) {
+        alert("⚠️ " + (err && err.message ? err.message : err));
+        google.script.run.withSuccessHandler(majMode).getInfosPanneau();
+      }
+
+      function reinitialiserPin() {
+        if (!confirm("Effacer le code responsable ?\n\nLe prochain passage dans l'espace responsable de l'application demandera d'en créer un nouveau.")) return;
+        google.script.run.withSuccessHandler(function (msg) { alert(msg); }).withFailureHandler(echec).reinitialiserPinPanneau();
+      }
+
       function imprimerAuj() { google.script.run.allerVersImpression("aujourdhui"); }
       function imprimerAncien() {
         var d = document.getElementById('dateImpression').value;
@@ -78,7 +90,7 @@
 
       function changerMode() {
         document.getElementById('btnMode').innerHTML = "⏳ MAJ...";
-        google.script.run.withSuccessHandler(majMode).basculerModeWebApp();
+        google.script.run.withSuccessHandler(majMode).withFailureHandler(echec).basculerModeWebApp();
       }
 
       function majMode(infosOuMode) {
@@ -98,7 +110,7 @@
               document.getElementById('dateDebut').value = "";
               document.getElementById('dateFin').value = "";
               
-          }).archiverOffreWebApp();
+          }).withFailureHandler(echec).archiverOffreWebApp();
         }
       }
 
@@ -116,7 +128,7 @@
         google.script.run.withSuccessHandler(function(rep) {
           msg.style.color = "green"; msg.innerHTML = rep;
           setTimeout(function(){ msg.innerHTML = ""; }, 3000);
-        }).setDatesOperation(debut, fin);
+        }).withFailureHandler(function (err) { msg.innerHTML = ""; echec(err); }).setDatesOperation(debut, fin);
       }
     </script>
   </body>

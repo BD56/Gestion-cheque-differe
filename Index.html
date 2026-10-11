@@ -93,7 +93,7 @@
           <button class="btn-settings" onclick="ouvrirPanneau()" title="Panneau de contrôle">⚙️</button>
         </div>
       </div>
-      <div class="subtitle"><?= cfg.NOM_OFFRE ?></div>
+      <div class="subtitle" id="txtNomOffre"><?= cfg.NOM_OFFRE ?></div>
 
       <div id="sousTitreOperation" style="text-align: center; color: #555; font-size: 16px; font-weight: bold; margin-top: -10px; margin-bottom: 20px;">⏳ Chargement des dates...</div>
       
@@ -114,11 +114,11 @@
           <input type="text" id="prenom" placeholder="Ex: JEAN" autocomplete="off">
         </div>
         <div class="input-group">
-          <label><?= cfg.LIBELLE_MONTANT ?> (€)<?= cfg.MONTANT_OBLIGATOIRE === "NON" ? "" : " *" ?></label>
+          <label id="lblMontant"><?= cfg.LIBELLE_MONTANT ?> (€)<?= cfg.MONTANT_OBLIGATOIRE === "NON" ? "" : " *" ?></label>
           <input type="text" id="montant" placeholder="Ex: 150,50" autocomplete="off">
         </div>
         <div class="input-group">
-          <label><?= cfg.LIBELLE_NOTES ?><?= cfg.PRECISION_NOTES ? " (" + cfg.PRECISION_NOTES + ")" : "" ?></label>
+          <label id="lblNotes"><?= cfg.LIBELLE_NOTES ?><?= cfg.PRECISION_NOTES ? " (" + cfg.PRECISION_NOTES + ")" : "" ?></label>
           <input type="text" id="notes" placeholder="Commentaire..." autocomplete="off">
         </div>
         <button class="btn-submit" id="btnValider" onclick="envoyerSaisie()">VÉRIFIER ET VALIDER</button>
@@ -238,7 +238,19 @@
         <button class="btn-action btn-print-offre" onclick="preparerImpression('offre', '', 'Impression Offre Complète')">📚 TOUTE L'OFFRE</button>
         
         <hr style="border: 0; height: 1px; background: #ddd; margin: 20px 0;">
-        
+
+        <!-- ===== ESPACE RESPONSABLE (code PIN vérifié côté serveur) ===== -->
+        <div id="zoneVerrou">
+          <h3 style="text-align: center; margin-top: 0;">🔒 Espace responsable</h3>
+          <p id="txtVerrou" style="font-size: 13px; text-align: center; color: #5f6368; margin-top: 0;"></p>
+          <input type="password" id="pinSaisi" inputmode="numeric" autocomplete="off" placeholder="Code (4 à 8 chiffres)" style="margin-bottom: 10px;">
+          <input type="password" id="pinConfirme" inputmode="numeric" autocomplete="off" placeholder="Confirmer le code" style="display: none; margin-bottom: 10px;">
+          <button class="btn-action" id="btnDeverrouiller" style="background-color: #1a73e8;" onclick="deverrouillerAdmin()">DÉVERROUILLER</button>
+          <div id="msgVerrou" style="text-align: center; font-weight: bold; font-size: 13px; color: #d93025;"></div>
+        </div>
+
+        <div id="zoneAdmin" style="display: none;">
+        <h3 style="text-align: center; margin-top: 0;">🔓 Espace responsable</h3>
         <button class="btn-action" id="btnMode" onclick="changerMode()">⏳ Chargement Mode...</button>
         <button class="btn-action" id="btnModeAnnuaire" style="display:none; background-color:#5f6368;" onclick="changerModeAnnuaire()"></button>
         <button class="btn-action btn-open-sheet" onclick="ouvrirFichierSouche()">OUVRIR GOOGLE SHEETS</button>
@@ -256,6 +268,29 @@
         </div>
         <button class="btn-action" style="background-color: #34a853;" onclick="sauvegarderDatesTablette()">METTRE À JOUR LES DATES</button>
         <div id="msgRetourModal" style="text-align: center; font-weight: bold; margin-top: 10px; font-size: 13px;"></div>
+
+        <hr style="border: 0; height: 1px; background: #ddd; margin: 20px 0;">
+        <button class="btn-action" style="background-color: #5f6368;" onclick="basculerBloc('blocReglages')">🏷️ RÉGLAGES DE LA STRUCTURE</button>
+        <div id="blocReglages" style="display: none; background: #f1f3f4; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+          <div id="champsReglages"></div>
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 14px;">
+            <input type="checkbox" id="cfg_MONTANT_OBLIGATOIRE" style="width: auto;"> Montant obligatoire
+          </label>
+          <button class="btn-action" style="background-color: #34a853; margin-top: 10px;" onclick="enregistrerReglages()">ENREGISTRER LES RÉGLAGES</button>
+          <div id="msgReglages" style="text-align: center; font-weight: bold; font-size: 13px;"></div>
+        </div>
+
+        <button class="btn-action" style="background-color: #5f6368;" onclick="basculerBloc('blocPin')">🔑 CHANGER LE CODE RESPONSABLE</button>
+        <div id="blocPin" style="display: none; background: #f1f3f4; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+          <input type="password" id="pinNouveau" inputmode="numeric" autocomplete="off" placeholder="Nouveau code (4 à 8 chiffres)" style="margin-bottom: 10px;">
+          <input type="password" id="pinNouveau2" inputmode="numeric" autocomplete="off" placeholder="Confirmer le nouveau code" style="margin-bottom: 10px;">
+          <button class="btn-action" style="background-color: #34a853;" onclick="changerPin()">ENREGISTRER LE CODE</button>
+          <div id="msgPin" style="text-align: center; font-weight: bold; font-size: 13px;"></div>
+        </div>
+
+        <button class="btn-action btn-archive" onclick="cloturerOffre()">⚠️ CLÔTURER L'OFFRE</button>
+        <button class="btn-action" style="background-color: #3c4043;" onclick="verrouillerAdmin()">🔒 VERROUILLER</button>
+        </div>
       </div>
     </div>
 
@@ -267,7 +302,7 @@
         
         <div class="texte-mentions">
           <p><strong>© 2026 DESJARDINS Bryan – Tous droits réservés.</strong><br>
-          Cette application, son code et sa conception demeurent la <strong>propriété exclusive de l'auteur</strong>, qui en conserve l'intégralité des droits. L'auteur concède à <strong><?= cfg.NOM_STRUCTURE ?></strong> une simple <strong>licence d'utilisation personnelle, non exclusive et révocable à tout moment</strong>, sans transfert d'aucun droit de propriété. L'auteur reste <strong>libre de faire évoluer, suspendre ou retirer cette autorisation quand il le souhaite</strong>, ainsi que d'<strong>exploiter, céder ou proposer l'outil à toute autre structure de son choix</strong>. Toute reproduction, copie, modification ou déploiement de cet outil par un tiers, sans l'accord écrit préalable de l'auteur, est strictement interdit.</p>
+          Cette application, son code et sa conception demeurent la <strong>propriété exclusive de l'auteur</strong>, qui en conserve l'intégralité des droits. L'auteur concède à <strong id="txtNomStructure"><?= cfg.NOM_STRUCTURE ?></strong> une simple <strong>licence d'utilisation personnelle, non exclusive et révocable à tout moment</strong>, sans transfert d'aucun droit de propriété. L'auteur reste <strong>libre de faire évoluer, suspendre ou retirer cette autorisation quand il le souhaite</strong>, ainsi que d'<strong>exploiter, céder ou proposer l'outil à toute autre structure de son choix</strong>. Toute reproduction, copie, modification ou déploiement de cet outil par un tiers, sans l'accord écrit préalable de l'auteur, est strictement interdit.</p>
           
           <p><strong>Confidentialité et Données :</strong> Cet outil a été pensé et conçu pour un usage strictement interne, dédié à la prévention des fraudes. Les données saisies (Identités, N° de pièces, Montants) sont stockées et archivées de manière sécurisée à des fins de traçabilité de l'offre, et ne sont en aucun cas prévues pour être cédées ou transmises à des tiers.</p>
 
@@ -333,8 +368,15 @@
       function ouvrirAide() { document.getElementById('modalAide').style.display = "flex"; }
       function fermerAide() { document.getElementById('modalAide').style.display = "none"; }
 
-      function ouvrirPanneau() { document.getElementById('modalParametres').style.display = "flex"; }
-      function fermerPanneau() { document.getElementById('modalParametres').style.display = "none"; }
+      function ouvrirPanneau() {
+        document.getElementById('modalParametres').style.display = "flex";
+        if (jetonAdmin) afficherZoneAdmin(); else afficherZoneVerrou();
+      }
+      // Fermer le panneau reverrouille l'espace responsable.
+      function fermerPanneau() {
+        document.getElementById('modalParametres').style.display = "none";
+        verrouillerAdmin();
+      }
       function ouvrirMentions() { document.getElementById('modalMentions').style.display = "flex"; }
       function fermerMentions() { document.getElementById('modalMentions').style.display = "none"; }
 
@@ -601,7 +643,10 @@
       function changerMode() {
         var btn = document.getElementById('btnMode'); 
         btn.innerHTML = "⏳ MAJ...";
-        google.script.run.withSuccessHandler(majAffichageMode).basculerModeWebApp();
+        appelAdmin('basculerModeWebApp', [], function (mode) {
+          majAffichageMode(mode);
+          if (cacheVerif) cacheVerif.mode = mode; // contrôle local A/B/C à jour tout de suite
+        });
       }
 
       function majAffichageMode(mode) {
@@ -619,13 +664,16 @@
 
       function cloturerOffre() {
         if (confirm("🚨 CLÔTURE DE L'OFFRE\n\nÊtes-vous sûr de vouloir archiver et vider la liste ?")) {
-          fermerPanneau(); 
+          // (on ne ferme le panneau qu'après la réponse : la fermeture reverrouille)
           document.body.style.cursor = "wait"; 
-          google.script.run.withSuccessHandler(function(message) {
+          appelAdmin('archiverOffreWebApp', [], function(message) {
               document.body.style.cursor = "default"; 
+              fermerPanneau();
               alert(message); 
               majAffichageMode("SIGNALER"); 
-            }).archiverOffreWebApp();
+              chargerDatesAffichage();
+              rechargerCacheVerif();
+            }, function () { document.body.style.cursor = "default"; });
         }
       }
 
@@ -706,12 +754,12 @@
         msg.style.color = "orange"; 
         msg.innerHTML = "Mise à jour en cours...";
         
-        google.script.run.withSuccessHandler(function(reponse) {
+        appelAdmin('setDatesOperation', [debut, fin], function(reponse) {
            msg.style.color = "green"; 
            msg.innerHTML = "✅ Dates mises à jour !";
            chargerDatesAffichage();
            setTimeout(function(){ msg.innerHTML = ""; }, 3000);
-        }).setDatesOperation(debut, fin);
+        }, function () { msg.innerHTML = ""; });
       }
 
       // Lance la vérification au démarrage de l'application
@@ -853,8 +901,169 @@
       }
       function changerModeAnnuaire() {
         document.getElementById('btnModeAnnuaire').innerHTML = "⏳ MAJ...";
-        google.script.run.withSuccessHandler(majAffichageModeAnnuaire).basculerModeAnnuaire();
+        appelAdmin('basculerModeAnnuaire', [], function (mode) {
+          majAffichageModeAnnuaire(mode);
+          if (cacheVerif) cacheVerif.modeAnnuaire = mode;
+        });
       }
+
+      // =================================================================
+      // --- ESPACE RESPONSABLE (code PIN) ---
+      // Le jeton n'est gardé qu'en mémoire : il disparaît à la fermeture du
+      // panneau, au rechargement de la page, ou après 10 min d'inactivité
+      // (côté serveur). Chaque action protégée le renvoie au serveur.
+      // =================================================================
+      var jetonAdmin = null;
+      var pinDefini = true;
+
+      // Appel d'une fonction serveur protégée (le jeton est ajouté en dernier argument)
+      function appelAdmin(nomFonction, args, onOk, onErr) {
+        var runner = google.script.run
+          .withSuccessHandler(onOk)
+          .withFailureHandler(function (err) {
+            var m = (err && err.message) ? err.message : String(err);
+            if (onErr) onErr(err);
+            if (m.indexOf('ADMIN_REQUIS') !== -1) {
+              verrouillerAdmin();
+              afficherZoneVerrou("🔒 Session expirée : ressaisissez le code.");
+            } else {
+              alert("Erreur : " + m);
+            }
+          });
+        runner[nomFonction].apply(runner, args.concat([jetonAdmin]));
+      }
+
+      function afficherZoneVerrou(message) {
+        document.getElementById('zoneAdmin').style.display = "none";
+        document.getElementById('zoneVerrou').style.display = "block";
+        document.getElementById('msgVerrou').textContent = message || "";
+        document.getElementById('txtVerrou').textContent = "⏳ …";
+        google.script.run.withSuccessHandler(function (etat) {
+          pinDefini = etat.pinDefini;
+          document.getElementById('txtVerrou').textContent = pinDefini
+            ? "Saisissez le code responsable."
+            : "Aucun code n'existe encore : choisissez le code responsable (4 à 8 chiffres).";
+          document.getElementById('pinConfirme').style.display = pinDefini ? "none" : "block";
+          document.getElementById('btnDeverrouiller').textContent = pinDefini ? "DÉVERROUILLER" : "CRÉER LE CODE";
+        }).withFailureHandler(function () {
+          document.getElementById('txtVerrou').textContent = "⚠️ Serveur injoignable.";
+        }).etatAdmin();
+      }
+
+      function deverrouillerAdmin() {
+        var pin = document.getElementById('pinSaisi').value.trim();
+        var msg = document.getElementById('msgVerrou');
+        msg.textContent = "";
+        if (!/^\d{4,8}$/.test(pin)) { msg.textContent = "Le code doit contenir 4 à 8 chiffres."; return; }
+        var surReponse = function (r) {
+          document.getElementById('pinSaisi').value = "";
+          document.getElementById('pinConfirme').value = "";
+          if (r && r.ok) { jetonAdmin = r.jeton; afficherZoneAdmin(); }
+          else msg.textContent = (r && r.message) || "Refusé.";
+        };
+        var surErreur = function (err) { msg.textContent = "Erreur : " + (err && err.message ? err.message : err); };
+        if (!pinDefini) {
+          if (pin !== document.getElementById('pinConfirme').value.trim()) { msg.textContent = "Les deux codes ne correspondent pas."; return; }
+          google.script.run.withSuccessHandler(surReponse).withFailureHandler(surErreur).definirPin(pin, null);
+        } else {
+          google.script.run.withSuccessHandler(surReponse).withFailureHandler(surErreur).ouvrirSessionAdmin(pin);
+        }
+      }
+
+      function verrouillerAdmin() {
+        if (jetonAdmin) google.script.run.withFailureHandler(function () {}).fermerSessionAdmin(jetonAdmin);
+        jetonAdmin = null;
+        document.getElementById('zoneAdmin').style.display = "none";
+        document.getElementById('zoneVerrou').style.display = "block";
+        ['blocReglages', 'blocPin'].forEach(function (id) { document.getElementById(id).style.display = "none"; });
+        if (document.getElementById('modalParametres').style.display === "flex") afficherZoneVerrou();
+      }
+
+      function afficherZoneAdmin() {
+        document.getElementById('zoneVerrou').style.display = "none";
+        document.getElementById('zoneAdmin').style.display = "block";
+        appelAdmin('getInfosAdmin', [], function (infos) {
+          majAffichageMode(infos.mode);
+          if (infos.annuaireActif) majAffichageModeAnnuaire(infos.modeAnnuaire);
+          document.getElementById('modalDateDebut').value = infos.dates.debut;
+          document.getElementById('modalDateFin').value = infos.dates.fin;
+          remplirFormulaireReglages(infos.config);
+        });
+      }
+
+      function basculerBloc(id) {
+        var b = document.getElementById(id);
+        b.style.display = (b.style.display === "none") ? "block" : "none";
+      }
+
+      // --- Réglages de la structure ---
+      var CHAMPS_CONFIG = [
+        ['NOM_STRUCTURE', "Nom de la structure, avec l'article (ex. « l'Hypermarché … », « la société … »)"],
+        ['NOM_OFFRE', "Nom de l'offre (sous le titre)"],
+        ['TITRE_APP', "Titre de l'onglet du navigateur"],
+        ['LIBELLE_MONTANT', "Libellé du montant"],
+        ['LIBELLE_NOTES', "Libellé du champ Notes"],
+        ['PRECISION_NOTES', "Précision du champ Notes, entre parenthèses (facultatif)"]
+      ];
+      function remplirFormulaireReglages(cfg) {
+        var zone = document.getElementById('champsReglages');
+        zone.innerHTML = "";
+        CHAMPS_CONFIG.forEach(function (c) {
+          var lab = document.createElement('label');
+          lab.style.fontSize = "13px";
+          lab.textContent = c[1];
+          var inp = document.createElement('input');
+          inp.type = "text"; inp.id = "cfg_" + c[0]; inp.maxLength = 100; inp.autocomplete = "off";
+          inp.value = cfg[c[0]] || "";
+          inp.style.marginBottom = "10px";
+          zone.appendChild(lab); zone.appendChild(inp);
+        });
+        document.getElementById('cfg_MONTANT_OBLIGATOIRE').checked = (cfg.MONTANT_OBLIGATOIRE !== "NON");
+      }
+      function enregistrerReglages() {
+        var valeurs = {};
+        CHAMPS_CONFIG.forEach(function (c) { valeurs[c[0]] = document.getElementById("cfg_" + c[0]).value; });
+        valeurs.MONTANT_OBLIGATOIRE = document.getElementById('cfg_MONTANT_OBLIGATOIRE').checked ? "OUI" : "NON";
+        var msg = document.getElementById('msgReglages');
+        msg.style.color = "orange"; msg.textContent = "Enregistrement...";
+        appelAdmin('setConfig', [valeurs], function (cfg) {
+          appliquerConfig(cfg);
+          remplirFormulaireReglages(cfg);
+          msg.style.color = "green";
+          msg.textContent = "✅ Réglages enregistrés (titre de l'onglet : au prochain chargement).";
+        }, function () { msg.textContent = ""; });
+      }
+      // Applique les réglages à l'écran sans recharger la page
+      function appliquerConfig(cfg) {
+        CONFIG = cfg;
+        MONTANT_OBLIGATOIRE = (cfg.MONTANT_OBLIGATOIRE !== "NON");
+        document.getElementById('txtNomOffre').textContent = cfg.NOM_OFFRE;
+        document.getElementById('lblMontant').textContent = cfg.LIBELLE_MONTANT + " (€)" + (MONTANT_OBLIGATOIRE ? " *" : "");
+        document.getElementById('lblNotes').textContent = cfg.LIBELLE_NOTES + (cfg.PRECISION_NOTES ? " (" + cfg.PRECISION_NOTES + ")" : "");
+        document.getElementById('txtNomStructure').textContent = cfg.NOM_STRUCTURE;
+      }
+
+      function changerPin() {
+        var p1 = document.getElementById('pinNouveau').value.trim();
+        var p2 = document.getElementById('pinNouveau2').value.trim();
+        var msg = document.getElementById('msgPin');
+        msg.style.color = "#d93025";
+        if (!/^\d{4,8}$/.test(p1)) { msg.textContent = "Le code doit contenir 4 à 8 chiffres."; return; }
+        if (p1 !== p2) { msg.textContent = "Les deux codes ne correspondent pas."; return; }
+        appelAdmin('definirPin', [p1], function (r) {
+          document.getElementById('pinNouveau').value = "";
+          document.getElementById('pinNouveau2').value = "";
+          if (r && r.ok) { jetonAdmin = r.jeton; msg.style.color = "green"; msg.textContent = "✅ Code modifié."; }
+          else msg.textContent = (r && r.message) || "Refusé.";
+        });
+      }
+
+      // Entrée dans les champs de code = valider
+      ['pinSaisi', 'pinConfirme'].forEach(function (id) {
+        document.getElementById(id).addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') { e.preventDefault(); deverrouillerAdmin(); }
+        });
+      });
     </script>
 
     <!-- ===== SCAN MRZ (OCR) — DORMANT, piloté par OCR_ACTIF ===== -->

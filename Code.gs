@@ -1,10 +1,54 @@
 function doGet(e) {
+  // Nouvelle structure : crée « Saisies » si elle n'existe pas encore (rien n'est écrasé)
+  if (!SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Saisies")) installerFeuilles_();
   var cfg = getConfig();
   var page = HtmlService.createTemplateFromFile('Index');
   page.cfg = cfg;
   return page.evaluate()
       .setTitle(cfg.TITRE_APP)
       .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+}
+
+// =================================================================
+// --- INSTALLATION (nouvelle structure) ---
+//     À lancer UNE FOIS depuis l'éditeur Apps Script (menu Exécuter), après
+//     chaque collage d'une nouvelle version : ça accorde les autorisations
+//     nécessaires et crée ce qui manque. Ne supprime et n'écrase jamais rien
+//     (sans effet sur une installation existante, à part ajouter ce qui manque).
+// =================================================================
+function installer() {
+  var rapport = installerFeuilles_();
+  var existants = ScriptApp.getProjectTriggers().map(function (t) { return t.getHandlerFunction(); });
+  if (existants.indexOf('verificationClotureNocturne') === -1) {
+    ScriptApp.newTrigger('verificationClotureNocturne').timeBased().everyDays(1).atHour(1).create();
+    rapport.push("Déclencheur créé : clôture automatique (chaque nuit vers 1h).");
+  }
+  if (ANNUAIRE_ACTIF && existants.indexOf('purgerAnnuaire') === -1) {
+    ScriptApp.newTrigger('purgerAnnuaire').timeBased().everyDays(1).atHour(3).create();
+    rapport.push("Déclencheur créé : purge de l'annuaire (chaque nuit vers 3h).");
+  }
+  if (rapport.length === 0) rapport.push("Rien à faire : tout est déjà en place.");
+  Logger.log(rapport.join("\n"));
+  return rapport.join("\n");
+}
+
+// Crée les feuilles manquantes. Renvoie la liste de ce qui a été fait.
+function installerFeuilles_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var faits = [];
+  if (!ss.getSheetByName("Saisies")) {
+    var f = ss.insertSheet("Saisies", 0);
+    f.getRange(1, 1, 1, 6).setValues([["Date", "Nom", "Prénom", "N° Pièce", "Montant", "Notes ou Infos"]]).setFontWeight("bold");
+    f.getRange("A2:A").setNumberFormat("dd/MM/yyyy HH:mm:ss");
+    f.getRange("Z1").setValue("SIGNALER");
+    f.setFrozenRows(1);
+    faits.push("Feuille « Saisies » créée.");
+  }
+  if (ANNUAIRE_ACTIF && !ss.getSheetByName(ANNUAIRE_FEUILLE)) {
+    _feuilleAnnuaire_();
+    faits.push("Feuille « " + ANNUAIRE_FEUILLE + " » créée (masquée).");
+  }
+  return faits;
 }
 
 // =================================================================

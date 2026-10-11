@@ -20,17 +20,28 @@ central : **détecter doublons et usurpations** quand un client tente de profite
 fois de l'offre. Outil **interne, non commercial** (aide aux collègues responsables de
 caisse).
 
+**Généralisé (oct. 2026, branche `generalisation`)** : installable par d'autres
+structures / pour d'autres offres (réglages dans l'appli, valeurs par défaut = Vannes).
+Principe : **tout passe par l'application** ; le Google Sheets n'est qu'un stockage
+(+ panneau de secours). Voir la section « Généralisation » plus bas.
+
 ## Fichiers
 - **Code.gs** — backend Apps Script (logique serveur).
 - **Index.html** — la web app servie par `doGet` (tablette caisse).
 - **Panneau.html** — sidebar admin dans le Sheets (menu `🚀 APPLICATION`).
 - **appsscript.json** — manifeste (V8, `Europe/Paris`, webapp `access: ANYONE`).
+- **INSTALLATION.md** — installer l'appli pour une nouvelle structure.
 - **prototype-ocr/** — banc d'essai OCR isolé (hors app, voir plus bas).
 
 ## Structure du Google Sheets
 - **Saisies** — offre en cours. Colonnes : A=Date, B=Nom, C=Prénom, D=N° Pièce,
   E=Montant, F=Notes, G=(réservé). **Z1** = mode de sécurité (`SIGNALER`/`BLOQUANT`).
-- **A_IMPRIMER** / **OFFRE_COMPLETE** — mise en forme impression (Z1 = paramètre date).
+- **A_IMPRIMER** / **OFFRE_COMPLETE** — onglets d'impression (formules `FILTER` /
+  `ARRAYFORMULA` sur « Saisies »). **Plus utilisés par l'appli** (impression calculée
+  par `genererDonneesImpression`) ; conservés pour les boutons du panneau du Sheet.
+  Une nouvelle structure n'en a pas besoin.
+- **_Annuaire** — feuille cachée de l'annuaire inter-offres (Niveau 3).
+- Restes sans effet chez Vannes : onglet **Logs**, cellule **Y1** (non lus par le code).
 - **Archives_<date>** — créées à chaque clôture d'offre.
 
 ## Logique métier centrale (la détection de doublons)
@@ -54,14 +65,22 @@ Même détection via `onEdit` (édition manuelle directe dans le Sheets).
 ## Fonctions clés (Code.gs)
 - `traiterSaisie` / `forcerSaisie` — saisie depuis la web app (protégées par
   `LockService`).
+- `modifierSaisie` / `supprimerSaisie` / `listerSaisies` — corrections depuis l'appli
+  (espace responsable) ; `modifierSaisie` **recontrôle A/B/C** comme `onEdit`.
+- `getConfig` / `setConfig` — réglages de la structure (`CFG_*` en `PropertiesService`).
+- `ouvrirSessionAdmin` / `definirPin` / `exigerAdmin_` — code responsable + jeton.
+- `genererDonneesImpression` / `listerArchives` / `donneesArchive` — impression.
+- `installer` — installation idempotente (feuilles + déclencheurs), à lancer depuis
+  l'éditeur.
 - `onEdit` — détection + formatage sur édition manuelle.
 - `getDatesOperation` / `setDatesOperation` — dates d'offre dans `PropertiesService`.
 - `verificationClotureNocturne` — robot de nuit : archive quand la date de fin passe.
-- `archiverOffreWebApp` — clôture : copie « Saisies » → `Archives_<date>`, vide, repasse
-  en SIGNALER, efface les dates.
+- `archiverOffreWebApp` (protégée) → `archiverOffre_` (sous verrou) — clôture : copie
+  « Saisies » → `Archives_<date>`, vide, repasse en SIGNALER, efface les dates.
 
 ## Triggers Apps Script
 - `verificationClotureNocturne` — trigger temporel (nuit).
+- `purgerAnnuaire` — trigger temporel (nuit). Les deux sont créés par `installer()`.
 - `onEdit` / `onOpen` — triggers simples automatiques.
 
 ## Synchronisation (IMPORTANT pour Vibe)
@@ -102,6 +121,26 @@ de l'algorithme. **Inutile d'« optimiser la recherche » côté données/algo.*
   `PropertiesService`). **Store NON autoritaire** (la décision A/B/C reste sur
   « Saisies »). Kill-switch : `ANNUAIRE_ACTIF` (Code.gs). Mention légale ajoutée.
   → **Après activation : lancer `reconstruireAnnuaire()` une fois.**
+
+## Généralisation (oct. 2026) — IMPLÉMENTÉE sur la branche `generalisation`
+Décision : `docs/retours-vibe/decisions/2026-10-11_generalisation.md`.
+- **Réglages** (`CONFIG_DEFAUTS` = Vannes) : nom de la structure (avec article), nom
+  de l'offre, titre de l'onglet, libellé + caractère obligatoire du montant, libellé +
+  précision des notes. Devise **euro** et conservation annuaire **3 ans** : fixes.
+  `doGet` passe en **template** (`<?= cfg.X ?>`, échappé) pour les injecter.
+- **Espace responsable** (⚙️) : code PIN 4-8 chiffres (SHA-256 + sel, jamais en clair),
+  jeton de session `CacheService` (10 min d'inactivité), 5 échecs → blocage 15 min.
+  Protège : réglages, mode, mode annuaire, dates, clôture, archives, corrections.
+  **Saisie et impression restent libres.** Toute fonction serveur sensible appelle
+  `exigerAdmin_(jeton)` en premier.
+- **Panneau du Sheet** (secours, inchangé) : passe sans code **pour les éditeurs du
+  classeur** (`estEditeurDuClasseur_`) ; bouton de réinitialisation du code.
+- **Impression** calculée depuis « Saisies » ; **archives** consultables/imprimables.
+- **Corrections / suppressions** dans l'appli, avec garde-fou « la ligne contient
+  encore ce que l'écran affichait ».
+- **Dette assumée** : la logique A/B/C existe désormais à **4 endroits**
+  (`traiterSaisie`, `analyserDoublonLocal` côté client, `onEdit`, `modifierSaisie`).
+  À garder synchro si la détection change.
 
 ## Historique des choix (ne pas réintroduire sans raison nouvelle)
 - **Logs d'audit** — retirés (redondants avec « Saisies » déjà horodaté).

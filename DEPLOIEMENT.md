@@ -29,6 +29,16 @@ C'est **ce déploiement-là** qu'on met à jour (jamais un nouveau).
 > l'a explicitement modifié (il faut activer « Afficher le fichier manifeste » dans les
 > paramètres du projet pour le voir).
 
+## Étape 1 bis — Lancer `installer` (si le code a changé côté serveur)
+Après avoir collé un nouveau `Code.gs`, dans l'éditeur Apps Script : choisir la
+fonction **`installer`** → **Exécuter**, et **accepter les autorisations** si Google
+en demande.
+- C'est **indispensable** quand la nouvelle version utilise un service Google de plus
+  (ex. version « généralisation » : code responsable, déclencheurs). Sinon l'application
+  web peut afficher une erreur d'autorisation pour tout le monde.
+- C'est **sans risque** : `installer` ne crée que ce qui manque (feuilles,
+  déclencheurs) et n'écrase rien. Le journal dit ce qui a été fait.
+
 ## Étape 2 — Redéployer sur la MÊME URL
 1. En haut à droite : **Déployer → Gérer les déploiements**.
 2. Dans la liste, **repérer le déploiement dont l'URL correspond à celle ci-dessus**
@@ -43,6 +53,16 @@ C'est **ce déploiement-là** qu'on met à jour (jamais un nouveau).
 - Ouvrir l'URL sur un appareil **connecté au compte Google** (l'accès demande une
   connexion). Recharger (le navigateur peut garder l'ancienne version en cache).
 - Vérifier visuellement le changement attendu.
+
+### Premier déploiement de la version « généralisation » (Vannes)
+- Sans réglage, les textes restent ceux de Vannes (valeurs par défaut).
+- **Tout de suite après** : ⚙️ → **Espace responsable** → **créer le code
+  responsable**. Tant qu'il n'est pas créé, la première personne qui ouvre l'espace
+  responsable le choisit.
+- Les actions sensibles (mode, dates, clôture, corrections, archives, réglages)
+  demandent désormais ce code ; la saisie et l'impression restent libres.
+- Le panneau du Google Sheets fonctionne comme avant (secours), pour les personnes
+  ayant accès au fichier.
 
 ## Étape 4 — Réconcilier plus tard (de retour sur le Mac)
 Le copier-coller fait diverger les copies. Quand le Mac est disponible :

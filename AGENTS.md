@@ -151,9 +151,13 @@ Décision : `docs/retours-vibe/decisions/2026-10-11_generalisation.md`.
   sous-traitance RGPD pour Bryan). Limite : chaque copie se met à jour à la main.
   Écartés pour l'instant : appli centrale multi-structures (Bryan deviendrait
   sous-traitant RGPD) et sortie de Google (autre projet).
-- **Dette assumée** : la logique A/B/C existe désormais à **4 endroits**
-  (`traiterSaisie`, `analyserDoublonLocal` côté client, `onEdit`, `modifierSaisie`).
-  À garder synchro si la détection change.
+- **`forcerSaisie` recontrôle côté serveur** (oct. 2026) : sous verrou, refait A/B/C ;
+  BLOQUANT + A/B → refus (rien d'écrit) ; sinon note + couleurs **calculées par le
+  serveur** (les paramètres `messageErreur`/drapeaux envoyés par la tablette sont
+  ignorés). Ferme le contournement du mode BLOQUANT (appel direct ou cache périmé).
+- **Dette assumée** : la logique A/B/C existe à **4 endroits** — `traiterSaisie`,
+  `analyserDoublonLocal` (client), `onEdit`, et `detecterDoublons_` (partagée par
+  `forcerSaisie` et `modifierSaisie`). À garder synchro si la détection change.
 
 ## Historique des choix (ne pas réintroduire sans raison nouvelle)
 - **Logs d'audit** — retirés (redondants avec « Saisies » déjà horodaté).

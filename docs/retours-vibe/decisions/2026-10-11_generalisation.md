@@ -48,6 +48,10 @@
 - **Créer le code responsable** juste après le déploiement.
 - Testé hors ligne (faux Apps Script + Chromium) ; **à valider sur une copie du Sheet**
   avant la prod.
+- **Corrigé (validé avec Bryan)** : `forcerSaisie` faisait confiance à la tablette (ni
+  mode, ni recontrôle, note/couleurs envoyées par le client) → un appel direct ou un
+  cache périmé pouvait forcer un cas A/B en BLOQUANT, voire sans marquage. Désormais
+  le serveur refait la détection, refuse A/B en BLOQUANT et calcule lui-même le cas.
 - Constat (non corrigé, panneau laissé tel quel) : dans `Panneau.html`, après une
   clôture, `changerMode()` est appelé → le mode repasse en **BLOQUANT** au lieu de
   rester SIGNALER.

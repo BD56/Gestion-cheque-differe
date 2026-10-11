@@ -403,6 +403,13 @@ function traiterSaisie(nom, prenom, piece, montant, notes) {
   }
 }
 
+// Ajout forcé (après confirmation d'un doublon à l'écran). Le serveur REFAIT la
+// détection A/B/C sous verrou, sans se fier à la tablette :
+//  - mode BLOQUANT + cas A/B -> refus (rien n'est écrit) ;
+//  - sinon écriture, avec note d'alerte et couleurs CALCULÉES ICI (le cas réel,
+//    pas celui vu par la tablette) ; plus de doublon -> ligne normale.
+// messageErreur / flagIdentite / flagPiece : ignorés (gardés pour la
+// compatibilité d'appel avec Index.html).
 function forcerSaisie(nom, prenom, piece, montant, notes, messageErreur, flagIdentite, flagPiece) {
   var lock = LockService.getScriptLock();
   try {
@@ -410,20 +417,31 @@ function forcerSaisie(nom, prenom, piece, montant, notes, messageErreur, flagIde
 
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var feuille = ss.getSheetByName("Saisies");
+    if (!feuille) return { status: "BLOQUE", titre: "Erreur Serveur", message: "La feuille 'Saisies' est introuvable." };
     
     nom = nom.toString().toUpperCase().trim(); 
     prenom = prenom.toString().toUpperCase().trim();
     piece = piece.toString().toUpperCase().trim(); 
-    notes = notes ? notes.toString().trim() : "";
+    notes = notes ? notes.toString().replace(ALERTE_FORCE_REGEX, '').trim() : "";
     if (montant && typeof montant === 'string' && montant.includes('.')) montant = montant.replace('.', ',');
-    
+
+    var modeSecurite = feuille.getRange("Z1").getValue() || "SIGNALER";
+    var det = detecterDoublons_(feuille, nom, prenom, piece, 0);
+    var pireCas = det.pireCas;
+
+    // 🛑 Mode BLOQUANT : un vrai doublon (A) ou une usurpation (B) ne se force jamais
+    if (modeSecurite === "BLOQUANT" && (pireCas === 'A' || pireCas === 'B')) {
+      return {
+        status: "BLOQUE", cas: pireCas, titre: "🛑 SAISIE REFUSÉE",
+        message: (pireCas === 'A') ? "Ce client a déjà profité de l'offre." : "Ce numéro de pièce d'identité est déjà associé à un autre client.",
+        details: det.details
+      };
+    }
+
     var noteFinale = notes;
-    if (messageErreur !== "") {
-      if (notes !== "") {
-        noteFinale = notes + "\n" + messageErreur;
-      } else {
-        noteFinale = messageErreur;
-      }
+    if (pireCas) {
+      var alerte = "⚠️ Ajout forcé (Cas " + pireCas + ")";
+      noteFinale = (notes !== "") ? notes + "\n" + alerte : alerte;
     }
     
     feuille.appendRow([new Date(), nom, prenom, piece, montant, noteFinale, ""]);
@@ -432,13 +450,16 @@ function forcerSaisie(nom, prenom, piece, montant, notes, messageErreur, flagIde
     // 🧹 LE CORRECTIF : On efface l'héritage automatique de Google Sheets sur les 7 colonnes
     feuille.getRange(indexLigne, 1, 1, 7).setBackground(null);
     
-    // 🎨 On applique tes vraies couleurs
-    feuille.getRange(indexLigne, 6).setBackground("#f4cccc");
-    if (flagIdentite) feuille.getRange(indexLigne, 2, 1, 2).setBackground("#f4cccc");
-    if (flagPiece) feuille.getRange(indexLigne, 4).setBackground("#f4cccc");
+    // 🎨 Couleurs selon le cas RÉEL (mêmes règles que onEdit)
+    if (pireCas) {
+      feuille.getRange(indexLigne, 6).setBackground("#f4cccc");
+      if (pireCas === 'A' || pireCas === 'C') feuille.getRange(indexLigne, 2, 1, 2).setBackground("#f4cccc");
+      if (pireCas === 'A' || pireCas === 'B') feuille.getRange(indexLigne, 4).setBackground("#f4cccc");
+    }
 
     majAnnuaire_(nom, prenom, piece);
-    return { status: "SUCCES", message: "⚠️ Saisie forcée et enregistrée en rouge." };
+    return { status: "SUCCES", cas: pireCas,
+             message: pireCas ? "⚠️ Saisie forcée et enregistrée en rouge." : "✅ Saisie enregistrée !" };
   } finally {
     lock.releaseLock(); // Libérer le verrou dans tous les cas
   }
@@ -775,6 +796,34 @@ function verifierLigneAttendue_(feuille, ligne, attendu) {
   return ligne;
 }
 
+// Détection A/B/C sur « Saisies » (mêmes règles que traiterSaisie / onEdit),
+// utilisée par forcerSaisie et modifierSaisie. ligneExclue : n° de ligne à ne
+// pas comparer (la ligne corrigée elle-même), ou 0.
+// Renvoie { pireCas: 'A'|'B'|'C'|null, details: [...] }.
+function detecterDoublons_(feuille, nom, prenom, piece, ligneExclue) {
+  var nomN = _normId_(nom), prenomN = _normId_(prenom), pieceN = _normId_(piece);
+  var donnees = feuille.getDataRange().getValues();
+  var pireCas = null, details = [];
+  for (var i = 1; i < donnees.length; i++) {
+    if (i === ligneExclue - 1) continue;
+    var memeId = (nomN !== "" && prenomN !== "" && _normId_(donnees[i][1]) === nomN && _normId_(donnees[i][2]) === prenomN);
+    var memePiece = (pieceN !== "" && _normId_(donnees[i][3]) === pieceN);
+    if (!memeId && !memePiece) continue;
+    var t = (memeId && memePiece) ? 'A' : (memePiece ? 'B' : 'C');
+    if (t === 'A') pireCas = 'A';
+    else if (t === 'B' && pireCas !== 'A') pireCas = 'B';
+    else if (t === 'C' && pireCas !== 'A' && pireCas !== 'B') pireCas = 'C';
+    details.push({
+      ligne: i + 1, type: t,
+      date: (donnees[i][0] instanceof Date) ? Utilities.formatDate(donnees[i][0], "Europe/Paris", "dd/MM/yyyy HH:mm") : (donnees[i][0] ? donnees[i][0].toString() : ""),
+      nom: donnees[i][1] ? donnees[i][1].toString() : "", prenom: donnees[i][2] ? donnees[i][2].toString() : "",
+      piece: donnees[i][3] ? donnees[i][3].toString() : "", montant: donnees[i][4] ? donnees[i][4].toString() : "",
+      notes: donnees[i][5] ? donnees[i][5].toString() : ""
+    });
+  }
+  return { pireCas: pireCas, details: details };
+}
+
 function messagesDoublon_(mode, pireCas) {
   var r = { bloque: false, couleur: "ROUGE", titre: "", message: "" };
   var homonyme = "Un client porte ce nom avec une autre pièce. Demandez une 2ème pièce d'identité pour confirmer qu'il s'agit bien d'une personne différente.";
@@ -810,26 +859,8 @@ function modifierSaisie(ligne, attendu, nouveau, forcer, jeton) {
     if (getConfig().MONTANT_OBLIGATOIRE !== "NON" && !montant) throw new Error("Le montant est obligatoire.");
 
     // Recontrôle A/B/C contre toutes les AUTRES lignes (comme onEdit)
-    var nomN = _normId_(nom), prenomN = _normId_(prenom), pieceN = _normId_(piece);
-    var donnees = feuille.getDataRange().getValues();
-    var pireCas = null, details = [];
-    for (var i = 1; i < donnees.length; i++) {
-      if (i === ligne - 1) continue;
-      var memeId = (nomN !== "" && prenomN !== "" && _normId_(donnees[i][1]) === nomN && _normId_(donnees[i][2]) === prenomN);
-      var memePiece = (pieceN !== "" && _normId_(donnees[i][3]) === pieceN);
-      if (!memeId && !memePiece) continue;
-      var t = (memeId && memePiece) ? 'A' : (memePiece ? 'B' : 'C');
-      if (t === 'A') pireCas = 'A';
-      else if (t === 'B' && pireCas !== 'A') pireCas = 'B';
-      else if (t === 'C' && pireCas !== 'A' && pireCas !== 'B') pireCas = 'C';
-      details.push({
-        ligne: i + 1, type: t,
-        date: (donnees[i][0] instanceof Date) ? Utilities.formatDate(donnees[i][0], "Europe/Paris", "dd/MM/yyyy HH:mm") : (donnees[i][0] ? donnees[i][0].toString() : ""),
-        nom: donnees[i][1] ? donnees[i][1].toString() : "", prenom: donnees[i][2] ? donnees[i][2].toString() : "",
-        piece: donnees[i][3] ? donnees[i][3].toString() : "", montant: donnees[i][4] ? donnees[i][4].toString() : "",
-        notes: donnees[i][5] ? donnees[i][5].toString() : ""
-      });
-    }
+    var det = detecterDoublons_(feuille, nom, prenom, piece, ligne);
+    var pireCas = det.pireCas, details = det.details;
 
     var mode = feuille.getRange("Z1").getValue() || "SIGNALER";
     if (pireCas) {

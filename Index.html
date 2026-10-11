@@ -567,9 +567,18 @@
         ajoutOptimisteCache(memNom, memPrenom, memPiece, memMontant, memNotes);
         afficherMessage("⚠️ Saisie forcée et enregistrée en rouge.", "error");
         reinitialiserFormulaire();
-        // Écriture forcée en arrière-plan
-        google.script.run.withSuccessHandler(function () {}).withFailureHandler(echecEnregistrement)
+        // Écriture forcée en arrière-plan : le serveur refait la détection (autoritaire)
+        google.script.run.withSuccessHandler(confirmerForcage).withFailureHandler(echecEnregistrement)
           .forcerSaisie(memNom, memPrenom, memPiece, memMontant, memNotes, memMessageErreur, memFlags.identite, memFlags.piece);
+      }
+
+      // Réponse du serveur à un ajout forcé
+      function confirmerForcage(rep) {
+        if (rep && rep.status === "SUCCES") return; // enregistré (cas recalculé côté serveur)
+        // Refus serveur (mode BLOQUANT + doublon/usurpation) -> rien n'a été écrit
+        afficherMessage("🛑 Le serveur a REFUSÉ l'ajout forcé" + (rep && rep.cas ? " (Cas " + rep.cas + ", mode BLOQUANT)" : "") +
+          ". La saisie n'a PAS été enregistrée.", "error");
+        rechargerCacheVerif();
       }
 
       // --- Contrôle A/B/C EN LOCAL (miroir de traiterSaisie, pour feedback instantané) ---

@@ -93,7 +93,7 @@
           <button class="btn-settings" onclick="ouvrirPanneau()" title="Panneau de contrôle">⚙️</button>
         </div>
       </div>
-      <div class="subtitle">Gestion Chèques Reportés</div>
+      <div class="subtitle"><?= cfg.NOM_OFFRE ?></div>
 
       <div id="sousTitreOperation" style="text-align: center; color: #555; font-size: 16px; font-weight: bold; margin-top: -10px; margin-bottom: 20px;">⏳ Chargement des dates...</div>
       
@@ -114,11 +114,11 @@
           <input type="text" id="prenom" placeholder="Ex: JEAN" autocomplete="off">
         </div>
         <div class="input-group">
-          <label>Montant (€) *</label>
+          <label><?= cfg.LIBELLE_MONTANT ?> (€)<?= cfg.MONTANT_OBLIGATOIRE === "NON" ? "" : " *" ?></label>
           <input type="text" id="montant" placeholder="Ex: 150,50" autocomplete="off">
         </div>
         <div class="input-group">
-          <label>Notes ou Infos (numéro caisse, etc...)</label>
+          <label><?= cfg.LIBELLE_NOTES ?><?= cfg.PRECISION_NOTES ? " (" + cfg.PRECISION_NOTES + ")" : "" ?></label>
           <input type="text" id="notes" placeholder="Commentaire..." autocomplete="off">
         </div>
         <button class="btn-submit" id="btnValider" onclick="envoyerSaisie()">VÉRIFIER ET VALIDER</button>
@@ -170,7 +170,7 @@
           </div>
           </div>
 
-          <button class="accordion">📝 Saisie d'un chèque et Alertes</button>
+          <button class="accordion">📝 Saisie et Alertes</button>
           <div class="panel">
             <ul>
               <li><strong>Comment faire :</strong> Remplissez les informations du formulaire, puis cliquez sur <strong>Valider</strong>.</li>
@@ -267,7 +267,7 @@
         
         <div class="texte-mentions">
           <p><strong>© 2026 DESJARDINS Bryan – Tous droits réservés.</strong><br>
-          Cette application, son code et sa conception demeurent la <strong>propriété exclusive de l'auteur</strong>, qui en conserve l'intégralité des droits. L'auteur concède à l'<strong>Hypermarché Carrefour Vannes</strong> une simple <strong>licence d'utilisation personnelle, non exclusive et révocable à tout moment</strong>, sans transfert d'aucun droit de propriété. L'auteur reste <strong>libre de faire évoluer, suspendre ou retirer cette autorisation quand il le souhaite</strong>, ainsi que d'<strong>exploiter, céder ou proposer l'outil à toute autre structure de son choix</strong>. Toute reproduction, copie, modification ou déploiement de cet outil par un tiers, sans l'accord écrit préalable de l'auteur, est strictement interdit.</p>
+          Cette application, son code et sa conception demeurent la <strong>propriété exclusive de l'auteur</strong>, qui en conserve l'intégralité des droits. L'auteur concède à <strong><?= cfg.NOM_STRUCTURE ?></strong> une simple <strong>licence d'utilisation personnelle, non exclusive et révocable à tout moment</strong>, sans transfert d'aucun droit de propriété. L'auteur reste <strong>libre de faire évoluer, suspendre ou retirer cette autorisation quand il le souhaite</strong>, ainsi que d'<strong>exploiter, céder ou proposer l'outil à toute autre structure de son choix</strong>. Toute reproduction, copie, modification ou déploiement de cet outil par un tiers, sans l'accord écrit préalable de l'auteur, est strictement interdit.</p>
           
           <p><strong>Confidentialité et Données :</strong> Cet outil a été pensé et conçu pour un usage strictement interne, dédié à la prévention des fraudes. Les données saisies (Identités, N° de pièces, Montants) sont stockées et archivées de manière sécurisée à des fins de traçabilité de l'offre, et ne sont en aucun cas prévues pour être cédées ou transmises à des tiers.</p>
 
@@ -303,6 +303,10 @@
     <div id="zoneImpression"></div>
 
     <script>
+      // Réglages de la structure, injectés par doGet (cf. Code.gs::getConfig)
+      var CONFIG = <?!= JSON.stringify(cfg).replace(/</g, '\\u003c') ?>;
+      var MONTANT_OBLIGATOIRE = (CONFIG.MONTANT_OBLIGATOIRE !== "NON");
+
       var memNom = "", memPrenom = "", memPiece = "", memMontant = "", memNotes = "";
       var memMessageErreur = "", memFlags = {};
       var lienFichierSouche = "";
@@ -341,8 +345,10 @@
         memMontant = document.getElementById('montant').value;
         memNotes = document.getElementById('notes').value;
 
-        if (memNom === "" || memPrenom === "" || memPiece === "" || memMontant === "") {
-          afficherMessage("Veuillez remplir le Nom, Prénom, N° de Pièce et le Montant.", "error");
+        if (memNom === "" || memPrenom === "" || memPiece === "" || (MONTANT_OBLIGATOIRE && memMontant === "")) {
+          afficherMessage(MONTANT_OBLIGATOIRE
+            ? "Veuillez remplir le Nom, Prénom, N° de Pièce et le " + CONFIG.LIBELLE_MONTANT + "."
+            : "Veuillez remplir le Nom, Prénom et N° de Pièce.", "error");
           return;
         }
         document.getElementById('statusMessage').style.display = "none";
@@ -428,7 +434,7 @@
           listeHTML += "📅 <b>Passage du :</b> " + d.date + " (Ligne " + d.ligne + ")<br>";
           listeHTML += "👤 <b>Identité :</b> " + d.nom + " " + d.prenom + "<br>";
           listeHTML += "💳 <b>N° Pièce :</b> " + d.piece + "<br>";
-          if (d.montant !== "") listeHTML += "💶 <b>Montant :</b> " + d.montant + " €<br>";
+          if (d.montant !== "") listeHTML += "💶 <b>" + CONFIG.LIBELLE_MONTANT + " :</b> " + d.montant + " €<br>";
           if (d.notes !== "") listeHTML += "💬 <b>Notes :</b> " + d.notes + "<br>";
           listeHTML += "</div>";
         });

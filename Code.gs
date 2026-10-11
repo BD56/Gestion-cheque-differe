@@ -1,7 +1,37 @@
 function doGet(e) {
-  return HtmlService.createHtmlOutputFromFile('Index')
-      .setTitle('Caisse - Saisie Chèques')
+  var cfg = getConfig();
+  var page = HtmlService.createTemplateFromFile('Index');
+  page.cfg = cfg;
+  return page.evaluate()
+      .setTitle(cfg.TITRE_APP)
       .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+}
+
+// =================================================================
+// --- RÉGLAGES DE LA STRUCTURE (généralisation) ---
+//     Stockés dans PropertiesService (clés CFG_*). Une clé absente = valeur
+//     par défaut ci-dessous, qui correspond à l'existant (Carrefour Vannes) :
+//     sans réglage, l'affichage et le comportement restent identiques.
+//     Ne touche PAS à la détection A/B/C (« Saisies » reste la source de vérité).
+// =================================================================
+var CONFIG_DEFAUTS = {
+  NOM_STRUCTURE: "l'Hypermarché Carrefour Vannes", // avec l'article : lu « L'auteur concède à … »
+  NOM_OFFRE: "Gestion Chèques Reportés",
+  TITRE_APP: "Caisse - Saisie Chèques",
+  LIBELLE_MONTANT: "Montant",
+  MONTANT_OBLIGATOIRE: "OUI",              // "OUI" ou "NON"
+  LIBELLE_NOTES: "Notes ou Infos",
+  PRECISION_NOTES: "numéro caisse, etc..." // affichée entre parenthèses (vide = rien)
+};
+
+function getConfig() {
+  var props = PropertiesService.getDocumentProperties().getProperties();
+  var cfg = {};
+  for (var k in CONFIG_DEFAUTS) {
+    var v = props['CFG_' + k];
+    cfg[k] = (v === undefined || v === null) ? CONFIG_DEFAUTS[k] : v;
+  }
+  return cfg;
 }
 
 // =================================================================

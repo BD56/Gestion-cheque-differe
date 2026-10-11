@@ -30,7 +30,8 @@ Principe : **tout passe par l'application** ; le Google Sheets n'est qu'un stock
 - **Index.html** — la web app servie par `doGet` (tablette caisse).
 - **Panneau.html** — sidebar admin dans le Sheets (menu `🚀 APPLICATION`).
 - **appsscript.json** — manifeste (V8, `Europe/Paris`, webapp `access: ANYONE`).
-- **INSTALLATION.md** — installer l'appli pour une nouvelle structure.
+- **INSTALLATION.md** — créer le **modèle** (une fois) et installer l'appli pour une
+  nouvelle structure (copie du modèle → menu Installer → déploiement).
 - **prototype-ocr/** — banc d'essai OCR isolé (hors app, voir plus bas).
 
 ## Structure du Google Sheets
@@ -70,8 +71,12 @@ Même détection via `onEdit` (édition manuelle directe dans le Sheets).
 - `getConfig` / `setConfig` — réglages de la structure (`CFG_*` en `PropertiesService`).
 - `ouvrirSessionAdmin` / `definirPin` / `exigerAdmin_` — code responsable + jeton.
 - `genererDonneesImpression` / `listerArchives` / `donneesArchive` — impression.
-- `installer` — installation idempotente (feuilles + déclencheurs), à lancer depuis
-  l'éditeur.
+- `installer` / `installerDepuisMenu` — installation idempotente (feuilles +
+  déclencheurs), via le menu du Sheet « 🧰 Installer / vérifier l'installation ».
+- `nettoyerSiCopie_` — les propriétés du document sont marquées `ID_CLASSEUR` ; si la
+  marque ≠ ID du classeur (= copie), elles sont **toutes effacées** (code responsable,
+  dates, réglages hérités). Appelée par `installer` et `doGet`. Classeur jamais marqué
+  (Vannes avant la généralisation) : marque posée, rien d'effacé.
 - `onEdit` — détection + formatage sur édition manuelle.
 - `getDatesOperation` / `setDatesOperation` — dates d'offre dans `PropertiesService`.
 - `verificationClotureNocturne` — robot de nuit : archive quand la date de fin passe.
@@ -138,6 +143,11 @@ Décision : `docs/retours-vibe/decisions/2026-10-11_generalisation.md`.
 - **Impression** calculée depuis « Saisies » ; **archives** consultables/imprimables.
 - **Corrections / suppressions** dans l'appli, avec garde-fou « la ligne contient
   encore ce que l'écran affichait ».
+- **Distribution = modèle à copier** (option A) : classeur modèle vierge chez Bryan,
+  lien `…/copy`. Chaque structure a ses données sur **son** compte Google (pas de
+  sous-traitance RGPD pour Bryan). Limite : chaque copie se met à jour à la main.
+  Écartés pour l'instant : appli centrale multi-structures (Bryan deviendrait
+  sous-traitant RGPD) et sortie de Google (autre projet).
 - **Dette assumée** : la logique A/B/C existe désormais à **4 endroits**
   (`traiterSaisie`, `analyserDoublonLocal` côté client, `onEdit`, `modifierSaisie`).
   À garder synchro si la détection change.

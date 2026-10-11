@@ -1,4 +1,5 @@
 function doGet(e) {
+  nettoyerSiCopie_(); // copie du modèle (ou d'un autre classeur) : repart sans code/dates/réglages hérités
   // Nouvelle structure : crée « Saisies » si elle n'existe pas encore (rien n'est écrasé)
   if (!SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Saisies")) installerFeuilles_();
   var cfg = getConfig();
@@ -11,13 +12,17 @@ function doGet(e) {
 
 // =================================================================
 // --- INSTALLATION (nouvelle structure) ---
-//     À lancer UNE FOIS depuis l'éditeur Apps Script (menu Exécuter), après
-//     chaque collage d'une nouvelle version : ça accorde les autorisations
-//     nécessaires et crée ce qui manque. Ne supprime et n'écrase jamais rien
-//     (sans effet sur une installation existante, à part ajouter ce qui manque).
+//     Menu du Sheet « 🚀 APPLICATION → 🧰 Installer / vérifier » (ou fonction
+//     installer depuis l'éditeur). À lancer sur chaque nouvelle copie du modèle
+//     et après chaque collage d'une nouvelle version : ça accorde les
+//     autorisations nécessaires et crée ce qui manque. N'écrase aucune donnée.
+//     Seule exception : une COPIE d'un autre classeur repart sans les réglages
+//     hérités (code responsable, dates, réglages) — cf. nettoyerSiCopie_.
 // =================================================================
 function installer() {
-  var rapport = installerFeuilles_();
+  var rapport = [];
+  if (nettoyerSiCopie_()) rapport.push("Nouvelle copie détectée : code responsable, dates et réglages hérités effacés.");
+  rapport = rapport.concat(installerFeuilles_());
   var existants = ScriptApp.getProjectTriggers().map(function (t) { return t.getHandlerFunction(); });
   if (existants.indexOf('verificationClotureNocturne') === -1) {
     ScriptApp.newTrigger('verificationClotureNocturne').timeBased().everyDays(1).atHour(1).create();
@@ -30,6 +35,43 @@ function installer() {
   if (rapport.length === 0) rapport.push("Rien à faire : tout est déjà en place.");
   Logger.log(rapport.join("\n"));
   return rapport.join("\n");
+}
+
+// Depuis le menu du Sheet : installe puis affiche le compte rendu + la suite.
+function installerDepuisMenu() {
+  var rapport = installer();
+  var ui = SpreadsheetApp.getUi();
+  ui.alert("🧰 Installation",
+    rapport +
+    "\n\nSi l'application n'est pas encore en ligne : Extensions → Apps Script → " +
+    "Déployer → Nouveau déploiement → Application Web (voir INSTALLATION.md).",
+    ui.ButtonSet.OK);
+}
+
+// Les réglages (PropertiesService du document) sont marqués avec l'ID du
+// classeur. Si la marque existe mais ne correspond pas, c'est une COPIE : on
+// efface tout ce qui a été hérité (code responsable, dates, réglages, mode
+// annuaire) pour repartir vierge. Classeur jamais marqué (ex. Vannes avant la
+// généralisation) : on pose la marque sans rien effacer.
+// Renvoie true si un nettoyage a eu lieu.
+function nettoyerSiCopie_() {
+  var props = PropertiesService.getDocumentProperties();
+  var id = SpreadsheetApp.getActiveSpreadsheet().getId();
+  var marque = props.getProperty('ID_CLASSEUR');
+  if (marque === id) return false;
+  if (marque) props.deleteAllProperties();
+  props.setProperty('ID_CLASSEUR', id);
+  return !!marque;
+}
+
+// Copie pas encore installée ? (lecture seule, utilisable dans onOpen)
+function estCopieNonInstallee_() {
+  try {
+    var marque = PropertiesService.getDocumentProperties().getProperty('ID_CLASSEUR');
+    return !!marque && marque !== SpreadsheetApp.getActiveSpreadsheet().getId();
+  } catch (e) {
+    return false;
+  }
 }
 
 // Crée les feuilles manquantes. Renvoie la liste de ce qui a été fait.
@@ -880,7 +922,12 @@ function onOpen() {
   var ui = SpreadsheetApp.getUi();
   ui.createMenu('🚀 APPLICATION')
     .addItem('⚙️ Ouvrir le panneau de contrôle', 'afficherPanneau')
+    .addItem('🧰 Installer / vérifier l\'installation', 'installerDepuisMenu')
     .addToUi();
+  if (estCopieNonInstallee_()) {
+    try { SpreadsheetApp.getActiveSpreadsheet().toast("Nouvelle copie : menu 🚀 APPLICATION → 🧰 Installer.", "Installation", 20); } catch (e) {}
+    return;
+  }
   afficherPanneau(); 
 }
 

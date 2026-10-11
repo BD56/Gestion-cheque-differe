@@ -29,15 +29,17 @@ C'est **ce déploiement-là** qu'on met à jour (jamais un nouveau).
 > l'a explicitement modifié (il faut activer « Afficher le fichier manifeste » dans les
 > paramètres du projet pour le voir).
 
-## Étape 1 bis — Lancer `installer` (si le code a changé côté serveur)
-Après avoir collé un nouveau `Code.gs`, dans l'éditeur Apps Script : choisir la
-fonction **`installer`** → **Exécuter**, et **accepter les autorisations** si Google
-en demande.
+## Étape 1 bis — Lancer « Installer » (si le code a changé côté serveur)
+Après avoir collé un nouveau `Code.gs` : dans le **Google Sheets**, menu
+**🚀 APPLICATION → 🧰 Installer / vérifier l'installation** (ou, dans l'éditeur Apps
+Script, fonction **`installer`** → **Exécuter**), et **accepter les autorisations** si
+Google en demande.
 - C'est **indispensable** quand la nouvelle version utilise un service Google de plus
   (ex. version « généralisation » : code responsable, déclencheurs). Sinon l'application
   web peut afficher une erreur d'autorisation pour tout le monde.
-- C'est **sans risque** : `installer` ne crée que ce qui manque (feuilles,
-  déclencheurs) et n'écrase rien. Le journal dit ce qui a été fait.
+- C'est **sans risque** pour un classeur déjà en service : ça ne crée que ce qui manque
+  (feuilles, déclencheurs) et n'écrase aucune donnée ni aucun réglage. Le compte rendu
+  dit ce qui a été fait.
 
 ## Étape 2 — Redéployer sur la MÊME URL
 1. En haut à droite : **Déployer → Gérer les déploiements**.
@@ -63,6 +65,17 @@ en demande.
   demandent désormais ce code ; la saisie et l'impression restent libres.
 - Le panneau du Google Sheets fonctionne comme avant (secours), pour les personnes
   ayant accès au fichier.
+
+## Étape 3 bis — Mettre à jour le MODÈLE (si des structures copient le modèle)
+Pour que les **prochaines** structures aient la nouvelle version, reporter aussi le
+code dans le **classeur modèle** (voir [`INSTALLATION.md`](INSTALLATION.md)) :
+1. Ouvrir le modèle → *Extensions → Apps Script* → recoller les fichiers modifiés
+   (comme à l'étape 1) → enregistrer.
+2. Dans le modèle : menu **🚀 APPLICATION → 🧰 Installer** (autorisations).
+3. **Ne pas déployer** le modèle, ne rien y saisir. Le lien `/copy` reste le même.
+
+Les structures **déjà installées** ne sont pas mises à jour automatiquement : pour
+chacune, refaire les étapes 1 à 3 dans **sa** copie (sur **son** déploiement).
 
 ## Étape 4 — Réconcilier plus tard (de retour sur le Mac)
 Le copier-coller fait diverger les copies. Quand le Mac est disponible :

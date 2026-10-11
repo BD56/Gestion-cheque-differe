@@ -12,6 +12,7 @@
 | Corrections | Correction **et** suppression dans l'appli |
 | Google Sheets | Laissé tel quel (panneau + `onEdit`) en **secours** |
 | Libellé colonne F | « Notes ou Infos » |
+| Distribution | **Option A : classeur modèle vierge à copier** (lien `/copy`), menu « Installer » ; seule étape manuelle restante : le déploiement web |
 
 ## 🔧 Ce qui a été fait (6 commits)
 1. Réglages de la structure + textes réglables (`getConfig`, template `doGet`).
@@ -20,6 +21,8 @@
 4. Archives consultables / imprimables.
 5. Correction / suppression de saisies (recontrôle A/B/C serveur).
 6. `installer()` idempotent + `INSTALLATION.md` + docs.
+7. Modèle à copier : menu « 🧰 Installer », détection de copie (`ID_CLASSEUR`) qui
+   efface les réglages hérités, guide modèle + mise à jour du modèle.
 
 ## 🛡️ Garde-fous
 - « Saisies » reste l'**unique source de vérité** ; `traiterSaisie` / `forcerSaisie` /
@@ -29,9 +32,18 @@
 - Correction/suppression refusée si la ligne a changé depuis l'affichage.
 - La **clôture** passe sous verrou (aucune saisie perdue entre copie et vidage).
 - Code PIN jamais stocké en clair ; blocage après 5 essais.
+- Une copie (du modèle ou d'un autre classeur) **n'hérite jamais** du code responsable,
+  des dates ni des réglages : effacés à l'installation / 1re ouverture.
+
+## 🔀 Options de distribution discutées
+- **A. Modèle à copier** ✅ retenue : simple, données chez chaque structure. Mises à jour
+  à reporter dans chaque copie (OK pour quelques structures).
+- **B. Appli centrale** ❌ pour l'instant : Bryan deviendrait sous-traitant RGPD de
+  toutes les structures ; refonte lourde. À rouvrir si beaucoup de structures.
+- **C. Sortir de Google** ❌ : autre projet (hébergement, coûts, données d'identité).
 
 ## ⚠️ À savoir
-- Après collage du nouveau `Code.gs` : **lancer `installer()`** depuis l'éditeur
+- Après collage du nouveau `Code.gs` : **menu 🚀 APPLICATION → 🧰 Installer** (ou `installer()` depuis l'éditeur)
   (nouvelles autorisations : déclencheurs, e-mail de l'utilisateur pour le panneau).
 - **Créer le code responsable** juste après le déploiement.
 - Testé hors ligne (faux Apps Script + Chromium) ; **à valider sur une copie du Sheet**

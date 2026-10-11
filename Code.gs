@@ -298,7 +298,7 @@ function traiterSaisie(nom, prenom, piece, montant, notes) {
     // Nettoyage profond (sans espaces ni tirets) - UNE FOIS
     var nomNorm = nom.replace(/[\s-]/g, '');
     var prenomNorm = prenom.replace(/[\s-]/g, '');
-    var pieceNorm = piece.replace(/[\s-]/g, '');
+    var pieceNorm = _normPiece_(piece);
     
     var donnees = feuille.getDataRange().getValues();
     var pireCas = null; 
@@ -318,7 +318,7 @@ function traiterSaisie(nom, prenom, piece, montant, notes) {
       
       var nomHistoNorm = nomHisto.replace(/[\s-]/g, '');
       var prenomHistoNorm = prenomHisto.replace(/[\s-]/g, '');
-      var pieceHistoNorm = pieceHisto.replace(/[\s-]/g, '');
+      var pieceHistoNorm = _normPiece_(pieceHisto);
       
       var estMemeIdentite = (nomNorm !== "" && prenomNorm !== "" && nomHistoNorm === nomNorm && prenomHistoNorm === prenomNorm);
       var estMemePiece = (pieceNorm !== "" && pieceHistoNorm === pieceNorm);
@@ -394,7 +394,7 @@ function traiterSaisie(nom, prenom, piece, montant, notes) {
         return { status: "CONFIRMATION", titre: msgTitre, message: msgAlerte, couleur: couleur, details: detailsDoublons, noteForce: notePourSheet, flags: { identite: (pireCas==='A'||pireCas==='C'), piece: (pireCas==='A'||pireCas==='B') } };
       }
     } else {
-      feuille.appendRow([new Date(), nom, prenom, piece, montant, notes, ""]);
+      feuille.appendRow([new Date(), texte_(nom), texte_(prenom), texte_(piece), montant, texte_(notes), ""]);
       majAnnuaire_(nom, prenom, piece);
       return { status: "SUCCES", message: "✅ Saisie enregistrée !" };
     }
@@ -444,7 +444,7 @@ function forcerSaisie(nom, prenom, piece, montant, notes, messageErreur, flagIde
       noteFinale = (notes !== "") ? notes + "\n" + alerte : alerte;
     }
     
-    feuille.appendRow([new Date(), nom, prenom, piece, montant, noteFinale, ""]);
+    feuille.appendRow([new Date(), texte_(nom), texte_(prenom), texte_(piece), montant, texte_(noteFinale), ""]);
     var indexLigne = feuille.getLastRow();
     
     // 🧹 LE CORRECTIF : On efface l'héritage automatique de Google Sheets sur les 7 colonnes
@@ -477,13 +477,13 @@ function verifierPiece(piece) {
   if (!feuille) return { trouve: false };
 
   var mode = feuille.getRange("Z1").getValue() || "SIGNALER";
-  var pieceNorm = piece ? piece.toString().toUpperCase().replace(/[\s-]/g, '') : "";
+  var pieceNorm = _normPiece_(piece);
   if (pieceNorm === "") return { trouve: false, mode: mode };
 
   var donnees = feuille.getDataRange().getValues();
   var matches = [];
   for (var i = 1; i < donnees.length; i++) {
-    var pieceHisto = donnees[i][3] ? donnees[i][3].toString().toUpperCase().replace(/[\s-]/g, '') : "";
+    var pieceHisto = _normPiece_(donnees[i][3]);
     if (pieceHisto !== "" && pieceHisto === pieceNorm) {
       matches.push({
         ligne: i + 1,
@@ -524,8 +524,22 @@ function _feuilleAnnuaire_() {
   return f;
 }
 
+// Normalisation d'un N° de pièce pour la COMPARAISON : majuscules, sans espaces ni
+// tirets ; un N° entièrement numérique est comparé SANS ses 0 initiaux.
+// Raison : Google Sheets convertit en nombre un texte qui ressemble à un nombre
+// ("012345678901" -> 12345678901, ex. anciennes CNI 2000-2009) ; les lignes déjà
+// enregistrées ainsi doivent rester reconnues (sinon doublon manqué).
 function _normPiece_(p) {
-  return p ? p.toString().toUpperCase().replace(/[\s-]/g, '') : "";
+  if (p === null || p === undefined || p === "") return "";
+  var n = p.toString().toUpperCase().replace(/[\s-]/g, '');
+  return /^\d+$/.test(n) ? n.replace(/^0+(?=\d)/, '') : n;
+}
+
+// Valeur texte à écrire dans le Sheet telle quelle : l'apostrophe initiale
+// (invisible) empêche Google Sheets de la convertir (nombre -> 0 perdu, date,
+// formule « = »). Les valeurs vides ou non textuelles sont écrites telles quelles.
+function texte_(v) {
+  return (typeof v === 'string' && v !== "") ? "'" + v : v;
 }
 
 // Upsert (appelé après une saisie réussie) : met à jour Nom/Prénom + date de vue.
@@ -537,11 +551,11 @@ function majAnnuaire_(nom, prenom, piece) {
   var data = f.getDataRange().getValues();
   for (var i = 1; i < data.length; i++) {
     if (_normPiece_(data[i][0]) === pieceNorm) {
-      f.getRange(i + 1, 1, 1, 4).setValues([[pieceNorm, nom, prenom, new Date()]]);
+      f.getRange(i + 1, 1, 1, 4).setValues([[texte_(pieceNorm), texte_(nom), texte_(prenom), new Date()]]);
       return;
     }
   }
-  f.appendRow([pieceNorm, nom, prenom, new Date()]);
+  f.appendRow([texte_(pieceNorm), texte_(nom), texte_(prenom), new Date()]);
 }
 
 // Recherche -> { nom, prenom } ou null
@@ -591,7 +605,7 @@ function reconstruireAnnuaire() {
     }
   }
   var rows = [];
-  for (var p in index) rows.push([p, index[p].nom, index[p].prenom, index[p].date]);
+  for (var p in index) rows.push([texte_(p), texte_(String(index[p].nom || "")), texte_(String(index[p].prenom || "")), index[p].date]);
   if (rows.length) f.getRange(2, 1, rows.length, 4).setValues(rows);
   return "Annuaire reconstruit : " + rows.length + " pièces.";
 }
@@ -801,13 +815,13 @@ function verifierLigneAttendue_(feuille, ligne, attendu) {
 // pas comparer (la ligne corrigée elle-même), ou 0.
 // Renvoie { pireCas: 'A'|'B'|'C'|null, details: [...] }.
 function detecterDoublons_(feuille, nom, prenom, piece, ligneExclue) {
-  var nomN = _normId_(nom), prenomN = _normId_(prenom), pieceN = _normId_(piece);
+  var nomN = _normId_(nom), prenomN = _normId_(prenom), pieceN = _normPiece_(piece);
   var donnees = feuille.getDataRange().getValues();
   var pireCas = null, details = [];
   for (var i = 1; i < donnees.length; i++) {
     if (i === ligneExclue - 1) continue;
     var memeId = (nomN !== "" && prenomN !== "" && _normId_(donnees[i][1]) === nomN && _normId_(donnees[i][2]) === prenomN);
-    var memePiece = (pieceN !== "" && _normId_(donnees[i][3]) === pieceN);
+    var memePiece = (pieceN !== "" && _normPiece_(donnees[i][3]) === pieceN);
     if (!memeId && !memePiece) continue;
     var t = (memeId && memePiece) ? 'A' : (memePiece ? 'B' : 'C');
     if (t === 'A') pireCas = 'A';
@@ -874,7 +888,7 @@ function modifierSaisie(ligne, attendu, nouveau, forcer, jeton) {
       var alerte = "⚠️ Ajout forcé (Cas " + pireCas + ")";
       noteFinale = (notesPropres === "") ? alerte : notesPropres + "\n" + alerte;
     }
-    feuille.getRange(ligne, 2, 1, 5).setValues([[nom, prenom, piece, montant, noteFinale]]);
+    feuille.getRange(ligne, 2, 1, 5).setValues([[texte_(nom), texte_(prenom), texte_(piece), montant, texte_(noteFinale)]]);
     // Couleurs : mêmes règles que onEdit / forcerSaisie
     feuille.getRange(ligne, 1, 1, 7).setBackground(null);
     if (pireCas) {
@@ -1006,7 +1020,8 @@ function onEdit(e) {
   
   // 2️⃣ FORMATAGE AUTOMATIQUE (Majuscules, virgules)
   if (colEdit >= 2 && colEdit <= 4 && e.value) {
-    feuille.getRange(ligneEdit, colEdit).setValue(e.value.toString().toUpperCase().trim());
+    // en texte : Sheets a déjà converti la frappe (ex. N° "0123" -> 123), on rétablit e.value
+    feuille.getRange(ligneEdit, colEdit).setValue(texte_(e.value.toString().toUpperCase().trim()));
   }
   if (colEdit === 5 && e.value && e.value.toString().includes('.')) {
     feuille.getRange(ligneEdit, colEdit).setValue(e.value.toString().replace('.', ','));
@@ -1021,7 +1036,7 @@ function onEdit(e) {
   
   var nom = rowData[1] ? rowData[1].toString().toUpperCase().replace(/[\s-]/g, '') : "";
   var prenom = rowData[2] ? rowData[2].toString().toUpperCase().replace(/[\s-]/g, '') : "";
-  var piece = rowData[3] ? rowData[3].toString().toUpperCase().replace(/[\s-]/g, '') : "";
+  var piece = _normPiece_(rowData[3]);
   var montant = rowData[4] ? rowData[4].toString() : "";
   var notes = rowData[5] ? rowData[5].toString() : "";
   
@@ -1053,7 +1068,7 @@ function onEdit(e) {
     
     var nomHisto = donnees[i][1] ? donnees[i][1].toString().toUpperCase().replace(/[\s-]/g, '') : "";
     var prenomHisto = donnees[i][2] ? donnees[i][2].toString().toUpperCase().replace(/[\s-]/g, '') : "";
-    var pieceHisto = donnees[i][3] ? donnees[i][3].toString().toUpperCase().replace(/[\s-]/g, '') : "";
+    var pieceHisto = _normPiece_(donnees[i][3]);
     
     var matchID = (nom !== "" && prenom !== "" && nomHisto === nom && prenomHisto === prenom);
     var matchPiece = (piece !== "" && pieceHisto === piece);

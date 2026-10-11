@@ -586,12 +586,12 @@
       //    reconfirme à l'écriture en arrière-plan) -> aucun faux négatif même si bug ici.
       function analyserDoublonLocal(nom, prenom, piece) {
         var mode = (cacheVerif && cacheVerif.mode) || "SIGNALER";
-        var nomN = normPieceJS(nom), prenomN = normPieceJS(prenom), pieceN = normPieceJS(piece);
+        var nomN = normIdJS(nom), prenomN = normIdJS(prenom), pieceN = normPieceJS(piece);
         var rows = (cacheVerif && cacheVerif.offre) || [];
         var pireCas = null, details = [];
         for (var i = 0; i < rows.length; i++) {
           var r = rows[i];
-          var nomH = normPieceJS(r.nom), prenomH = normPieceJS(r.prenom);
+          var nomH = normIdJS(r.nom), prenomH = normIdJS(r.prenom);
           var pieceH = r.pieceNorm || normPieceJS(r.piece || "");
           if (!nomH && !pieceH) continue;
           var memeId = (nomN !== "" && prenomN !== "" && nomH === nomN && prenomH === prenomN);
@@ -898,7 +898,11 @@
       // frappe du numéro -> cache frais au moment du blur, sans latence perçue.
       document.getElementById('piece').addEventListener('focus', rechargerCacheVerif);
 
-      function normPieceJS(p) { return (p || "").toString().toUpperCase().replace(/[\s-]/g, ''); }
+      // Comparaison des noms : majuscules, sans espaces ni tirets.
+      function normIdJS(p) { return (p === null || p === undefined ? "" : p).toString().toUpperCase().replace(/[\s-]/g, ''); }
+      // Comparaison des N° de pièce : idem + N° entièrement numérique sans ses 0 initiaux
+      // (miroir de Code.gs::_normPiece_ — Google Sheets a pu stocker "0123" en 123).
+      function normPieceJS(p) { var n = normIdJS(p); return /^\d+$/.test(n) ? n.replace(/^0+(?=\d)/, '') : n; }
 
       document.getElementById('piece').addEventListener('blur', function () {
         var val = this.value.trim();
@@ -1121,11 +1125,13 @@
         });
       }
       function dessinerListeSaisies() {
-        var filtre = normPieceJS(document.getElementById('rechercheSaisie').value);
+        var saisi = document.getElementById('rechercheSaisie').value;
+        var filtre = normIdJS(saisi), filtrePiece = normPieceJS(saisi);
         var zone = document.getElementById('listeSaisies');
         zone.innerHTML = "";
         listeSaisies.forEach(function (sa) {
-          if (filtre && normPieceJS(sa.nom + sa.prenom + " " + sa.prenom + sa.nom + " " + sa.piece).indexOf(filtre) === -1) return;
+          var botte = normIdJS(sa.nom + sa.prenom + " " + sa.prenom + sa.nom + " " + sa.piece);
+          if (filtre && botte.indexOf(filtre) === -1 && botte.indexOf(filtrePiece) === -1) return;
           var carte = document.createElement('div');
           carte.className = 'doublon-carte';
           if (sa.alerte) carte.style.borderLeftColor = "#d93025";

@@ -396,17 +396,45 @@ function getInfosPanneau() {
   return { success: true, mode: mode, urlFichier: ss.getUrl(), annuaireActif: ANNUAIRE_ACTIF, modeAnnuaire: getModeAnnuaire() };
 }
 
+// Impression calculée directement depuis « Saisies » (colonnes A-F). Ne dépend
+// plus des onglets A_IMPRIMER / OFFRE_COMPLETE (conservés tels quels pour le
+// panneau du Sheet, en secours) et ne les modifie plus.
+//  - 'jour'  : lignes dont la date tombe le jour choisi ("aujourdhui" ou
+//              "yyyy-MM-dd"), date en jj/mm/aaaa — comme A_IMPRIMER.
+//  - 'offre' : toutes les lignes non vides, date + heure — comme OFFRE_COMPLETE.
+// Renvoie [] s'il n'y a aucune ligne à imprimer.
 function genererDonneesImpression(type, dateChoisieStr) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var feuille = (type === 'jour') ? ss.getSheetByName("A_IMPRIMER") : ss.getSheetByName("OFFRE_COMPLETE");
+  var feuille = ss.getSheetByName("Saisies");
   if (!feuille) return [];
+  var derniere = feuille.getLastRow();
+  if (derniere < 2) return [];
+
+  var cfg = getConfig();
+  var entete = ["Date", "Nom", "Prénom", "N° Pièce", cfg.LIBELLE_MONTANT, cfg.LIBELLE_NOTES];
+  var plage = feuille.getRange(2, 1, derniere - 1, 6);
+  var valeurs = plage.getValues();
+  var affichage = plage.getDisplayValues();
+  var tz = ss.getSpreadsheetTimeZone(); // même référence que INT()/TODAY() dans A_IMPRIMER
+  var cible = null;
   if (type === 'jour') {
-    if (dateChoisieStr === "aujourdhui") feuille.getRange("Z1").clearContent();
-    else feuille.getRange("Z1").setValue("'" + dateChoisieStr);
-    SpreadsheetApp.flush(); Utilities.sleep(500); 
+    cible = (dateChoisieStr === "aujourdhui") ? Utilities.formatDate(new Date(), tz, "yyyy-MM-dd") : dateChoisieStr;
   }
-  var dl = feuille.getLastRow();
-  return (dl < 1) ? [] : feuille.getRange(1, 1, dl, 6).getDisplayValues();
+
+  var lignes = [];
+  for (var i = 0; i < valeurs.length; i++) {
+    if (type === 'jour') {
+      var d = valeurs[i][0];
+      if (!(d instanceof Date) || Utilities.formatDate(d, tz, "yyyy-MM-dd") !== cible) continue;
+      var ligne = affichage[i].slice();
+      ligne[0] = Utilities.formatDate(d, tz, "dd/MM/yyyy");
+      lignes.push(ligne);
+    } else {
+      if (affichage[i].join("") === "") continue;
+      lignes.push(affichage[i]);
+    }
+  }
+  return lignes.length ? [entete].concat(lignes) : [];
 }
 
 function basculerModeWebApp() {

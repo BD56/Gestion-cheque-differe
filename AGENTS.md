@@ -136,6 +136,9 @@ Décision : `docs/retours-vibe/decisions/2026-10-11_generalisation.md`.
 - **Espace responsable** (⚙️) : code PIN 4-8 chiffres (SHA-256 + sel, jamais en clair),
   jeton de session `CacheService` (10 min d'inactivité), 5 échecs → blocage 15 min.
   Protège : réglages, mode, mode annuaire, dates, clôture, archives, corrections.
+  Présentation : **6 tuiles** (Saisies, Archives, Opération, Sécurité, Réglages, Code)
+  ouvrant chacune un sous-écran (« ← Retour ») + Clôturer / Verrouiller à part.
+  Bouton « Ouvrir Google Sheets » retiré de l'appli (tout passe par l'appli).
   **Saisie et impression restent libres.** Toute fonction serveur sensible appelle
   `exigerAdmin_(jeton)` en premier.
 - **Panneau du Sheet** (secours, inchangé) : passe sans code **pour les éditeurs du

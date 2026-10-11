@@ -68,11 +68,11 @@ Avec le **compte Google de la structure** (c'est lui qui possède les données) 
    *(C'est la seule étape que Google ne permet pas d'automatiser simplement.)*
 4. **Sur la tablette**, ouvrir l'URL puis **⚙️ → Espace responsable** :
    - **créer le code responsable** (4 à 8 chiffres, réservé aux responsables) ;
-   - **🏷️ Réglages de la structure** : nom de la structure **avec l'article**
+   - tuile **🏷️ Réglages** : nom de la structure **avec l'article**
      (« l'Hypermarché X », « la société Y » — lu « L'auteur concède à … »), nom de
      l'offre, titre de l'onglet, libellé et caractère obligatoire du montant (euro),
      libellé et précision du champ Notes ;
-   - **📅 Opération en cours** : dates de début et de fin de l'offre.
+   - tuile **📅 Opération** : dates de début et de fin de l'offre.
 
 C'est tout : **tout se fait ensuite dans l'application** (saisie, impression,
 corrections, archives, clôture). Le Google Sheets ne sert que de stockage.
@@ -92,7 +92,7 @@ Ce nettoyage a lieu à l'installation ou à la première ouverture de l'applicat
 - **Code responsable oublié** : ouvrir le Google Sheets → panneau ⚙️ (à droite) →
   **Réinitialiser le code responsable** (réservé aux personnes ayant accès au fichier).
 - **Ne pas modifier** le Google Sheets à la main : passer par l'application
-  (⚙️ → Espace responsable → Corriger / supprimer). Si quelqu'un le fait quand même,
+  (⚙️ → Espace responsable → tuile 📋 Saisies). Si quelqu'un le fait quand même,
   la détection de doublon (`onEdit`) reste active en filet de sécurité.
 - Les boutons « Voir jour / Toute l'offre » du **panneau du Sheet** utilisent des
   onglets `A_IMPRIMER` / `OFFRE_COMPLETE` propres à l'installation d'origine : une

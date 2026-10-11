@@ -48,7 +48,18 @@
       .btn-mode-signaler { background-color: #f2994a; }
       .btn-mode-bloquant { background-color: #d93025; }
       .btn-archive { background-color: #d93025; margin-top: 20px; }
-      .btn-open-sheet { background-color: #0f9d58; }
+      /* --- Espace responsable : tuiles + sous-écrans --- */
+      .sous-ecran { display: none; }
+      .sous-ecran.actif { display: block; }
+      .tuiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+      .tuile { background: #f1f3f4; border: none; border-radius: 12px; padding: 12px 8px; font-size: 14px; font-weight: bold; color: #3c4043; cursor: pointer; text-align: center; line-height: 1.3; }
+      .tuile:hover { background: #e8eaed; }
+      .tuile .ico { font-size: 26px; display: block; margin-bottom: 4px; }
+      .tuile small { display: block; font-weight: normal; font-size: 11px; color: #5f6368; margin-top: 2px; }
+      .pied { display: flex; gap: 10px; }
+      .pied .btn-action { margin: 0; font-size: 13px; }
+      .retour { background: none; border: none; color: #1a73e8; font-weight: bold; font-size: 15px; cursor: pointer; padding: 0; margin-bottom: 10px; }
+      .titre-ecran { text-align: center; margin-top: 0; }
 
       .footer-legal { margin-top: 20px; text-align: center; width: 100%; max-width: 450px; }
       .footer-legal a { color: #9aa0a6; font-size: 12px; text-decoration: none; transition: color 0.2s; cursor: pointer; }
@@ -73,7 +84,7 @@
         html, body { height: auto !important; min-height: auto !important; overflow: visible !important; }
         body { background-color: white !important; display: block !important; padding: 0 !important; margin: 0 !important; }
         .container, .footer-legal { display: none !important; }
-        #modalParametres, #modalMentions, #modalAide, #modalSaisies { display: none !important; }
+        #modalParametres, #modalMentions, #modalAide { display: none !important; }
         #zoneImpression { display: block !important; width: 100%; }
         .table-print { width: 100%; border-collapse: collapse; font-family: sans-serif; font-size: 12px; }
         .table-print th, .table-print td { border: 1px solid #000; padding: 8px; text-align: left; }
@@ -211,7 +222,7 @@
           <button class="accordion">📅 Dates de l'offre et Clôture automatique</button>
           <div class="panel">
             <ul>
-              <li><strong>Lancer ou modifier :</strong> Cliquez sur ⚙️, ouvrez l'espace responsable et saisissez vos dates. S'il y a une erreur ou une prolongation, modifiez simplement la date de fin ici.</li>
+              <li><strong>Lancer ou modifier :</strong> Cliquez sur ⚙️, ouvrez l'espace responsable puis la tuile <strong>📅 Opération</strong>. S'il y a une erreur ou une prolongation, modifiez simplement la date de fin ici.</li>
               <li><strong>Fin de l'offre (Auto-Pilote) :</strong> Vous n'avez rien à faire ! L'opération se clôture, s'archive et verrouille la tablette <strong>toute seule</strong> la nuit suivant le dernier jour.</li>
             </ul>
           </div>
@@ -219,10 +230,10 @@
           <button class="accordion">🖨️ Corrections, Impressions et Archives</button>
           <div class="panel">
             <ul>
-              <li><strong>Corriger ou supprimer une saisie :</strong> ⚙️ → espace responsable → <strong>📋 Corriger / supprimer une saisie</strong>. Recherchez la ligne par nom ou n° de pièce. Une correction est <strong>re-vérifiée</strong> (doublon, usurpation, homonyme) comme une nouvelle saisie.</li>
+              <li><strong>Corriger ou supprimer une saisie :</strong> ⚙️ → espace responsable → tuile <strong>📋 Saisies</strong>. Recherchez la ligne par nom ou n° de pièce. Une correction est <strong>re-vérifiée</strong> (doublon, usurpation, homonyme) comme une nouvelle saisie.</li>
               <li><strong>Imprimer le jour actuel :</strong> Cliquez sur ⚙️ puis sur le bouton bleu <strong>🖨️ IMPRIMER AUJOURD'HUI</strong> pour sortir la liste des saisies du jour.</li>
               <li><strong>Imprimer un jour oublié :</strong> Toujours dans ⚙️, utilisez le calendrier <em>"Imprimer un jour précédent"</em> pour sortir la liste d'une journée passée.</li>
-              <li><strong>Imprimer une ancienne offre clôturée :</strong> ⚙️ → espace responsable → <strong>🗄️ Archives</strong>, choisissez l'offre puis imprimez.</li>
+              <li><strong>Imprimer une ancienne offre clôturée :</strong> ⚙️ → espace responsable → tuile <strong>🗄️ Archives</strong>, choisissez l'offre puis imprimez.</li>
             </ul>
           </div>
 
@@ -235,7 +246,9 @@
         <button class="btn-close-modal" onclick="fermerPanneau()">✖</button>
         <h2 style="margin-top:0;">⚙️ Paramètres</h2>
         <hr style="border: 0; height: 1px; background: #ddd; margin: 15px 0;">
-        
+
+        <!-- ===== ACCUEIL : impression (libre) + espace responsable ===== -->
+        <div class="sous-ecran actif" data-ecran="accueil">
         <button class="btn-action btn-print-jour" onclick="preparerImpression('jour', 'aujourdhui', 'Impression du Jour')">🖨️ IMPRIMER AUJOURD'HUI</button>
         
         <div style="background: #f1f3f4; padding: 15px; border-radius: 8px; margin-bottom: 10px; text-align: center;">
@@ -250,7 +263,7 @@
         
         <hr style="border: 0; height: 1px; background: #ddd; margin: 20px 0;">
 
-        <!-- ===== ESPACE RESPONSABLE (code PIN vérifié côté serveur) ===== -->
+        <!-- Espace responsable (code PIN vérifié côté serveur) -->
         <div id="zoneVerrou">
           <h3 style="text-align: center; margin-top: 0;">🔒 Espace responsable</h3>
           <p id="txtVerrou" style="font-size: 13px; text-align: center; color: #5f6368; margin-top: 0;"></p>
@@ -261,35 +274,84 @@
         </div>
 
         <div id="zoneAdmin" style="display: none;">
-        <h3 style="text-align: center; margin-top: 0;">🔓 Espace responsable</h3>
-        <button class="btn-action" style="background-color: #1a73e8;" onclick="ouvrirSaisies()">📋 CORRIGER / SUPPRIMER UNE SAISIE</button>
-        <button class="btn-action" id="btnMode" onclick="changerMode()">⏳ Chargement Mode...</button>
-        <button class="btn-action" id="btnModeAnnuaire" style="display:none; background-color:#5f6368;" onclick="changerModeAnnuaire()"></button>
-        <button class="btn-action btn-open-sheet" onclick="ouvrirFichierSouche()">OUVRIR GOOGLE SHEETS</button>
-        <hr style="border: 0; height: 1px; background: #ddd; margin: 20px 0;">
-        <h3 style="text-align: center; margin-top: 0;">📅 Opération en cours</h3>
-        <div style="display: flex; justify-content: space-around; margin-bottom: 15px;">
-          <div>
-            <label style="font-weight: bold; font-size: 13px;">Début :</label>
-            <input type="date" id="modalDateDebut" style="padding: 8px; font-size: 14px; border-radius: 5px; border: 1px solid #ccc; width: 130px;">
+          <h3 style="text-align: center; margin-top: 0;">🔓 Espace responsable</h3>
+          <div class="tuiles">
+            <button class="tuile" onclick="ouvrirSaisies()"><span class="ico">📋</span>Saisies<small>corriger / supprimer</small></button>
+            <button class="tuile" onclick="ouvrirArchives()"><span class="ico">🗄️</span>Archives<small>offres clôturées</small></button>
+            <button class="tuile" onclick="allerEcran('operation')"><span class="ico">📅</span>Opération<small id="resumeOperation">—</small></button>
+            <button class="tuile" onclick="allerEcran('securite')"><span class="ico">🛡️</span>Sécurité<small id="resumeSecurite">—</small></button>
+            <button class="tuile" onclick="allerEcran('reglages')"><span class="ico">🏷️</span>Réglages<small>textes de la structure</small></button>
+            <button class="tuile" onclick="allerEcran('code')"><span class="ico">🔑</span>Code<small>changer le code</small></button>
           </div>
-          <div>
-            <label style="font-weight: bold; font-size: 13px;">Fin :</label>
-            <input type="date" id="modalDateFin" style="padding: 8px; font-size: 14px; border-radius: 5px; border: 1px solid #ccc; width: 130px;">
+          <div class="pied">
+            <button class="btn-action btn-archive" onclick="cloturerOffre()">⚠️ CLÔTURER L'OFFRE</button>
+            <button class="btn-action" style="background-color: #3c4043;" onclick="verrouillerAdmin()">🔒 VERROUILLER</button>
           </div>
         </div>
-        <button class="btn-action" style="background-color: #34a853;" onclick="sauvegarderDatesTablette()">METTRE À JOUR LES DATES</button>
-        <div id="msgRetourModal" style="text-align: center; font-weight: bold; margin-top: 10px; font-size: 13px;"></div>
+        </div>
 
-        <hr style="border: 0; height: 1px; background: #ddd; margin: 20px 0;">
-        <button class="btn-action" style="background-color: #5f6368;" onclick="ouvrirArchives()">🗄️ ARCHIVES (OFFRES CLÔTURÉES)</button>
-        <div id="blocArchives" style="display: none; background: #f1f3f4; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+        <!-- ===== SOUS-ÉCRANS DE L'ESPACE RESPONSABLE ===== -->
+        <div class="sous-ecran" data-ecran="saisies">
+          <button class="retour" onclick="fermerSaisies()">← Retour</button>
+          <h3 class="titre-ecran">📋 Saisies de l'offre en cours</h3>
+          <div id="vueListeSaisies">
+            <input type="text" id="rechercheSaisie" placeholder="Rechercher (nom, prénom, pièce)…" autocomplete="off" style="margin-bottom: 10px;">
+            <div id="msgSaisies" style="text-align: center; font-weight: bold; font-size: 13px; margin-bottom: 8px;"></div>
+            <div id="listeSaisies"></div>
+          </div>
+          <div id="vueCorrection" style="display: none;">
+            <div class="input-group"><label>N° de Pièce *</label><input type="text" id="corPiece" autocomplete="off"></div>
+            <div class="input-group"><label>Nom *</label><input type="text" id="corNom" autocomplete="off"></div>
+            <div class="input-group"><label>Prénom *</label><input type="text" id="corPrenom" autocomplete="off"></div>
+            <div class="input-group"><label id="corLblMontant">Montant (€)</label><input type="text" id="corMontant" autocomplete="off"></div>
+            <div class="input-group"><label id="corLblNotes">Notes</label><input type="text" id="corNotes" autocomplete="off"></div>
+            <div id="corAlerte" style="display: none; padding: 12px; border-radius: 8px; border: 2px solid; margin-bottom: 10px;">
+              <div class="doublon-titre" id="corAlerteTitre"></div>
+              <div class="message-alerte" id="corAlerteMsg"></div>
+              <div id="corAlerteListe"></div>
+              <button class="btn-action" id="btnForcerCorrection" style="background-color: #f2994a;" onclick="enregistrerCorrection(true)">FORCER LA CORRECTION</button>
+            </div>
+            <div class="flex-btn">
+              <button class="btn-cancel" onclick="annulerCorrection()">ANNULER</button>
+              <button class="btn-force" style="background: #34a853;" onclick="enregistrerCorrection(false)">ENREGISTRER</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="sous-ecran" data-ecran="archives">
+          <button class="retour" onclick="allerEcran('accueil')">← Retour</button>
+          <h3 class="titre-ecran">🗄️ Archives (offres clôturées)</h3>
           <select id="selArchive" style="width: 100%; padding: 10px; font-size: 14px; border: 2px solid #ccc; border-radius: 8px; margin-bottom: 10px;"></select>
-          <button class="btn-action" style="background-color: #1a73e8; margin-bottom: 0;" onclick="imprimerArchive()">🖨️ IMPRIMER CETTE ARCHIVE</button>
+          <button class="btn-action" style="background-color: #1a73e8;" onclick="imprimerArchive()">🖨️ IMPRIMER CETTE ARCHIVE</button>
         </div>
 
-        <button class="btn-action" style="background-color: #5f6368;" onclick="basculerBloc('blocReglages')">🏷️ RÉGLAGES DE LA STRUCTURE</button>
-        <div id="blocReglages" style="display: none; background: #f1f3f4; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+        <div class="sous-ecran" data-ecran="operation">
+          <button class="retour" onclick="allerEcran('accueil')">← Retour</button>
+          <h3 class="titre-ecran">📅 Opération en cours</h3>
+          <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <div style="flex: 1;">
+              <label style="font-weight: bold; font-size: 13px;">Début :</label>
+              <input type="date" id="modalDateDebut" style="padding: 8px; font-size: 14px; border-radius: 5px; border: 1px solid #ccc;">
+            </div>
+            <div style="flex: 1;">
+              <label style="font-weight: bold; font-size: 13px;">Fin :</label>
+              <input type="date" id="modalDateFin" style="padding: 8px; font-size: 14px; border-radius: 5px; border: 1px solid #ccc;">
+            </div>
+          </div>
+          <button class="btn-action" style="background-color: #34a853;" onclick="sauvegarderDatesTablette()">METTRE À JOUR LES DATES</button>
+          <div id="msgRetourModal" style="text-align: center; font-weight: bold; margin-top: 10px; font-size: 13px;"></div>
+        </div>
+
+        <div class="sous-ecran" data-ecran="securite">
+          <button class="retour" onclick="allerEcran('accueil')">← Retour</button>
+          <h3 class="titre-ecran">🛡️ Sécurité</h3>
+          <button class="btn-action" id="btnMode" onclick="changerMode()">⏳ Chargement Mode...</button>
+          <button class="btn-action" id="btnModeAnnuaire" style="display:none; background-color:#5f6368;" onclick="changerModeAnnuaire()"></button>
+        </div>
+
+        <div class="sous-ecran" data-ecran="reglages">
+          <button class="retour" onclick="allerEcran('accueil')">← Retour</button>
+          <h3 class="titre-ecran">🏷️ Réglages de la structure</h3>
           <div id="champsReglages"></div>
           <label style="display: flex; align-items: center; gap: 8px; font-size: 14px;">
             <input type="checkbox" id="cfg_MONTANT_OBLIGATOIRE" style="width: auto;"> Montant obligatoire
@@ -298,45 +360,13 @@
           <div id="msgReglages" style="text-align: center; font-weight: bold; font-size: 13px;"></div>
         </div>
 
-        <button class="btn-action" style="background-color: #5f6368;" onclick="basculerBloc('blocPin')">🔑 CHANGER LE CODE RESPONSABLE</button>
-        <div id="blocPin" style="display: none; background: #f1f3f4; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+        <div class="sous-ecran" data-ecran="code">
+          <button class="retour" onclick="allerEcran('accueil')">← Retour</button>
+          <h3 class="titre-ecran">🔑 Code responsable</h3>
           <input type="password" id="pinNouveau" inputmode="numeric" autocomplete="off" placeholder="Nouveau code (4 à 8 chiffres)" style="margin-bottom: 10px;">
           <input type="password" id="pinNouveau2" inputmode="numeric" autocomplete="off" placeholder="Confirmer le nouveau code" style="margin-bottom: 10px;">
           <button class="btn-action" style="background-color: #34a853;" onclick="changerPin()">ENREGISTRER LE CODE</button>
           <div id="msgPin" style="text-align: center; font-weight: bold; font-size: 13px;"></div>
-        </div>
-
-        <button class="btn-action btn-archive" onclick="cloturerOffre()">⚠️ CLÔTURER L'OFFRE</button>
-        <button class="btn-action" style="background-color: #3c4043;" onclick="verrouillerAdmin()">🔒 VERROUILLER</button>
-        </div>
-      </div>
-    </div>
-
-    <div id="modalSaisies" class="modal-overlay">
-      <div class="modal-content" style="max-width: 520px;">
-        <button class="btn-close-modal" onclick="fermerSaisies()">✖</button>
-        <h2 style="margin-top:0; font-size:18px;">📋 Saisies de l'offre en cours</h2>
-        <div id="vueListeSaisies">
-          <input type="text" id="rechercheSaisie" placeholder="Rechercher (nom, prénom, pièce)…" autocomplete="off" style="margin-bottom: 10px;">
-          <div id="msgSaisies" style="text-align: center; font-weight: bold; font-size: 13px; margin-bottom: 8px;"></div>
-          <div id="listeSaisies"></div>
-        </div>
-        <div id="vueCorrection" style="display: none;">
-          <div class="input-group"><label>N° de Pièce *</label><input type="text" id="corPiece" autocomplete="off"></div>
-          <div class="input-group"><label>Nom *</label><input type="text" id="corNom" autocomplete="off"></div>
-          <div class="input-group"><label>Prénom *</label><input type="text" id="corPrenom" autocomplete="off"></div>
-          <div class="input-group"><label id="corLblMontant">Montant (€)</label><input type="text" id="corMontant" autocomplete="off"></div>
-          <div class="input-group"><label id="corLblNotes">Notes</label><input type="text" id="corNotes" autocomplete="off"></div>
-          <div id="corAlerte" style="display: none; padding: 12px; border-radius: 8px; border: 2px solid; margin-bottom: 10px;">
-            <div class="doublon-titre" id="corAlerteTitre"></div>
-            <div class="message-alerte" id="corAlerteMsg"></div>
-            <div id="corAlerteListe"></div>
-            <button class="btn-action" id="btnForcerCorrection" style="background-color: #f2994a;" onclick="enregistrerCorrection(true)">FORCER LA CORRECTION</button>
-          </div>
-          <div class="flex-btn">
-            <button class="btn-cancel" onclick="annulerCorrection()">ANNULER</button>
-            <button class="btn-force" style="background: #34a853;" onclick="enregistrerCorrection(false)">ENREGISTRER</button>
-          </div>
         </div>
       </div>
     </div>
@@ -391,7 +421,6 @@
 
       var memNom = "", memPrenom = "", memPiece = "", memMontant = "", memNotes = "";
       var memMessageErreur = "", memFlags = {};
-      var lienFichierSouche = "";
 
       window.onload = function() {
         var auj = new Date();
@@ -402,7 +431,6 @@
         
         google.script.run.withSuccessHandler(function(infos) {
           if (infos.success) {
-            lienFichierSouche = infos.urlFichier;
             majAffichageMode(infos.mode);
             if (infos.annuaireActif) majAffichageModeAnnuaire(infos.modeAnnuaire);
           } else {
@@ -417,6 +445,7 @@
 
       function ouvrirPanneau() {
         document.getElementById('modalParametres').style.display = "flex";
+        allerEcran('accueil');
         if (jetonAdmin) afficherZoneAdmin(); else afficherZoneVerrou();
       }
       // Fermer le panneau reverrouille l'espace responsable.
@@ -704,14 +733,8 @@
       function majAffichageMode(mode) {
         var btn = document.getElementById('btnMode'); 
         btn.innerHTML = "🛡️ MODE : " + mode;
+        document.getElementById('resumeSecurite').textContent = mode;
         btn.className = (mode === "BLOQUANT") ? "btn-action btn-mode-bloquant" : "btn-action btn-mode-signaler";
-      }
-
-      function ouvrirFichierSouche() {
-        if (lienFichierSouche) { 
-          window.open(lienFichierSouche, '_blank'); 
-          fermerPanneau(); 
-        }
       }
 
       function cloturerOffre() {
@@ -809,6 +832,7 @@
         appelAdmin('setDatesOperation', [debut, fin], function(reponse) {
            msg.style.color = "green"; 
            msg.innerHTML = "✅ Dates mises à jour !";
+           majResumeOperation(debut, fin);
            chargerDatesAffichage();
            setTimeout(function(){ msg.innerHTML = ""; }, 3000);
         }, function () { msg.innerHTML = ""; });
@@ -1027,10 +1051,10 @@
       function verrouillerAdmin() {
         if (jetonAdmin) google.script.run.withFailureHandler(function () {}).fermerSessionAdmin(jetonAdmin);
         jetonAdmin = null;
-        document.getElementById('modalSaisies').style.display = "none";
+        saisieEnCours = null;
+        allerEcran('accueil');
         document.getElementById('zoneAdmin').style.display = "none";
         document.getElementById('zoneVerrou').style.display = "block";
-        ['blocReglages', 'blocPin', 'blocArchives'].forEach(function (id) { document.getElementById(id).style.display = "none"; });
         if (document.getElementById('modalParametres').style.display === "flex") afficherZoneVerrou();
       }
 
@@ -1042,13 +1066,20 @@
           if (infos.annuaireActif) majAffichageModeAnnuaire(infos.modeAnnuaire);
           document.getElementById('modalDateDebut').value = infos.dates.debut;
           document.getElementById('modalDateFin').value = infos.dates.fin;
+          majResumeOperation(infos.dates.debut, infos.dates.fin);
           remplirFormulaireReglages(infos.config);
         });
       }
 
-      function basculerBloc(id) {
-        var b = document.getElementById(id);
-        b.style.display = (b.style.display === "none") ? "block" : "none";
+      // Navigation : accueil (tuiles) <-> sous-écrans de l'espace responsable
+      function allerEcran(nom) {
+        var ecrans = document.querySelectorAll('#modalParametres .sous-ecran');
+        for (var i = 0; i < ecrans.length; i++) ecrans[i].classList.toggle('actif', ecrans[i].getAttribute('data-ecran') === nom);
+        document.querySelector('#modalParametres .modal-content').scrollTop = 0;
+      }
+      function majResumeOperation(debut, fin) {
+        document.getElementById('resumeOperation').textContent = (debut && fin)
+          ? formaterDateAffichage(debut) + " → " + formaterDateAffichage(fin) : "aucune date";
       }
 
       // --- Correction / suppression d'une saisie ---
@@ -1056,13 +1087,13 @@
       var listeSaisies = [], saisieEnCours = null;
 
       function ouvrirSaisies() {
-        document.getElementById('modalSaisies').style.display = "flex";
+        allerEcran('saisies');
         afficherVueListe();
         chargerListeSaisies();
       }
       function fermerSaisies() {
-        document.getElementById('modalSaisies').style.display = "none";
         saisieEnCours = null;
+        allerEcran('accueil');
       }
       function afficherVueListe() {
         document.getElementById('vueCorrection').style.display = "none";
@@ -1180,11 +1211,9 @@
 
       // --- Archives (offres clôturées) ---
       function ouvrirArchives() {
-        var bloc = document.getElementById('blocArchives');
-        if (bloc.style.display !== "none") { bloc.style.display = "none"; return; }
+        allerEcran('archives');
         var sel = document.getElementById('selArchive');
-        sel.innerHTML = "<option>⏳ Chargement…</option>";
-        bloc.style.display = "block";
+        sel.innerHTML = "<option value=''>⏳ Chargement…</option>";
         appelAdmin('listerArchives', [], function (liste) {
           sel.innerHTML = "";
           if (!liste.length) { sel.innerHTML = "<option value=''>Aucune archive</option>"; return; }

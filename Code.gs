@@ -286,6 +286,9 @@ function traiterSaisie(nom, prenom, piece, montant, notes) {
     var feuille = ss.getSheetByName("Saisies");
     if (!feuille) return { status: "BLOQUE", titre: "Erreur Serveur", message: "La feuille 'Saisies' est introuvable." };
 
+    var horsPeriode = controlerPeriode_();
+    if (horsPeriode) return horsPeriode;
+
     var modeSecurite = feuille.getRange("Z1").getValue() || "SIGNALER";
     
     // Nettoyage standard pour l'affichage
@@ -403,6 +406,20 @@ function traiterSaisie(nom, prenom, piece, montant, notes) {
   }
 }
 
+// Une saisie n'est acceptée que PENDANT l'offre (dates de l'opération, heure de Paris).
+// Sinon (tablette restée ouverte après la clôture, appel direct…) -> refus, rien d'écrit.
+// Renvoie null si la saisie est permise, sinon la réponse de refus.
+function controlerPeriode_() {
+  var dates = getDatesOperation();
+  var refus = function (msg) { return { status: "BLOQUE", horsPeriode: true, titre: "🛑 HORS PÉRIODE", message: msg, details: [] }; };
+  if (!dates.debut || !dates.fin) return refus("Aucune opération en cours : saisie impossible.");
+  var auj = Utilities.formatDate(new Date(), "Europe/Paris", "yyyy-MM-dd");
+  var jjmm = function (iso) { var p = iso.split('-'); return p.length === 3 ? p[2] + "/" + p[1] : iso; };
+  if (auj < dates.debut) return refus("L'opération n'a pas encore commencé (début le " + jjmm(dates.debut) + ").");
+  if (auj > dates.fin) return refus("L'opération est terminée (fin le " + jjmm(dates.fin) + ").");
+  return null;
+}
+
 // Ajout forcé (après confirmation d'un doublon à l'écran). Le serveur REFAIT la
 // détection A/B/C sous verrou, sans se fier à la tablette :
 //  - mode BLOQUANT + cas A/B -> refus (rien n'est écrit) ;
@@ -418,6 +435,8 @@ function forcerSaisie(nom, prenom, piece, montant, notes, messageErreur, flagIde
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var feuille = ss.getSheetByName("Saisies");
     if (!feuille) return { status: "BLOQUE", titre: "Erreur Serveur", message: "La feuille 'Saisies' est introuvable." };
+    var horsPeriode = controlerPeriode_();
+    if (horsPeriode) return horsPeriode;
     
     nom = nom.toString().toUpperCase().trim(); 
     prenom = prenom.toString().toUpperCase().trim();

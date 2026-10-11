@@ -155,6 +155,22 @@ Décision : `docs/retours-vibe/decisions/2026-10-11_generalisation.md`.
   BLOQUANT + A/B → refus (rien d'écrit) ; sinon note + couleurs **calculées par le
   serveur** (les paramètres `messageErreur`/drapeaux envoyés par la tablette sont
   ignorés). Ferme le contournement du mode BLOQUANT (appel direct ou cache périmé).
+- **Robustesse (oct. 2026, analyse globale)** :
+  - **N° de pièce** : Google Sheets convertissait « 0123… » en nombre (0 perdu, ex. anciennes
+    CNI 2000-2009) → doublon manqué. Désormais : écriture en **texte** (`texte_`, apostrophe
+    invisible, protège aussi des formules « = ») et comparaison via **`_normPiece_`**
+    (N° entièrement numérique comparé sans ses 0 initiaux ; miroir client `normPieceJS`,
+    les noms utilisent `_normId_` / `normIdJS`). Les anciennes lignes restent reconnues.
+  - **Saisies en attente** (client) : une saisie validée reste dans la copie locale jusqu'à
+    ce que le serveur l'ait écrite ET qu'un rechargement la contienne (`saisiesEnAttente`,
+    `fusionnerEnAttente`) — sinon la resynchro au focus du N° l'effaçait (doublon immédiat
+    invisible). Réponses de rechargement appliquées dans l'ordre.
+  - **Refus du serveur** (doublon manqué localement, hors période, échec réseau) : **fenêtre
+    d'alerte** `modalAlerteServeur` (détail + NE PAS ENREGISTRER / FORCER si permis), plus
+    de simple bandeau ; bandeau à minuteur unique.
+  - **Période de l'offre** : `controlerPeriode_` refuse côté serveur toute saisie hors dates
+    (`traiterSaisie`, `forcerSaisie`) ; la tablette revérifie au retour sur la page, toutes les
+    10 min et avant chaque saisie.
 - **Dette assumée** : la logique A/B/C existe à **4 endroits** — `traiterSaisie`,
   `analyserDoublonLocal` (client), `onEdit`, et `detecterDoublons_` (partagée par
   `forcerSaisie` et `modifierSaisie`). À garder synchro si la détection change.

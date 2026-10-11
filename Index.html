@@ -84,7 +84,7 @@
         html, body { height: auto !important; min-height: auto !important; overflow: visible !important; }
         body { background-color: white !important; display: block !important; padding: 0 !important; margin: 0 !important; }
         .container, .footer-legal { display: none !important; }
-        #modalParametres, #modalMentions, #modalAide { display: none !important; }
+        #modalParametres, #modalMentions, #modalAide, #modalAlerteServeur { display: none !important; }
         #zoneImpression { display: block !important; width: 100%; }
         .table-print { width: 100%; border-collapse: collapse; font-family: sans-serif; font-size: 12px; }
         .table-print th, .table-print td { border: 1px solid #000; padding: 8px; text-align: left; }
@@ -401,6 +401,20 @@
       </div>
     </div>
 
+    <div id="modalAlerteServeur" class="modal-overlay" style="z-index: 2000;">
+      <div class="modal-content" style="border: 3px solid #d93025;">
+        <h2 id="alerteServeurTitre" style="margin-top:0; color:#d93025; font-size:18px;"></h2>
+        <p id="alerteServeurMsg" style="font-size:14px; font-weight:bold; color:#721c24;"></p>
+        <div id="alerteServeurSaisie" class="doublon-carte" style="border-left-color:#d93025;"></div>
+        <div id="alerteServeurListe"></div>
+        <div class="flex-btn" id="alerteServeurChoix">
+          <button class="btn-cancel" onclick="fermerAlerteServeur()">NE PAS ENREGISTRER</button>
+          <button class="btn-force" onclick="forcerDepuisAlerte()">FORCER L'AJOUT</button>
+        </div>
+        <button class="btn-action" id="btnAlerteOk" style="background:#d93025; margin-top:10px;" onclick="fermerAlerteServeur()">OK, COMPRIS</button>
+      </div>
+    </div>
+
     <div id="modalAnnuaire" class="modal-overlay">
       <div class="modal-content">
         <h2 style="margin-top:0; color:#1a73e8; font-size:18px;">👤 Client connu</h2>
@@ -420,7 +434,6 @@
       var MONTANT_OBLIGATOIRE = (CONFIG.MONTANT_OBLIGATOIRE !== "NON");
 
       var memNom = "", memPrenom = "", memPiece = "", memMontant = "", memNotes = "";
-      var memMessageErreur = "", memFlags = {};
 
       window.onload = function() {
         var auj = new Date();
@@ -471,6 +484,13 @@
         }
         document.getElementById('statusMessage').style.display = "none";
 
+        // Hors période (tablette restée ouverte, passage de minuit…) : on revérifie et on bloque
+        if (!dansPeriode()) {
+          afficherMessage("🛑 Aucune opération en cours aujourd'hui : saisie impossible.", "error");
+          chargerDatesAffichage();
+          return;
+        }
+
         if (!cacheVerif) {
           // Cache pas encore prêt -> repli serveur (ancien flux, avec attente)
           var btn = document.getElementById('btnValider');
@@ -487,12 +507,15 @@
         // Contrôle A/B/C EN LOCAL -> feedback instantané
         var reponse = analyserDoublonLocal(memNom, memPrenom, memPiece);
         if (reponse.status === "SUCCES") {
-          ajoutOptimisteCache(memNom, memPrenom, memPiece, memMontant, memNotes);
+          var saisie = { nom: memNom, prenom: memPrenom, piece: memPiece, montant: memMontant, notes: memNotes };
+          saisie.id = ajoutOptimisteCache(saisie);
           afficherMessage("✅ Saisie enregistrée !", "success");
           reinitialiserFormulaire();
           // Écriture autoritaire en arrière-plan : le serveur reconfirme ET écrit.
-          google.script.run.withSuccessHandler(confirmerEnregistrement).withFailureHandler(echecEnregistrement)
-            .traiterSaisie(memNom, memPrenom, memPiece, memMontant, memNotes);
+          google.script.run
+            .withSuccessHandler(function (rep) { confirmerEnregistrement(rep, saisie); })
+            .withFailureHandler(function (err) { echecEnregistrement(err, saisie); })
+            .traiterSaisie(saisie.nom, saisie.prenom, saisie.piece, saisie.montant, saisie.notes);
         } else {
           // Doublon détecté en local -> modale (réutilise l'affichage existant)
           traitementTermine(reponse);
@@ -509,8 +532,6 @@
           reinitialiserFormulaire();
           rechargerCacheVerif();
         } else if (reponse.status === "CONFIRMATION") {
-          memMessageErreur = reponse.noteForce; 
-          memFlags = reponse.flags;
           afficherDetailsDoublon(reponse.details, false, reponse.titre, reponse.message, reponse.couleur);
         } else if (reponse.status === "BLOQUE") {
           afficherDetailsDoublon(reponse.details, true, reponse.titre, reponse.message, "ROUGE");
@@ -564,21 +585,26 @@
       function forcerAjout() {
         document.getElementById('boxConfirmation').style.display = "none";
         document.getElementById('formulaireSaisie').style.display = "block";
-        ajoutOptimisteCache(memNom, memPrenom, memPiece, memMontant, memNotes);
-        afficherMessage("⚠️ Saisie forcée et enregistrée en rouge.", "error");
         reinitialiserFormulaire();
-        // Écriture forcée en arrière-plan : le serveur refait la détection (autoritaire)
-        google.script.run.withSuccessHandler(confirmerForcage).withFailureHandler(echecEnregistrement)
-          .forcerSaisie(memNom, memPrenom, memPiece, memMontant, memNotes, memMessageErreur, memFlags.identite, memFlags.piece);
+        envoyerForcage({ nom: memNom, prenom: memPrenom, piece: memPiece, montant: memMontant, notes: memNotes });
+      }
+
+      // Écriture forcée en arrière-plan : le serveur refait la détection (autoritaire)
+      function envoyerForcage(saisie) {
+        saisie.id = ajoutOptimisteCache(saisie);
+        afficherMessage("⚠️ Saisie forcée et enregistrée en rouge.", "error");
+        google.script.run
+          .withSuccessHandler(function (rep) { confirmerForcage(rep, saisie); })
+          .withFailureHandler(function (err) { echecEnregistrement(err, saisie); })
+          .forcerSaisie(saisie.nom, saisie.prenom, saisie.piece, saisie.montant, saisie.notes, "", false, false);
       }
 
       // Réponse du serveur à un ajout forcé
-      function confirmerForcage(rep) {
-        if (rep && rep.status === "SUCCES") return; // enregistré (cas recalculé côté serveur)
-        // Refus serveur (mode BLOQUANT + doublon/usurpation) -> rien n'a été écrit
-        afficherMessage("🛑 Le serveur a REFUSÉ l'ajout forcé" + (rep && rep.cas ? " (Cas " + rep.cas + ", mode BLOQUANT)" : "") +
-          ". La saisie n'a PAS été enregistrée.", "error");
-        rechargerCacheVerif();
+      function confirmerForcage(rep, saisie) {
+        if (rep && rep.status === "SUCCES") { saisieConfirmee(saisie); return; } // cas recalculé côté serveur
+        // Refus serveur (BLOQUANT + doublon/usurpation, ou hors période) -> rien n'a été écrit
+        retirerEnAttente(saisie);
+        alerterServeur(saisie, rep);
       }
 
       // --- Contrôle A/B/C EN LOCAL (miroir de traiterSaisie, pour feedback instantané) ---
@@ -622,30 +648,112 @@
                  flags: { identite: (pireCas === 'A' || pireCas === 'C'), piece: (pireCas === 'A' || pireCas === 'B') } };
       }
 
+      // --- Saisies envoyées mais pas encore visibles dans une copie rechargée ---
+      // Une resynchronisation (retour du curseur dans « N° », retour sur la page…) peut lire
+      // le Sheet AVANT que l'écriture soit faite : sans ce suivi, la tablette « oubliait » la
+      // saisie qu'elle venait de valider et ne voyait pas le doublon du client suivant.
+      // Une saisie reste suivie jusqu'à ce que le serveur l'ait écrite ET qu'une copie
+      // rechargée la contienne (ou 2 min après l'écriture, par sécurité) ; refus/échec -> retirée.
+      var saisiesEnAttente = [], compteurSaisies = 0;
+
+      function entreeCache(saisie) {
+        return {
+          pieceNorm: normPieceJS(saisie.piece), ligne: "en cours", date: "à l'instant",
+          nom: (saisie.nom || "").toUpperCase().trim(), prenom: (saisie.prenom || "").toUpperCase().trim(),
+          piece: (saisie.piece || "").toUpperCase().trim(), montant: (saisie.montant || "").toString(), notes: (saisie.notes || "").toString()
+        };
+      }
+      function ajouterAuCache(e) {
+        cacheVerif.offre.push(e);
+        if (cacheVerif.annuaireActif && e.pieceNorm) cacheVerif.annuaire[e.pieceNorm] = { nom: e.nom, prenom: e.prenom };
+      }
       // Ajoute la saisie au cache local TOUT DE SUITE (optimiste) -> la suivante est correcte
-      function ajoutOptimisteCache(nom, prenom, piece, montant, notes) {
-        if (!cacheVerif) return;
-        var pn = normPieceJS(piece);
-        cacheVerif.offre.push({
-          pieceNorm: pn, ligne: -1, date: "à l'instant",
-          nom: (nom || "").toUpperCase().trim(), prenom: (prenom || "").toUpperCase().trim(),
-          piece: (piece || "").toUpperCase().trim(), montant: (montant || "").toString(), notes: (notes || "").toString()
+      function ajoutOptimisteCache(saisie) {
+        var suivi = { id: ++compteurSaisies, entree: entreeCache(saisie), ecriteA: 0 };
+        saisiesEnAttente.push(suivi);
+        if (cacheVerif) ajouterAuCache(suivi.entree);
+        return suivi.id;
+      }
+      function saisieConfirmee(saisie) {
+        saisiesEnAttente.forEach(function (s) { if (s.id === saisie.id) s.ecriteA = Date.now(); });
+      }
+      function retirerEnAttente(saisie) {
+        saisiesEnAttente = saisiesEnAttente.filter(function (s) { return s.id !== saisie.id; });
+        rechargerCacheVerif();
+      }
+      // Après chaque rechargement : on remet les saisies encore en attente
+      function fusionnerEnAttente() {
+        var maintenant = Date.now();
+        saisiesEnAttente = saisiesEnAttente.filter(function (s) {
+          var e = s.entree;
+          var presente = cacheVerif.offre.some(function (o) {
+            return o.pieceNorm === e.pieceNorm && normIdJS(o.nom) === normIdJS(e.nom) && normIdJS(o.prenom) === normIdJS(e.prenom);
+          });
+          if (s.ecriteA && (presente || maintenant - s.ecriteA > 120000)) return false; // le Sheet fait foi
+          if (!presente) ajouterAuCache(e);
+          return true;
         });
-        if (cacheVerif.annuaireActif && pn) {
-          cacheVerif.annuaire[pn] = { nom: (nom || "").toUpperCase().trim(), prenom: (prenom || "").toUpperCase().trim() };
-        }
       }
 
       // Réponse du serveur à l'écriture en arrière-plan
-      function confirmerEnregistrement(rep) {
-        if (rep && rep.status === "SUCCES") return; // tout va bien (silencieux)
-        // Cas rare : le serveur a détecté un doublon manqué en local -> non écrit
-        afficherMessage("⚠️ Le serveur a refusé la dernière saisie (doublon). Elle n'a PAS été enregistrée — à ressaisir.", "error");
-        rechargerCacheVerif();
+      function confirmerEnregistrement(rep, saisie) {
+        if (rep && rep.status === "SUCCES") { saisieConfirmee(saisie); return; } // tout va bien (silencieux)
+        // Le serveur (source de vérité) a trouvé un doublon que la tablette n'avait pas vu,
+        // ou la saisie est hors période -> rien n'a été écrit : alerte bien visible.
+        retirerEnAttente(saisie);
+        alerterServeur(saisie, rep);
       }
-      function echecEnregistrement(err) {
-        afficherMessage("⚠️ Échec d'enregistrement (réseau). La dernière saisie n'est PAS garantie — à ressaisir.", "error");
-        rechargerCacheVerif();
+      function echecEnregistrement(err, saisie) {
+        retirerEnAttente(saisie);
+        alerterServeur(saisie, null);
+      }
+
+      // --- Fenêtre d'alerte du serveur (ne touche pas au formulaire en cours de frappe) ---
+      var alertesEnFile = [], alerteCourante = null;
+      function alerterServeur(saisie, rep) {
+        alertesEnFile.push({ saisie: saisie, rep: rep });
+        if (!alerteCourante) alerteSuivante();
+      }
+      function alerteSuivante() {
+        alerteCourante = alertesEnFile.shift() || null;
+        var m = document.getElementById('modalAlerteServeur');
+        if (!alerteCourante) { m.style.display = "none"; return; }
+        var sa = alerteCourante.saisie, rep = alerteCourante.rep;
+        var titre, msg, forcable = false;
+        if (!rep) {
+          titre = "⚠️ ENREGISTREMENT NON CONFIRMÉ";
+          msg = "La connexion a échoué : cette saisie n'est peut-être PAS enregistrée. Ressaisissez-la — si elle l'était déjà, l'application la signalera comme doublon (dans ce cas, ne forcez pas).";
+        } else {
+          titre = rep.titre || "🛑 SAISIE REFUSÉE";
+          msg = "Cette saisie n'a PAS été enregistrée. " + (rep.message || "");
+          forcable = (rep.status === "CONFIRMATION");
+          if (rep.horsPeriode) chargerDatesAffichage();
+        }
+        document.getElementById('alerteServeurTitre').textContent = titre;
+        document.getElementById('alerteServeurMsg').textContent = msg;
+        var carte = document.getElementById('alerteServeurSaisie');
+        carte.textContent = "";
+        ["👤 " + (sa.nom || "").toUpperCase() + " " + (sa.prenom || "").toUpperCase(), "💳 " + (sa.piece || "").toUpperCase(),
+         sa.montant ? "💶 " + sa.montant : ""].forEach(function (t) {
+          if (!t) return; var d = document.createElement('div'); d.textContent = t; carte.appendChild(d);
+        });
+        var liste = document.getElementById('alerteServeurListe');
+        liste.textContent = "";
+        ((rep && rep.details) || []).forEach(function (d) {
+          var c = document.createElement('div');
+          c.className = 'doublon-carte';
+          c.textContent = "Déjà enregistré : " + d.date + " (Ligne " + d.ligne + ") — " + d.nom + " " + d.prenom + " — 💳 " + d.piece;
+          liste.appendChild(c);
+        });
+        document.getElementById('alerteServeurChoix').style.display = forcable ? "flex" : "none";
+        document.getElementById('btnAlerteOk').style.display = forcable ? "none" : "block";
+        m.style.display = "flex";
+      }
+      function fermerAlerteServeur() { alerteSuivante(); }
+      function forcerDepuisAlerte() {
+        var sa = alerteCourante && alerteCourante.saisie;
+        alerteSuivante();
+        if (sa) envoyerForcage({ nom: sa.nom, prenom: sa.prenom, piece: sa.piece, montant: sa.montant, notes: sa.notes });
       }
 
       function annulerSaisie() {
@@ -666,12 +774,15 @@
         document.getElementById('piece').focus();
       }
 
+      var minuteurMessage = null;
       function afficherMessage(texte, type) {
         var div = document.getElementById('statusMessage'); 
-        div.innerHTML = texte; 
+        div.textContent = texte; 
         div.className = type; 
         div.style.display = "block";
-        setTimeout(function(){ div.style.display = "none"; }, 5000);
+        // un nouveau message annule la disparition programmée du précédent (sinon il était coupé)
+        clearTimeout(minuteurMessage);
+        minuteurMessage = setTimeout(function(){ div.style.display = "none"; }, 5000);
       }
 
       function preparerImpressionAncien() {
@@ -782,8 +893,20 @@
         return (parts.length === 3) ? parts[2] + "/" + parts[1] : dateString;
       }
 
+      // Période de l'offre connue de la tablette (null tant que non chargée)
+      var periodeOperation = null;
+      function dansPeriode() {
+        if (!periodeOperation) return true; // pas encore chargée : le serveur tranchera
+        if (!periodeOperation.debut || !periodeOperation.fin) return false;
+        var j = new Date(); j.setHours(0,0,0,0);
+        var d = new Date(periodeOperation.debut); d.setHours(0,0,0,0);
+        var f = new Date(periodeOperation.fin); f.setHours(0,0,0,0);
+        return j >= d && j <= f;
+      }
+
       function chargerDatesAffichage() {
         google.script.run.withSuccessHandler(function(dates) {
+          periodeOperation = dates;
           var affichage = document.getElementById('sousTitreOperation');
           var formulaire = document.getElementById('formulaireSaisie');
           var isVerrouille = true;
@@ -885,15 +1008,27 @@
       // Pré-avertissement non bloquant : ce N° est-il déjà sur l'offre en cours ?
       // Cache pré-chargé (offre en cours + annuaire) pour une vérif LOCALE instantanée.
       var cacheVerif = null;
+      var seqCache = 0, seqCacheApplique = 0;
       function rechargerCacheVerif() {
+        var seq = ++seqCache;
         google.script.run
-          .withSuccessHandler(function (c) { cacheVerif = c; })
+          .withSuccessHandler(function (c) {
+            if (seq < seqCacheApplique) return; // réponse plus ancienne qu'une copie déjà appliquée
+            seqCacheApplique = seq;
+            cacheVerif = c;
+            fusionnerEnAttente();
+          })
           .withFailureHandler(function () {})
           .chargerCacheVerif();
       }
       window.addEventListener('load', rechargerCacheVerif);
       // Rafraîchir au retour sur la page (réveil tablette, retour d'une autre app)
-      document.addEventListener('visibilitychange', function () { if (!document.hidden) rechargerCacheVerif(); });
+      document.addEventListener('visibilitychange', function () {
+        if (document.hidden) return;
+        rechargerCacheVerif();
+        chargerDatesAffichage(); // la tablette a pu rester ouverte après la fin de l'offre
+      });
+      setInterval(chargerDatesAffichage, 10 * 60 * 1000); // et sans quitter la page
       // Re-synchroniser au DÉBUT de chaque saisie (focus du N°) : l'appel chevauche la
       // frappe du numéro -> cache frais au moment du blur, sans latence perçue.
       document.getElementById('piece').addEventListener('focus', rechargerCacheVerif);

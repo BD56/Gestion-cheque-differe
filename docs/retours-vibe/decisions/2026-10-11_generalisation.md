@@ -52,6 +52,14 @@
   mode, ni recontrôle, note/couleurs envoyées par le client) → un appel direct ou un
   cache périmé pouvait forcer un cas A/B en BLOQUANT, voire sans marquage. Désormais
   le serveur refait la détection, refuse A/B en BLOQUANT et calcule lui-même le cas.
+- **Analyse globale + contre-analyse (validées avec Bryan)** : 23 points relevés, tous
+  reproduits. Corrigés en priorité (graves, existaient déjà en prod) :
+  1. N° de pièce converti en nombre par Sheets (0 initial perdu — **confirmé par Bryan sur
+     une copie**) → écriture en texte + comparaison sans 0 initiaux ;
+  2. doublon immédiat invisible sur la tablette (saisie effacée de la copie locale) ;
+  3. message de refus coupé par un ancien minuteur → fenêtre d'alerte ;
+  4. saisies acceptées après la fin de l'offre (tablette restée ouverte) → contrôle serveur.
+  Restent à traiter : voir l'analyse (points 5 à 23).
 - Constat (non corrigé, panneau laissé tel quel) : dans `Panneau.html`, après une
   clôture, `changerMode()` est appelé → le mode repasse en **BLOQUANT** au lieu de
   rester SIGNALER.

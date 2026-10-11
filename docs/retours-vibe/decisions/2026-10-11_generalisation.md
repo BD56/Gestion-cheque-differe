@@ -62,8 +62,12 @@
   Puis (validés avec Bryan) : #7 accents, #8 annuaire et usurpation, #9 marquages
   recalculés, #11 panneau (clôture -> BLOQUANT), #16 injection HTML, #17 montant,
   #23 pré-remplissage depuis un doublon de l'offre retiré (revient sur 8bae95e).
+  Puis mineurs #13 (nom d'archive unique), #14 (pas d'archive vide), #15 (dates
+  contrôlées), #19 (reconstruireAnnuaire réservée aux éditeurs), #20 (saisie incomplète
+  refusée côté serveur), #22 (purge sous verrou).
   Restent : #5 et #6 (décisions : compte Google de la tablette, exposition des données),
-  et mineurs #10, #12-#15, #18-#20, #22.
+  #10 (onEdit et collage multi-lignes), #12 (texte du message d'échec réseau, déjà
+  remplacé par la fenêtre d'alerte), #18 (taille de l'annuaire téléchargé).
 - Constat (non corrigé, panneau laissé tel quel) : dans `Panneau.html`, après une
   clôture, `changerMode()` est appelé → le mode repasse en **BLOQUANT** au lieu de
   rester SIGNALER.

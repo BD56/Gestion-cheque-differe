@@ -288,6 +288,8 @@ function traiterSaisie(nom, prenom, piece, montant, notes) {
 
     var horsPeriode = controlerPeriode_();
     if (horsPeriode) return horsPeriode;
+    var incomplet = controlerChamps_(nom, prenom, piece, montant);
+    if (incomplet) return incomplet;
 
     var modeSecurite = feuille.getRange("Z1").getValue() || "SIGNALER";
     
@@ -420,6 +422,19 @@ function controlerPeriode_() {
   return null;
 }
 
+// Champs obligatoires (la tablette les vérifie déjà ; ceci couvre un appel direct).
+// Renvoie null si complet, sinon la réponse de refus.
+function controlerChamps_(nom, prenom, piece, montant) {
+  var vide = function (v) { return v === null || v === undefined || v.toString().trim() === ""; };
+  var manque = [];
+  if (vide(nom)) manque.push("Nom");
+  if (vide(prenom)) manque.push("Prénom");
+  if (vide(piece)) manque.push("N° de pièce");
+  if (vide(montant) && getConfig().MONTANT_OBLIGATOIRE !== "NON") manque.push(getConfig().LIBELLE_MONTANT);
+  if (!manque.length) return null;
+  return { status: "BLOQUE", titre: "🛑 SAISIE INCOMPLÈTE", message: "Champ(s) manquant(s) : " + manque.join(", ") + ".", details: [] };
+}
+
 // Ajout forcé (après confirmation d'un doublon à l'écran). Le serveur REFAIT la
 // détection A/B/C sous verrou, sans se fier à la tablette :
 //  - mode BLOQUANT + cas A/B -> refus (rien n'est écrit) ;
@@ -437,6 +452,8 @@ function forcerSaisie(nom, prenom, piece, montant, notes, messageErreur, flagIde
     if (!feuille) return { status: "BLOQUE", titre: "Erreur Serveur", message: "La feuille 'Saisies' est introuvable." };
     var horsPeriode = controlerPeriode_();
     if (horsPeriode) return horsPeriode;
+    var incomplet = controlerChamps_(nom, prenom, piece, montant);
+    if (incomplet) return incomplet;
     
     nom = nom.toString().toUpperCase().trim(); 
     prenom = prenom.toString().toUpperCase().trim();
@@ -605,6 +622,8 @@ function basculerModeAnnuaire(jeton) {
 // Reconstruit l'annuaire depuis « Saisies » + toutes les feuilles Archives_*
 // (manuel, à lancer une fois avant activation). Garde la dernière occurrence.
 function reconstruireAnnuaire() {
+  // Lancée depuis l'éditeur (ou le panneau) : jamais depuis la tablette
+  if (!estEditeurDuClasseur_()) throw new Error("Réservé aux personnes ayant accès au classeur (éditeur Apps Script).");
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var f = _feuilleAnnuaire_();
   f.clearContents();
@@ -633,13 +652,23 @@ function reconstruireAnnuaire() {
 // Purge des entrées inactives depuis ANNUAIRE_RETENTION_ANS ans (à mettre sur trigger).
 function purgerAnnuaire() {
   if (!ANNUAIRE_ACTIF) return;
-  var f = _feuilleAnnuaire_();
-  var data = f.getDataRange().getValues();
-  var limite = new Date();
-  limite.setFullYear(limite.getFullYear() - ANNUAIRE_RETENTION_ANS);
-  for (var i = data.length - 1; i >= 1; i--) {
-    var d = (data[i][3] instanceof Date) ? data[i][3] : null;
-    if (!d || d < limite) f.deleteRow(i + 1);
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000); // pas de saisie (qui met l'annuaire à jour) pendant la réécriture
+  try {
+    var f = _feuilleAnnuaire_();
+    var data = f.getDataRange().getValues();
+    var limite = new Date();
+    limite.setFullYear(limite.getFullYear() - ANNUAIRE_RETENTION_ANS);
+    var garder = [];
+    for (var i = 1; i < data.length; i++) {
+      var d = (data[i][3] instanceof Date) ? data[i][3] : null;
+      if (d && d >= limite) garder.push([texte_(String(data[i][0])), texte_(String(data[i][1] || "")), texte_(String(data[i][2] || "")), d]);
+    }
+    if (garder.length === data.length - 1) return; // rien à purger
+    if (data.length > 1) f.getRange(2, 1, data.length - 1, 4).clearContent();
+    if (garder.length) f.getRange(2, 1, garder.length, 4).setValues(garder);
+  } finally {
+    lock.releaseLock();
   }
 }
 
@@ -997,21 +1026,30 @@ function archiverOffre_() {
 function archiverOffreSousVerrou_() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var feuilleSaisies = ss.getSheetByName("Saisies");
-  var dateFin = Utilities.formatDate(new Date(), "Europe/Paris", "dd-MM-yyyy_HH-mm");
-  
-  var archive = ss.insertSheet('Archives_' + dateFin, ss.getNumSheets());
-  feuilleSaisies.getDataRange().copyTo(archive.getRange(1, 1));
-  archive.setFrozenRows(1);
-  
   var derniereLigne = feuilleSaisies.getLastRow();
-  if (derniereLigne > 1) feuilleSaisies.getRange(2, 1, derniereLigne - 1, 7).clearContent().setBackground(null);
+  var message;
+
+  if (derniereLigne > 1) {
+    // Nom unique : deux clôtures dans la même minute ne doivent pas échouer
+    var base = 'Archives_' + Utilities.formatDate(new Date(), "Europe/Paris", "dd-MM-yyyy_HH-mm");
+    var nom = base, n = 2;
+    while (ss.getSheetByName(nom)) nom = base + "_" + (n++);
+    var archive = ss.insertSheet(nom, ss.getNumSheets());
+    feuilleSaisies.getDataRange().copyTo(archive.getRange(1, 1));
+    archive.setFrozenRows(1);
+    feuilleSaisies.getRange(2, 1, derniereLigne - 1, 7).clearContent().setBackground(null);
+    message = "✅ L'offre a été clôturée et archivée avec succès !";
+  } else {
+    // Aucune saisie : on clôture sans créer d'archive vide
+    message = "✅ L'offre a été clôturée (aucune saisie : pas d'archive créée).";
+  }
   
   feuilleSaisies.getRange("Z1").setValue("SIGNALER");
   
   // 🧹 NOUVEAU : On efface les dates en mémoire pour verrouiller les tablettes
   enregistrerDates_("", "");
 
-  return "✅ L'offre a été clôturée et archivée avec succès !";
+  return message;
 }
 
 function onOpen() {
@@ -1215,6 +1253,13 @@ function getDatesOperation() {
 
 function setDatesOperation(dateDebut, dateFin, jeton) {
   exigerAdmin_(jeton);
+  dateDebut = (dateDebut || "").toString().trim();
+  dateFin = (dateFin || "").toString().trim();
+  var iso = /^\d{4}-\d{2}-\d{2}$/;
+  if (dateDebut !== "" || dateFin !== "") {
+    if (!iso.test(dateDebut) || !iso.test(dateFin)) throw new Error("Saisissez la date de début ET la date de fin (ou aucune des deux pour arrêter l'opération).");
+    if (dateDebut > dateFin) throw new Error("La date de début doit précéder la date de fin.");
+  }
   return enregistrerDates_(dateDebut, dateFin);
 }
 

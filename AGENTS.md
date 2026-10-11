@@ -184,6 +184,10 @@ Décision : `docs/retours-vibe/decisions/2026-10-11_generalisation.md`.
   - **Montant** contrôlé (`lireMontant`) et reformaté « 1234,50 € » ; TOTAL d'impression juste.
   - **Affichage échappé** (`echapper`, `textContent`) : un nom/une note ne peut plus injecter
     de code dans la page.
+  - Divers : clôture sans archive vide et nom d'archive unique (suffixe `_2`…) ; dates
+    contrôlées (les deux ou aucune, début ≤ fin) ; saisie incomplète refusée côté serveur
+    (`controlerChamps_`) ; `reconstruireAnnuaire` réservée aux éditeurs du classeur ;
+    `purgerAnnuaire` sous verrou, réécriture en une fois (en texte).
 - **Dette assumée** : la logique A/B/C existe à **4 endroits** — `traiterSaisie`,
   `analyserDoublonLocal` (client), `onEdit`, et `detecterDoublons_` (partagée par
   `forcerSaisie` et `modifierSaisie`). À garder synchro si la détection change.

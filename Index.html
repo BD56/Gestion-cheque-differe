@@ -972,6 +972,8 @@
         var dateFinObj = new Date(fin); 
         var dateJour = new Date(); dateJour.setHours(0,0,0,0);
 
+        if ((debut === "") !== (fin === "")) { msg.style.color = "#d93025"; msg.textContent = "Saisissez les deux dates (ou aucune pour arrêter l'opération)."; return; }
+        if (debut !== "" && debut > fin) { msg.style.color = "#d93025"; msg.textContent = "La date de début doit précéder la date de fin."; return; }
         if (fin !== "" && dateFinObj < dateJour) {
            if (!confirm("⚠️ ATTENTION : La date de fin est déjà passée !\nSi vous validez, l'opération sera clôturée cette nuit.\nVoulez-vous vraiment continuer ?")) return;
         }

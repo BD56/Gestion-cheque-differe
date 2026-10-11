@@ -270,6 +270,12 @@
         <div id="msgRetourModal" style="text-align: center; font-weight: bold; margin-top: 10px; font-size: 13px;"></div>
 
         <hr style="border: 0; height: 1px; background: #ddd; margin: 20px 0;">
+        <button class="btn-action" style="background-color: #5f6368;" onclick="ouvrirArchives()">🗄️ ARCHIVES (OFFRES CLÔTURÉES)</button>
+        <div id="blocArchives" style="display: none; background: #f1f3f4; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+          <select id="selArchive" style="width: 100%; padding: 10px; font-size: 14px; border: 2px solid #ccc; border-radius: 8px; margin-bottom: 10px;"></select>
+          <button class="btn-action" style="background-color: #1a73e8; margin-bottom: 0;" onclick="imprimerArchive()">🖨️ IMPRIMER CETTE ARCHIVE</button>
+        </div>
+
         <button class="btn-action" style="background-color: #5f6368;" onclick="basculerBloc('blocReglages')">🏷️ RÉGLAGES DE LA STRUCTURE</button>
         <div id="blocReglages" style="display: none; background: #f1f3f4; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
           <div id="champsReglages"></div>
@@ -607,37 +613,42 @@
         document.body.style.cursor = "wait";
         google.script.run.withSuccessHandler(function(donnees) {
             document.body.style.cursor = "default";
-            if (donnees.length === 0) { alert("Aucune donnée trouvée."); return; }
-            
-            var html = "<h2 class='titre-print'>" + titreRapport + "</h2><table class='table-print'>";
-            var idxMontant = 4; // colonnes A=0 (Date) ... E=4 (Montant) ... F=5 (Notes)
-            var totalMontant = 0;
-            for (var i = 0; i < donnees.length; i++) {
-              html += "<tr>";
-              for (var j = 0; j < donnees[i].length; j++) {
-                html += (i===0) ? "<th>"+donnees[i][j]+"</th>" : "<td>"+donnees[i][j]+"</td>";
-              }
-              html += "</tr>";
-              if (i > 0) totalMontant += parseMontant(donnees[i][idxMontant]);
-            }
-            // Ligne TOTAL (somme de la colonne Montant)
-            var nbCol = (donnees[0] || []).length || 6;
-            var totalStr = totalMontant.toFixed(2).replace('.', ',') + " €";
-            html += "<tr>";
-            html += "<td colspan='" + idxMontant + "' style='text-align:right; font-weight:bold;'>TOTAL</td>";
-            html += "<td style='font-weight:bold;'>" + totalStr + "</td>";
-            for (var k = idxMontant + 1; k < nbCol; k++) html += "<td></td>";
-            html += "</tr>";
-            html += "</table>";
-            
-            document.getElementById('zoneImpression').innerHTML = html;
-            fermerPanneau(); 
-            window.print();
+            imprimerTableau(donnees, titreRapport);
           }).withFailureHandler(function(err) { 
             document.body.style.cursor = "default"; 
             alert("Erreur : " + err.message); 
           })
           .genererDonneesImpression(type, dateStr);
+      }
+
+      // Met en page un tableau [en-tête, lignes...] + ligne TOTAL, puis imprime
+      function imprimerTableau(donnees, titreRapport) {
+        if (!donnees || donnees.length === 0) { alert("Aucune donnée trouvée."); return; }
+        
+        var html = "<h2 class='titre-print'>" + titreRapport + "</h2><table class='table-print'>";
+        var idxMontant = 4; // colonnes A=0 (Date) ... E=4 (Montant) ... F=5 (Notes)
+        var totalMontant = 0;
+        for (var i = 0; i < donnees.length; i++) {
+          html += "<tr>";
+          for (var j = 0; j < donnees[i].length; j++) {
+            html += (i===0) ? "<th>"+donnees[i][j]+"</th>" : "<td>"+donnees[i][j]+"</td>";
+          }
+          html += "</tr>";
+          if (i > 0) totalMontant += parseMontant(donnees[i][idxMontant]);
+        }
+        // Ligne TOTAL (somme de la colonne Montant)
+        var nbCol = (donnees[0] || []).length || 6;
+        var totalStr = totalMontant.toFixed(2).replace('.', ',') + " €";
+        html += "<tr>";
+        html += "<td colspan='" + idxMontant + "' style='text-align:right; font-weight:bold;'>TOTAL</td>";
+        html += "<td style='font-weight:bold;'>" + totalStr + "</td>";
+        for (var k = idxMontant + 1; k < nbCol; k++) html += "<td></td>";
+        html += "</tr>";
+        html += "</table>";
+        
+        document.getElementById('zoneImpression').innerHTML = html;
+        fermerPanneau(); 
+        window.print();
       }
 
       function changerMode() {
@@ -975,7 +986,7 @@
         jetonAdmin = null;
         document.getElementById('zoneAdmin').style.display = "none";
         document.getElementById('zoneVerrou').style.display = "block";
-        ['blocReglages', 'blocPin'].forEach(function (id) { document.getElementById(id).style.display = "none"; });
+        ['blocReglages', 'blocPin', 'blocArchives'].forEach(function (id) { document.getElementById(id).style.display = "none"; });
         if (document.getElementById('modalParametres').style.display === "flex") afficherZoneVerrou();
       }
 
@@ -994,6 +1005,35 @@
       function basculerBloc(id) {
         var b = document.getElementById(id);
         b.style.display = (b.style.display === "none") ? "block" : "none";
+      }
+
+      // --- Archives (offres clôturées) ---
+      function ouvrirArchives() {
+        var bloc = document.getElementById('blocArchives');
+        if (bloc.style.display !== "none") { bloc.style.display = "none"; return; }
+        var sel = document.getElementById('selArchive');
+        sel.innerHTML = "<option>⏳ Chargement…</option>";
+        bloc.style.display = "block";
+        appelAdmin('listerArchives', [], function (liste) {
+          sel.innerHTML = "";
+          if (!liste.length) { sel.innerHTML = "<option value=''>Aucune archive</option>"; return; }
+          liste.forEach(function (a) {
+            var o = document.createElement('option');
+            o.value = a.nom;
+            o.textContent = a.libelle + " — " + a.lignes + " ligne(s)";
+            sel.appendChild(o);
+          });
+        });
+      }
+      function imprimerArchive() {
+        var sel = document.getElementById('selArchive');
+        if (!sel.value) return;
+        var libelle = sel.options[sel.selectedIndex].textContent.split(" — ")[0];
+        document.body.style.cursor = "wait";
+        appelAdmin('donneesArchive', [sel.value], function (donnees) {
+          document.body.style.cursor = "default";
+          imprimerTableau(donnees, "Archive — " + libelle);
+        }, function () { document.body.style.cursor = "default"; });
       }
 
       // --- Réglages de la structure ---

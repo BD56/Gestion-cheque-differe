@@ -561,25 +561,31 @@ function genererDonneesImpression(type, dateChoisieStr) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var feuille = ss.getSheetByName("Saisies");
   if (!feuille) return [];
+  var tz = ss.getSpreadsheetTimeZone(); // même référence que INT()/TODAY() dans A_IMPRIMER
+  var jour = null;
+  if (type === 'jour') {
+    jour = (dateChoisieStr === "aujourdhui") ? Utilities.formatDate(new Date(), tz, "yyyy-MM-dd") : dateChoisieStr;
+  }
+  return tableauImpression_(feuille, jour, tz);
+}
+
+// En-tête + lignes A-F affichées d'une feuille au format « Saisies ».
+// jour (yyyy-MM-dd) : ne garde que ce jour-là, date en jj/mm/aaaa ;
+// jour null : toutes les lignes non vides, telles qu'affichées.
+function tableauImpression_(feuille, jour, tz) {
   var derniere = feuille.getLastRow();
   if (derniere < 2) return [];
-
   var cfg = getConfig();
   var entete = ["Date", "Nom", "Prénom", "N° Pièce", cfg.LIBELLE_MONTANT, cfg.LIBELLE_NOTES];
   var plage = feuille.getRange(2, 1, derniere - 1, 6);
   var valeurs = plage.getValues();
   var affichage = plage.getDisplayValues();
-  var tz = ss.getSpreadsheetTimeZone(); // même référence que INT()/TODAY() dans A_IMPRIMER
-  var cible = null;
-  if (type === 'jour') {
-    cible = (dateChoisieStr === "aujourdhui") ? Utilities.formatDate(new Date(), tz, "yyyy-MM-dd") : dateChoisieStr;
-  }
 
   var lignes = [];
   for (var i = 0; i < valeurs.length; i++) {
-    if (type === 'jour') {
+    if (jour) {
       var d = valeurs[i][0];
-      if (!(d instanceof Date) || Utilities.formatDate(d, tz, "yyyy-MM-dd") !== cible) continue;
+      if (!(d instanceof Date) || Utilities.formatDate(d, tz, "yyyy-MM-dd") !== jour) continue;
       var ligne = affichage[i].slice();
       ligne[0] = Utilities.formatDate(d, tz, "dd/MM/yyyy");
       lignes.push(ligne);
@@ -589,6 +595,41 @@ function genererDonneesImpression(type, dateChoisieStr) {
     }
   }
   return lignes.length ? [entete].concat(lignes) : [];
+}
+
+// =================================================================
+// --- ARCHIVES (espace responsable) : offres clôturées « Archives_* » ---
+// =================================================================
+// "Archives_26-09-2026_23-05" -> clé de tri "202609262305" + libellé lisible
+function infosNomArchive_(nom) {
+  var m = /^Archives_(\d{2})-(\d{2})-(\d{4})_(\d{2})-(\d{2})/.exec(nom);
+  if (!m) return { tri: "", libelle: nom };
+  return { tri: m[3] + m[2] + m[1] + m[4] + m[5], libelle: "Clôturée le " + m[1] + "/" + m[2] + "/" + m[3] + " à " + m[4] + "h" + m[5] };
+}
+
+// Liste des archives, la plus récente d'abord.
+function listerArchives(jeton) {
+  exigerAdmin_(jeton);
+  var liste = [];
+  SpreadsheetApp.getActiveSpreadsheet().getSheets().forEach(function (f) {
+    var nom = f.getName();
+    if (nom.indexOf("Archives_") !== 0) return;
+    var infos = infosNomArchive_(nom);
+    liste.push({ nom: nom, libelle: infos.libelle, tri: infos.tri, lignes: Math.max(0, f.getLastRow() - 1) });
+  });
+  liste.sort(function (a, b) { return a.tri < b.tri ? 1 : (a.tri > b.tri ? -1 : 0); });
+  return liste.map(function (a) { return { nom: a.nom, libelle: a.libelle, lignes: a.lignes }; });
+}
+
+// Données d'impression d'une archive (même format que l'offre complète).
+function donneesArchive(nom, jeton) {
+  exigerAdmin_(jeton);
+  nom = (nom || "").toString();
+  if (nom.indexOf("Archives_") !== 0) throw new Error("Archive inconnue.");
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var f = ss.getSheetByName(nom);
+  if (!f) throw new Error("Archive introuvable : " + nom);
+  return tableauImpression_(f, null, ss.getSpreadsheetTimeZone());
 }
 
 function basculerModeWebApp(jeton) {

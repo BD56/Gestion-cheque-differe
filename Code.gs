@@ -298,9 +298,9 @@ function traiterSaisie(nom, prenom, piece, montant, notes) {
     notes = notes ? notes.toString().trim() : "";
     if (montant && typeof montant === 'string' && montant.includes('.')) montant = montant.replace('.', ',');
     
-    // Nettoyage profond (sans espaces ni tirets) - UNE FOIS
-    var nomNorm = nom.replace(/[\s-]/g, '');
-    var prenomNorm = prenom.replace(/[\s-]/g, '');
+    // Nettoyage profond pour la comparaison (cf. _normId_ / _normPiece_) - UNE FOIS
+    var nomNorm = _normId_(nom);
+    var prenomNorm = _normId_(prenom);
     var pieceNorm = _normPiece_(piece);
     
     var donnees = feuille.getDataRange().getValues();
@@ -319,8 +319,8 @@ function traiterSaisie(nom, prenom, piece, montant, notes) {
       var montantHisto = donnees[i][4] ? donnees[i][4].toString() : "";
       var notesHisto = donnees[i][5] ? donnees[i][5].toString() : "";
       
-      var nomHistoNorm = nomHisto.replace(/[\s-]/g, '');
-      var prenomHistoNorm = prenomHisto.replace(/[\s-]/g, '');
+      var nomHistoNorm = _normId_(nomHisto);
+      var prenomHistoNorm = _normId_(prenomHisto);
       var pieceHistoNorm = _normPiece_(pieceHisto);
       
       var estMemeIdentite = (nomNorm !== "" && prenomNorm !== "" && nomHistoNorm === nomNorm && prenomHistoNorm === prenomNorm);
@@ -476,7 +476,8 @@ function forcerSaisie(nom, prenom, piece, montant, notes, messageErreur, flagIde
       if (pireCas === 'A' || pireCas === 'B') feuille.getRange(indexLigne, 4).setBackground("#f4cccc");
     }
 
-    majAnnuaire_(nom, prenom, piece);
+    // Usurpation (B) : la pièce appartient à quelqu'un d'autre -> on ne remplace pas son nom
+    if (pireCas !== 'B') majAnnuaire_(nom, prenom, piece);
     return { status: "SUCCES", cas: pireCas,
              message: pireCas ? "⚠️ Saisie forcée et enregistrée en rouge." : "✅ Saisie enregistrée !" };
   } finally {
@@ -783,8 +784,13 @@ function donneesArchive(nom, jeton) {
 // =================================================================
 var ALERTE_FORCE_REGEX = /(?:\n|\|)?\s*⚠️ Ajout forcé \(Cas [ABC]\)/g;
 
+// Normalisation d'un NOM / PRÉNOM pour la comparaison : majuscules, sans accents
+// (HÉLÈNE = HELENE), ligatures dépliées (Œ -> OE), sans espaces, tirets, apostrophes
+// ni points (D'ARC = DARC). Sinon un homonyme (cas C) passait inaperçu.
 function _normId_(v) {
-  return v ? v.toString().toUpperCase().replace(/[\s-]/g, '') : "";
+  if (v === null || v === undefined || v === "") return "";
+  return v.toString().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/Œ/g, 'OE').replace(/Æ/g, 'AE').replace(/[\s\-'’.]/g, '');
 }
 
 // Saisies de l'offre en cours, la plus récente d'abord.
@@ -857,6 +863,40 @@ function detecterDoublons_(feuille, nom, prenom, piece, ligneExclue) {
   return { pireCas: pireCas, details: details };
 }
 
+// Recalcule la note « ⚠️ Ajout forcé (Cas X) » et le rouge de chaque ligne de « Saisies ».
+// Même règle qu'à l'enregistrement : une ligne est marquée si elle double une ligne
+// PLUS ANCIENNE (au-dessus) ; la première occurrence reste propre. La note saisie par
+// l'hôtesse est conservée. Appelée après une correction ou une suppression.
+function recalculerMarquages_(feuille) {
+  var derniere = feuille.getLastRow();
+  if (derniere < 2) return;
+  var plage = feuille.getRange(2, 1, derniere - 1, 7);
+  var v = plage.getValues();
+  var rouge = "#f4cccc";
+  var notes = [], fonds = [];
+  for (var i = 0; i < v.length; i++) {
+    var nomN = _normId_(v[i][1]), prenomN = _normId_(v[i][2]), pieceN = _normPiece_(v[i][3]);
+    var pireCas = null;
+    if (nomN || prenomN || pieceN) {
+      for (var j = 0; j < i; j++) {
+        var memeId = (nomN !== "" && prenomN !== "" && _normId_(v[j][1]) === nomN && _normId_(v[j][2]) === prenomN);
+        var memePiece = (pieceN !== "" && _normPiece_(v[j][3]) === pieceN);
+        if (memeId && memePiece) { pireCas = 'A'; break; }
+        if (memePiece) pireCas = 'B';
+        else if (memeId && pireCas !== 'B') pireCas = 'C';
+      }
+    }
+    var notePropre = (v[i][5] ? v[i][5].toString() : "").replace(ALERTE_FORCE_REGEX, '').trim();
+    var alerte = pireCas ? "⚠️ Ajout forcé (Cas " + pireCas + ")" : "";
+    notes.push([texte_(alerte ? (notePropre ? notePropre + "\n" + alerte : alerte) : notePropre)]);
+    fonds.push([null,
+      (pireCas === 'A' || pireCas === 'C') ? rouge : null, (pireCas === 'A' || pireCas === 'C') ? rouge : null,
+      (pireCas === 'A' || pireCas === 'B') ? rouge : null, null, pireCas ? rouge : null, null]);
+  }
+  feuille.getRange(2, 6, v.length, 1).setValues(notes);
+  plage.setBackgrounds(fonds);
+}
+
 function messagesDoublon_(mode, pireCas) {
   var r = { bloque: false, couleur: "ROUGE", titre: "", message: "" };
   var homonyme = "Un client porte ce nom avec une autre pièce. Demandez une 2ème pièce d'identité pour confirmer qu'il s'agit bien d'une personne différente.";
@@ -902,21 +942,12 @@ function modifierSaisie(ligne, attendu, nouveau, forcer, jeton) {
       if (!forcer) return { status: "CONFIRMATION", titre: m.titre, message: m.message, couleur: m.couleur, details: details };
     }
 
-    var noteFinale = notesPropres;
-    if (pireCas) {
-      var alerte = "⚠️ Ajout forcé (Cas " + pireCas + ")";
-      noteFinale = (notesPropres === "") ? alerte : notesPropres + "\n" + alerte;
-    }
-    feuille.getRange(ligne, 2, 1, 5).setValues([[texte_(nom), texte_(prenom), texte_(piece), montant, texte_(noteFinale)]]);
-    // Couleurs : mêmes règles que onEdit / forcerSaisie
-    feuille.getRange(ligne, 1, 1, 7).setBackground(null);
-    if (pireCas) {
-      feuille.getRange(ligne, 6).setBackground("#f4cccc");
-      if (pireCas === 'A' || pireCas === 'C') feuille.getRange(ligne, 2, 1, 2).setBackground("#f4cccc");
-      if (pireCas === 'A' || pireCas === 'B') feuille.getRange(ligne, 4).setBackground("#f4cccc");
-    }
-    majAnnuaire_(nom, prenom, piece);
-    return { status: "SUCCES", message: pireCas ? "⚠️ Correction forcée (Cas " + pireCas + "), marquée en rouge." : "✅ Saisie corrigée." };
+    feuille.getRange(ligne, 2, 1, 5).setValues([[texte_(nom), texte_(prenom), texte_(piece), montant, texte_(notesPropres)]]);
+    // Note d'alerte + rouge recalculés pour TOUTES les lignes (la correction peut créer
+    // ou faire disparaître un doublon ailleurs dans l'offre)
+    recalculerMarquages_(feuille);
+    if (pireCas !== 'B') majAnnuaire_(nom, prenom, piece);
+    return { status: "SUCCES", message: pireCas ? "⚠️ Correction forcée (Cas " + pireCas + ") : le doublon est marqué en rouge." : "✅ Saisie corrigée." };
   } finally {
     lock.releaseLock();
   }
@@ -931,6 +962,7 @@ function supprimerSaisie(ligne, attendu, jeton) {
     if (!feuille) throw new Error("La feuille 'Saisies' est introuvable.");
     ligne = verifierLigneAttendue_(feuille, ligne, attendu);
     feuille.deleteRow(ligne);
+    recalculerMarquages_(feuille); // un doublon de la ligne supprimée n'en est peut-être plus un
     return "🗑️ Saisie supprimée.";
   } finally {
     lock.releaseLock();
@@ -1053,8 +1085,8 @@ function onEdit(e) {
   var donnees = feuille.getDataRange().getValues();
   var rowData = donnees[ligneEdit - 1]; 
   
-  var nom = rowData[1] ? rowData[1].toString().toUpperCase().replace(/[\s-]/g, '') : "";
-  var prenom = rowData[2] ? rowData[2].toString().toUpperCase().replace(/[\s-]/g, '') : "";
+  var nom = _normId_(rowData[1]);
+  var prenom = _normId_(rowData[2]);
   var piece = _normPiece_(rowData[3]);
   var montant = rowData[4] ? rowData[4].toString() : "";
   var notes = rowData[5] ? rowData[5].toString() : "";
@@ -1085,8 +1117,8 @@ function onEdit(e) {
   for (var i = 1; i < donnees.length; i++) {
     if (i === (ligneEdit - 1)) continue; // Ne se compare pas à soi-même
     
-    var nomHisto = donnees[i][1] ? donnees[i][1].toString().toUpperCase().replace(/[\s-]/g, '') : "";
-    var prenomHisto = donnees[i][2] ? donnees[i][2].toString().toUpperCase().replace(/[\s-]/g, '') : "";
+    var nomHisto = _normId_(donnees[i][1]);
+    var prenomHisto = _normId_(donnees[i][2]);
     var pieceHisto = _normPiece_(donnees[i][3]);
     
     var matchID = (nom !== "" && prenom !== "" && nomHisto === nom && prenomHisto === prenom);

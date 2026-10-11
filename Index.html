@@ -484,6 +484,13 @@
         }
         document.getElementById('statusMessage').style.display = "none";
 
+        if (memMontant.trim() !== "" && lireMontant(memMontant) === null) {
+          afficherMessage("Montant illisible : saisissez un nombre (ex. 150 ou 150,50).", "error");
+          document.getElementById('montant').style.borderColor = "#d93025";
+          return;
+        }
+        if (memMontant.trim() !== "") memMontant = formaterMontant(lireMontant(memMontant));
+
         // Hors période (tablette restée ouverte, passage de minuit…) : on revérifie et on bloque
         if (!dansPeriode()) {
           afficherMessage("🛑 Aucune opération en cours aujourd'hui : saisie impossible.", "error");
@@ -544,8 +551,8 @@
         var titre = document.getElementById('titreDoublon');
         var msgBox = document.getElementById('messageAlerte');
         
-        titre.innerHTML = titreTexte;
-        msgBox.innerHTML = messageTexte;
+        titre.textContent = titreTexte;
+        msgBox.textContent = messageTexte;
         
         if (couleurTheme === "ORANGE") {
           box.style.backgroundColor = "#fff3cd"; 
@@ -570,11 +577,11 @@
         var listeHTML = "";
         details.forEach(function(d) {
           listeHTML += "<div class='doublon-carte'>";
-          listeHTML += "📅 <b>Passage du :</b> " + d.date + " (Ligne " + d.ligne + ")<br>";
-          listeHTML += "👤 <b>Identité :</b> " + d.nom + " " + d.prenom + "<br>";
-          listeHTML += "💳 <b>N° Pièce :</b> " + d.piece + "<br>";
-          if (d.montant !== "") listeHTML += "💶 <b>" + CONFIG.LIBELLE_MONTANT + " :</b> " + d.montant + " €<br>";
-          if (d.notes !== "") listeHTML += "💬 <b>Notes :</b> " + d.notes + "<br>";
+          listeHTML += "📅 <b>Passage du :</b> " + echapper(d.date) + " (Ligne " + echapper(d.ligne) + ")<br>";
+          listeHTML += "👤 <b>Identité :</b> " + echapper(d.nom) + " " + echapper(d.prenom) + "<br>";
+          listeHTML += "💳 <b>N° Pièce :</b> " + echapper(d.piece) + "<br>";
+          if (d.montant !== "") listeHTML += "💶 <b>" + echapper(CONFIG.LIBELLE_MONTANT) + " :</b> " + echapper(formaterMontantAffiche(d.montant)) + "<br>";
+          if (d.notes !== "") listeHTML += "💬 <b>Notes :</b> " + echapper(d.notes) + "<br>";
           listeHTML += "</div>";
         });
         document.getElementById('listeDoublons').innerHTML = listeHTML; 
@@ -791,13 +798,24 @@
         preparerImpression('jour', d, "Impression du " + d.split('-').reverse().join('/'));
       }
 
-      // Convertit un montant texte ("150,50 €", "150.50"...) en nombre
-      function parseMontant(s) {
-        if (s === null || s === undefined) return 0;
-        var t = s.toString().replace(/[^0-9.,-]/g, '').replace(',', '.');
-        var v = parseFloat(t);
-        return isNaN(v) ? 0 : v;
+      // Lit un montant saisi ou affiché : "150", "150,5", "150.50", "1 234,50 €", "1.234,50"…
+      // Renvoie un nombre, ou null s'il n'est pas lisible (ex. "abc", "12,3,4").
+      function lireMontant(s) {
+        if (s === null || s === undefined) return null;
+        if (typeof s === 'number') return isFinite(s) ? s : null;
+        var t = s.toString().replace(/[\s\u00a0\u202f€]/g, '');
+        if (t === "") return null;
+        if (t.indexOf(',') !== -1 && t.indexOf('.') !== -1) t = t.replace(/\./g, '').replace(',', '.'); // 1.234,50
+        else if (/^\d{1,3}(\.\d{3})+$/.test(t)) t = t.replace(/\./g, '');                          // 1.234
+        else t = t.replace(',', '.');
+        if (!/^\d+(\.\d{1,2})?$/.test(t)) return null;
+        return parseFloat(t);
       }
+      // 1234.5 -> "1234,50 €"
+      function formaterMontant(n) { return n.toFixed(2).replace('.', ',') + " €"; }
+      function formaterMontantAffiche(s) { var n = lireMontant(s); return n === null ? s : formaterMontant(n); }
+      // Total à l'impression : un montant illisible compte pour 0
+      function parseMontant(s) { var n = lireMontant(s); return n === null ? 0 : n; }
 
       function preparerImpression(type, dateStr, titreRapport) {
         document.body.style.cursor = "wait";
@@ -815,13 +833,13 @@
       function imprimerTableau(donnees, titreRapport) {
         if (!donnees || donnees.length === 0) { alert("Aucune donnée trouvée."); return; }
         
-        var html = "<h2 class='titre-print'>" + titreRapport + "</h2><table class='table-print'>";
+        var html = "<h2 class='titre-print'>" + echapper(titreRapport) + "</h2><table class='table-print'>";
         var idxMontant = 4; // colonnes A=0 (Date) ... E=4 (Montant) ... F=5 (Notes)
         var totalMontant = 0;
         for (var i = 0; i < donnees.length; i++) {
           html += "<tr>";
           for (var j = 0; j < donnees[i].length; j++) {
-            html += (i===0) ? "<th>"+donnees[i][j]+"</th>" : "<td>"+donnees[i][j]+"</td>";
+            html += (i===0) ? "<th>"+echapper(donnees[i][j])+"</th>" : "<td>"+echapper(donnees[i][j])+"</td>";
           }
           html += "</tr>";
           if (i > 0) totalMontant += parseMontant(donnees[i][idxMontant]);
@@ -973,17 +991,18 @@
       // Lance la vérification au démarrage de l'application
       window.addEventListener('load', chargerDatesAffichage);
       // --- FORMATAGE AUTOMATIQUE DU MONTANT ---
+      // Montant lisible -> reformaté « 1234,50 € » ; illisible -> laissé tel quel, encadré en rouge
       ['montant', 'corMontant'].forEach(function (idMontant) {
-        document.getElementById(idMontant).addEventListener('blur', function() {
+        var champ = document.getElementById(idMontant);
+        champ.addEventListener('blur', function() {
           var valeur = this.value.trim();
-          // Si la case n'est pas vide et ne contient pas déjà le symbole €
-          if (valeur !== "" && !valeur.includes('€')) {
-            // Remplace un éventuel point par une virgule (format français)
-            valeur = valeur.replace('.', ',');
-            // Ajoute l'espace et le symbole €
-            this.value = valeur + " €";
-          }
+          if (valeur === "") { this.style.borderColor = ""; return; }
+          var n = lireMontant(valeur);
+          if (n === null) { this.style.borderColor = "#d93025"; return; }
+          this.style.borderColor = "";
+          this.value = formaterMontant(n);
         });
+        champ.addEventListener('input', function () { this.style.borderColor = ""; });
       });
 
       // --- ENTRÉE → CHAMP SUIVANT (Nom, Prénom, N° Pièce, Montant ; Notes exclu) ---
@@ -1033,11 +1052,26 @@
       // frappe du numéro -> cache frais au moment du blur, sans latence perçue.
       document.getElementById('piece').addEventListener('focus', rechargerCacheVerif);
 
-      // Comparaison des noms : majuscules, sans espaces ni tirets.
-      function normIdJS(p) { return (p === null || p === undefined ? "" : p).toString().toUpperCase().replace(/[\s-]/g, ''); }
-      // Comparaison des N° de pièce : idem + N° entièrement numérique sans ses 0 initiaux
-      // (miroir de Code.gs::_normPiece_ — Google Sheets a pu stocker "0123" en 123).
-      function normPieceJS(p) { var n = normIdJS(p); return /^\d+$/.test(n) ? n.replace(/^0+(?=\d)/, '') : n; }
+      // Comparaison des noms (miroir de Code.gs::_normId_) : majuscules, sans accents,
+      // ligatures dépliées, sans espaces, tirets, apostrophes ni points.
+      function normIdJS(p) {
+        if (p === null || p === undefined) return "";
+        return p.toString().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+          .replace(/Œ/g, 'OE').replace(/Æ/g, 'AE').replace(/[\s\-'’.]/g, '');
+      }
+      // Comparaison des N° de pièce (miroir de Code.gs::_normPiece_) : majuscules, sans
+      // espaces ni tirets ; N° entièrement numérique sans ses 0 initiaux (Sheets a pu
+      // stocker "0123" en 123).
+      function normPieceJS(p) {
+        if (p === null || p === undefined) return "";
+        var n = p.toString().toUpperCase().replace(/[\s-]/g, '');
+        return /^\d+$/.test(n) ? n.replace(/^0+(?=\d)/, '') : n;
+      }
+      // #16 : toute donnée (nom, notes…) insérée dans du HTML passe par echapper()
+      function echapper(v) {
+        return (v === null || v === undefined ? "" : v).toString()
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      }
 
       document.getElementById('piece').addEventListener('blur', function () {
         var val = this.value.trim();
@@ -1068,15 +1102,16 @@
           var html = "";
           (res.matches || []).forEach(function (d) {
             html += "<div class='doublon-carte'>";
-            html += "📅 " + d.date + " (Ligne " + d.ligne + ")<br>";
-            html += "👤 " + d.nom + " " + d.prenom;
-            if (d.montant !== "") html += "<br>💶 " + d.montant + " €";
+            html += "📅 " + echapper(d.date) + " (Ligne " + echapper(d.ligne) + ")<br>";
+            html += "👤 " + echapper(d.nom) + " " + echapper(d.prenom);
+            if (d.montant !== "") html += "<br>💶 " + echapper(formaterMontantAffiche(d.montant));
             html += "</div>";
           });
           document.getElementById('listeDoublonPiece').innerHTML = html;
           document.getElementById('modalDoublonPiece').style.display = "flex";
-          // On connaît la personne (doublon de l'offre) -> pré-remplir Nom/Prénom si vides
-          if (res.matches && res.matches.length) remplirAnnuaire({ nom: res.matches[0].nom, prenom: res.matches[0].prenom });
+          // Pas de pré-remplissage ici : l'hôtesse doit recopier le nom LU sur la pièce
+          // présentée. Pré-remplir avec le nom déjà enregistré transformait une usurpation
+          // (même pièce, autre personne = cas B) en « vrai doublon » A si elle ne corrigeait pas.
           return;
         }
         // Niveau 3 (dormant) : pièce connue d'une offre passée, pas sur l'offre en cours
@@ -1106,7 +1141,7 @@
         m.dataset.nom = a.nom || "";
         m.dataset.prenom = a.prenom || "";
         document.getElementById('msgAnnuaire').innerHTML =
-          "Client connu d'une offre précédente : <b>" + (a.nom || "") + " " + (a.prenom || "") +
+          "Client connu d'une offre précédente : <b>" + echapper(a.nom) + " " + echapper(a.prenom) +
           "</b>.<br>Pré-remplir le Nom et le Prénom ?";
         m.style.display = "flex";
       }
@@ -1312,11 +1347,21 @@
 
       function enregistrerCorrection(forcer) {
         if (!saisieEnCours) return;
+        var montantCor = document.getElementById('corMontant').value.trim();
+        if (montantCor !== "" && lireMontant(montantCor) === null) {
+          var box0 = document.getElementById('corAlerte');
+          document.getElementById('corAlerteTitre').textContent = "Montant illisible";
+          document.getElementById('corAlerteMsg').textContent = "Saisissez un nombre (ex. 150 ou 150,50).";
+          document.getElementById('corAlerteListe').textContent = "";
+          document.getElementById('btnForcerCorrection').style.display = "none";
+          box0.style.backgroundColor = "#f8d7da"; box0.style.borderColor = "#f5c6cb"; box0.style.display = "block";
+          return;
+        }
         var nouveau = {
           piece: document.getElementById('corPiece').value,
           nom: document.getElementById('corNom').value,
           prenom: document.getElementById('corPrenom').value,
-          montant: document.getElementById('corMontant').value,
+          montant: montantCor === "" ? "" : formaterMontant(lireMontant(montantCor)),
           notes: document.getElementById('corNotes').value
         };
         appelAdmin('modifierSaisie', [saisieEnCours.ligne, attenduDe(saisieEnCours), nouveau, !!forcer], function (r) {

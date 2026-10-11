@@ -104,7 +104,9 @@
         if(confirm("🚨 CLÔTURE DE L'OFFRE\n\nÊtes-vous sûr de vouloir archiver et vider la liste ?")) {
           google.script.run.withSuccessHandler(function(msg){
               alert(msg); 
-              changerMode(); 
+              // la clôture remet le mode à SIGNALER : on rafraîchit l'affichage
+              // (avant : changerMode() rebasculait à tort en BLOQUANT)
+              google.script.run.withSuccessHandler(majMode).getInfosPanneau();
               
               // NOUVEAU : Met à jour l'affichage des dates sur le panneau (ça les vide)
               document.getElementById('dateDebut').value = "";

@@ -171,6 +171,19 @@ Décision : `docs/retours-vibe/decisions/2026-10-11_generalisation.md`.
   - **Période de l'offre** : `controlerPeriode_` refuse côté serveur toute saisie hors dates
     (`traiterSaisie`, `forcerSaisie`) ; la tablette revérifie au retour sur la page, toutes les
     10 min et avant chaque saisie.
+  - **Noms** comparés sans accents, ligatures, apostrophes ni points (`_normId_` /
+    `normIdJS`) : « HÉLÈNE » = « HELENE », « D'ARC » = « DARC ».
+  - **Marquages** (note « ⚠️ Ajout forcé (Cas X) » + rouge) **recalculés pour toute l'offre**
+    après une correction ou une suppression (`recalculerMarquages_`) : une ligne est marquée
+    si elle double une ligne **plus ancienne** (la 1re occurrence reste propre).
+  - Une **usurpation forcée (B)** ne réécrit pas l'annuaire (le nom du vrai titulaire reste).
+  - **Pas de pré-remplissage** Nom/Prénom quand le N° est déjà sur l'offre en cours (revient
+    sur le commit 8bae95e) : l'hôtesse recopie le nom lu sur la pièce, sinon une usurpation
+    (B) devenait un « vrai doublon » (A). Le pré-remplissage depuis l'**annuaire** (offres
+    passées) est conservé.
+  - **Montant** contrôlé (`lireMontant`) et reformaté « 1234,50 € » ; TOTAL d'impression juste.
+  - **Affichage échappé** (`echapper`, `textContent`) : un nom/une note ne peut plus injecter
+    de code dans la page.
 - **Dette assumée** : la logique A/B/C existe à **4 endroits** — `traiterSaisie`,
   `analyserDoublonLocal` (client), `onEdit`, et `detecterDoublons_` (partagée par
   `forcerSaisie` et `modifierSaisie`). À garder synchro si la détection change.

@@ -59,7 +59,11 @@
   2. doublon immédiat invisible sur la tablette (saisie effacée de la copie locale) ;
   3. message de refus coupé par un ancien minuteur → fenêtre d'alerte ;
   4. saisies acceptées après la fin de l'offre (tablette restée ouverte) → contrôle serveur.
-  Restent à traiter : voir l'analyse (points 5 à 23).
+  Puis (validés avec Bryan) : #7 accents, #8 annuaire et usurpation, #9 marquages
+  recalculés, #11 panneau (clôture -> BLOQUANT), #16 injection HTML, #17 montant,
+  #23 pré-remplissage depuis un doublon de l'offre retiré (revient sur 8bae95e).
+  Restent : #5 et #6 (décisions : compte Google de la tablette, exposition des données),
+  et mineurs #10, #12-#15, #18-#20, #22.
 - Constat (non corrigé, panneau laissé tel quel) : dans `Panneau.html`, après une
   clôture, `changerMode()` est appelé → le mode repasse en **BLOQUANT** au lieu de
   rester SIGNALER.

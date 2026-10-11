@@ -73,7 +73,7 @@
         html, body { height: auto !important; min-height: auto !important; overflow: visible !important; }
         body { background-color: white !important; display: block !important; padding: 0 !important; margin: 0 !important; }
         .container, .footer-legal { display: none !important; }
-        #modalParametres, #modalMentions, #modalAide { display: none !important; }
+        #modalParametres, #modalMentions, #modalAide, #modalSaisies { display: none !important; }
         #zoneImpression { display: block !important; width: 100%; }
         .table-print { width: 100%; border-collapse: collapse; font-family: sans-serif; font-size: 12px; }
         .table-print th, .table-print td { border: 1px solid #000; padding: 8px; text-align: left; }
@@ -190,17 +190,28 @@
 
           <button class="accordion">🚦 Les Modes de Sécurité (Bouton ⚙️)</button>
           <div class="panel">
-            <p>Dans le panneau de contrôle, vous définissez la rigueur du système :</p>
+            <p>Dans l'espace responsable (⚙️, code responsable), vous définissez la rigueur du système :</p>
             <ul>
               <li>🟡 <strong>Mode SIGNALER :</strong> Souple. L'application vous alerte (Orange ou Rouge) mais vous laisse le bouton pour "Forcer" la validation manuellement.</li>
-              <li>🔴 <strong>Mode BLOQUANT :</strong> Strict. En cas d'alerte Rouge, l'application verrouille le bouton de validation. Aucune saisie n'est techniquement possible.</li>
+              <li>🔴 <strong>Mode BLOQUANT :</strong> Strict. En cas d'alerte Rouge (doublon ou pièce déjà utilisée), la saisie est refusée : aucun bouton pour forcer.</li>
+            </ul>
+          </div>
+
+          <button class="accordion">🔒 Espace responsable (code)</button>
+          <div class="panel">
+            <ul>
+              <li><strong>Libre pour tous :</strong> la saisie et l'impression (⚙️, en haut).</li>
+              <li><strong>Avec le code responsable :</strong> mode de sécurité, dates de l'offre, corrections, archives, réglages, clôture.</li>
+              <li><strong>1ʳᵉ utilisation :</strong> l'application demande de choisir le code (4 à 8 chiffres).</li>
+              <li><strong>Sécurité :</strong> l'espace se reverrouille à la fermeture du panneau ou après 10 min sans action ; 5 codes faux bloquent 15 min.</li>
+              <li><strong>Code oublié :</strong> il se réinitialise depuis le panneau ⚙️ du Google Sheets (réservé aux personnes qui ont accès au fichier).</li>
             </ul>
           </div>
 
           <button class="accordion">📅 Dates de l'offre et Clôture automatique</button>
           <div class="panel">
             <ul>
-              <li><strong>Lancer ou modifier :</strong> Cliquez sur ⚙️ et saisissez vos dates. S'il y a une erreur ou une prolongation, modifiez simplement la date de fin ici.</li>
+              <li><strong>Lancer ou modifier :</strong> Cliquez sur ⚙️, ouvrez l'espace responsable et saisissez vos dates. S'il y a une erreur ou une prolongation, modifiez simplement la date de fin ici.</li>
               <li><strong>Fin de l'offre (Auto-Pilote) :</strong> Vous n'avez rien à faire ! L'opération se clôture, s'archive et verrouille la tablette <strong>toute seule</strong> la nuit suivant le dernier jour.</li>
             </ul>
           </div>
@@ -208,10 +219,10 @@
           <button class="accordion">🖨️ Corrections, Impressions et Archives</button>
           <div class="panel">
             <ul>
-              <li><strong>Corriger une erreur :</strong> Cliquez sur ⚙️ puis sur <strong>Ouvrir Google Sheets</strong>. Trouvez la ligne dans le tableau sur l'ordinateur et corrigez ou supprimez-la directement.</li>
+              <li><strong>Corriger ou supprimer une saisie :</strong> ⚙️ → espace responsable → <strong>📋 Corriger / supprimer une saisie</strong>. Recherchez la ligne par nom ou n° de pièce. Une correction est <strong>re-vérifiée</strong> (doublon, usurpation, homonyme) comme une nouvelle saisie.</li>
               <li><strong>Imprimer le jour actuel :</strong> Cliquez sur ⚙️ puis sur le bouton bleu <strong>🖨️ IMPRIMER AUJOURD'HUI</strong> pour sortir la liste des saisies du jour.</li>
               <li><strong>Imprimer un jour oublié :</strong> Toujours dans ⚙️, utilisez le calendrier <em>"Imprimer un jour précédent"</em> pour sortir la liste d'une journée passée.</li>
-              <li><strong>Imprimer une ancienne offre clôturée :</strong> Cliquez sur <strong>Ouvrir Google Sheets</strong>, allez dans l'onglet <em>Archives</em> (en bas du tableau Excel), et imprimez depuis l'ordinateur.</li>
+              <li><strong>Imprimer une ancienne offre clôturée :</strong> ⚙️ → espace responsable → <strong>🗄️ Archives</strong>, choisissez l'offre puis imprimez.</li>
             </ul>
           </div>
 
@@ -251,6 +262,7 @@
 
         <div id="zoneAdmin" style="display: none;">
         <h3 style="text-align: center; margin-top: 0;">🔓 Espace responsable</h3>
+        <button class="btn-action" style="background-color: #1a73e8;" onclick="ouvrirSaisies()">📋 CORRIGER / SUPPRIMER UNE SAISIE</button>
         <button class="btn-action" id="btnMode" onclick="changerMode()">⏳ Chargement Mode...</button>
         <button class="btn-action" id="btnModeAnnuaire" style="display:none; background-color:#5f6368;" onclick="changerModeAnnuaire()"></button>
         <button class="btn-action btn-open-sheet" onclick="ouvrirFichierSouche()">OUVRIR GOOGLE SHEETS</button>
@@ -296,6 +308,35 @@
 
         <button class="btn-action btn-archive" onclick="cloturerOffre()">⚠️ CLÔTURER L'OFFRE</button>
         <button class="btn-action" style="background-color: #3c4043;" onclick="verrouillerAdmin()">🔒 VERROUILLER</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="modalSaisies" class="modal-overlay">
+      <div class="modal-content" style="max-width: 520px;">
+        <button class="btn-close-modal" onclick="fermerSaisies()">✖</button>
+        <h2 style="margin-top:0; font-size:18px;">📋 Saisies de l'offre en cours</h2>
+        <div id="vueListeSaisies">
+          <input type="text" id="rechercheSaisie" placeholder="Rechercher (nom, prénom, pièce)…" autocomplete="off" style="margin-bottom: 10px;">
+          <div id="msgSaisies" style="text-align: center; font-weight: bold; font-size: 13px; margin-bottom: 8px;"></div>
+          <div id="listeSaisies"></div>
+        </div>
+        <div id="vueCorrection" style="display: none;">
+          <div class="input-group"><label>N° de Pièce *</label><input type="text" id="corPiece" autocomplete="off"></div>
+          <div class="input-group"><label>Nom *</label><input type="text" id="corNom" autocomplete="off"></div>
+          <div class="input-group"><label>Prénom *</label><input type="text" id="corPrenom" autocomplete="off"></div>
+          <div class="input-group"><label id="corLblMontant">Montant (€)</label><input type="text" id="corMontant" autocomplete="off"></div>
+          <div class="input-group"><label id="corLblNotes">Notes</label><input type="text" id="corNotes" autocomplete="off"></div>
+          <div id="corAlerte" style="display: none; padding: 12px; border-radius: 8px; border: 2px solid; margin-bottom: 10px;">
+            <div class="doublon-titre" id="corAlerteTitre"></div>
+            <div class="message-alerte" id="corAlerteMsg"></div>
+            <div id="corAlerteListe"></div>
+            <button class="btn-action" id="btnForcerCorrection" style="background-color: #f2994a;" onclick="enregistrerCorrection(true)">FORCER LA CORRECTION</button>
+          </div>
+          <div class="flex-btn">
+            <button class="btn-cancel" onclick="annulerCorrection()">ANNULER</button>
+            <button class="btn-force" style="background: #34a853;" onclick="enregistrerCorrection(false)">ENREGISTRER</button>
+          </div>
         </div>
       </div>
     </div>
@@ -776,15 +817,17 @@
       // Lance la vérification au démarrage de l'application
       window.addEventListener('load', chargerDatesAffichage);
       // --- FORMATAGE AUTOMATIQUE DU MONTANT ---
-      document.getElementById('montant').addEventListener('blur', function() {
-        var valeur = this.value.trim();
-        // Si la case n'est pas vide et ne contient pas déjà le symbole €
-        if (valeur !== "" && !valeur.includes('€')) {
-          // Remplace un éventuel point par une virgule (format français)
-          valeur = valeur.replace('.', ',');
-          // Ajoute l'espace et le symbole €
-          this.value = valeur + " €";
-        }
+      ['montant', 'corMontant'].forEach(function (idMontant) {
+        document.getElementById(idMontant).addEventListener('blur', function() {
+          var valeur = this.value.trim();
+          // Si la case n'est pas vide et ne contient pas déjà le symbole €
+          if (valeur !== "" && !valeur.includes('€')) {
+            // Remplace un éventuel point par une virgule (format français)
+            valeur = valeur.replace('.', ',');
+            // Ajoute l'espace et le symbole €
+            this.value = valeur + " €";
+          }
+        });
       });
 
       // --- ENTRÉE → CHAMP SUIVANT (Nom, Prénom, N° Pièce, Montant ; Notes exclu) ---
@@ -984,6 +1027,7 @@
       function verrouillerAdmin() {
         if (jetonAdmin) google.script.run.withFailureHandler(function () {}).fermerSessionAdmin(jetonAdmin);
         jetonAdmin = null;
+        document.getElementById('modalSaisies').style.display = "none";
         document.getElementById('zoneAdmin').style.display = "none";
         document.getElementById('zoneVerrou').style.display = "block";
         ['blocReglages', 'blocPin', 'blocArchives'].forEach(function (id) { document.getElementById(id).style.display = "none"; });
@@ -1005,6 +1049,133 @@
       function basculerBloc(id) {
         var b = document.getElementById(id);
         b.style.display = (b.style.display === "none") ? "block" : "none";
+      }
+
+      // --- Correction / suppression d'une saisie ---
+      // Le serveur recontrôle A/B/C sur « Saisies » (source de vérité) à chaque correction.
+      var listeSaisies = [], saisieEnCours = null;
+
+      function ouvrirSaisies() {
+        document.getElementById('modalSaisies').style.display = "flex";
+        afficherVueListe();
+        chargerListeSaisies();
+      }
+      function fermerSaisies() {
+        document.getElementById('modalSaisies').style.display = "none";
+        saisieEnCours = null;
+      }
+      function afficherVueListe() {
+        document.getElementById('vueCorrection').style.display = "none";
+        document.getElementById('vueListeSaisies').style.display = "block";
+      }
+      function msgSaisies(texte, couleur) {
+        var m = document.getElementById('msgSaisies');
+        m.textContent = texte || ""; m.style.color = couleur || "#3c4043";
+      }
+      function chargerListeSaisies(message, couleur) {
+        msgSaisies(message || "⏳ Chargement…", couleur);
+        appelAdmin('listerSaisies', [], function (liste) {
+          listeSaisies = liste || [];
+          msgSaisies(message || (listeSaisies.length ? listeSaisies.length + " saisie(s)" : "Aucune saisie sur l'offre en cours."), couleur);
+          dessinerListeSaisies();
+        });
+      }
+      function dessinerListeSaisies() {
+        var filtre = normPieceJS(document.getElementById('rechercheSaisie').value);
+        var zone = document.getElementById('listeSaisies');
+        zone.innerHTML = "";
+        listeSaisies.forEach(function (sa) {
+          if (filtre && normPieceJS(sa.nom + sa.prenom + " " + sa.prenom + sa.nom + " " + sa.piece).indexOf(filtre) === -1) return;
+          var carte = document.createElement('div');
+          carte.className = 'doublon-carte';
+          if (sa.alerte) carte.style.borderLeftColor = "#d93025";
+          var lignes = [
+            "📅 " + sa.date + " (Ligne " + sa.ligne + ")",
+            "👤 " + sa.nom + " " + sa.prenom + (sa.alerte ? "  ⚠️" : ""),
+            "💳 " + sa.piece
+          ];
+          if (sa.montant) lignes.push("💶 " + sa.montant);
+          if (sa.notes) lignes.push("💬 " + sa.notes);
+          lignes.forEach(function (t) { var d = document.createElement('div'); d.textContent = t; carte.appendChild(d); });
+          var actions = document.createElement('div');
+          actions.className = 'flex-btn'; actions.style.marginTop = "8px";
+          var bSup = document.createElement('button');
+          bSup.className = 'btn-cancel'; bSup.style.background = "#d93025"; bSup.textContent = "🗑️ SUPPRIMER";
+          bSup.onclick = function () { supprimerUneSaisie(sa); };
+          var bCor = document.createElement('button');
+          bCor.className = 'btn-force'; bCor.style.background = "#1a73e8"; bCor.textContent = "✏️ CORRIGER";
+          bCor.onclick = function () { corrigerUneSaisie(sa); };
+          actions.appendChild(bSup); actions.appendChild(bCor);
+          carte.appendChild(actions);
+          zone.appendChild(carte);
+        });
+      }
+      document.getElementById('rechercheSaisie').addEventListener('input', dessinerListeSaisies);
+
+      function attenduDe(sa) { return { nom: sa.nom, prenom: sa.prenom, piece: sa.piece }; }
+
+      function corrigerUneSaisie(sa) {
+        saisieEnCours = sa;
+        document.getElementById('corPiece').value = sa.piece;
+        document.getElementById('corNom').value = sa.nom;
+        document.getElementById('corPrenom').value = sa.prenom;
+        document.getElementById('corMontant').value = sa.montant;
+        document.getElementById('corNotes').value = sa.notes;
+        document.getElementById('corLblMontant').textContent = CONFIG.LIBELLE_MONTANT + " (€)" + (MONTANT_OBLIGATOIRE ? " *" : "");
+        document.getElementById('corLblNotes').textContent = CONFIG.LIBELLE_NOTES;
+        document.getElementById('corAlerte').style.display = "none";
+        document.getElementById('vueListeSaisies').style.display = "none";
+        document.getElementById('vueCorrection').style.display = "block";
+      }
+      function annulerCorrection() { saisieEnCours = null; afficherVueListe(); }
+
+      function enregistrerCorrection(forcer) {
+        if (!saisieEnCours) return;
+        var nouveau = {
+          piece: document.getElementById('corPiece').value,
+          nom: document.getElementById('corNom').value,
+          prenom: document.getElementById('corPrenom').value,
+          montant: document.getElementById('corMontant').value,
+          notes: document.getElementById('corNotes').value
+        };
+        appelAdmin('modifierSaisie', [saisieEnCours.ligne, attenduDe(saisieEnCours), nouveau, !!forcer], function (r) {
+          if (r.status === "SUCCES") {
+            saisieEnCours = null;
+            afficherVueListe();
+            chargerListeSaisies(r.message, r.message.indexOf("✅") === 0 ? "green" : "#d35400");
+            rechargerCacheVerif();
+            return;
+          }
+          // Doublon : CONFIRMATION (forçable) ou BLOQUE
+          var box = document.getElementById('corAlerte');
+          var orange = (r.couleur === "ORANGE");
+          box.style.backgroundColor = orange ? "#fff3cd" : "#f8d7da";
+          box.style.borderColor = orange ? "#ffeeba" : "#f5c6cb";
+          document.getElementById('corAlerteTitre').textContent = r.titre;
+          document.getElementById('corAlerteMsg').textContent = r.message;
+          var liste = document.getElementById('corAlerteListe');
+          liste.innerHTML = "";
+          (r.details || []).forEach(function (d) {
+            var c = document.createElement('div');
+            c.className = 'doublon-carte';
+            c.textContent = "📅 " + d.date + " (Ligne " + d.ligne + ") — " + d.nom + " " + d.prenom + " — 💳 " + d.piece;
+            liste.appendChild(c);
+          });
+          document.getElementById('btnForcerCorrection').style.display = (r.status === "CONFIRMATION") ? "block" : "none";
+          box.style.display = "block";
+        }, function (err) {
+          // Ligne qui a bougé, champ manquant… : on revient à la liste rechargée
+          var m = (err && err.message) ? err.message : "";
+          if (m.indexOf('ADMIN_REQUIS') === -1 && m.indexOf('rechargez') !== -1) { saisieEnCours = null; afficherVueListe(); chargerListeSaisies(); }
+        });
+      }
+
+      function supprimerUneSaisie(sa) {
+        if (!confirm("🗑️ SUPPRIMER DÉFINITIVEMENT cette saisie ?\n\n" + sa.nom + " " + sa.prenom + " — pièce " + sa.piece + "\n(" + sa.date + ")")) return;
+        appelAdmin('supprimerSaisie', [sa.ligne, attenduDe(sa)], function (message) {
+          chargerListeSaisies(message, "green");
+          rechargerCacheVerif();
+        }, function () { chargerListeSaisies(); });
       }
 
       // --- Archives (offres clôturées) ---

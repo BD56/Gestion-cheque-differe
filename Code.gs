@@ -632,6 +632,161 @@ function donneesArchive(nom, jeton) {
   return tableauImpression_(f, null, ss.getSpreadsheetTimeZone());
 }
 
+// =================================================================
+// --- CORRECTION / SUPPRESSION D'UNE SAISIE (espace responsable) ---
+//     Remplace l'édition manuelle du Sheet. Mêmes règles que onEdit : la
+//     ligne corrigée est RECONTRÔLÉE (A/B/C) contre toutes les autres lignes
+//     de « Saisies », sous verrou. Mode BLOQUANT : A et B refusés. Sinon,
+//     doublon -> confirmation explicite, puis marquage rouge + note d'alerte.
+//     Garde-fou : la ligne doit encore contenir ce que l'écran affichait
+//     (sinon refus : la feuille a bougé entre-temps).
+// =================================================================
+var ALERTE_FORCE_REGEX = /(?:\n|\|)?\s*⚠️ Ajout forcé \(Cas [ABC]\)/g;
+
+function _normId_(v) {
+  return v ? v.toString().toUpperCase().replace(/[\s-]/g, '') : "";
+}
+
+// Saisies de l'offre en cours, la plus récente d'abord.
+function listerSaisies(jeton) {
+  exigerAdmin_(jeton);
+  var feuille = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Saisies");
+  if (!feuille) return [];
+  var derniere = feuille.getLastRow();
+  if (derniere < 2) return [];
+  var plage = feuille.getRange(2, 1, derniere - 1, 6);
+  var valeurs = plage.getValues();
+  var affichage = plage.getDisplayValues();
+  var liste = [];
+  for (var i = 0; i < valeurs.length; i++) {
+    if (affichage[i].join("") === "") continue;
+    var notes = valeurs[i][5] ? valeurs[i][5].toString() : "";
+    liste.push({
+      ligne: i + 2,
+      date: affichage[i][0],
+      nom: valeurs[i][1] ? valeurs[i][1].toString() : "",
+      prenom: valeurs[i][2] ? valeurs[i][2].toString() : "",
+      piece: valeurs[i][3] ? valeurs[i][3].toString() : "",
+      montant: affichage[i][4],
+      notes: notes.replace(ALERTE_FORCE_REGEX, '').trim(),
+      alerte: notes !== notes.replace(ALERTE_FORCE_REGEX, '')
+    });
+  }
+  return liste.reverse();
+}
+
+// La ligne contient-elle toujours ce que l'écran affichait ?
+function verifierLigneAttendue_(feuille, ligne, attendu) {
+  ligne = Number(ligne);
+  if (!(ligne >= 2 && ligne <= feuille.getLastRow() && Math.floor(ligne) === ligne)) {
+    throw new Error("Ligne introuvable : rechargez la liste.");
+  }
+  var v = feuille.getRange(ligne, 2, 1, 3).getValues()[0];
+  var a = attendu || {};
+  if ((v[0] || "").toString() !== (a.nom || "") || (v[1] || "").toString() !== (a.prenom || "") || (v[2] || "").toString() !== (a.piece || "")) {
+    throw new Error("Cette ligne a changé entre-temps : rechargez la liste.");
+  }
+  return ligne;
+}
+
+function messagesDoublon_(mode, pireCas) {
+  var r = { bloque: false, couleur: "ROUGE", titre: "", message: "" };
+  var homonyme = "Un client porte ce nom avec une autre pièce. Demandez une 2ème pièce d'identité pour confirmer qu'il s'agit bien d'une personne différente.";
+  if (pireCas === 'C') { r.couleur = "ORANGE"; r.titre = "⚠️ HOMONYME DÉTECTÉ"; r.message = homonyme; return r; }
+  if (mode === "BLOQUANT") {
+    r.bloque = true; r.titre = "🛑 CORRECTION REFUSÉE";
+    r.message = (pireCas === 'A') ? "Ce client a déjà profité de l'offre (autre ligne)." : "Ce numéro de pièce d'identité est déjà associé à un autre client.";
+  } else {
+    r.titre = (pireCas === 'A') ? "🛑 ALERTE FRAUDE" : "🛑 ANOMALIE GRAVE";
+    r.message = (pireCas === 'A') ? "Ce client est déjà enregistré avec ce numéro de pièce (autre ligne)." : "Ce numéro de pièce d'identité est déjà utilisé sous un autre nom !";
+  }
+  return r;
+}
+
+// nouveau = { nom, prenom, piece, montant, notes } ; forcer = confirmer malgré un doublon.
+function modifierSaisie(ligne, attendu, nouveau, forcer, jeton) {
+  exigerAdmin_(jeton);
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    var feuille = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Saisies");
+    if (!feuille) throw new Error("La feuille 'Saisies' est introuvable.");
+    ligne = verifierLigneAttendue_(feuille, ligne, attendu);
+
+    var n = nouveau || {};
+    var nom = (n.nom || "").toString().toUpperCase().trim();
+    var prenom = (n.prenom || "").toString().toUpperCase().trim();
+    var piece = (n.piece || "").toString().toUpperCase().trim();
+    var montant = (n.montant || "").toString().trim();
+    if (montant.indexOf('.') !== -1) montant = montant.replace('.', ',');
+    var notesPropres = (n.notes || "").toString().replace(ALERTE_FORCE_REGEX, '').trim();
+    if (!nom || !prenom || !piece) throw new Error("Le Nom, le Prénom et le N° de pièce sont obligatoires.");
+    if (getConfig().MONTANT_OBLIGATOIRE !== "NON" && !montant) throw new Error("Le montant est obligatoire.");
+
+    // Recontrôle A/B/C contre toutes les AUTRES lignes (comme onEdit)
+    var nomN = _normId_(nom), prenomN = _normId_(prenom), pieceN = _normId_(piece);
+    var donnees = feuille.getDataRange().getValues();
+    var pireCas = null, details = [];
+    for (var i = 1; i < donnees.length; i++) {
+      if (i === ligne - 1) continue;
+      var memeId = (nomN !== "" && prenomN !== "" && _normId_(donnees[i][1]) === nomN && _normId_(donnees[i][2]) === prenomN);
+      var memePiece = (pieceN !== "" && _normId_(donnees[i][3]) === pieceN);
+      if (!memeId && !memePiece) continue;
+      var t = (memeId && memePiece) ? 'A' : (memePiece ? 'B' : 'C');
+      if (t === 'A') pireCas = 'A';
+      else if (t === 'B' && pireCas !== 'A') pireCas = 'B';
+      else if (t === 'C' && pireCas !== 'A' && pireCas !== 'B') pireCas = 'C';
+      details.push({
+        ligne: i + 1, type: t,
+        date: (donnees[i][0] instanceof Date) ? Utilities.formatDate(donnees[i][0], "Europe/Paris", "dd/MM/yyyy HH:mm") : (donnees[i][0] ? donnees[i][0].toString() : ""),
+        nom: donnees[i][1] ? donnees[i][1].toString() : "", prenom: donnees[i][2] ? donnees[i][2].toString() : "",
+        piece: donnees[i][3] ? donnees[i][3].toString() : "", montant: donnees[i][4] ? donnees[i][4].toString() : "",
+        notes: donnees[i][5] ? donnees[i][5].toString() : ""
+      });
+    }
+
+    var mode = feuille.getRange("Z1").getValue() || "SIGNALER";
+    if (pireCas) {
+      var m = messagesDoublon_(mode, pireCas);
+      if (m.bloque) return { status: "BLOQUE", titre: m.titre, message: m.message, details: details };
+      if (!forcer) return { status: "CONFIRMATION", titre: m.titre, message: m.message, couleur: m.couleur, details: details };
+    }
+
+    var noteFinale = notesPropres;
+    if (pireCas) {
+      var alerte = "⚠️ Ajout forcé (Cas " + pireCas + ")";
+      noteFinale = (notesPropres === "") ? alerte : notesPropres + "\n" + alerte;
+    }
+    feuille.getRange(ligne, 2, 1, 5).setValues([[nom, prenom, piece, montant, noteFinale]]);
+    // Couleurs : mêmes règles que onEdit / forcerSaisie
+    feuille.getRange(ligne, 1, 1, 7).setBackground(null);
+    if (pireCas) {
+      feuille.getRange(ligne, 6).setBackground("#f4cccc");
+      if (pireCas === 'A' || pireCas === 'C') feuille.getRange(ligne, 2, 1, 2).setBackground("#f4cccc");
+      if (pireCas === 'A' || pireCas === 'B') feuille.getRange(ligne, 4).setBackground("#f4cccc");
+    }
+    majAnnuaire_(nom, prenom, piece);
+    return { status: "SUCCES", message: pireCas ? "⚠️ Correction forcée (Cas " + pireCas + "), marquée en rouge." : "✅ Saisie corrigée." };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function supprimerSaisie(ligne, attendu, jeton) {
+  exigerAdmin_(jeton);
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    var feuille = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Saisies");
+    if (!feuille) throw new Error("La feuille 'Saisies' est introuvable.");
+    ligne = verifierLigneAttendue_(feuille, ligne, attendu);
+    feuille.deleteRow(ligne);
+    return "🗑️ Saisie supprimée.";
+  } finally {
+    lock.releaseLock();
+  }
+}
+
 function basculerModeWebApp(jeton) {
   exigerAdmin_(jeton);
   var feuille = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Saisies");

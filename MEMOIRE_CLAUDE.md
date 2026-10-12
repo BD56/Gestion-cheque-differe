@@ -10,7 +10,7 @@
 - Bryan a choisi de **tout perfectionner sur `generalisation`** (Vannes n'a pas d'offre en
   cours) plutôt qu'un correctif séparé sur `main`.
 - **Rien n'a encore été testé sur un vrai Google Sheet** : uniquement en simulation
-  (`tests/`, 22 séries, toutes vertes). Prochaine étape : test sur une copie, puis
+  (`tests/`, 23 séries, toutes vertes). Prochaine étape : test sur une copie, puis
   déploiement à Vannes (`DEPLOIEMENT.md`).
 - Bryan n'a temporairement **pas accès à GitHub** : il a demandé `INSTALLATION.md` en
   fichier ; je lui ai proposé de lui fournir les 4 fichiers à coller (`Code.gs`,
@@ -70,6 +70,11 @@
    boutons, vouvoiement). Accordéon supprimé. Le code responsable reste vérifié **côté
    serveur** (discuté : empreinte d'un code à 6 chiffres cassable, pause/blocage
    contournables côté tablette).
+9. **Mentions légales** à jour (données dans le Sheet de l'établissement, tablettes
+   autorisées, clé technique, établissement responsable du traitement) ; « personnelle »
+   retiré de la licence (décision Bryan). **Purge des archives 3 ans après clôture**
+   (décision Bryan, RGPD) : `purgerArchives_` lancée chaque nuit par
+   `verificationClotureNocturne` ; onglet au nom non reconnu jamais supprimé.
 
 ## 3. À vérifier sur un vrai Google Sheet (la simulation ne peut pas le garantir)
 1. La tablette **garde sa clé** d'un jour à l'autre (localStorage dans l'iframe Apps Script).
@@ -78,6 +83,8 @@
    éditeur (`estEditeurDuClasseur_` repose sur `Session.getActiveUser()`).
 4. Ce que Google **recopie** lors d'une copie du modèle (propriétés du document).
 5. `installer()` crée bien les déclencheurs (nuit 1h clôture, 3h purge).
+   À Vannes : vérifier le **nom des anciens onglets d'archives** (seul le format
+   `Archives_jj-mm-aaaa_hh-mm` est purgé ; la 1re nuit supprimera ceux de plus de 3 ans).
 6. Parcours complet : autorisation, saisie, doublons, passages, correction, impression,
    archives, clôture.
 

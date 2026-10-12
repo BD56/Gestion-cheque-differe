@@ -89,6 +89,10 @@
 - **Aide en tuiles (choix de Bryan, option B sur maquette)** : deux groupes « Pour la
   saisie » / « Pour le responsable », une rubrique par écran, texte remis à jour et au
   vouvoiement ; l'impression (libre) passe côté saisie.
+- **Mentions légales et conservation (décisions de Bryan)** : mentions remises à jour
+  (stockage, tablettes, responsable du traitement) ; « licence d'utilisation
+  personnelle » → « licence d'utilisation » ; **archives supprimées 3 ans après la
+  clôture** (purge nocturne), comme l'annuaire.
 - Constat (non corrigé, panneau laissé tel quel) : dans `Panneau.html`, après une
   clôture, `changerMode()` est appelé → le mode repasse en **BLOQUANT** au lieu de
   rester SIGNALER.

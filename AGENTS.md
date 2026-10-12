@@ -84,7 +84,9 @@ Même détection via `onEdit` (édition manuelle directe dans le Sheets).
   « Saisies » → `Archives_<date>`, vide, repasse en SIGNALER, efface les dates.
 
 ## Triggers Apps Script
-- `verificationClotureNocturne` — trigger temporel (nuit).
+- `verificationClotureNocturne` — trigger temporel (nuit) : purge d'abord les archives
+  de plus de 3 ans (`purgerArchives_`, date lue dans le nom `Archives_jj-mm-aaaa_hh-mm`,
+  nom non reconnu = jamais supprimé), puis clôture si l'offre est finie.
 - `purgerAnnuaire` — trigger temporel (nuit). Les deux sont créés par `installer()`.
 - `onEdit` / `onOpen` — triggers simples automatiques.
 
@@ -131,7 +133,8 @@ de l'algorithme. **Inutile d'« optimiser la recherche » côté données/algo.*
 Décision : `docs/retours-vibe/decisions/2026-10-11_generalisation.md`.
 - **Réglages** (`CONFIG_DEFAUTS` = Vannes) : nom de la structure (avec article), nom
   de l'offre, titre de l'onglet, libellé + caractère obligatoire du montant, libellé +
-  précision des notes. Devise **euro** et conservation annuaire **3 ans** : fixes.
+  précision des notes. Devise **euro**, conservation annuaire **3 ans** et
+  archives **3 ans** après clôture : fixes.
   `doGet` passe en **template** (`<?= cfg.X ?>`, échappé) pour les injecter.
 - **Espace responsable** (⚙️) : code PIN 4-8 chiffres (SHA-256 + sel, jamais en clair),
   jeton de session `CacheService` (10 min d'inactivité), 5 échecs → blocage 15 min.

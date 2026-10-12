@@ -71,7 +71,8 @@ Avec le **compte Google qui détiendra les données** (voir ci-dessus) :
    Magasin X »). Le code est copié avec le classeur.
 2. Dans la copie : menu **🚀 APPLICATION → 🧰 Installer / vérifier l'installation** →
    accepter les autorisations. Ça crée ce qui manque (feuilles, **clôture automatique
-   de nuit**, **purge de l'annuaire**) et efface tout réglage hérité du modèle.
+   de nuit**, **purge de l'annuaire** ; les archives sont supprimées 3 ans après la
+   clôture de l'offre) et efface tout réglage hérité du modèle.
    *(Si le menu n'apparaît pas : recharger la page.)*
 3. **Mettre l'application en ligne** : *Extensions → Apps Script → **Déployer** →
    **Nouveau déploiement*** → type **Application Web** :

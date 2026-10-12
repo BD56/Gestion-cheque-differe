@@ -948,6 +948,32 @@ function infosNomArchive_(nom) {
   return { tri: m[3] + m[2] + m[1] + m[4] + m[5], libelle: "Clôturée le " + m[1] + "/" + m[2] + "/" + m[3] + " à " + m[4] + "h" + m[5] };
 }
 
+// Archives supprimées automatiquement ARCHIVES_RETENTION_ANS ans après leur clôture
+// (RGPD : durée de conservation définie). Date lue dans le nom de l'onglet ; un
+// onglet au nom non reconnu n'est jamais supprimé. Appelée chaque nuit par
+// verificationClotureNocturne. Renvoie les noms supprimés.
+var ARCHIVES_RETENTION_ANS = 3;
+function purgerArchives_() {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var limite = new Date();
+    limite.setFullYear(limite.getFullYear() - ARCHIVES_RETENTION_ANS);
+    var cleLimite = Utilities.formatDate(limite, "Europe/Paris", "yyyyMMddHHmm");
+    var supprimees = [];
+    ss.getSheets().forEach(function (f) {
+      var nom = f.getName();
+      if (nom.indexOf("Archives_") !== 0) return;
+      var tri = infosNomArchive_(nom).tri;
+      if (tri && tri < cleLimite) { ss.deleteSheet(f); supprimees.push(nom); }
+    });
+    return supprimees;
+  } finally {
+    lock.releaseLock();
+  }
+}
+
 // Liste des archives, la plus récente d'abord.
 function listerArchives(jeton) {
   exigerAdmin_(jeton);
@@ -1424,6 +1450,9 @@ function controlerLigneEditee_(feuille, ligneEdit, modeSecurite, plageAnnulee) {
 // =================================================================
 
 function verificationClotureNocturne() {
+  // Archives de plus de 3 ans : supprimées (n'empêche jamais la clôture)
+  try { purgerArchives_(); } catch (e) { Logger.log("Purge des archives : " + e); }
+
   var dates = lireDates_();
   
   // S'il n'y a pas de date de fin enregistrée, le robot se rendort

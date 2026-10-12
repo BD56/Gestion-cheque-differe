@@ -57,6 +57,7 @@ function makeSpreadsheet(env) {
     getSheets: () => Object.values(env.sheets),
     insertSheet: (name) => { const s = new FakeSheet(name); env.sheets[name] = s; return s; },
     getNumSheets: () => Object.keys(env.sheets).length,
+    deleteSheet: (s) => { delete env.sheets[s.getName()]; },
     getSpreadsheetTimeZone: () => 'Europe/Paris',
     getOwner: () => ({ getEmail: () => env.owner }),
     getEditors: () => env.editors.map(e => ({ getEmail: () => e })),

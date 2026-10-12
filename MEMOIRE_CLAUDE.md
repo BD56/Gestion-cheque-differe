@@ -71,8 +71,10 @@
    serveur** (discuté : empreinte d'un code à 6 chiffres cassable, pause/blocage
    contournables côté tablette).
 9. **Mentions légales** à jour (données dans le Sheet de l'établissement, tablettes
-   autorisées, clé technique, établissement responsable du traitement) ; « personnelle »
-   retiré de la licence (décision Bryan). **Purge des archives 3 ans après clôture**
+   autorisées, clé technique, établissement responsable du traitement), sans gras ;
+   licence « non exclusive, non cessible et révocable », « dans les conditions convenues
+   par écrit avec l'auteur », nom de la structure (réglage) conservé ; les données restent
+   à l'établissement (décisions Bryan). **Purge des archives 3 ans après clôture**
    (décision Bryan, RGPD) : `purgerArchives_` lancée chaque nuit par
    `verificationClotureNocturne` ; onglet au nom non reconnu jamais supprimé.
 

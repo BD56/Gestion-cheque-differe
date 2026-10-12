@@ -10,7 +10,7 @@ const { FakeSheet } = require('./fakesheet');
     await page.focus('#piece'); await page.keyboard.type('0123 4567 8901'); await page.keyboard.press('Enter');
     await page.waitForTimeout(100);
     assert.ok(await page.isVisible('#modalDoublonPiece'), 'avertissement N° attendu (ancienne ligne sans 0)');
-    await page.click('text=OK');
+    await page.click('#modalDoublonPiece >> text=OK');
     await page.fill('#nom', 'Dupont'); await page.fill('#prenom', 'Jean');
     await page.fill('#montant', '5'); await page.click('#btnValider'); await page.waitForTimeout(100);
     assert.match(await page.textContent('#titreDoublon'), /REFUSÉE/);

@@ -52,8 +52,9 @@ Google en demande.
    changer de leur côté.
 
 ## Étape 3 — Vérifier
-- Ouvrir l'URL sur un appareil **connecté au compte Google** (l'accès demande une
-  connexion). Recharger (le navigateur peut garder l'ancienne version en cache).
+- Ouvrir l'URL sur une **tablette autorisée** : aucun compte Google n'est nécessaire
+  (accès « Tout le monde », version « généralisation »). Recharger (le navigateur peut
+  garder l'ancienne version en cache).
 - Vérifier visuellement le changement attendu.
 
 ### Premier déploiement de la version « généralisation » (Vannes)

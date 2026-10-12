@@ -84,7 +84,7 @@
         html, body { height: auto !important; min-height: auto !important; overflow: visible !important; }
         body { background-color: white !important; display: block !important; padding: 0 !important; margin: 0 !important; }
         .container, .footer-legal { display: none !important; }
-        #modalParametres, #modalMentions, #modalAide, #modalAlerteServeur { display: none !important; }
+        #modalParametres, #modalMentions, #modalAide, #modalAlerteServeur, #ecranAppairage { display: none !important; }
         #zoneImpression { display: block !important; width: 100%; }
         .table-print { width: 100%; border-collapse: collapse; font-family: sans-serif; font-size: 12px; }
         .table-print th, .table-print td { border: 1px solid #000; padding: 8px; text-align: left; }
@@ -213,8 +213,9 @@
             <ul>
               <li><strong>Libre pour tous :</strong> la saisie et l'impression (⚙️, en haut).</li>
               <li><strong>Avec le code responsable :</strong> mode de sécurité, dates de l'offre, corrections, archives, réglages, clôture.</li>
-              <li><strong>1ʳᵉ utilisation :</strong> l'application demande de choisir le code (4 à 8 chiffres).</li>
-              <li><strong>Sécurité :</strong> l'espace se reverrouille à la fermeture du panneau ou après 10 min sans action ; 5 codes faux bloquent 15 min.</li>
+              <li><strong>1ʳᵉ utilisation :</strong> l'application demande de choisir le code (6 chiffres).</li>
+              <li><strong>Tablettes autorisées :</strong> chaque tablette doit être autorisée une fois par un responsable (avec le code). Une tablette non autorisée ne voit rien, même avec le lien. Liste et retrait : ⚙️ → Espace responsable → <strong>🔑 Code &amp; tablettes</strong>.</li>
+              <li><strong>Sécurité :</strong> l'espace se reverrouille à la fermeture du panneau ou après 10 min sans action. Après un code faux, il faut patienter 10 s ; 5 codes faux bloquent 15 min.</li>
               <li><strong>Code oublié :</strong> il se réinitialise depuis le panneau ⚙️ du Google Sheets (réservé aux personnes qui ont accès au fichier).</li>
             </ul>
           </div>
@@ -267,8 +268,8 @@
         <div id="zoneVerrou">
           <h3 style="text-align: center; margin-top: 0;">🔒 Espace responsable</h3>
           <p id="txtVerrou" style="font-size: 13px; text-align: center; color: #5f6368; margin-top: 0;"></p>
-          <input type="password" id="pinSaisi" inputmode="numeric" autocomplete="off" placeholder="Code (4 à 8 chiffres)" style="margin-bottom: 10px;">
-          <input type="password" id="pinConfirme" inputmode="numeric" autocomplete="off" placeholder="Confirmer le code" style="display: none; margin-bottom: 10px;">
+          <input type="password" id="pinSaisi" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="Code (6 chiffres)" style="margin-bottom: 10px;">
+          <input type="password" id="pinConfirme" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="Confirmer le code" style="display: none; margin-bottom: 10px;">
           <button class="btn-action" id="btnDeverrouiller" style="background-color: #1a73e8;" onclick="deverrouillerAdmin()">DÉVERROUILLER</button>
           <div id="msgVerrou" style="text-align: center; font-weight: bold; font-size: 13px; color: #d93025;"></div>
         </div>
@@ -281,7 +282,7 @@
             <button class="tuile" onclick="allerEcran('operation')"><span class="ico">📅</span>Opération<small id="resumeOperation">—</small></button>
             <button class="tuile" onclick="allerEcran('securite')"><span class="ico">🛡️</span>Sécurité<small id="resumeSecurite">—</small></button>
             <button class="tuile" onclick="allerEcran('reglages')"><span class="ico">🏷️</span>Réglages<small>textes de la structure</small></button>
-            <button class="tuile" onclick="allerEcran('code')"><span class="ico">🔑</span>Code<small>changer le code</small></button>
+            <button class="tuile" onclick="ouvrirCodeTablettes()"><span class="ico">🔑</span>Code &amp; tablettes<small>code, tablettes autorisées</small></button>
           </div>
           <div class="pied">
             <button class="btn-action btn-archive" onclick="cloturerOffre()">⚠️ CLÔTURER L'OFFRE</button>
@@ -363,10 +364,15 @@
         <div class="sous-ecran" data-ecran="code">
           <button class="retour" onclick="allerEcran('accueil')">← Retour</button>
           <h3 class="titre-ecran">🔑 Code responsable</h3>
-          <input type="password" id="pinNouveau" inputmode="numeric" autocomplete="off" placeholder="Nouveau code (4 à 8 chiffres)" style="margin-bottom: 10px;">
-          <input type="password" id="pinNouveau2" inputmode="numeric" autocomplete="off" placeholder="Confirmer le nouveau code" style="margin-bottom: 10px;">
+          <input type="password" id="pinNouveau" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="Nouveau code (6 chiffres)" style="margin-bottom: 10px;">
+          <input type="password" id="pinNouveau2" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="Confirmer le nouveau code" style="margin-bottom: 10px;">
           <button class="btn-action" style="background-color: #34a853;" onclick="changerPin()">ENREGISTRER LE CODE</button>
           <div id="msgPin" style="text-align: center; font-weight: bold; font-size: 13px;"></div>
+          <hr style="border: 0; height: 1px; background: #ddd; margin: 20px 0;">
+          <h3 class="titre-ecran">📱 Tablettes autorisées</h3>
+          <div id="msgTablettes" style="text-align: center; font-size: 13px; margin-bottom: 8px;"></div>
+          <div id="listeTablettes"></div>
+          <button class="btn-action btn-archive" style="margin-top: 10px;" onclick="retirerToutesLesTablettes()">⚠️ RETIRER TOUTES LES TABLETTES</button>
         </div>
       </div>
     </div>
@@ -398,6 +404,27 @@
         <p id="msgDoublonPiece" style="font-size:14px; font-weight:bold; color:#721c24;"></p>
         <div id="listeDoublonPiece"></div>
         <button class="btn-action" style="background:#1a73e8; margin-top:10px;" onclick="fermerDoublonPiece()">OK</button>
+      </div>
+    </div>
+
+    <div id="ecranAppairage" class="modal-overlay" style="z-index: 3000; background-color: #f4f7f6;">
+      <div class="modal-content" style="max-width: 420px;">
+        <h2 style="margin-top:0; text-align:center;">🔒 Tablette non autorisée</h2>
+        <p id="txtAppairage" style="font-size:14px; color:#3c4043; line-height:1.4;"></p>
+        <div class="input-group">
+          <label id="lblPinApp">Code responsable (6 chiffres)</label>
+          <input type="password" id="pinApp" inputmode="numeric" maxlength="6" autocomplete="off">
+        </div>
+        <div class="input-group" id="blocPinApp2" style="display:none;">
+          <label>Confirmer le code</label>
+          <input type="password" id="pinApp2" inputmode="numeric" maxlength="6" autocomplete="off">
+        </div>
+        <div class="input-group">
+          <label>Nom de cette tablette</label>
+          <input type="text" id="nomTablette" value="Tablette caisse" maxlength="40" autocomplete="off">
+        </div>
+        <button class="btn-action" id="btnAppairer" style="background:#1a73e8;" onclick="appairerCetteTablette()">AUTORISER CETTE TABLETTE</button>
+        <div id="msgAppairage" style="text-align:center; font-weight:bold; font-size:13px; color:#d93025;"></div>
       </div>
     </div>
 
@@ -435,13 +462,90 @@
 
       var memNom = "", memPrenom = "", memPiece = "", memMontant = "", memNotes = "";
 
-      window.onload = function() {
-        var auj = new Date();
-        var annee = auj.getFullYear();
-        var mois = ("0" + (auj.getMonth() + 1)).slice(-2);
-        var jour = ("0" + auj.getDate()).slice(-2);
-        document.getElementById("dateImpression").value = annee + "-" + mois + "-" + jour;
-        
+      // =================================================================
+      // --- TABLETTE AUTORISÉE (appairage) ---
+      // La clé reçue lors de l'autorisation est gardée dans le navigateur et envoyée à
+      // CHAQUE appel au serveur ; sans elle, le serveur refuse tout (un lien qui fuite
+      // ne donne accès à rien).
+      // =================================================================
+      var STOCKAGE_OK = true;
+      function lireStockage(k) { try { return window.localStorage.getItem(k); } catch (e) { STOCKAGE_OK = false; return null; } }
+      function ecrireStockage(k, v) {
+        try { if (v === null) window.localStorage.removeItem(k); else window.localStorage.setItem(k, v); return true; }
+        catch (e) { STOCKAGE_OK = false; return false; }
+      }
+      var CLE_TABLETTE = lireStockage('cdTabletteCle');
+      var ID_TABLETTE = lireStockage('cdTabletteId');
+
+      function oublierTablette() {
+        CLE_TABLETTE = null; ID_TABLETTE = null;
+        ecrireStockage('cdTabletteCle', null); ecrireStockage('cdTabletteId', null);
+      }
+      // Erreur « tablette non autorisée » (retirée par un responsable, clé perdue…) ?
+      function siNonAutorisee(err) {
+        var m = (err && err.message) ? err.message : String(err || "");
+        if (m.indexOf('TABLETTE_NON_AUTORISEE') === -1) return false;
+        oublierTablette();
+        afficherEcranAppairage("Cette tablette n'est plus autorisée. Un responsable doit l'autoriser à nouveau.");
+        return true;
+      }
+
+      var pinDefiniAppairage = true;
+      function afficherEcranAppairage(message) {
+        document.getElementById('ecranAppairage').style.display = "flex";
+        document.getElementById('msgAppairage').textContent = message || "";
+        document.getElementById('txtAppairage').textContent = "⏳ …";
+        google.script.run.withSuccessHandler(function (etat) {
+          pinDefiniAppairage = etat.pinDefini;
+          document.getElementById('txtAppairage').textContent = pinDefiniAppairage
+            ? "Pour utiliser l'application sur cette tablette, un responsable doit l'autoriser une fois avec son code."
+            : "Première installation : choisissez le code responsable (6 chiffres). Il servira à autoriser les tablettes et à ouvrir l'espace responsable.";
+          document.getElementById('lblPinApp').textContent = pinDefiniAppairage ? "Code responsable (6 chiffres)" : "Nouveau code responsable (6 chiffres)";
+          document.getElementById('blocPinApp2').style.display = pinDefiniAppairage ? "none" : "block";
+          if (!STOCKAGE_OK) document.getElementById('msgAppairage').textContent =
+            "⚠️ Ce navigateur ne peut pas mémoriser l'autorisation : elle sera redemandée à chaque ouverture.";
+        }).withFailureHandler(function () {
+          document.getElementById('txtAppairage').textContent = "⚠️ Serveur injoignable. Rechargez la page.";
+        }).etatAdmin();
+      }
+
+      function appairerCetteTablette() {
+        var pin = document.getElementById('pinApp').value.trim();
+        var nom = document.getElementById('nomTablette').value.trim();
+        var msg = document.getElementById('msgAppairage');
+        msg.textContent = "";
+        if (!/^\d{6}$/.test(pin)) { msg.textContent = "Le code doit contenir exactement 6 chiffres."; return; }
+        var btn = document.getElementById('btnAppairer');
+        var fin = function (texte) { btn.disabled = false; if (texte) msg.textContent = texte; };
+        var autoriser = function () {
+          google.script.run.withSuccessHandler(function (r) {
+            document.getElementById('pinApp').value = ""; document.getElementById('pinApp2').value = "";
+            if (!r || !r.ok) { fin((r && r.message) || "Refusé."); return; }
+            CLE_TABLETTE = r.cle; ID_TABLETTE = r.id;
+            ecrireStockage('cdTabletteCle', r.cle); ecrireStockage('cdTabletteId', r.id);
+            fin();
+            document.getElementById('ecranAppairage').style.display = "none";
+            demarrerApplication();
+          }).withFailureHandler(function (err) { fin("Erreur : " + (err && err.message ? err.message : err)); })
+            .appairerTablette(pin, nom);
+        };
+        btn.disabled = true;
+        if (pinDefiniAppairage) { autoriser(); return; }
+        // Première installation : création du code, puis autorisation de cette tablette
+        if (pin !== document.getElementById('pinApp2').value.trim()) { fin("Les deux codes ne correspondent pas."); return; }
+        google.script.run.withSuccessHandler(function (r) {
+          if (!r || !r.ok) { fin((r && r.message) || "Refusé."); return; }
+          autoriser();
+        }).withFailureHandler(function (err) {
+          var m = (err && err.message) ? err.message : String(err);
+          fin(m.indexOf('TABLETTE_NON_AUTORISEE') !== -1
+            ? "Le code a été réinitialisé : créez-le depuis une tablette déjà autorisée (⚙️ → Espace responsable)."
+            : "Erreur : " + m);
+        }).definirPin(pin, null, CLE_TABLETTE);
+      }
+
+      // Lance l'application (une fois la tablette autorisée)
+      function demarrerApplication() {
         google.script.run.withSuccessHandler(function(infos) {
           if (infos.success) {
             majAffichageMode(infos.mode);
@@ -449,7 +553,18 @@
           } else {
             document.getElementById('btnMode').innerHTML = "⚠️ ERREUR Serveur";
           }
-        }).getInfosPanneau();
+        }).withFailureHandler(siNonAutorisee).getInfosPanneau(CLE_TABLETTE);
+        chargerDatesAffichage();
+        rechargerCacheVerif();
+      }
+
+      window.onload = function() {
+        var auj = new Date();
+        var annee = auj.getFullYear();
+        var mois = ("0" + (auj.getMonth() + 1)).slice(-2);
+        var jour = ("0" + auj.getDate()).slice(-2);
+        document.getElementById("dateImpression").value = annee + "-" + mois + "-" + jour;
+        if (CLE_TABLETTE) demarrerApplication(); else afficherEcranAppairage();
       };
 
       // NOUVEAU : Fonctions pour ouvrir et fermer l'aide
@@ -506,8 +621,8 @@
           google.script.run.withSuccessHandler(traitementTermine).withFailureHandler(function (err) {
             btn.innerHTML = "VÉRIFIER ET VALIDER";
             btn.disabled = false;
-            afficherMessage("Erreur : " + err.message, "error");
-          }).traiterSaisie(memNom, memPrenom, memPiece, memMontant, memNotes);
+            if (!siNonAutorisee(err)) afficherMessage("Erreur : " + err.message, "error");
+          }).traiterSaisie(memNom, memPrenom, memPiece, memMontant, memNotes, CLE_TABLETTE);
           return;
         }
 
@@ -522,7 +637,7 @@
           google.script.run
             .withSuccessHandler(function (rep) { confirmerEnregistrement(rep, saisie); })
             .withFailureHandler(function (err) { echecEnregistrement(err, saisie); })
-            .traiterSaisie(saisie.nom, saisie.prenom, saisie.piece, saisie.montant, saisie.notes);
+            .traiterSaisie(saisie.nom, saisie.prenom, saisie.piece, saisie.montant, saisie.notes, CLE_TABLETTE);
         } else {
           // Doublon détecté en local -> modale (réutilise l'affichage existant)
           traitementTermine(reponse);
@@ -603,7 +718,7 @@
         google.script.run
           .withSuccessHandler(function (rep) { confirmerForcage(rep, saisie); })
           .withFailureHandler(function (err) { echecEnregistrement(err, saisie); })
-          .forcerSaisie(saisie.nom, saisie.prenom, saisie.piece, saisie.montant, saisie.notes, "", false, false);
+          .forcerSaisie(saisie.nom, saisie.prenom, saisie.piece, saisie.montant, saisie.notes, "", false, false, CLE_TABLETTE);
       }
 
       // Réponse du serveur à un ajout forcé
@@ -712,6 +827,10 @@
       }
       function echecEnregistrement(err, saisie) {
         retirerEnAttente(saisie);
+        if (siNonAutorisee(err)) {
+          alerterServeur(saisie, { status: "BLOQUE", titre: "🔒 TABLETTE NON AUTORISÉE", message: "Faites autoriser la tablette, puis ressaisissez.", details: [] });
+          return;
+        }
         alerterServeur(saisie, null);
       }
 
@@ -824,9 +943,9 @@
             imprimerTableau(donnees, titreRapport);
           }).withFailureHandler(function(err) { 
             document.body.style.cursor = "default"; 
-            alert("Erreur : " + err.message); 
+            if (!siNonAutorisee(err)) alert("Erreur : " + err.message); 
           })
-          .genererDonneesImpression(type, dateStr);
+          .genererDonneesImpression(type, dateStr, CLE_TABLETTE);
       }
 
       // Met en page un tableau [en-tête, lignes...] + ligne TOTAL, puis imprime
@@ -962,7 +1081,7 @@
             document.getElementById('modalDateDebut').value = dates.debut;
             document.getElementById('modalDateFin').value = dates.fin;
           }
-        }).getDatesOperation();
+        }).withFailureHandler(siNonAutorisee).getDatesOperation(CLE_TABLETTE);
       }
 
       function sauvegarderDatesTablette() {
@@ -991,7 +1110,6 @@
       }
 
       // Lance la vérification au démarrage de l'application
-      window.addEventListener('load', chargerDatesAffichage);
       // --- FORMATAGE AUTOMATIQUE DU MONTANT ---
       // Montant lisible -> reformaté « 1234,50 € » ; illisible -> laissé tel quel, encadré en rouge
       ['montant', 'corMontant'].forEach(function (idMontant) {
@@ -1039,20 +1157,19 @@
             cacheVerif = c;
             fusionnerEnAttente();
           })
-          .withFailureHandler(function () {})
-          .chargerCacheVerif();
+          .withFailureHandler(siNonAutorisee)
+          .chargerCacheVerif(CLE_TABLETTE);
       }
-      window.addEventListener('load', rechargerCacheVerif);
       // Rafraîchir au retour sur la page (réveil tablette, retour d'une autre app)
       document.addEventListener('visibilitychange', function () {
-        if (document.hidden) return;
+        if (document.hidden || !CLE_TABLETTE) return;
         rechargerCacheVerif();
         chargerDatesAffichage(); // la tablette a pu rester ouverte après la fin de l'offre
       });
-      setInterval(chargerDatesAffichage, 10 * 60 * 1000); // et sans quitter la page
+      setInterval(function () { if (CLE_TABLETTE) chargerDatesAffichage(); }, 10 * 60 * 1000); // et sans quitter la page
       // Re-synchroniser au DÉBUT de chaque saisie (focus du N°) : l'appel chevauche la
       // frappe du numéro -> cache frais au moment du blur, sans latence perçue.
-      document.getElementById('piece').addEventListener('focus', rechargerCacheVerif);
+      document.getElementById('piece').addEventListener('focus', function () { if (CLE_TABLETTE) rechargerCacheVerif(); });
 
       // Comparaison des noms (miroir de Code.gs::_normId_) : majuscules, sans accents,
       // ligatures dépliées, sans espaces, tirets, apostrophes ni points.
@@ -1080,7 +1197,7 @@
         if (val === "") return; // champ vide -> rien
         if (!cacheVerif) {
           // cache pas encore chargé -> repli serveur (rare)
-          google.script.run.withSuccessHandler(afficherVerifPiece).withFailureHandler(function () {}).verifierPiece(val);
+          google.script.run.withSuccessHandler(afficherVerifPiece).withFailureHandler(siNonAutorisee).verifierPiece(val, CLE_TABLETTE);
           return;
         }
         // Vérif 100% locale (instantanée)
@@ -1205,7 +1322,7 @@
           pinDefini = etat.pinDefini;
           document.getElementById('txtVerrou').textContent = pinDefini
             ? "Saisissez le code responsable."
-            : "Aucun code n'existe encore : choisissez le code responsable (4 à 8 chiffres).";
+            : "Aucun code n'existe encore : choisissez le code responsable (6 chiffres).";
           document.getElementById('pinConfirme').style.display = pinDefini ? "none" : "block";
           document.getElementById('btnDeverrouiller').textContent = pinDefini ? "DÉVERROUILLER" : "CRÉER LE CODE";
         }).withFailureHandler(function () {
@@ -1217,19 +1334,19 @@
         var pin = document.getElementById('pinSaisi').value.trim();
         var msg = document.getElementById('msgVerrou');
         msg.textContent = "";
-        if (!/^\d{4,8}$/.test(pin)) { msg.textContent = "Le code doit contenir 4 à 8 chiffres."; return; }
+        if (!/^\d{6}$/.test(pin)) { msg.textContent = "Le code doit contenir exactement 6 chiffres."; return; }
         var surReponse = function (r) {
           document.getElementById('pinSaisi').value = "";
           document.getElementById('pinConfirme').value = "";
           if (r && r.ok) { jetonAdmin = r.jeton; afficherZoneAdmin(); }
           else msg.textContent = (r && r.message) || "Refusé.";
         };
-        var surErreur = function (err) { msg.textContent = "Erreur : " + (err && err.message ? err.message : err); };
+        var surErreur = function (err) { if (!siNonAutorisee(err)) msg.textContent = "Erreur : " + (err && err.message ? err.message : err); };
         if (!pinDefini) {
           if (pin !== document.getElementById('pinConfirme').value.trim()) { msg.textContent = "Les deux codes ne correspondent pas."; return; }
-          google.script.run.withSuccessHandler(surReponse).withFailureHandler(surErreur).definirPin(pin, null);
+          google.script.run.withSuccessHandler(surReponse).withFailureHandler(surErreur).definirPin(pin, null, CLE_TABLETTE);
         } else {
-          google.script.run.withSuccessHandler(surReponse).withFailureHandler(surErreur).ouvrirSessionAdmin(pin);
+          google.script.run.withSuccessHandler(surReponse).withFailureHandler(surErreur).ouvrirSessionAdmin(pin, CLE_TABLETTE);
         }
       }
 
@@ -1480,12 +1597,53 @@
         document.getElementById('txtNomStructure').textContent = cfg.NOM_STRUCTURE;
       }
 
+      // --- Tablettes autorisées (liste, retrait) ---
+      function ouvrirCodeTablettes() {
+        allerEcran('code');
+        chargerTablettes();
+      }
+      function chargerTablettes() {
+        var msg = document.getElementById('msgTablettes');
+        msg.textContent = "⏳ Chargement…";
+        appelAdmin('listerTablettes', [], function (liste) {
+          msg.textContent = liste.length + " tablette(s) autorisée(s).";
+          var zone = document.getElementById('listeTablettes');
+          zone.textContent = "";
+          liste.forEach(function (t) {
+            var carte = document.createElement('div');
+            carte.className = 'doublon-carte';
+            [ "📱 " + t.nom + (t.id === ID_TABLETTE ? "  (cette tablette)" : ""),
+              "Autorisée le " + t.creeLe + (t.vueLe ? " — utilisée le " + t.vueLe : "") ].forEach(function (x) {
+              var d = document.createElement('div'); d.textContent = x; carte.appendChild(d);
+            });
+            var b = document.createElement('button');
+            b.className = 'btn-cancel'; b.style.background = "#d93025"; b.style.marginTop = "8px"; b.textContent = "RETIRER";
+            b.onclick = function () { retirerUneTablette(t); };
+            carte.appendChild(b);
+            zone.appendChild(carte);
+          });
+        });
+      }
+      function retirerUneTablette(t) {
+        if (!confirm("Retirer l'autorisation de « " + t.nom + " » ?\nElle ne pourra plus utiliser l'application tant qu'un responsable ne l'aura pas autorisée à nouveau.")) return;
+        appelAdmin('retirerTablette', [t.id], function () {
+          if (t.id === ID_TABLETTE) { oublierTablette(); fermerPanneau(); afficherEcranAppairage("Cette tablette n'est plus autorisée."); return; }
+          chargerTablettes();
+        });
+      }
+      function retirerToutesLesTablettes() {
+        if (!confirm("⚠️ Retirer TOUTES les tablettes ?\nChacune (y compris celle-ci) devra être autorisée à nouveau avec le code.")) return;
+        appelAdmin('retirerToutesTablettes', [], function (message) {
+          oublierTablette(); fermerPanneau(); afficherEcranAppairage(message);
+        });
+      }
+
       function changerPin() {
         var p1 = document.getElementById('pinNouveau').value.trim();
         var p2 = document.getElementById('pinNouveau2').value.trim();
         var msg = document.getElementById('msgPin');
         msg.style.color = "#d93025";
-        if (!/^\d{4,8}$/.test(p1)) { msg.textContent = "Le code doit contenir 4 à 8 chiffres."; return; }
+        if (!/^\d{6}$/.test(p1)) { msg.textContent = "Le code doit contenir exactement 6 chiffres."; return; }
         if (p1 !== p2) { msg.textContent = "Les deux codes ne correspondent pas."; return; }
         appelAdmin('definirPin', [p1], function (r) {
           document.getElementById('pinNouveau').value = "";

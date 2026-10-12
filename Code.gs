@@ -149,9 +149,10 @@ function setConfig(valeurs, jeton) {
 //     - Le panneau du Sheet (secours) passe sans code : réservé aux
 //       éditeurs du classeur. Il permet aussi de réinitialiser le code.
 // =================================================================
-var ADMIN_PIN_REGEX = /^\d{4,8}$/;
-var ADMIN_ESSAIS_MAX = 5;
+var ADMIN_PIN_REGEX = /^\d{6}$/;   // exactement 6 chiffres
+var ADMIN_ESSAIS_MAX = 5;          // 5 codes faux -> blocage
 var ADMIN_BLOCAGE_MIN = 15;
+var ADMIN_PAUSE_MS = 10000;        // pause imposée par le SERVEUR après chaque code faux
 var ADMIN_SESSION_SEC = 600;
 
 function empreintePin_(sel, pin) {
@@ -197,49 +198,70 @@ function exigerAdmin_(jeton) {
   throw new Error("ADMIN_REQUIS : code responsable requis (session expirée ?)");
 }
 
-// Code juste -> { ok:true, jeton } ; sinon { ok:false, message }
-function ouvrirSessionAdmin(pin) {
+// Vérifie le code responsable avec les protections contre les essais au hasard
+// (compteur GLOBAL côté serveur, quel que soit l'appareil) :
+//  - après chaque code faux : 10 s de pause pendant lesquelles tout essai est refusé ;
+//  - après 5 codes faux : blocage 15 min (jamais plus long : le vrai responsable
+//    n'est pas bloqué durablement ; déblocage immédiat possible depuis le Sheet).
+// À appeler sous verrou. Renvoie { ok:true } ou { ok:false, message }.
+function verifierPin_(props, pin) {
+  var hash = props.getProperty('ADMIN_PIN_HASH');
+  if (!hash) return { ok: false, message: "Aucun code défini : créez-le d'abord." };
+  var maintenant = Date.now();
+  var bloque = Number(props.getProperty('ADMIN_BLOQUE_JUSQUA') || 0);
+  if (bloque > maintenant) {
+    return { ok: false, message: "Trop d'essais. Réessayez dans " + Math.ceil((bloque - maintenant) / 60000) + " min." };
+  }
+  var dernierEchec = Number(props.getProperty('ADMIN_DERNIER_ECHEC') || 0);
+  if (maintenant - dernierEchec < ADMIN_PAUSE_MS) {
+    return { ok: false, message: "Patientez " + Math.ceil((ADMIN_PAUSE_MS - (maintenant - dernierEchec)) / 1000) + " s avant un nouvel essai." };
+  }
+  if (empreintePin_(props.getProperty('ADMIN_PIN_SEL'), (pin || "").toString()) === hash) {
+    props.setProperty('ADMIN_ECHECS', '0');
+    return { ok: true };
+  }
+  var echecs = Number(props.getProperty('ADMIN_ECHECS') || 0) + 1;
+  if (echecs >= ADMIN_ESSAIS_MAX) {
+    props.setProperties({ ADMIN_ECHECS: '0', ADMIN_DERNIER_ECHEC: String(maintenant), ADMIN_BLOQUE_JUSQUA: String(maintenant + ADMIN_BLOCAGE_MIN * 60000) });
+    return { ok: false, message: "Code faux. Trop d'essais : bloqué " + ADMIN_BLOCAGE_MIN + " min." };
+  }
+  props.setProperties({ ADMIN_ECHECS: String(echecs), ADMIN_DERNIER_ECHEC: String(maintenant) });
+  return { ok: false, message: "Code faux (" + (ADMIN_ESSAIS_MAX - echecs) + " essai(s) restant(s)). Patientez 10 s." };
+}
+
+// Code juste -> { ok:true, jeton } ; sinon { ok:false, message }. Tablette autorisée requise.
+function ouvrirSessionAdmin(pin, cle) {
+  exigerTablette_(cle);
   var lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
-    var props = PropertiesService.getDocumentProperties();
-    var hash = props.getProperty('ADMIN_PIN_HASH');
-    if (!hash) return { ok: false, message: "Aucun code défini : créez-le d'abord." };
-    var bloque = Number(props.getProperty('ADMIN_BLOQUE_JUSQUA') || 0);
-    if (bloque > Date.now()) {
-      return { ok: false, message: "Trop d'essais. Réessayez dans " + Math.ceil((bloque - Date.now()) / 60000) + " min." };
-    }
-    if (empreintePin_(props.getProperty('ADMIN_PIN_SEL'), (pin || "").toString()) === hash) {
-      props.setProperty('ADMIN_ECHECS', '0');
-      return { ok: true, jeton: creerJetonAdmin_() };
-    }
-    var echecs = Number(props.getProperty('ADMIN_ECHECS') || 0) + 1;
-    if (echecs >= ADMIN_ESSAIS_MAX) {
-      props.setProperties({ ADMIN_ECHECS: '0', ADMIN_BLOQUE_JUSQUA: String(Date.now() + ADMIN_BLOCAGE_MIN * 60000) });
-      return { ok: false, message: "Code faux. Trop d'essais : bloqué " + ADMIN_BLOCAGE_MIN + " min." };
-    }
-    props.setProperty('ADMIN_ECHECS', String(echecs));
-    return { ok: false, message: "Code faux (" + (ADMIN_ESSAIS_MAX - echecs) + " essai(s) restant(s))." };
+    var v = verifierPin_(PropertiesService.getDocumentProperties(), pin);
+    return v.ok ? { ok: true, jeton: creerJetonAdmin_() } : v;
   } finally {
     lock.releaseLock();
   }
 }
 
 // Création (si aucun code) ou changement (session responsable requise).
-function definirPin(nouveauPin, jeton) {
+// Création : libre à la toute première installation (aucune tablette autorisée) ;
+// ensuite (ex. après une réinitialisation depuis le Sheet), seulement depuis une
+// tablette déjà autorisée — sinon n'importe qui ayant le lien pourrait la faire.
+function definirPin(nouveauPin, jeton, cle) {
   var lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
     var props = PropertiesService.getDocumentProperties();
     if (props.getProperty('ADMIN_PIN_HASH')) exigerAdmin_(jeton);
+    else if (lireTablettes_().length > 0) exigerTablette_(cle);
     nouveauPin = (nouveauPin || "").toString();
-    if (!ADMIN_PIN_REGEX.test(nouveauPin)) return { ok: false, message: "Le code doit contenir 4 à 8 chiffres." };
+    if (!ADMIN_PIN_REGEX.test(nouveauPin)) return { ok: false, message: "Le code doit contenir exactement 6 chiffres." };
     var sel = Utilities.getUuid();
     props.setProperties({
       ADMIN_PIN_SEL: sel,
       ADMIN_PIN_HASH: empreintePin_(sel, nouveauPin),
       ADMIN_ECHECS: '0',
-      ADMIN_BLOQUE_JUSQUA: '0'
+      ADMIN_BLOQUE_JUSQUA: '0',
+      ADMIN_DERNIER_ECHEC: '0'
     });
     return { ok: true, jeton: (jeton && jetonValide_(jeton)) ? jeton : creerJetonAdmin_() };
   } finally {
@@ -256,8 +278,109 @@ function fermerSessionAdmin(jeton) {
 function reinitialiserPinPanneau() {
   if (!estEditeurDuClasseur_()) throw new Error("Réservé aux éditeurs du classeur.");
   var props = PropertiesService.getDocumentProperties();
-  ['ADMIN_PIN_HASH', 'ADMIN_PIN_SEL', 'ADMIN_ECHECS', 'ADMIN_BLOQUE_JUSQUA'].forEach(function (k) { props.deleteProperty(k); });
+  ['ADMIN_PIN_HASH', 'ADMIN_PIN_SEL', 'ADMIN_ECHECS', 'ADMIN_BLOQUE_JUSQUA', 'ADMIN_DERNIER_ECHEC'].forEach(function (k) { props.deleteProperty(k); });
   return "✅ Code responsable effacé. Il sera redemandé (création) dans l'application.";
+}
+
+// =================================================================
+// --- TABLETTES AUTORISÉES (appairage) ---
+//     Seules les tablettes autorisées une fois par un responsable (code) peuvent
+//     utiliser l'application : saisie, vérification, impression, espace
+//     responsable. Un lien qui fuite ne donne donc accès à rien.
+//     - La tablette garde une clé secrète (localStorage) ; le serveur n'en garde
+//       que l'empreinte (comme le code), dans les propriétés du document.
+//     - Le panneau du Sheet (éditeurs du classeur) passe sans clé.
+//     - Retrait d'une tablette / de toutes : espace responsable, tuile « Tablettes ».
+// =================================================================
+var TABLETTES_MAX = 20;
+
+function lireTablettes_() {
+  try { return JSON.parse(PropertiesService.getDocumentProperties().getProperty('TABLETTES') || '[]'); }
+  catch (e) { return []; }
+}
+function ecrireTablettes_(liste) {
+  PropertiesService.getDocumentProperties().setProperty('TABLETTES', JSON.stringify(liste));
+}
+function empreinteCle_(cle) {
+  return Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, "tablette:" + cle, Utilities.Charset.UTF_8));
+}
+function tabletteDeCle_(cle) {
+  if (!cle || typeof cle !== 'string' || cle.length < 32) return null;
+  var h = empreinteCle_(cle);
+  var liste = lireTablettes_();
+  for (var i = 0; i < liste.length; i++) if (liste[i].hash === h) return liste[i];
+  return null;
+}
+
+// Refuse l'appel si la clé ne correspond à aucune tablette autorisée (sauf
+// panneau du Sheet). Note la date de dernière utilisation (une fois par jour,
+// propriété séparée : pas de réécriture de la liste, donc pas de conflit).
+function exigerTablette_(cle) {
+  var t = tabletteDeCle_(cle);
+  if (t) {
+    var props = PropertiesService.getDocumentProperties();
+    var auj = Utilities.formatDate(new Date(), "Europe/Paris", "dd/MM/yyyy");
+    if (props.getProperty('TABLETTE_VUE_' + t.id) !== auj) props.setProperty('TABLETTE_VUE_' + t.id, auj);
+    return;
+  }
+  if (estEditeurDuClasseur_()) return;
+  throw new Error("TABLETTE_NON_AUTORISEE : cette tablette n'est pas (ou plus) autorisée.");
+}
+
+// Autorise la tablette qui appelle (code responsable requis). Renvoie la clé à garder.
+function appairerTablette(pin, nom) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    var props = PropertiesService.getDocumentProperties();
+    var v = verifierPin_(props, pin);
+    if (!v.ok) return v;
+    var liste = lireTablettes_();
+    if (liste.length >= TABLETTES_MAX) return { ok: false, message: TABLETTES_MAX + " tablettes maximum : retirez-en une depuis l'espace responsable." };
+    var cle = Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '');
+    var id = Utilities.getUuid().replace(/-/g, '').slice(0, 10);
+    nom = (nom || "").toString().trim().slice(0, 40) || ("Tablette " + (liste.length + 1));
+    liste.push({ id: id, nom: nom, hash: empreinteCle_(cle), creeLe: Utilities.formatDate(new Date(), "Europe/Paris", "dd/MM/yyyy HH:mm") });
+    ecrireTablettes_(liste);
+    return { ok: true, cle: cle, id: id, nom: nom };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function listerTablettes(jeton) {
+  exigerAdmin_(jeton);
+  var props = PropertiesService.getDocumentProperties();
+  return lireTablettes_().map(function (t) {
+    return { id: t.id, nom: t.nom, creeLe: t.creeLe, vueLe: props.getProperty('TABLETTE_VUE_' + t.id) || "" };
+  });
+}
+
+function retirerTablette(id, jeton) {
+  exigerAdmin_(jeton);
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    ecrireTablettes_(lireTablettes_().filter(function (t) { return t.id !== id; }));
+    PropertiesService.getDocumentProperties().deleteProperty('TABLETTE_VUE_' + id);
+    return "Tablette retirée.";
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function retirerToutesTablettes(jeton) {
+  exigerAdmin_(jeton);
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    var props = PropertiesService.getDocumentProperties();
+    lireTablettes_().forEach(function (t) { props.deleteProperty('TABLETTE_VUE_' + t.id); });
+    ecrireTablettes_([]);
+    return "Toutes les tablettes ont été retirées : chacune devra être autorisée à nouveau.";
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 // Tout ce qu'affiche l'espace responsable, en un appel.
@@ -266,7 +389,7 @@ function getInfosAdmin(jeton) {
   var f = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Saisies");
   return {
     mode: f ? (f.getRange("Z1").getValue() || "SIGNALER") : "SIGNALER",
-    dates: getDatesOperation(),
+    dates: lireDates_(),
     annuaireActif: ANNUAIRE_ACTIF,
     modeAnnuaire: getModeAnnuaire(),
     config: getConfig()
@@ -277,7 +400,8 @@ function getInfosAdmin(jeton) {
 // --- FONCTIONS PRINCIPALES AVEC LOCKSERVICE POUR ATOMICITÉ ---
 // =================================================================
 
-function traiterSaisie(nom, prenom, piece, montant, notes) {
+function traiterSaisie(nom, prenom, piece, montant, notes, cle) {
+  exigerTablette_(cle);
   var lock = LockService.getScriptLock();
   try {
     lock.waitLock(10000); // Verrou pour éviter les race conditions
@@ -412,7 +536,7 @@ function traiterSaisie(nom, prenom, piece, montant, notes) {
 // Sinon (tablette restée ouverte après la clôture, appel direct…) -> refus, rien d'écrit.
 // Renvoie null si la saisie est permise, sinon la réponse de refus.
 function controlerPeriode_() {
-  var dates = getDatesOperation();
+  var dates = lireDates_();
   var refus = function (msg) { return { status: "BLOQUE", horsPeriode: true, titre: "🛑 HORS PÉRIODE", message: msg, details: [] }; };
   if (!dates.debut || !dates.fin) return refus("Aucune opération en cours : saisie impossible.");
   var auj = Utilities.formatDate(new Date(), "Europe/Paris", "yyyy-MM-dd");
@@ -442,7 +566,8 @@ function controlerChamps_(nom, prenom, piece, montant) {
 //    pas celui vu par la tablette) ; plus de doublon -> ligne normale.
 // messageErreur / flagIdentite / flagPiece : ignorés (gardés pour la
 // compatibilité d'appel avec Index.html).
-function forcerSaisie(nom, prenom, piece, montant, notes, messageErreur, flagIdentite, flagPiece) {
+function forcerSaisie(nom, prenom, piece, montant, notes, messageErreur, flagIdentite, flagPiece, cle) {
+  exigerTablette_(cle);
   var lock = LockService.getScriptLock();
   try {
     lock.waitLock(10000); // Verrou pour éviter les doublons forcés
@@ -508,7 +633,8 @@ function forcerSaisie(nom, prenom, piece, montant, notes, messageErreur, flagIde
 //     l'offre en cours ? Ne bloque rien, ne réécrit rien, ne décide rien
 //     (la décision A/B/C reste à traiterSaisie, à la validation).
 // =================================================================
-function verifierPiece(piece) {
+function verifierPiece(piece, cle) {
+  exigerTablette_(cle);
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var feuille = ss.getSheetByName("Saisies");
   if (!feuille) return { trouve: false };
@@ -675,7 +801,8 @@ function purgerAnnuaire() {
 // Données pré-chargées au démarrage pour la vérif IMMÉDIATE (locale) au blur :
 // pièces de l'offre en cours (N2) + annuaire (N3). Rafraîchi au retour sur la page
 // et après chaque saisie. NE remplace PAS la validation finale (toujours serveur).
-function chargerCacheVerif() {
+function chargerCacheVerif(cle) {
+  exigerTablette_(cle);
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var feuille = ss.getSheetByName("Saisies");
   var mode = feuille ? (feuille.getRange("Z1").getValue() || "SIGNALER") : "SIGNALER";
@@ -713,7 +840,8 @@ function chargerCacheVerif() {
 }
 
 // --- FONCTIONS SECONDAIRES ---
-function getInfosPanneau() {
+function getInfosPanneau(cle) {
+  exigerTablette_(cle);
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var f = ss.getSheetByName("Saisies");
   var mode = f.getRange("Z1").getValue() || "SIGNALER";
@@ -727,7 +855,8 @@ function getInfosPanneau() {
 //              "yyyy-MM-dd"), date en jj/mm/aaaa — comme A_IMPRIMER.
 //  - 'offre' : toutes les lignes non vides, date + heure — comme OFFRE_COMPLETE.
 // Renvoie [] s'il n'y a aucune ligne à imprimer.
-function genererDonneesImpression(type, dateChoisieStr) {
+function genererDonneesImpression(type, dateChoisieStr, cle) {
+  exigerTablette_(cle);
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var feuille = ss.getSheetByName("Saisies");
   if (!feuille) return [];
@@ -1214,7 +1343,7 @@ function onEdit(e) {
 // =================================================================
 
 function verificationClotureNocturne() {
-  var dates = getDatesOperation();
+  var dates = lireDates_();
   
   // S'il n'y a pas de date de fin enregistrée, le robot se rendort
   if (!dates.fin || dates.fin === "") {
@@ -1243,7 +1372,12 @@ function verificationClotureNocturne() {
 // --- GESTION DES DATES DE L'OPÉRATION (MÉMOIRE SECRÈTE) ---
 // =================================================================
 
-function getDatesOperation() {
+function getDatesOperation(cle) {
+  exigerTablette_(cle);
+  return lireDates_();
+}
+
+function lireDates_() {
   var memoire = PropertiesService.getDocumentProperties();
   return {
     debut: memoire.getProperty('DATE_DEBUT') || '',

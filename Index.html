@@ -436,7 +436,7 @@
         
         <div class="texte-mentions">
           <p><strong>© 2026 DESJARDINS Bryan – Tous droits réservés.</strong><br>
-          Cette application, son code et sa conception demeurent la <strong>propriété exclusive de l'auteur</strong>, qui en conserve l'intégralité des droits. L'auteur concède à <strong id="txtNomStructure"><?= cfg.NOM_STRUCTURE ?></strong> une simple <strong>licence d'utilisation non exclusive et révocable à tout moment</strong>, sans transfert d'aucun droit de propriété. L'auteur reste <strong>libre de faire évoluer, suspendre ou retirer cette autorisation quand il le souhaite</strong>, ainsi que d'<strong>exploiter, céder ou proposer l'outil à toute autre structure de son choix</strong>. Toute reproduction, copie, modification ou déploiement de cet outil par un tiers, sans l'accord écrit préalable de l'auteur, est strictement interdit.</p>
+          Cette application, son code et sa conception demeurent la <strong>propriété exclusive de l'auteur</strong>, qui en conserve l'intégralité des droits. L'auteur concède une simple <strong>licence d'utilisation non exclusive, non cessible et révocable à tout moment</strong>, dans les conditions convenues par écrit avec l'auteur, sans transfert d'aucun droit de propriété. L'auteur reste <strong>libre de faire évoluer, suspendre ou retirer cette autorisation quand il le souhaite</strong>, ainsi que d'<strong>exploiter, céder ou proposer l'outil à toute autre structure de son choix</strong>. Toute reproduction, copie, modification ou déploiement de cet outil par un tiers, sans l'accord écrit préalable de l'auteur, est strictement interdit. Les données saisies restent la propriété de l'établissement, qui les conserve en cas de retrait de l'autorisation.</p>
           
           <p><strong>Confidentialité et Données :</strong> Cet outil a été pensé et conçu pour un usage strictement interne, dédié à la prévention des fraudes. Les données saisies (identités, N° de pièces, montants, notes) sont enregistrées dans le <strong>classeur Google Sheets de l'établissement</strong> (services Google), à des fins de traçabilité de l'offre. Elles ne sont accessibles que depuis les <strong>tablettes autorisées</strong> par un responsable et par les personnes ayant accès à ce classeur, et ne sont en aucun cas prévues pour être cédées ou transmises à des tiers. Les saisies de chaque offre sont <strong>archivées à sa clôture</strong>, puis <strong>supprimées automatiquement 3 ans après</strong>.</p>
 
@@ -1684,7 +1684,6 @@
         document.getElementById('txtNomOffre').textContent = cfg.NOM_OFFRE;
         document.getElementById('lblMontant').textContent = cfg.LIBELLE_MONTANT + " (€)" + (MONTANT_OBLIGATOIRE ? " *" : "");
         document.getElementById('lblNotes').textContent = cfg.LIBELLE_NOTES + (cfg.PRECISION_NOTES ? " (" + cfg.PRECISION_NOTES + ")" : "");
-        document.getElementById('txtNomStructure').textContent = cfg.NOM_STRUCTURE;
       }
 
       // --- Tablettes autorisées (liste, retrait) ---

@@ -12,7 +12,7 @@ for (const m of rendu.matchAll(/<script(?:\s+type="module")?>([\s\S]*?)<\/script
 }
 console.log('scripts vérifiés:', n, '| titre:', cfg.TITRE_APP);
 // Config personnalisée + caractères piégeux
-props.setProperty('CFG_NOM_STRUCTURE', 'la société <Test> & "Cie"');
+props.setProperty('CFG_NOM_OFFRE', 'la société <Test> & "Cie"');
 props.setProperty('CFG_MONTANT_OBLIGATOIRE', 'NON');
 props.setProperty('CFG_PRECISION_NOTES', '');
 props.setProperty('CFG_LIBELLE_NOTES', '</script><b>x');

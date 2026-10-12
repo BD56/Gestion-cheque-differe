@@ -65,9 +65,19 @@
   Puis mineurs #13 (nom d'archive unique), #14 (pas d'archive vide), #15 (dates
   contrôlées), #19 (reconstruireAnnuaire réservée aux éditeurs), #20 (saisie incomplète
   refusée côté serveur), #22 (purge sous verrou).
-  Restent : #5 et #6 (décisions : compte Google de la tablette, exposition des données),
-  #10 (onEdit et collage multi-lignes), #12 (texte du message d'échec réseau, déjà
-  remplacé par la fenêtre d'alerte), #18 (taille de l'annuaire téléchargé).
+  Puis (décisions de Bryan) :
+  - **#5** : le manager de caisse détient le Sheet (idéalement compte Google du magasin)
+    et ne transmet que le lien de l'appli ; ce compte n'est jamais connecté sur une
+    tablette de caisse (règle documentée dans INSTALLATION.md).
+  - **#6** : **tablettes autorisées (appairage)** par le code responsable ; accès du
+    déploiement « Tout le monde » (plus besoin de compte Google sur la tablette).
+  - **Code responsable : 6 chiffres**, pause serveur de **10 s** après un code faux
+    (idée de Bryan, compteur global : on ne peut pas reconnaître l'appareil), blocage
+    15 min après 5 erreurs, sans blocage progressif (évite de bloquer le vrai
+    responsable).
+  - **#10** : `onEdit` contrôle chaque ligne d'un collage.
+  Clos : #12 (remplacé par la fenêtre d'alerte). Accepté : #18 (taille de l'annuaire
+  téléchargé, ~170 Ko après 3 ans, à revoir si besoin).
 - Constat (non corrigé, panneau laissé tel quel) : dans `Panneau.html`, après une
   clôture, `changerMode()` est appelé → le mode repasse en **BLOQUANT** au lieu de
   rester SIGNALER.

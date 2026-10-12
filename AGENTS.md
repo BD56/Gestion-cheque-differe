@@ -141,8 +141,8 @@ Décision : `docs/retours-vibe/decisions/2026-10-11_generalisation.md`.
   Bouton « Ouvrir Google Sheets » retiré de l'appli (tout passe par l'appli).
   **Saisie et impression restent libres.** Toute fonction serveur sensible appelle
   `exigerAdmin_(jeton)` en premier.
-- **Panneau du Sheet** (secours, inchangé) : passe sans code **pour les éditeurs du
-  classeur** (`estEditeurDuClasseur_`) ; bouton de réinitialisation du code.
+- **Panneau du Sheet** (secours, inchangé) : passe sans code ni clé de tablette **pour les
+  éditeurs du classeur** (`estEditeurDuClasseur_`) ; bouton de réinitialisation du code.
 - **Impression** calculée depuis « Saisies » ; **archives** consultables/imprimables.
 - **Corrections / suppressions** dans l'appli, avec garde-fou « la ligne contient
   encore ce que l'écran affichait ».
@@ -188,6 +188,20 @@ Décision : `docs/retours-vibe/decisions/2026-10-11_generalisation.md`.
     contrôlées (les deux ou aucune, début ≤ fin) ; saisie incomplète refusée côté serveur
     (`controlerChamps_`) ; `reconstruireAnnuaire` réservée aux éditeurs du classeur ;
     `purgerAnnuaire` sous verrou, réécriture en une fois (en texte).
+- **Tablettes autorisées (appairage)** : seules les tablettes autorisées une fois par un
+  responsable (code) accèdent à l'appli ; clé en `localStorage` (`cdTabletteCle`),
+  empreinte côté serveur (`TABLETTES` en propriétés). `exigerTablette_(cle)` en tête
+  de toutes les fonctions utilisées par la tablette (le panneau du Sheet passe via
+  `estEditeurDuClasseur_`). Accès du déploiement : **Tout le monde** (`ANYONE_ANONYMOUS`).
+  Après une réinitialisation du code, seule une tablette autorisée peut le recréer.
+- **Code responsable** : exactement **6 chiffres** ; pause serveur de 10 s après chaque
+  code faux (compteur global) ; blocage 15 min après 5 erreurs (jamais plus long).
+- **Règle d'installation (#5)** : le manager détient le Sheet (idéalement compte Google du
+  magasin) et ne transmet que le lien `/exec` ; ce compte n'est jamais connecté sur une
+  tablette de caisse (sinon le code ne protège rien).
+- **`onEdit`** (filet de secours) : un collage de plusieurs lignes est contrôlé ligne par
+  ligne (`preparerLigneEditee_`, `controlerLigneEditee_`) ; en BLOQUANT seules les lignes
+  fautives sont annulées.
 - **Dette assumée** : la logique A/B/C existe à **4 endroits** — `traiterSaisie`,
   `analyserDoublonLocal` (client), `onEdit`, et `detecterDoublons_` (partagée par
   `forcerSaisie` et `modifierSaisie`). À garder synchro si la détection change.

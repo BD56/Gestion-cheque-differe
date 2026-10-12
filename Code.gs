@@ -1224,33 +1224,71 @@ function onEdit(e) {
   // On ne déclenche la magie que sur la bonne feuille
   if (feuille.getName() !== "Saisies") return;
   
-  var ligneEdit = e.range.getRow();
+  var premiere = e.range.getRow();
   var colEdit = e.range.getColumn();
+  var nbLignes = e.range.getNumRows();
+  var nbCols = e.range.getNumColumns();
+  var derniere = premiere + nbLignes - 1;
   
   // On ignore la ligne 1 (en-têtes) et on s'arrête à la colonne F
-  if (ligneEdit < 2 || colEdit > 6) return;
-  
-  // 1️⃣ HORODATAGE AUTOMATIQUE
-  var celluleDate = feuille.getRange(ligneEdit, 1);
-  if (celluleDate.isBlank() && e.value && colEdit > 1) {
-    celluleDate.setValue(new Date());
-  }
-  
-  // 2️⃣ FORMATAGE AUTOMATIQUE (Majuscules, virgules)
-  if (colEdit >= 2 && colEdit <= 4 && e.value) {
-    // en texte : Sheets a déjà converti la frappe (ex. N° "0123" -> 123), on rétablit e.value
-    feuille.getRange(ligneEdit, colEdit).setValue(texte_(e.value.toString().toUpperCase().trim()));
-  }
-  if (colEdit === 5 && e.value && e.value.toString().includes('.')) {
-    feuille.getRange(ligneEdit, colEdit).setValue(e.value.toString().replace('.', ','));
+  if (derniere < 2 || colEdit > 6) return;
+  var uneCellule = (nbLignes === 1 && nbCols === 1);
+  var debut = Math.max(2, premiere);
+
+  // 1️⃣ + 2️⃣ Horodatage et formatage, ligne par ligne (un collage peut couvrir
+  //    plusieurs lignes : chacune est traitée, pas seulement la première)
+  for (var l = debut; l <= derniere; l++) {
+    preparerLigneEditee_(feuille, l, colEdit, nbCols, uneCellule ? e.value : undefined, uneCellule);
   }
 
   // On laisse un instant au tableur pour s'actualiser
   Utilities.sleep(500);
   
   var modeSecurite = feuille.getRange("Z1").getValue() || "SIGNALER";
+  var refus = [];
+  for (var ligne = debut; ligne <= derniere; ligne++) {
+    var plageAnnulee = uneCellule ? e.range : feuille.getRange(ligne, colEdit, 1, Math.min(nbCols, 7 - colEdit));
+    var cas = controlerLigneEditee_(feuille, ligne, modeSecurite, plageAnnulee);
+    if (cas) refus.push("ligne " + ligne + " (Cas " + cas + ")");
+  }
+  if (refus.length) {
+    SpreadsheetApp.getUi().alert(
+      "🛑 SAISIE REFUSÉE",
+      "Mode BLOQUANT actif :\nCe doublon ou cette usurpation est strictement interdit(e).\n\nModification annulée : " + refus.join(", ") + ".",
+      SpreadsheetApp.getUi().ButtonSet.OK
+    );
+  }
+}
+
+// Horodatage + mise en forme (majuscules, texte, virgule) d'une ligne modifiée à la main.
+// valeur : ce qui a été tapé (cellule seule) — permet de rétablir un N° « 0123 » que
+// Sheets a déjà converti en 123 ; undefined pour un collage (valeurs relues).
+function preparerLigneEditee_(feuille, ligne, colEdit, nbCols, valeur, uneCellule) {
+  // 1️⃣ HORODATAGE AUTOMATIQUE
+  var celluleDate = feuille.getRange(ligne, 1);
+  if (celluleDate.isBlank() && colEdit + nbCols - 1 > 1) {
+    var rempli = uneCellule ? !!valeur : feuille.getRange(ligne, 2, 1, 5).getValues()[0].some(function (v) { return v !== "" && v !== null; });
+    if (rempli && (colEdit > 1 || !uneCellule)) celluleDate.setValue(new Date());
+  }
+  // 2️⃣ FORMATAGE AUTOMATIQUE (Majuscules, virgules)
+  for (var c = Math.max(colEdit, 2); c <= Math.min(colEdit + nbCols - 1, 5); c++) {
+    var v = uneCellule ? valeur : feuille.getRange(ligne, c).getValue();
+    if (v === undefined || v === null || v === "" || v instanceof Date) continue;
+    if (c <= 4) {
+      // en texte : Sheets a déjà converti la frappe (ex. N° "0123" -> 123), on rétablit la valeur
+      feuille.getRange(ligne, c).setValue(texte_(v.toString().toUpperCase().trim()));
+    } else if (v.toString().indexOf('.') !== -1 && typeof v === 'string') {
+      feuille.getRange(ligne, c).setValue(v.toString().replace('.', ','));
+    }
+  }
+}
+
+// Contrôle A/B/C d'une ligne modifiée à la main contre toutes les autres + marquage.
+// Mode BLOQUANT + A/B : la modification est annulée (plageAnnulee vidée) et le cas
+// est renvoyé (pour l'alerte) ; sinon renvoie null.
+function controlerLigneEditee_(feuille, ligneEdit, modeSecurite, plageAnnulee) {
   var donnees = feuille.getDataRange().getValues();
-  var rowData = donnees[ligneEdit - 1]; 
+  var rowData = donnees[ligneEdit - 1] || []; 
   
   var nom = _normId_(rowData[1]);
   var prenom = _normId_(rowData[2]);
@@ -1275,7 +1313,7 @@ function onEdit(e) {
     if (montant === "" && notePropre === "") {
       feuille.getRange(ligneEdit, 1).clearContent();
     }
-    return;
+    return null;
   }
   
   var pireCas = null;
@@ -1306,17 +1344,12 @@ function onEdit(e) {
   // 4️⃣ APPLICATION DES RÈGLES SELON LE MODE
   if (pireCas) {
     
-    // 🛑 LE VIGILE : Mode BLOQUANT + Fraude grave (A ou B)
+    // 🛑 LE VIGILE : Mode BLOQUANT + Fraude grave (A ou B) -> modification annulée
     if (modeSecurite === "BLOQUANT" && (pireCas === 'A' || pireCas === 'B')) {
-      SpreadsheetApp.getUi().alert(
-        "🛑 SAISIE REFUSÉE",
-        "Mode BLOQUANT actif :\nCe doublon ou cette usurpation (Cas " + pireCas + ") est strictement interdit(e).\n\nVotre modification va être annulée.",
-        SpreadsheetApp.getUi().ButtonSet.OK
-      );
-      e.range.clearContent(); // Annule la frappe
+      plageAnnulee.clearContent(); // Annule la frappe / le collage de cette ligne
       rangeLigne.setBackground(null); // Nettoie le rouge s'il y en avait
       if (notes !== notePropre) rangeNotes.setValue(notePropre);
-      return;
+      return pireCas;
     }
 
     // 🟠 MODE SIGNALER (ou Cas C autorisé)
@@ -1328,13 +1361,14 @@ function onEdit(e) {
     // Ajout de la note sans l'écraser
     var alerteTexte = "⚠️ Ajout forcé (Cas " + pireCas + ")";
     var noteFinale = (notePropre === "") ? alerteTexte : notePropre + "\n" + alerteTexte;
-    if (notes !== noteFinale) rangeNotes.setValue(noteFinale);
+    if (notes !== noteFinale) rangeNotes.setValue(texte_(noteFinale));
 
   } else {
     // 🟢 AUCUN DOUBLON (ou vous venez de le corriger)
     rangeLigne.setBackground(null);
-    if (notes !== notePropre) rangeNotes.setValue(notePropre);
+    if (notes !== notePropre) rangeNotes.setValue(texte_(notePropre));
   }
+  return null;
 }
 
 

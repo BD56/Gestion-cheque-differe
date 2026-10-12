@@ -58,11 +58,18 @@ Google en demande.
 
 ### Premier déploiement de la version « généralisation » (Vannes)
 - Sans réglage, les textes restent ceux de Vannes (valeurs par défaut).
-- **Tout de suite après** : ⚙️ → **Espace responsable** → **créer le code
-  responsable**. Tant qu'il n'est pas créé, la première personne qui ouvre l'espace
-  responsable le choisit.
+- À l'étape 2 (« Modifier » le déploiement existant), régler **Qui a accès : Tout le
+  monde** : les tablettes n'ont plus besoin de compte Google (c'est l'autorisation
+  des tablettes qui protège l'accès). L'URL ne change pas.
+- **Tout de suite après**, sur la tablette de caisse : l'écran **« 🔒 Tablette non
+  autorisée »** s'affiche → **créer le code responsable (6 chiffres)** et nommer la
+  tablette → AUTORISER. Faire de même (avec ce code) pour chaque autre tablette.
+  Tant que le code n'est pas créé, la première personne qui ouvre le lien le choisit.
 - Les actions sensibles (mode, dates, clôture, corrections, archives, réglages)
-  demandent désormais ce code ; la saisie et l'impression restent libres.
+  demandent ce code ; la saisie et l'impression sont libres **sur les tablettes
+  autorisées**.
+- Règle : le compte Google qui détient le Sheet **ne doit pas être connecté sur les
+  tablettes de caisse** (voir `INSTALLATION.md`, « Qui fait quoi »).
 - Le panneau du Google Sheets fonctionne comme avant (secours), pour les personnes
   ayant accès au fichier.
 

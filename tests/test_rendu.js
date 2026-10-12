@@ -3,7 +3,7 @@ const fs = require('fs'); const repo = process.argv[2]; const orig = process.arg
 const props = makeProps();
 const ctx = loadCode(repo, { PropertiesService: { getDocumentProperties: () => props } });
 const cfg = ctx.getConfig();
-const rendu = renderTemplate(fs.readFileSync(repo + '/Index.html', 'utf8'), { cfg });
+const rendu = renderTemplate(fs.readFileSync(repo + '/Index.html', 'utf8'), { cfg, dates: ctx.lireDates_() });
 fs.writeFileSync(__dirname + '/rendu_defaut.html', rendu);
 // Syntaxe JS des <script> rendus
 const vm = require('vm'); let n = 0;
@@ -16,9 +16,10 @@ props.setProperty('CFG_NOM_STRUCTURE', 'la société <Test> & "Cie"');
 props.setProperty('CFG_MONTANT_OBLIGATOIRE', 'NON');
 props.setProperty('CFG_PRECISION_NOTES', '');
 props.setProperty('CFG_LIBELLE_NOTES', '</script><b>x');
-const r2 = renderTemplate(fs.readFileSync(repo + '/Index.html', 'utf8'), { cfg: ctx.getConfig() });
+const r2 = renderTemplate(fs.readFileSync(repo + '/Index.html', 'utf8'), { cfg: ctx.getConfig(), dates: { debut: '</script>', fin: '' } });
 console.log('échappement HTML ok:', r2.includes('la société &lt;Test&gt; &amp; &quot;Cie&quot;'));
 console.log('pas de </script> injecté:', (r2.match(/<\/script>/g)||[]).length === (rendu.match(/<\/script>/g)||[]).length);
 console.log('montant facultatif sans *:', /\(€\)<\/label>/.test(r2), '| précision vide:', r2.includes('&lt;/script&gt;&lt;b&gt;x</label>'));
+console.log('DATES client relues:', new Function('return ' + r2.match(/var DATES_INITIALES = (.*);/)[1])().debut === '</script>');
 const cfgClient = new Function(r2.match(/var CONFIG = (.*);/)[1].replace(/^/, 'return ') )();
 console.log('CONFIG client relu:', cfgClient.LIBELLE_NOTES === '</script><b>x');

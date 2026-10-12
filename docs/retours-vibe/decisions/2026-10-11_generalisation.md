@@ -82,6 +82,10 @@
   au-delà. B et C toujours signalés (C empêche de dépasser la limite avec une autre pièce).
   Changer le réglage recalcule les marquages de l'offre. Accepté : #18 (taille de l'annuaire
   téléchargé, ~170 Ko après 3 ans, à revoir si besoin).
+- **Démarrage de la tablette (validé avec Bryan)** : la saisie s'affichait puis laissait
+  place à « aucune opération en cours ». Dates injectées dans la page par `doGet`,
+  formulaire masqué par défaut, un seul appel `demarrage` au lieu de trois, cache de
+  vérification chargé seulement si l'offre est en cours.
 - Constat (non corrigé, panneau laissé tel quel) : dans `Panneau.html`, après une
   clôture, `changerMode()` est appelé → le mode repasse en **BLOQUANT** au lieu de
   rester SIGNALER.

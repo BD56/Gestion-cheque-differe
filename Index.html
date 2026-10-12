@@ -108,7 +108,7 @@
 
       <div id="sousTitreOperation" style="text-align: center; color: #555; font-size: 16px; font-weight: bold; margin-top: -10px; margin-bottom: 20px;">⏳ Chargement des dates...</div>
       
-      <div id="formulaireSaisie">
+      <div id="formulaireSaisie" style="display:none;"><!-- affiché seulement si l'offre est en cours (appliquerDates) -->
         <input type="file" id="ocrFile" accept="image/*" capture="environment" style="display:none;">
         <div id="ocrStatus" style="font-size:13px; text-align:center; min-height:18px; color:#5f6368; margin-bottom:10px;"></div>
         <div id="indiceAnnuaire" style="display:none; font-size:13px; text-align:center; color:#188038; background:#e6f4ea; border-radius:6px; padding:6px; margin-bottom:10px;">⤷ Nom/Prénom pré-remplis depuis l'historique — vérifiez.</div>
@@ -460,6 +460,8 @@
       // Réglages de la structure, injectés par doGet (cf. Code.gs::getConfig)
       var CONFIG = <?!= JSON.stringify(cfg).replace(/</g, '\\u003c') ?>;
       var MONTANT_OBLIGATOIRE = (CONFIG.MONTANT_OBLIGATOIRE !== "NON");
+      // Dates de l'offre au moment de l'ouverture (injectées par doGet) : bon écran d'emblée
+      var DATES_INITIALES = <?!= JSON.stringify(dates).replace(/</g, '\\u003c') ?>;
 
       var memNom = "", memPrenom = "", memPiece = "", memMontant = "", memNotes = "";
 
@@ -546,17 +548,25 @@
       }
 
       // Lance l'application (une fois la tablette autorisée)
+      // Un seul appel au serveur : mode, dates à jour et cache de vérification (ce
+      // dernier seulement si l'offre est en cours).
       function demarrerApplication() {
-        google.script.run.withSuccessHandler(function(infos) {
+        var seq = ++seqCache;
+        google.script.run.withSuccessHandler(function(rep) {
+          var infos = rep.infos;
           if (infos.success) {
             majAffichageMode(infos.mode);
             if (infos.annuaireActif) majAffichageModeAnnuaire(infos.modeAnnuaire);
           } else {
             document.getElementById('btnMode').innerHTML = "⚠️ ERREUR Serveur";
           }
-        }).withFailureHandler(siNonAutorisee).getInfosPanneau(CLE_TABLETTE);
-        chargerDatesAffichage();
-        rechargerCacheVerif();
+          if (rep.cache && seq >= seqCacheApplique) {
+            seqCacheApplique = seq;
+            cacheVerif = rep.cache;
+            fusionnerEnAttente();
+          }
+          appliquerDates(rep.dates);
+        }).withFailureHandler(siNonAutorisee).demarrage(CLE_TABLETTE);
       }
 
       window.onload = function() {
@@ -1058,47 +1068,55 @@
       }
 
       function chargerDatesAffichage() {
-        google.script.run.withSuccessHandler(function(dates) {
-          periodeOperation = dates;
-          var affichage = document.getElementById('sousTitreOperation');
-          var formulaire = document.getElementById('formulaireSaisie');
-          var isVerrouille = true;
-          var dateJour = new Date(); dateJour.setHours(0,0,0,0);
-
-          if (dates.debut && dates.fin) {
-            var strDebut = formaterDateAffichage(dates.debut);
-            var strFin = formaterDateAffichage(dates.fin);
-            var debutObj = new Date(dates.debut); debutObj.setHours(0,0,0,0);
-            var finObj = new Date(dates.fin); finObj.setHours(0,0,0,0);
-
-            if (dateJour >= debutObj && dateJour <= finObj) {
-              affichage.innerHTML = "Opération du " + strDebut + " au " + strFin;
-              affichage.style.color = "#000000";
-              isVerrouille = false; // On est dans les dates, on déverrouille !
-            } else if (dateJour > finObj) {
-              affichage.innerHTML = "🛑 Opération terminée (du " + strDebut + " au " + strFin + ")";
-              affichage.style.color = "#cc0000";
-            } else {
-              affichage.innerHTML = "⏳ Opération à venir (du " + strDebut + " au " + strFin + ")";
-              affichage.style.color = "#f2994a";
-            }
-          } else {
-            affichage.innerHTML = "🛑 Aucune opération en cours";
-            affichage.style.color = "#cc0000";
-          }
-
-          // Verrouillage/Déverrouillage visuel du formulaire
-          if (formulaire) {
-            formulaire.style.display = isVerrouille ? "none" : "block";
-          }
-
-          // Mise à jour des cases dans la modale
-          if (document.getElementById('modalDateDebut')) {
-            document.getElementById('modalDateDebut').value = dates.debut;
-            document.getElementById('modalDateFin').value = dates.fin;
-          }
-        }).withFailureHandler(siNonAutorisee).getDatesOperation(CLE_TABLETTE);
+        google.script.run.withSuccessHandler(appliquerDates)
+          .withFailureHandler(siNonAutorisee).getDatesOperation(CLE_TABLETTE);
       }
+
+      // Affiche l'état de l'offre et montre/masque le formulaire selon les dates.
+      function appliquerDates(dates, sansCache) {
+        periodeOperation = dates;
+        var affichage = document.getElementById('sousTitreOperation');
+        var formulaire = document.getElementById('formulaireSaisie');
+        var isVerrouille = true;
+        var dateJour = new Date(); dateJour.setHours(0,0,0,0);
+
+        if (dates.debut && dates.fin) {
+          var strDebut = formaterDateAffichage(dates.debut);
+          var strFin = formaterDateAffichage(dates.fin);
+          var debutObj = new Date(dates.debut); debutObj.setHours(0,0,0,0);
+          var finObj = new Date(dates.fin); finObj.setHours(0,0,0,0);
+
+          if (dateJour >= debutObj && dateJour <= finObj) {
+            affichage.innerHTML = "Opération du " + strDebut + " au " + strFin;
+            affichage.style.color = "#000000";
+            isVerrouille = false; // On est dans les dates, on déverrouille !
+          } else if (dateJour > finObj) {
+            affichage.innerHTML = "🛑 Opération terminée (du " + strDebut + " au " + strFin + ")";
+            affichage.style.color = "#cc0000";
+          } else {
+            affichage.innerHTML = "⏳ Opération à venir (du " + strDebut + " au " + strFin + ")";
+            affichage.style.color = "#f2994a";
+          }
+        } else {
+          affichage.innerHTML = "🛑 Aucune opération en cours";
+          affichage.style.color = "#cc0000";
+        }
+
+        // Verrouillage/Déverrouillage visuel du formulaire
+        if (formulaire) {
+          formulaire.style.display = isVerrouille ? "none" : "block";
+        }
+
+        // Mise à jour des cases dans la modale
+        if (document.getElementById('modalDateDebut')) {
+          document.getElementById('modalDateDebut').value = dates.debut;
+          document.getElementById('modalDateFin').value = dates.fin;
+        }
+
+        // L'offre vient de démarrer (ou démarrage hors période) : charger le cache
+        if (!sansCache && !isVerrouille && !cacheVerif && CLE_TABLETTE) rechargerCacheVerif();
+      }
+      appliquerDates(DATES_INITIALES, true); // tout de suite, sans attendre le serveur
 
       function sauvegarderDatesTablette() {
         var debut = document.getElementById('modalDateDebut').value;
@@ -1179,7 +1197,7 @@
       // Rafraîchir au retour sur la page (réveil tablette, retour d'une autre app)
       document.addEventListener('visibilitychange', function () {
         if (document.hidden || !CLE_TABLETTE) return;
-        rechargerCacheVerif();
+        if (dansPeriode()) rechargerCacheVerif();
         chargerDatesAffichage(); // la tablette a pu rester ouverte après la fin de l'offre
       });
       setInterval(function () { if (CLE_TABLETTE) chargerDatesAffichage(); }, 10 * 60 * 1000); // et sans quitter la page

@@ -171,6 +171,11 @@ Décision : `docs/retours-vibe/decisions/2026-10-11_generalisation.md`.
   - **Période de l'offre** : `controlerPeriode_` refuse côté serveur toute saisie hors dates
     (`traiterSaisie`, `forcerSaisie`) ; la tablette revérifie au retour sur la page, toutes les
     10 min et avant chaque saisie.
+  - **Démarrage de la tablette** : les dates sont glissées dans la page par `doGet`
+    (`DATES_INITIALES`) → bon écran d'emblée (le formulaire est masqué par défaut, plus de
+    saisie affichée puis retirée). Puis **un seul appel** `demarrage(cle)` (mode + dates à
+    jour + cache) au lieu de trois ; le cache (toute l'offre + annuaire) n'est envoyé que si
+    l'offre est en cours, et chargé dès qu'elle démarre (`appliquerDates`).
   - **Noms** comparés sans accents, ligatures, apostrophes ni points (`_normId_` /
     `normIdJS`) : « HÉLÈNE » = « HELENE », « D'ARC » = « DARC ».
   - **Marquages** (note « ⚠️ Ajout forcé (Cas X) » + rouge) **recalculés pour toute l'offre**

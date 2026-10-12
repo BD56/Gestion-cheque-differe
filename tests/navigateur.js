@@ -42,7 +42,7 @@ async function ouvrir(repo, envOpts) {
     env.sheets.Saisies = new FakeSheet('Saisies', [['Date', 'Nom', 'Prénom', 'N° Pièce', 'Montant', 'Notes ou Infos', '']]);
     env.sheets.Saisies.getRange('Z1').setValue('SIGNALER');
   }
-  const html = renderTemplate(fs.readFileSync(repo + '/Index.html', 'utf8'), { cfg: env.ctx.getConfig() })
+  const html = renderTemplate(fs.readFileSync(repo + '/Index.html', 'utf8'), { cfg: env.ctx.getConfig(), dates: env.ctx.lireDates_() })
     .replace('<head>', '<head><script>window.__SANS_CLE=' + !!(envOpts && envOpts.sansCle) + ';' + PROXY + '</script>');
   const browser = await chromium.launch();
   const page = await browser.newPage();

@@ -10,7 +10,7 @@
 - Bryan a choisi de **tout perfectionner sur `generalisation`** (Vannes n'a pas d'offre en
   cours) plutôt qu'un correctif séparé sur `main`.
 - **Rien n'a encore été testé sur un vrai Google Sheet** : uniquement en simulation
-  (`tests/`, 20 séries, toutes vertes). Prochaine étape : test sur une copie, puis
+  (`tests/`, 21 séries, toutes vertes). Prochaine étape : test sur une copie, puis
   déploiement à Vannes (`DEPLOIEMENT.md`).
 - Bryan n'a temporairement **pas accès à GitHub** : il a demandé `INSTALLATION.md` en
   fichier ; je lui ai proposé de lui fournir les 4 fichiers à coller (`Code.gs`,
@@ -60,6 +60,9 @@
 6. **Passages autorisés par client et par offre** (réglage `PASSAGES_MAX`, 1–10, défaut
    1) : même client (nom + pièce) accepté jusqu'à N fois, noté « ℹ️ Passage k/N » ; au-delà
    cas A. **B et C toujours signalés.** Changer le réglage recalcule les marquages.
+7. **Démarrage plus rapide** (signalé par Bryan : la saisie s'affichait puis laissait place
+   à « aucune opération ») : dates injectées dans la page, formulaire masqué par défaut,
+   un seul appel `demarrage(cle)`, cache chargé seulement si l'offre est en cours.
 
 ## 3. À vérifier sur un vrai Google Sheet (la simulation ne peut pas le garantir)
 1. La tablette **garde sa clé** d'un jour à l'autre (localStorage dans l'iframe Apps Script).

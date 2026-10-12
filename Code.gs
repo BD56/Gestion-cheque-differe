@@ -5,6 +5,9 @@ function doGet(e) {
   var cfg = getConfig();
   var page = HtmlService.createTemplateFromFile('Index');
   page.cfg = cfg;
+  // Dates de l'offre glissées dans la page : la tablette affiche tout de suite le bon
+  // écran (saisie ou « aucune opération »), sans attendre un appel au serveur.
+  page.dates = lireDates_();
   return page.evaluate()
       .setTitle(cfg.TITRE_APP)
       .addMetaTag('viewport', 'width=device-width, initial-scale=1');
@@ -822,6 +825,10 @@ function purgerAnnuaire() {
 // et après chaque saisie. NE remplace PAS la validation finale (toujours serveur).
 function chargerCacheVerif(cle) {
   exigerTablette_(cle);
+  return cacheVerif_();
+}
+
+function cacheVerif_() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var feuille = ss.getSheetByName("Saisies");
   var mode = feuille ? (feuille.getRange("Z1").getValue() || "SIGNALER") : "SIGNALER";
@@ -858,9 +865,25 @@ function chargerCacheVerif(cle) {
   return { mode: mode, offre: offre, annuaire: annuaire, annuaireActif: ANNUAIRE_ACTIF, modeAnnuaire: getModeAnnuaire() };
 }
 
+// Démarrage de la tablette : UN seul appel (au lieu de trois) pour le mode, les
+// dates et le cache de vérification. Le cache (toute l'offre + l'annuaire) n'est
+// envoyé que si l'offre est en cours : hors période, la saisie est impossible.
+function demarrage(cle) {
+  exigerTablette_(cle);
+  return {
+    infos: infosPanneau_(),
+    dates: lireDates_(),
+    cache: controlerPeriode_() ? null : cacheVerif_()
+  };
+}
+
 // --- FONCTIONS SECONDAIRES ---
 function getInfosPanneau(cle) {
   exigerTablette_(cle);
+  return infosPanneau_();
+}
+
+function infosPanneau_() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var f = ss.getSheetByName("Saisies");
   var mode = f.getRange("Z1").getValue() || "SIGNALER";

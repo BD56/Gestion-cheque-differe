@@ -1,0 +1,103 @@
+# Mémoire de travail — Claude (branche `generalisation`)
+
+> Fichier de reprise après compactage du contexte. À lire **avec** `AGENTS.md` (référence
+> canonique) et `docs/retours-vibe/decisions/2026-10-11_generalisation.md` (décisions).
+> Dernière mise à jour : 2026-10-12.
+
+## 1. Où on en est
+- Travail sur la branche **`generalisation`** (créée depuis `main`, poussée sur GitHub).
+  `main` et la prod de Vannes **non touchées**. Aucune pull request ouverte.
+- Bryan a choisi de **tout perfectionner sur `generalisation`** (Vannes n'a pas d'offre en
+  cours) plutôt qu'un correctif séparé sur `main`.
+- **Rien n'a encore été testé sur un vrai Google Sheet** : uniquement en simulation
+  (`tests/`, 20 séries, toutes vertes). Prochaine étape : test sur une copie, puis
+  déploiement à Vannes (`DEPLOIEMENT.md`).
+- Bryan n'a temporairement **pas accès à GitHub** : il a demandé `INSTALLATION.md` en
+  fichier ; je lui ai proposé de lui fournir les 4 fichiers à coller (`Code.gs`,
+  `Index.html`, `Panneau.html`, `appsscript.json`) — il a préféré ce fichier mémoire.
+
+## 2. Ce qui a été fait (dans l'ordre, voir `git log main..generalisation`)
+1. **Généralisation** : réglages de la structure (`getConfig`/`setConfig`, défauts = Vannes),
+   textes réglables (template `doGet`), impression calculée depuis « Saisies », espace
+   responsable à code PIN, archives, correction/suppression de saisies (recontrôle A/B/C),
+   `installer()` idempotent, distribution par **modèle à copier** (lien `/copy`, menu
+   « 🧰 Installer », détection de copie `ID_CLASSEUR` qui efface les réglages hérités).
+2. **Panneau ⚙️ en tuiles** (option 2 choisie par Bryan sur maquette) : Saisies, Archives,
+   Opération, Sécurité, Réglages, Code & tablettes ; Clôturer / Verrouiller à part.
+   Bouton « Ouvrir Google Sheets » retiré.
+3. **`forcerSaisie` recontrôle côté serveur** (ne fait plus confiance à la tablette).
+4. **Analyse globale** (23 points) + **contre-analyse** (tous reproduits par tests), puis
+   corrections :
+   - #1 **N° de pièce commençant par 0** (Sheets convertit en nombre — **confirmé par
+     Bryan sur sa copie**) : écriture en texte (`texte_`, apostrophe) + comparaison sans
+     0 initiaux (`_normPiece_` / `normPieceJS`). Protège aussi des formules « = ».
+   - #2 doublon immédiat invisible (saisies en attente `saisiesEnAttente`, avec **rang**),
+     #3 message coupé (minuteur unique + **fenêtre d'alerte** `modalAlerteServeur`),
+     #4 saisie hors période (`controlerPeriode_` serveur + revérif tablette).
+   - #7 accents/apostrophes/ligatures (`_normId_` / `normIdJS`), #8 annuaire non écrasé
+     par une usurpation forcée, #9 marquages recalculés (`recalculerMarquages_` : seule la
+     ligne qui double une ligne **plus ancienne** est marquée), #11 panneau (clôture ne
+     rebascule plus en BLOQUANT), #16 injection HTML (`echapper`), #17 montant
+     (`lireMontant`, format « 1234,50 € »), #23 plus de pré-remplissage depuis un doublon
+     de l'offre (revient sur le commit 8bae95e ; l'annuaire des offres passées pré-remplit
+     toujours).
+   - Mineurs : #13 nom d'archive unique, #14 pas d'archive vide, #15 dates contrôlées,
+     #19 `reconstruireAnnuaire` réservée aux éditeurs, #20 saisie incomplète refusée côté
+     serveur, #22 purge sous verrou. #10 `onEdit` contrôle chaque ligne d'un collage.
+   - Clos : #12. Accepté : #18 (annuaire ~170 Ko téléchargé par saisie après 3 ans).
+5. **Sécurité** :
+   - #5 (décision Bryan) : **le manager de caisse détient le Sheet** (idéalement compte
+     Google du magasin), ne transmet que le lien `/exec`, ne se connecte jamais sur une
+     tablette de caisse. Documenté dans `INSTALLATION.md` (« Qui fait quoi »).
+   - #6 : **tablettes autorisées (appairage)** — clé en `localStorage` (`cdTabletteCle`),
+     empreinte serveur (`TABLETTES`), `exigerTablette_(cle)` sur toutes les fonctions de
+     la tablette ; tuile « 🔑 Code & tablettes » (liste, retrait) ; accès déploiement
+     **« Tout le monde »** (`ANYONE_ANONYMOUS`, plus de compte Google sur la tablette).
+     Après réinitialisation du code, seule une tablette autorisée peut le recréer.
+   - **Code responsable : exactement 6 chiffres** ; **pause serveur 10 s** après un code
+     faux (idée de Bryan ; compteur global — le serveur ne peut pas identifier
+     l'appareil) ; blocage 15 min après 5 erreurs, jamais plus long.
+6. **Passages autorisés par client et par offre** (réglage `PASSAGES_MAX`, 1–10, défaut
+   1) : même client (nom + pièce) accepté jusqu'à N fois, noté « ℹ️ Passage k/N » ; au-delà
+   cas A. **B et C toujours signalés.** Changer le réglage recalcule les marquages.
+
+## 3. À vérifier sur un vrai Google Sheet (la simulation ne peut pas le garantir)
+1. La tablette **garde sa clé** d'un jour à l'autre (localStorage dans l'iframe Apps Script).
+2. L'accès **« Tout le monde »** fonctionne sans compte Google (et `google.script.run`).
+3. Le **panneau du Sheet** (mode, dates, clôture, réinitialiser le code) marche pour un
+   éditeur (`estEditeurDuClasseur_` repose sur `Session.getActiveUser()`).
+4. Ce que Google **recopie** lors d'une copie du modèle (propriétés du document).
+5. `installer()` crée bien les déclencheurs (nuit 1h clôture, 3h purge).
+6. Parcours complet : autorisation, saisie, doublons, passages, correction, impression,
+   archives, clôture.
+
+## 4. Points ouverts / idées non faites
+- Pull request `generalisation` → `main` : à ouvrir **après** le test de Bryan (il n'a pas
+  encore demandé).
+- Option B de l'analyse #6 (n'envoyer que le nom correspondant au N° au lieu de tout
+  l'annuaire) : non faite (#18 accepté).
+- Détection « usurpation inter-offres » (pièce d'une offre passée présentée sous un autre
+  nom) : jamais faite, idée seulement.
+- Dette assumée : logique A/B/C à **4 endroits** (`traiterSaisie`, `analyserDoublonLocal`,
+  `onEdit`/`controlerLigneEditee_`, `detecterDoublons_`) — à garder synchro.
+
+## 5. Comment travailler avec Bryan (rappel)
+- **Discuter et faire valider avant de coder** ; il répond souvent « go » ; poser les
+  questions de conception (il tranche vite et a de bonnes idées, ex. pause de 10 s).
+- Honnêteté : dire ce qui n'est **pas** testé, signaler les risques (RGPD, faux négatifs).
+- **Faux négatif = pire échec** ; « Saisies » = source de vérité ; le serveur décide.
+- Ne jamais toucher `main` / la prod sans accord ; commits clairs en français.
+- Rappeler que le déploiement est manuel (`DEPLOIEMENT.md`).
+
+## 6. Environnement / outillage
+- Tests : `bash tests/lancer.sh` (voir `tests/README.md`). Playwright global
+  (`NODE_PATH=$(npm root -g)`), Chromium dans `/opt/pw-browsers`.
+- La fausse feuille imite la conversion de Google Sheets ; le contrôle tablette est
+  neutralisé par défaut sauf dans `test_tablettes` / `test_ui_tablettes`.
+- Réseau de l'environnement : Bryan a ajouté `docs.google.com` et
+  `*.googleusercontent.com` (pour lire une **copie anonymisée** de son Sheet, partagée par
+  lien — URL volontairement non recopiée ici ; formules : `A_IMPRIMER` = `FILTER` sur
+  « Saisies » par jour (Z1), `OFFRE_COMPLETE` = `ARRAYFORMULA(Saisies!A:F)` ; colonne F
+  de « Saisies » intitulée « CODE » chez Vannes, libellé retenu « Notes ou Infos »).
+- Maquettes du panneau (tuiles vs accordéons) : faites dans l'espace temporaire de la
+  session, non conservées (décision prise : tuiles).

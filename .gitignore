@@ -1,1 +1,3 @@
 .clasp.json
+tests/rendu_defaut.html
+node_modules/

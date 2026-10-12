@@ -2,3 +2,4 @@
 # Le prototype OCR vit dans le repo Git mais ne doit JAMAIS partir sur Apps Script.
 prototype-ocr/**
 **/*.md
+tests/**

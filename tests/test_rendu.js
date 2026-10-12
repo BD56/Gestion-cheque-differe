@@ -1,0 +1,24 @@
+const { renderTemplate, loadCode, makeProps } = require('./harness');
+const fs = require('fs'); const repo = process.argv[2]; const orig = process.argv[3];
+const props = makeProps();
+const ctx = loadCode(repo, { PropertiesService: { getDocumentProperties: () => props } });
+const cfg = ctx.getConfig();
+const rendu = renderTemplate(fs.readFileSync(repo + '/Index.html', 'utf8'), { cfg });
+fs.writeFileSync(__dirname + '/rendu_defaut.html', rendu);
+// Syntaxe JS des <script> rendus
+const vm = require('vm'); let n = 0;
+for (const m of rendu.matchAll(/<script(?:\s+type="module")?>([\s\S]*?)<\/script>/g)) {
+  n++; try { new vm.Script(m[1].replace(/^\s*(import|export)\b.*$/mg, '')); } catch (e) { console.log('ERREUR SYNTAXE script', n, e.message); process.exitCode = 1; }
+}
+console.log('scripts vérifiés:', n, '| titre:', cfg.TITRE_APP);
+// Config personnalisée + caractères piégeux
+props.setProperty('CFG_NOM_STRUCTURE', 'la société <Test> & "Cie"');
+props.setProperty('CFG_MONTANT_OBLIGATOIRE', 'NON');
+props.setProperty('CFG_PRECISION_NOTES', '');
+props.setProperty('CFG_LIBELLE_NOTES', '</script><b>x');
+const r2 = renderTemplate(fs.readFileSync(repo + '/Index.html', 'utf8'), { cfg: ctx.getConfig() });
+console.log('échappement HTML ok:', r2.includes('la société &lt;Test&gt; &amp; &quot;Cie&quot;'));
+console.log('pas de </script> injecté:', (r2.match(/<\/script>/g)||[]).length === (rendu.match(/<\/script>/g)||[]).length);
+console.log('montant facultatif sans *:', /\(€\)<\/label>/.test(r2), '| précision vide:', r2.includes('&lt;/script&gt;&lt;b&gt;x</label>'));
+const cfgClient = new Function(r2.match(/var CONFIG = (.*);/)[1].replace(/^/, 'return ') )();
+console.log('CONFIG client relu:', cfgClient.LIBELLE_NOTES === '</script><b>x');

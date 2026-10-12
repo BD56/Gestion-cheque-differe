@@ -202,6 +202,14 @@ Décision : `docs/retours-vibe/decisions/2026-10-11_generalisation.md`.
 - **`onEdit`** (filet de secours) : un collage de plusieurs lignes est contrôlé ligne par
   ligne (`preparerLigneEditee_`, `controlerLigneEditee_`) ; en BLOQUANT seules les lignes
   fautives sont annulées.
+- **Passages autorisés par client** (réglage `PASSAGES_MAX`, 1 à 10, défaut 1 = comportement
+  historique) : un même client (même nom + même pièce) peut revenir jusqu'à N fois sur une
+  offre ; ses passages sont notés « ℹ️ Passage k/N » (sans rouge) ; au-delà -> cas A.
+  **B (même pièce, autre nom) et C (même nom, autre pièce) restent toujours signalés.**
+  Appliqué partout : `traiterSaisie`, `detecterDoublons_` (forçage, correction),
+  `recalculerMarquages_` (recalcul aussi quand le réglage change), `onEdit`, client
+  (`analyserDoublonLocal`, avertissement N°). Notes système : `NOTES_SYSTEME_REGEX`.
+  Côté client, les saisies en attente retiennent leur **rang** (passages identiques comptés).
 - **Dette assumée** : la logique A/B/C existe à **4 endroits** — `traiterSaisie`,
   `analyserDoublonLocal` (client), `onEdit`, et `detecterDoublons_` (partagée par
   `forcerSaisie` et `modifierSaisie`). À garder synchro si la détection change.

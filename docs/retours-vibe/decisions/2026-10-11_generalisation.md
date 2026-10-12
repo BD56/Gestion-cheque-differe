@@ -76,7 +76,11 @@
     15 min après 5 erreurs, sans blocage progressif (évite de bloquer le vrai
     responsable).
   - **#10** : `onEdit` contrôle chaque ligne d'un collage.
-  Clos : #12 (remplacé par la fenêtre d'alerte). Accepté : #18 (taille de l'annuaire
+  Clos : #12 (remplacé par la fenêtre d'alerte).
+- **Passages autorisés par client (validé avec Bryan)** : réglage 1 à 10 (défaut 1). Même
+  client (nom + pièce) accepté jusqu'à N passages, notés « ℹ️ Passage k/N », doublon A
+  au-delà. B et C toujours signalés (C empêche de dépasser la limite avec une autre pièce).
+  Changer le réglage recalcule les marquages de l'offre. Accepté : #18 (taille de l'annuaire
   téléchargé, ~170 Ko après 3 ans, à revoir si besoin).
 - Constat (non corrigé, panneau laissé tel quel) : dans `Panneau.html`, après une
   clôture, `changerMode()` est appelé → le mode repasse en **BLOQUANT** au lieu de

@@ -107,8 +107,20 @@ var CONFIG_DEFAUTS = {
   LIBELLE_MONTANT: "Montant",
   MONTANT_OBLIGATOIRE: "OUI",              // "OUI" ou "NON"
   LIBELLE_NOTES: "Notes ou Infos",
-  PRECISION_NOTES: "numéro caisse, etc..." // affichée entre parenthèses (vide = rien)
+  PRECISION_NOTES: "numéro caisse, etc...", // affichée entre parenthèses (vide = rien)
+  PASSAGES_MAX: "1"                         // passages autorisés par client et par offre (1 à 10)
 };
+
+// Nombre de passages autorisés par client (même nom + même pièce) sur une offre.
+function passagesMax_() {
+  var n = parseInt(getConfig().PASSAGES_MAX, 10);
+  return (n >= 1 && n <= 10) ? n : 1;
+}
+
+// Notes ajoutées automatiquement par l'application (retirées avant toute réécriture)
+var NOTES_SYSTEME_REGEX = /(?:\n|\|)?\s*(?:⚠️ Ajout forcé \(Cas [ABC]\)|ℹ️ Passage \d+\/\d+)/g;
+function notePassage_(rang, max) { return "ℹ️ Passage " + rang + "/" + max; }
+function ajouterNote_(notes, ajout) { return notes ? notes + "\n" + ajout : ajout; }
 
 function getConfig() {
   var props = PropertiesService.getDocumentProperties().getProperties();
@@ -130,11 +142,24 @@ function setConfig(valeurs, jeton) {
     if (!valeurs || !(k in valeurs)) continue;
     var v = (valeurs[k] === null || valeurs[k] === undefined) ? "" : valeurs[k].toString().trim();
     if (k === "MONTANT_OBLIGATOIRE") v = (v === "NON") ? "NON" : "OUI";
+    if (k === "PASSAGES_MAX" && !/^([1-9]|10)$/.test(v)) throw new Error("Passages autorisés par client : un nombre de 1 à 10.");
     if (v.length > 100) throw new Error("« " + k + " » : 100 caractères maximum.");
     if (obligatoires.indexOf(k) !== -1 && v === "") throw new Error("« " + k + " » ne peut pas être vide.");
     aEcrire['CFG_' + k] = v;
   }
+  var ancienMax = passagesMax_();
   PropertiesService.getDocumentProperties().setProperties(aEcrire);
+  // Limite de passages changée : marquages de l'offre recalculés avec la nouvelle règle
+  if (passagesMax_() !== ancienMax) {
+    var lock = LockService.getScriptLock();
+    lock.waitLock(10000);
+    try {
+      var f = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Saisies");
+      if (f) recalculerMarquages_(f);
+    } finally {
+      lock.releaseLock();
+    }
+  }
   return getConfig();
 }
 
@@ -421,7 +446,7 @@ function traiterSaisie(nom, prenom, piece, montant, notes, cle) {
     nom = nom.toString().toUpperCase().trim();
     prenom = prenom.toString().toUpperCase().trim();
     piece = piece.toString().toUpperCase().trim();
-    notes = notes ? notes.toString().trim() : "";
+    notes = notes ? notes.toString().replace(NOTES_SYSTEME_REGEX, '').trim() : "";
     if (montant && typeof montant === 'string' && montant.includes('.')) montant = montant.replace('.', ',');
     
     // Nettoyage profond pour la comparaison (cf. _normId_ / _normPiece_) - UNE FOIS
@@ -432,6 +457,7 @@ function traiterSaisie(nom, prenom, piece, montant, notes, cle) {
     var donnees = feuille.getDataRange().getValues();
     var pireCas = null; 
     var detailsDoublons = []; 
+    var passagesClient = 0; // passages déjà enregistrés pour CE client (même nom + même pièce)
     
     // Optimisation: Ignorer les lignes vides
     for (var i = 1; i < donnees.length; i++) {
@@ -457,21 +483,9 @@ function traiterSaisie(nom, prenom, piece, montant, notes, cle) {
                           : estMemePiece ? 'B' 
                           : 'C';
         
-        // Si on trouve un Cas A, on peut arrêter la boucle (pire cas possible)
-        if (typeCeDoublon === 'A') {
-          pireCas = 'A';
-          detailsDoublons.push({ 
-            ligne: i + 1, 
-            type: typeCeDoublon, 
-            date: (donnees[i][0] instanceof Date) ? Utilities.formatDate(donnees[i][0], "Europe/Paris", "dd/MM/yyyy HH:mm") : donnees[i][0].toString(),
-            nom: nomHisto, 
-            prenom: prenomHisto, 
-            piece: pieceHisto,
-            montant: montantHisto,
-            notes: notesHisto
-          });
-          break; // Sortir de la boucle immédiatement
-        }
+        // Même client (cas A) : on COMPTE ses passages ; ce n'est un doublon que s'il
+        // a déjà atteint le nombre de passages autorisés (réglage, 1 par défaut).
+        if (typeCeDoublon === 'A') passagesClient++;
         
         if (typeCeDoublon === 'B' && pireCas !== 'A') pireCas = 'B';
         if (typeCeDoublon === 'C' && pireCas !== 'A' && pireCas !== 'B') pireCas = 'C';
@@ -489,6 +503,10 @@ function traiterSaisie(nom, prenom, piece, montant, notes, cle) {
       }
     }
     
+    var passagesMax = passagesMax_();
+    if (passagesClient >= passagesMax) pireCas = 'A'; // limite atteinte -> vrai doublon (prioritaire)
+    var limiteTxt = (passagesMax > 1) ? " (déjà " + passagesClient + " passage(s) ; maximum " + passagesMax + " par client)" : "";
+
     if (pireCas) {
       var isBloque = false;
       var msgTitre = "";
@@ -497,7 +515,7 @@ function traiterSaisie(nom, prenom, piece, montant, notes, cle) {
       
       if (modeSecurite === "BLOQUANT") {
         if (pireCas === 'A') {
-          isBloque = true; msgTitre = "🛑 SAISIE REFUSÉE"; msgAlerte = "Ce client a déjà profité de l'offre.";
+          isBloque = true; msgTitre = "🛑 SAISIE REFUSÉE"; msgAlerte = "Ce client a déjà profité de l'offre." + limiteTxt;
         } else if (pireCas === 'B') {
           isBloque = true; msgTitre = "🛑 SAISIE REFUSÉE"; msgAlerte = "Ce numéro de pièce d'identité est déjà associé à un autre client.";
         } else if (pireCas === 'C') {
@@ -506,7 +524,7 @@ function traiterSaisie(nom, prenom, piece, montant, notes, cle) {
         }
       } else {
         if (pireCas === 'A') {
-          msgTitre = "🛑 ALERTE FRAUDE"; msgAlerte = "Ce client a déjà été enregistré avec ce numéro de pièce d'identité.";
+          msgTitre = "🛑 ALERTE FRAUDE"; msgAlerte = "Ce client a déjà été enregistré avec ce numéro de pièce d'identité." + limiteTxt;
         } else if (pireCas === 'B') {
           msgTitre = "🛑 ANOMALIE GRAVE"; msgAlerte = "Ce numéro de pièce d'identité est déjà utilisé dans la base sous un autre nom !";
         } else if (pireCas === 'C') {
@@ -523,9 +541,12 @@ function traiterSaisie(nom, prenom, piece, montant, notes, cle) {
         return { status: "CONFIRMATION", titre: msgTitre, message: msgAlerte, couleur: couleur, details: detailsDoublons, noteForce: notePourSheet, flags: { identite: (pireCas==='A'||pireCas==='C'), piece: (pireCas==='A'||pireCas==='B') } };
       }
     } else {
+      // Passage supplémentaire autorisé : trace dans les notes (« ℹ️ Passage 2/3 »), sans rouge
+      if (passagesClient > 0) notes = ajouterNote_(notes, notePassage_(passagesClient + 1, passagesMax));
       feuille.appendRow([new Date(), texte_(nom), texte_(prenom), texte_(piece), montant, texte_(notes), ""]);
       majAnnuaire_(nom, prenom, piece);
-      return { status: "SUCCES", message: "✅ Saisie enregistrée !" };
+      return { status: "SUCCES", passage: passagesClient + 1, passagesMax: passagesMax,
+               message: passagesClient > 0 ? "✅ Saisie enregistrée ! (passage " + (passagesClient + 1) + "/" + passagesMax + ")" : "✅ Saisie enregistrée !" };
     }
   } finally {
     lock.releaseLock(); // Libérer le verrou dans tous les cas
@@ -583,7 +604,7 @@ function forcerSaisie(nom, prenom, piece, montant, notes, messageErreur, flagIde
     nom = nom.toString().toUpperCase().trim(); 
     prenom = prenom.toString().toUpperCase().trim();
     piece = piece.toString().toUpperCase().trim(); 
-    notes = notes ? notes.toString().replace(ALERTE_FORCE_REGEX, '').trim() : "";
+    notes = notes ? notes.toString().replace(NOTES_SYSTEME_REGEX, '').trim() : "";
     if (montant && typeof montant === 'string' && montant.includes('.')) montant = montant.replace('.', ',');
 
     var modeSecurite = feuille.getRange("Z1").getValue() || "SIGNALER";
@@ -600,10 +621,8 @@ function forcerSaisie(nom, prenom, piece, montant, notes, messageErreur, flagIde
     }
 
     var noteFinale = notes;
-    if (pireCas) {
-      var alerte = "⚠️ Ajout forcé (Cas " + pireCas + ")";
-      noteFinale = (notes !== "") ? notes + "\n" + alerte : alerte;
-    }
+    if (pireCas) noteFinale = ajouterNote_(notes, "⚠️ Ajout forcé (Cas " + pireCas + ")");
+    else if (det.passages > 0) noteFinale = ajouterNote_(notes, notePassage_(det.passages + 1, passagesMax_()));
     
     feuille.appendRow([new Date(), texte_(nom), texte_(prenom), texte_(piece), montant, texte_(noteFinale), ""]);
     var indexLigne = feuille.getLastRow();
@@ -972,7 +991,7 @@ function listerSaisies(jeton) {
       prenom: valeurs[i][2] ? valeurs[i][2].toString() : "",
       piece: valeurs[i][3] ? valeurs[i][3].toString() : "",
       montant: affichage[i][4],
-      notes: notes.replace(ALERTE_FORCE_REGEX, '').trim(),
+      notes: notes.replace(NOTES_SYSTEME_REGEX, '').trim(),
       alerte: notes !== notes.replace(ALERTE_FORCE_REGEX, '')
     });
   }
@@ -996,20 +1015,21 @@ function verifierLigneAttendue_(feuille, ligne, attendu) {
 // Détection A/B/C sur « Saisies » (mêmes règles que traiterSaisie / onEdit),
 // utilisée par forcerSaisie et modifierSaisie. ligneExclue : n° de ligne à ne
 // pas comparer (la ligne corrigée elle-même), ou 0.
-// Renvoie { pireCas: 'A'|'B'|'C'|null, details: [...] }.
+// Même client (A) : doublon seulement si ses passages atteignent la limite autorisée.
+// Renvoie { pireCas: 'A'|'B'|'C'|null, details: [...], passages: nb de passages du client }.
 function detecterDoublons_(feuille, nom, prenom, piece, ligneExclue) {
   var nomN = _normId_(nom), prenomN = _normId_(prenom), pieceN = _normPiece_(piece);
   var donnees = feuille.getDataRange().getValues();
-  var pireCas = null, details = [];
+  var pireCas = null, details = [], passages = 0;
   for (var i = 1; i < donnees.length; i++) {
     if (i === ligneExclue - 1) continue;
     var memeId = (nomN !== "" && prenomN !== "" && _normId_(donnees[i][1]) === nomN && _normId_(donnees[i][2]) === prenomN);
     var memePiece = (pieceN !== "" && _normPiece_(donnees[i][3]) === pieceN);
     if (!memeId && !memePiece) continue;
     var t = (memeId && memePiece) ? 'A' : (memePiece ? 'B' : 'C');
-    if (t === 'A') pireCas = 'A';
-    else if (t === 'B' && pireCas !== 'A') pireCas = 'B';
-    else if (t === 'C' && pireCas !== 'A' && pireCas !== 'B') pireCas = 'C';
+    if (t === 'A') passages++;
+    else if (t === 'B') pireCas = 'B';
+    else if (t === 'C' && pireCas !== 'B') pireCas = 'C';
     details.push({
       ligne: i + 1, type: t,
       date: (donnees[i][0] instanceof Date) ? Utilities.formatDate(donnees[i][0], "Europe/Paris", "dd/MM/yyyy HH:mm") : (donnees[i][0] ? donnees[i][0].toString() : ""),
@@ -1018,7 +1038,8 @@ function detecterDoublons_(feuille, nom, prenom, piece, ligneExclue) {
       notes: donnees[i][5] ? donnees[i][5].toString() : ""
     });
   }
-  return { pireCas: pireCas, details: details };
+  if (passages >= passagesMax_()) pireCas = 'A';
+  return { pireCas: pireCas, details: details, passages: passages };
 }
 
 // Recalcule la note « ⚠️ Ajout forcé (Cas X) » et le rouge de chaque ligne de « Saisies ».
@@ -1031,22 +1052,24 @@ function recalculerMarquages_(feuille) {
   var plage = feuille.getRange(2, 1, derniere - 1, 7);
   var v = plage.getValues();
   var rouge = "#f4cccc";
+  var max = passagesMax_();
   var notes = [], fonds = [];
   for (var i = 0; i < v.length; i++) {
     var nomN = _normId_(v[i][1]), prenomN = _normId_(v[i][2]), pieceN = _normPiece_(v[i][3]);
-    var pireCas = null;
+    var pireCas = null, passages = 0;
     if (nomN || prenomN || pieceN) {
       for (var j = 0; j < i; j++) {
         var memeId = (nomN !== "" && prenomN !== "" && _normId_(v[j][1]) === nomN && _normId_(v[j][2]) === prenomN);
         var memePiece = (pieceN !== "" && _normPiece_(v[j][3]) === pieceN);
-        if (memeId && memePiece) { pireCas = 'A'; break; }
-        if (memePiece) pireCas = 'B';
+        if (memeId && memePiece) passages++;
+        else if (memePiece) pireCas = 'B';
         else if (memeId && pireCas !== 'B') pireCas = 'C';
       }
+      if (passages >= max) pireCas = 'A';
     }
-    var notePropre = (v[i][5] ? v[i][5].toString() : "").replace(ALERTE_FORCE_REGEX, '').trim();
-    var alerte = pireCas ? "⚠️ Ajout forcé (Cas " + pireCas + ")" : "";
-    notes.push([texte_(alerte ? (notePropre ? notePropre + "\n" + alerte : alerte) : notePropre)]);
+    var notePropre = (v[i][5] ? v[i][5].toString() : "").replace(NOTES_SYSTEME_REGEX, '').trim();
+    var noteSysteme = pireCas ? "⚠️ Ajout forcé (Cas " + pireCas + ")" : (passages > 0 ? notePassage_(passages + 1, max) : "");
+    notes.push([texte_(noteSysteme ? ajouterNote_(notePropre, noteSysteme) : notePropre)]);
     fonds.push([null,
       (pireCas === 'A' || pireCas === 'C') ? rouge : null, (pireCas === 'A' || pireCas === 'C') ? rouge : null,
       (pireCas === 'A' || pireCas === 'B') ? rouge : null, null, pireCas ? rouge : null, null]);
@@ -1085,7 +1108,7 @@ function modifierSaisie(ligne, attendu, nouveau, forcer, jeton) {
     var piece = (n.piece || "").toString().toUpperCase().trim();
     var montant = (n.montant || "").toString().trim();
     if (montant.indexOf('.') !== -1) montant = montant.replace('.', ',');
-    var notesPropres = (n.notes || "").toString().replace(ALERTE_FORCE_REGEX, '').trim();
+    var notesPropres = (n.notes || "").toString().replace(NOTES_SYSTEME_REGEX, '').trim();
     if (!nom || !prenom || !piece) throw new Error("Le Nom, le Prénom et le N° de pièce sont obligatoires.");
     if (getConfig().MONTANT_OBLIGATOIRE !== "NON" && !montant) throw new Error("Le montant est obligatoire.");
 
@@ -1316,7 +1339,7 @@ function controlerLigneEditee_(feuille, ligneEdit, modeSecurite, plageAnnulee) {
     return null;
   }
   
-  var pireCas = null;
+  var pireCas = null, passages = 0;
   
   // 3️⃣ RECHERCHE DE DOUBLON SUR TOUTE LA BASE
   for (var i = 1; i < donnees.length; i++) {
@@ -1335,11 +1358,12 @@ function controlerLigneEditee_(feuille, ligneEdit, modeSecurite, plageAnnulee) {
       else if (!matchID && matchPiece) typeCeDoublon = 'B';
       else if (matchID && !matchPiece) typeCeDoublon = 'C';
       
-      if (typeCeDoublon === 'A') pireCas = 'A';
+      if (typeCeDoublon === 'A') passages++; // même client : compté (limite de passages)
       if (typeCeDoublon === 'B' && pireCas !== 'A') pireCas = 'B';
       if (typeCeDoublon === 'C' && pireCas !== 'A' && pireCas !== 'B') pireCas = 'C';
     }
   }
+  if (passages >= passagesMax_()) pireCas = 'A';
   
   // 4️⃣ APPLICATION DES RÈGLES SELON LE MODE
   if (pireCas) {

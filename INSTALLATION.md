@@ -92,7 +92,8 @@ Avec le **compte Google qui détiendra les données** (voir ci-dessus) :
    - tuile **🏷️ Réglages** : nom de la structure **avec l'article**
      (« l'Hypermarché X », « la société Y » — lu « L'auteur concède à … »), nom de
      l'offre, titre de l'onglet, libellé et caractère obligatoire du montant (euro),
-     libellé et précision du champ Notes ;
+     libellé et précision du champ Notes, **passages autorisés par client et par offre**
+     (1 par défaut = un seul chèque par client ; jusqu'à 10) ;
    - tuile **📅 Opération** : dates de début et de fin de l'offre.
 
 C'est tout : **tout se fait ensuite dans l'application** (saisie, impression,

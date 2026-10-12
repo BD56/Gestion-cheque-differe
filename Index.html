@@ -188,6 +188,7 @@
               <li>🟢 <strong>Bandeau Vert :</strong> Saisie acceptée et enregistrée. Aucun doublon détecté.</li>
               <li>🟠 <strong>Bandeau Orange (Homonyme possible) :</strong> Le système a détecté le <strong>même Nom</strong>, mais avec une <strong>Pièce d'identité différente</strong>.</li>
               <li>🔴 <strong>Bandeau Rouge (Doublon ou Usurpation) :</strong> Ce <strong>Numéro de Pièce</strong> a déjà été enregistré (soit par le même client, soit sous un nom différent).</li>
+              <li>🔁 <strong>Plusieurs passages autorisés :</strong> si le réglage le permet (⚙️ → Réglages, « Passages autorisés par client »), un même client (même nom + même pièce) peut revenir jusqu'à ce nombre ; ses passages sont notés « ℹ️ Passage 2/3 ». Au-delà : doublon. Une pièce sous un autre nom, ou le même nom avec une autre pièce, reste toujours signalé.</li>
             </ul>
           </div>
 
@@ -631,7 +632,7 @@
         if (reponse.status === "SUCCES") {
           var saisie = { nom: memNom, prenom: memPrenom, piece: memPiece, montant: memMontant, notes: memNotes };
           saisie.id = ajoutOptimisteCache(saisie);
-          afficherMessage("✅ Saisie enregistrée !", "success");
+          afficherMessage(reponse.message, "success");
           reinitialiserFormulaire();
           // Écriture autoritaire en arrière-plan : le serveur reconfirme ET écrit.
           google.script.run
@@ -732,8 +733,11 @@
       // --- Contrôle A/B/C EN LOCAL (miroir de traiterSaisie, pour feedback instantané) ---
       // ⚠️ Garder synchro avec Code.gs::traiterSaisie. Le serveur reste autoritaire (il
       //    reconfirme à l'écriture en arrière-plan) -> aucun faux négatif même si bug ici.
+      function passagesMaxJS() { var n = parseInt(CONFIG.PASSAGES_MAX, 10); return (n >= 1 && n <= 10) ? n : 1; }
+
       function analyserDoublonLocal(nom, prenom, piece) {
         var mode = (cacheVerif && cacheVerif.mode) || "SIGNALER";
+        var passagesClient = 0, passagesMax = passagesMaxJS();
         var nomN = normIdJS(nom), prenomN = normIdJS(prenom), pieceN = normPieceJS(piece);
         var rows = (cacheVerif && cacheVerif.offre) || [];
         var pireCas = null, details = [];
@@ -746,21 +750,23 @@
           var memePiece = (pieceN !== "" && pieceH === pieceN);
           if (!memeId && !memePiece) continue;
           var t = (memeId && memePiece) ? 'A' : (memePiece ? 'B' : 'C');
-          if (t === 'A') pireCas = 'A';
-          else if (t === 'B' && pireCas !== 'A') pireCas = 'B';
-          else if (t === 'C' && pireCas !== 'A' && pireCas !== 'B') pireCas = 'C';
+          if (t === 'A') passagesClient++; // même client : compté (limite de passages)
+          else if (t === 'B') pireCas = 'B';
+          else if (t === 'C' && pireCas !== 'B') pireCas = 'C';
           details.push({ ligne: r.ligne, type: t, date: r.date, nom: r.nom, prenom: r.prenom, piece: r.piece || "", montant: r.montant || "", notes: r.notes || "" });
-          if (t === 'A') break;
         }
-        if (!pireCas) return { status: "SUCCES", message: "✅ Saisie enregistrée !" };
+        if (passagesClient >= passagesMax) pireCas = 'A';
+        var limiteTxt = (passagesMax > 1) ? " (déjà " + passagesClient + " passage(s) ; maximum " + passagesMax + " par client)" : "";
+        if (!pireCas) return { status: "SUCCES", passage: passagesClient + 1,
+          message: passagesClient > 0 ? "✅ Saisie enregistrée ! (passage " + (passagesClient + 1) + "/" + passagesMax + ")" : "✅ Saisie enregistrée !" };
 
         var isBloque = false, titre = "", msg = "", couleur = "ROUGE";
         if (mode === "BLOQUANT") {
-          if (pireCas === 'A') { isBloque = true; titre = "🛑 SAISIE REFUSÉE"; msg = "Ce client a déjà profité de l'offre."; }
+          if (pireCas === 'A') { isBloque = true; titre = "🛑 SAISIE REFUSÉE"; msg = "Ce client a déjà profité de l'offre." + limiteTxt; }
           else if (pireCas === 'B') { isBloque = true; titre = "🛑 SAISIE REFUSÉE"; msg = "Ce numéro de pièce d'identité est déjà associé à un autre client."; }
           else { couleur = "ORANGE"; titre = "⚠️ HOMONYME DÉTECTÉ"; msg = "Un client porte ce nom avec une autre pièce. Demandez une 2ème pièce d'identité pour confirmer qu'il s'agit bien d'une personne différente avant de forcer l'ajout."; }
         } else {
-          if (pireCas === 'A') { titre = "🛑 ALERTE FRAUDE"; msg = "Ce client a déjà été enregistré avec ce numéro de pièce d'identité."; }
+          if (pireCas === 'A') { titre = "🛑 ALERTE FRAUDE"; msg = "Ce client a déjà été enregistré avec ce numéro de pièce d'identité." + limiteTxt; }
           else if (pireCas === 'B') { titre = "🛑 ANOMALIE GRAVE"; msg = "Ce numéro de pièce d'identité est déjà utilisé dans la base sous un autre nom !"; }
           else { couleur = "ORANGE"; titre = "⚠️ HOMONYME DÉTECTÉ"; msg = "Un client porte ce nom avec une autre pièce. Demandez une 2ème pièce d'identité pour confirmer qu'il s'agit bien d'une personne différente avant de forcer l'ajout."; }
         }
@@ -789,11 +795,19 @@
         cacheVerif.offre.push(e);
         if (cacheVerif.annuaireActif && e.pieceNorm) cacheVerif.annuaire[e.pieceNorm] = { nom: e.nom, prenom: e.prenom };
       }
-      // Ajoute la saisie au cache local TOUT DE SUITE (optimiste) -> la suivante est correcte
+      function memeClient(o, e) {
+        return o.pieceNorm === e.pieceNorm && normIdJS(o.nom) === normIdJS(e.nom) && normIdJS(o.prenom) === normIdJS(e.prenom);
+      }
+      // Ajoute la saisie au cache local TOUT DE SUITE (optimiste) -> la suivante est correcte.
+      // « rang » = nombre de lignes identiques (même client) déjà connues : avec plusieurs
+      // passages autorisés, des lignes identiques sont normales, on les compte.
       function ajoutOptimisteCache(saisie) {
-        var suivi = { id: ++compteurSaisies, entree: entreeCache(saisie), ecriteA: 0 };
+        var e = entreeCache(saisie);
+        var deja = cacheVerif ? cacheVerif.offre.filter(function (o) { return memeClient(o, e); }).length
+                              : saisiesEnAttente.filter(function (s) { return memeClient(s.entree, e); }).length;
+        var suivi = { id: ++compteurSaisies, entree: e, rang: deja, ecriteA: 0 };
         saisiesEnAttente.push(suivi);
-        if (cacheVerif) ajouterAuCache(suivi.entree);
+        if (cacheVerif) ajouterAuCache(e);
         return suivi.id;
       }
       function saisieConfirmee(saisie) {
@@ -803,14 +817,16 @@
         saisiesEnAttente = saisiesEnAttente.filter(function (s) { return s.id !== saisie.id; });
         rechargerCacheVerif();
       }
-      // Après chaque rechargement : on remet les saisies encore en attente
+      // Après chaque rechargement : on remet les saisies encore en attente.
+      // Une saisie de rang r est « dans le Sheet » si la copie rechargée contient plus de r
+      // lignes de ce client (comptage : plusieurs passages identiques sont possibles).
       function fusionnerEnAttente() {
         var maintenant = Date.now();
+        var duServeur = cacheVerif.offre.slice(); // lignes réellement renvoyées par le serveur
         saisiesEnAttente = saisiesEnAttente.filter(function (s) {
           var e = s.entree;
-          var presente = cacheVerif.offre.some(function (o) {
-            return o.pieceNorm === e.pieceNorm && normIdJS(o.nom) === normIdJS(e.nom) && normIdJS(o.prenom) === normIdJS(e.prenom);
-          });
+          var nbServeur = duServeur.filter(function (o) { return memeClient(o, e); }).length;
+          var presente = nbServeur > s.rang;
           if (s.ecriteA && (presente || maintenant - s.ecriteA > 120000)) return false; // le Sheet fait foi
           if (!presente) ajouterAuCache(e);
           return true;
@@ -1215,8 +1231,18 @@
         if (!res) return;
         if (res.trouve) {
           // Niveau 2 : doublon sur l'offre en cours -> modale d'avertissement (prioritaire)
-          var msg = "Ce numéro est déjà enregistré sur cette offre.";
-          if (res.mode === "BLOQUANT") msg += " (sera refusé à la validation)";
+          var max = passagesMaxJS(), nb = (res.matches || []).length;
+          var msg;
+          if (max === 1) {
+            msg = "Ce numéro est déjà enregistré sur cette offre.";
+            if (res.mode === "BLOQUANT") msg += " (sera refusé à la validation)";
+          } else if (nb < max) {
+            msg = "Ce numéro est déjà enregistré " + nb + " fois sur cette offre. Jusqu'à " + max +
+                  " passages par client sont autorisés : vérifiez le nom sur la pièce.";
+          } else {
+            msg = "Ce numéro est déjà enregistré " + nb + " fois sur cette offre : limite de " + max + " passages atteinte" +
+                  (res.mode === "BLOQUANT" ? " (sera refusé à la validation)." : ".");
+          }
           document.getElementById('msgDoublonPiece').innerHTML = msg;
           var html = "";
           (res.matches || []).forEach(function (d) {
@@ -1557,7 +1583,8 @@
         ['TITRE_APP', "Titre de l'onglet du navigateur"],
         ['LIBELLE_MONTANT', "Libellé du montant"],
         ['LIBELLE_NOTES', "Libellé du champ Notes"],
-        ['PRECISION_NOTES', "Précision du champ Notes, entre parenthèses (facultatif)"]
+        ['PRECISION_NOTES', "Précision du champ Notes, entre parenthèses (facultatif)"],
+        ['PASSAGES_MAX', "Passages autorisés par client et par offre (1 à 10)"]
       ];
       function remplirFormulaireReglages(cfg) {
         var zone = document.getElementById('champsReglages');
@@ -1568,6 +1595,7 @@
           lab.textContent = c[1];
           var inp = document.createElement('input');
           inp.type = "text"; inp.id = "cfg_" + c[0]; inp.maxLength = 100; inp.autocomplete = "off";
+          if (c[0] === 'PASSAGES_MAX') { inp.inputMode = "numeric"; inp.maxLength = 2; }
           inp.value = cfg[c[0]] || "";
           inp.style.marginBottom = "10px";
           zone.appendChild(lab); zone.appendChild(inp);

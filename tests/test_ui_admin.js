@@ -23,7 +23,7 @@ const { ouvrir } = require('./navigateur');
     assert.strictEqual(await txt('#resumeSecurite'), 'SIGNALER');
     assert.match(await txt('#resumeOperation'), /→/);
     assert.ok(!(await page.isVisible('text=OUVRIR GOOGLE SHEETS')));
-    await page.click('.tuile:has-text("Sécurité")');
+    await page.click('#modalParametres .tuile:has-text("Sécurité")');
     assert.ok(!(await page.isVisible('.btn-print-jour')), 'sous-écran : accueil masqué');
     assert.match(await txt('#btnMode'), /SIGNALER/);
     assert.strictEqual(await page.inputValue('#modalDateFin'), env.props._store.DATE_FIN);
@@ -35,13 +35,13 @@ const { ouvrir } = require('./navigateur');
     await page.click('[data-ecran="securite"] .retour');
     assert.ok(await page.isVisible('.btn-print-jour') && await page.isVisible('#zoneAdmin .tuiles'));
     // Opération : dates -> résumé de la tuile
-    await page.click('.tuile:has-text("Opération")');
+    await page.click('#modalParametres .tuile:has-text("Opération")');
     await page.fill('#modalDateFin', '2099-12-31'); await page.click('text=METTRE À JOUR LES DATES'); await page.waitForTimeout(150);
     assert.strictEqual(env.props._store.DATE_FIN, '2099-12-31');
     await page.click('[data-ecran="operation"] .retour');
     assert.match(await txt('#resumeOperation'), /31\/12$/);
     // Réglages -> appliqués à l'écran
-    await page.click('.tuile:has-text("Réglages")');
+    await page.click('#modalParametres .tuile:has-text("Réglages")');
     assert.strictEqual(await page.inputValue('#cfg_NOM_STRUCTURE'), "l'Hypermarché Carrefour Vannes");
     await page.fill('#cfg_NOM_OFFRE', 'Bons cadeaux'); await page.fill('#cfg_LIBELLE_MONTANT', 'Valeur');
     await page.uncheck('#cfg_MONTANT_OBLIGATOIRE');
@@ -62,7 +62,7 @@ const { ouvrir } = require('./navigateur');
     assert.ok(await vis('#zoneAdmin'));
     // Session expirée côté serveur -> retour au verrou avec message
     for (const k in env.cacheStore) delete env.cacheStore[k];
-    await page.click('.tuile:has-text("Sécurité")');
+    await page.click('#modalParametres .tuile:has-text("Sécurité")');
     await page.click('#btnMode'); await page.waitForTimeout(200);
     assert.ok(await page.isVisible('.btn-print-jour'), 'session expirée : retour à l\'accueil');
     assert.ok(await vis('#zoneVerrou'));

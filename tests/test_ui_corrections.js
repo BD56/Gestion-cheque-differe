@@ -15,7 +15,7 @@ const { FakeSheet } = require('./fakesheet');
   try {
     await page.click('button[title="Panneau de contrôle"]'); await page.waitForTimeout(100);
     await page.fill('#pinSaisi', '258025'); await page.fill('#pinConfirme', '258025'); await page.click('#btnDeverrouiller'); await page.waitForTimeout(150);
-    await page.click('.tuile:has-text("Saisies")'); await page.waitForTimeout(150);
+    await page.click('#modalParametres .tuile:has-text("Saisies")'); await page.waitForTimeout(150);
     assert.strictEqual(await page.$$eval('#listeSaisies .doublon-carte', x => x.length), 3);
     assert.strictEqual(await page.$$eval('#listeSaisies img', x => x.length), 0, 'pas d\'injection HTML');
     // Recherche
@@ -53,7 +53,7 @@ const { FakeSheet } = require('./fakesheet');
     assert.ok(!(await page.isVisible('#listeSaisies')) && await page.isVisible('#zoneVerrou'));
     // Retour depuis la liste des saisies -> accueil
     await page.fill('#pinSaisi', '258025'); await page.press('#pinSaisi', 'Enter'); await page.waitForTimeout(150);
-    await page.click('.tuile:has-text("Saisies")'); await page.waitForTimeout(100);
+    await page.click('#modalParametres .tuile:has-text("Saisies")'); await page.waitForTimeout(100);
     await page.click('[data-ecran="saisies"] .retour');
     assert.ok(await page.isVisible('#zoneAdmin .tuiles'));
     assert.deepStrictEqual(erreursPage, []);

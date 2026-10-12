@@ -10,7 +10,7 @@
 - Bryan a choisi de **tout perfectionner sur `generalisation`** (Vannes n'a pas d'offre en
   cours) plutôt qu'un correctif séparé sur `main`.
 - **Rien n'a encore été testé sur un vrai Google Sheet** : uniquement en simulation
-  (`tests/`, 21 séries, toutes vertes). Prochaine étape : test sur une copie, puis
+  (`tests/`, 22 séries, toutes vertes). Prochaine étape : test sur une copie, puis
   déploiement à Vannes (`DEPLOIEMENT.md`).
 - Bryan n'a temporairement **pas accès à GitHub** : il a demandé `INSTALLATION.md` en
   fichier ; je lui ai proposé de lui fournir les 4 fichiers à coller (`Code.gs`,
@@ -63,6 +63,13 @@
 7. **Démarrage plus rapide** (signalé par Bryan : la saisie s'affichait puis laissait place
    à « aucune opération ») : dates injectées dans la page, formulaire masqué par défaut,
    un seul appel `demarrage(cle)`, cache chargé seulement si l'offre est en cours.
+8. **Aide ❓ en tuiles** (option B choisie sur maquette) : 2 groupes « 👤 Pour la saisie »
+   (Saisir, Alertes, Vérification du N°, Imprimer, + Scan si OCR actif) et « 🔒 Pour le
+   responsable » (fond jaune : Modes, Code & tablettes, Dates & clôture, Corrections &
+   archives) ; une rubrique par écran (`allerAide`) ; texte relu (vrais titres d'alerte et
+   boutons, vouvoiement). Accordéon supprimé. Le code responsable reste vérifié **côté
+   serveur** (discuté : empreinte d'un code à 6 chiffres cassable, pause/blocage
+   contournables côté tablette).
 
 ## 3. À vérifier sur un vrai Google Sheet (la simulation ne peut pas le garantir)
 1. La tablette **garde sa clé** d'un jour à l'autre (localStorage dans l'iframe Apps Script).

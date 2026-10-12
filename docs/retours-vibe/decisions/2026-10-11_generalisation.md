@@ -86,6 +86,9 @@
   place à « aucune opération en cours ». Dates injectées dans la page par `doGet`,
   formulaire masqué par défaut, un seul appel `demarrage` au lieu de trois, cache de
   vérification chargé seulement si l'offre est en cours.
+- **Aide en tuiles (choix de Bryan, option B sur maquette)** : deux groupes « Pour la
+  saisie » / « Pour le responsable », une rubrique par écran, texte remis à jour et au
+  vouvoiement ; l'impression (libre) passe côté saisie.
 - Constat (non corrigé, panneau laissé tel quel) : dans `Panneau.html`, après une
   clôture, `changerMode()` est appelé → le mode repasse en **BLOQUANT** au lieu de
   rester SIGNALER.

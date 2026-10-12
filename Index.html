@@ -67,17 +67,19 @@
       .texte-mentions { text-align: justify; font-size: 13px; line-height: 1.5; color: #3c4043; }
       .texte-mentions p { margin-bottom: 12px; }
 
-      /* --- CSS ACCORDÉON AIDE --- */
+      /* --- AIDE : tuiles en 2 groupes + sous-écrans (mêmes classes que l'espace responsable) --- */
       .texte-aide { text-align: left; font-size: 14px; color: #3c4043; }
-      .accordion { background-color: #f1f3f4; color: #3c4043; cursor: pointer; padding: 14px; width: 100%; border: none; text-align: left; outline: none; font-size: 15px; font-weight: bold; border-radius: 8px; margin-bottom: 6px; transition: 0.3s; display: flex; justify-content: space-between; align-items: center; }
-      .accordion.active, .accordion:hover { background-color: #e8eaed; }
-      .accordion:after { content: '\002B'; color: #5f6368; font-weight: bold; font-size: 18px; }
-      .accordion.active:after { content: "\2212"; }
-      .panel { padding: 0 15px; background-color: white; max-height: 0; overflow: hidden; transition: max-height 0.2s ease-out; margin-bottom: 5px; border-radius: 0 0 8px 8px; }
-      .panel p { margin-top: 10px; margin-bottom: 5px; }
-      .panel ul { padding-left: 20px; margin-top: 5px; margin-bottom: 15px; }
-      .panel li { margin-bottom: 8px; line-height: 1.4; }
-
+      .texte-aide p { margin-top: 10px; margin-bottom: 5px; }
+      .texte-aide ul { padding-left: 20px; margin-top: 5px; margin-bottom: 15px; }
+      .texte-aide li { margin-bottom: 8px; line-height: 1.4; }
+      .groupe-aide { font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: .5px; color: #5f6368; margin: 4px 2px 8px; }
+      .groupe-aide.resp { color: #b06000; margin-top: 14px; }
+      .tuile.resp { background: #fef7e0; }
+      .tuile.resp:hover { background: #fcefc7; }
+      .encadre-aide { border-radius: 6px; padding: 8px; list-style: none; margin-left: -20px; }
+      .encadre-aide.vert { background: #e6f4ea; border: 1px solid #c3e6cb; }
+      .encadre-aide.orange { background: #fff3cd; border: 1px solid #ffeeba; }
+      .encadre-aide.rouge { background: #fce8e6; border: 1px solid #f5c6cb; }
       #zoneImpression { display: none; }
       @page { size: landscape; margin: 1cm; }
       @media print {
@@ -163,79 +165,126 @@
         <button class="btn-close-modal" onclick="fermerAide()">✖</button>
         <h2 style="margin-top:0; text-align:center; font-size:18px;">❓ Guide d'utilisation et Aide</h2>
         <hr style="border: 0; height: 1px; background: #ddd; margin: 15px 0;">
-        
+
         <div class="texte-aide">
 
-          <div id="aideOCR" style="display:none;">
-          <button class="accordion">📷 Scanner une pièce d'identité</button>
-          <div class="panel">
+          <!-- ===== ACCUEIL : tuiles en 2 groupes ===== -->
+          <div class="sous-ecran actif" data-aide="accueil">
+            <div class="groupe-aide">👤 Pour la saisie</div>
+            <div class="tuiles">
+              <button class="tuile" onclick="allerAide('saisir')"><span class="ico">📝</span>Saisir un client<small>formulaire, validation</small></button>
+              <button class="tuile" onclick="allerAide('alertes')"><span class="ico">🚨</span>Les alertes<small>doublon, usurpation, homonyme</small></button>
+              <button class="tuile" onclick="allerAide('numero')"><span class="ico">🔎</span>Vérification du N°<small>dès la saisie du numéro</small></button>
+              <button class="tuile" onclick="allerAide('imprimer')"><span class="ico">🖨️</span>Imprimer<small>jour, jour précédent</small></button>
+              <button class="tuile" id="aideOCR" style="display:none;" onclick="allerAide('scan')"><span class="ico">📷</span>Scanner une pièce<small>lecture automatique</small></button>
+            </div>
+            <div class="groupe-aide resp">🔒 Pour le responsable (code)</div>
+            <div class="tuiles">
+              <button class="tuile resp" onclick="allerAide('modes')"><span class="ico">🚦</span>Modes de sécurité<small>signaler ou bloquer</small></button>
+              <button class="tuile resp" onclick="allerAide('code')"><span class="ico">🔑</span>Code &amp; tablettes<small>code, autorisations</small></button>
+              <button class="tuile resp" onclick="allerAide('dates')"><span class="ico">📅</span>Dates &amp; clôture<small>lancer, prolonger, finir</small></button>
+              <button class="tuile resp" onclick="allerAide('corrections')"><span class="ico">📋</span>Corrections &amp; archives<small>modifier, anciennes offres</small></button>
+            </div>
+          </div>
+
+          <div class="sous-ecran" data-aide="saisir">
+            <button class="retour" onclick="allerAide('accueil')">← Retour</button>
+            <h3 class="titre-ecran">📝 Saisir un client</h3>
+            <ul>
+              <li>Remplissez le <strong>N° de pièce</strong>, le <strong>Nom</strong>, le <strong>Prénom</strong>, le montant et les notes. La touche <strong>Entrée</strong> passe au champ suivant.</li>
+              <li>Touchez <strong>VÉRIFIER ET VALIDER</strong>.</li>
+              <li class="encadre-aide vert">🟢 <strong>Bandeau vert</strong> : saisie enregistrée. Le formulaire se vide pour le client suivant.</li>
+              <li>En dehors des dates de l'offre, la saisie est impossible : « 🛑 Aucune opération en cours ».</li>
+            </ul>
+          </div>
+
+          <div class="sous-ecran" data-aide="alertes">
+            <button class="retour" onclick="allerAide('accueil')">← Retour</button>
+            <h3 class="titre-ecran">🚨 Les alertes</h3>
+            <p>Si le client pose problème, un encadré s'affiche à la place du formulaire :</p>
+            <ul>
+              <li class="encadre-aide rouge">🛑 <strong>ALERTE FRAUDE</strong> : ce client (même nom + même pièce) a déjà profité de l'offre.</li>
+              <li class="encadre-aide rouge">🛑 <strong>ANOMALIE GRAVE</strong> : ce N° de pièce est déjà enregistré <strong>sous un autre nom</strong> (usurpation possible).</li>
+              <li class="encadre-aide orange">⚠️ <strong>HOMONYME DÉTECTÉ</strong> : même nom avec une autre pièce. Demandez une 2ᵉ pièce d'identité avant de forcer.</li>
+              <li>Vous choisissez : <strong>ABANDONNER</strong> ou <strong>FORCER L'AJOUT</strong> (la ligne est alors marquée).</li>
+              <li>En mode <strong>BLOQUANT</strong>, les alertes rouges deviennent <strong>SAISIE REFUSÉE</strong> : impossible de forcer.</li>
+              <li><strong>Plusieurs passages autorisés</strong> (selon le réglage) : un même client peut revenir jusqu'à ce nombre, noté « ℹ️ Passage 2/3 ». Au-delà : ALERTE FRAUDE.</li>
+              <li>Rarement, une fenêtre <strong>rouge</strong> apparaît juste après une saisie acceptée : le serveur a trouvé un doublon (par exemple saisi au même moment sur une autre tablette). Choisissez <strong>NE PAS ENREGISTRER</strong> ou <strong>FORCER L'AJOUT</strong>.</li>
+            </ul>
+          </div>
+
+          <div class="sous-ecran" data-aide="numero">
+            <button class="retour" onclick="allerAide('accueil')">← Retour</button>
+            <h3 class="titre-ecran">🔎 Vérification du N°</h3>
+            <ul>
+              <li>Dès que vous quittez le champ <strong>N° de pièce</strong>, l'application le vérifie.</li>
+              <li><strong>Déjà enregistré sur l'offre en cours</strong> : une fenêtre vous le signale avec la ligne concernée. Recopiez quand même le nom lu sur la pièce : la décision se fait à la validation.</li>
+              <li><strong>Client d'une offre passée</strong> : le Nom et le Prénom se pré-remplissent (ou une fenêtre vous le propose, selon le réglage). <strong>Vérifiez-les avec la pièce.</strong></li>
+            </ul>
+          </div>
+
+          <div class="sous-ecran" data-aide="imprimer">
+            <button class="retour" onclick="allerAide('accueil')">← Retour</button>
+            <h3 class="titre-ecran">🖨️ Imprimer</h3>
+            <ul>
+              <li>Touchez <strong>⚙️</strong> puis <strong>🖨️ IMPRIMER AUJOURD'HUI</strong>.</li>
+              <li><strong>Un jour oublié</strong> : dans ⚙️, choisissez la date sous « Imprimer un jour précédent » puis <strong>IMPRIMER</strong>.</li>
+              <li>Aucun code n'est demandé pour imprimer.</li>
+            </ul>
+          </div>
+
+          <div class="sous-ecran" data-aide="scan">
+            <button class="retour" onclick="allerAide('accueil')">← Retour</button>
+            <h3 class="titre-ecran">📷 Scanner une pièce d'identité</h3>
             <ul>
               <li><strong>Quelle face ?</strong> Le côté qui porte la <strong>bande de symboles &lt;&lt;&lt;</strong> (en bas du document). Sur les <strong>cartes</strong> (CNI, titre de séjour), c'est en général <strong>le dos</strong> ; sur le <strong>passeport</strong>, la <strong>page avec la photo</strong>.</li>
               <li><strong>Comment faire :</strong> touchez <strong>📷</strong> (en haut), photographiez <strong>cette bande</strong> bien à plat → le <strong>Nom</strong>, le <strong>Prénom</strong> et le <strong>N° de pièce</strong> se remplissent tout seuls.</li>
               <li><strong>Pièces reconnues :</strong> Passeport, Nouvelle carte d'identité, Ancienne carte d'identité, Titre de séjour. <em>(Ne fonctionne pas avec la Carte Vitale ni le permis de conduire.)</em></li>
               <li><strong>Pour une bonne lecture :</strong> la bande doit <strong>remplir la largeur</strong>, être <strong>nette</strong>, <strong>bien éclairée</strong>, <strong>sans reflet</strong>, et dans le <strong>sens de lecture</strong>.</li>
-              <li style="background:#fff3cd; border:1px solid #ffeeba; border-radius:6px; padding:8px; list-style:none; margin-left:-20px;">⚠️ <strong>Vérifiez toujours :</strong> relisez le <strong>Nom</strong>, le <strong>Prénom</strong> et le <strong>N° de pièce</strong>, et corrigez si besoin <strong>avant de valider</strong>.</li>
+              <li class="encadre-aide orange">⚠️ <strong>Vérifiez toujours :</strong> relisez le <strong>Nom</strong>, le <strong>Prénom</strong> et le <strong>N° de pièce</strong>, et corrigez si besoin <strong>avant de valider</strong>.</li>
               <li><strong>Si ça ne marche pas :</strong> reprenez la photo ou <strong>saisissez à la main</strong>. Le scan est une aide, pas une obligation.</li>
               <li><strong>1ᵉʳ usage :</strong> le tout premier scan prend quelques secondes (chargement du lecteur), ensuite c'est rapide.</li>
             </ul>
           </div>
-          </div>
 
-          <button class="accordion">📝 Saisie et Alertes</button>
-          <div class="panel">
+          <div class="sous-ecran" data-aide="modes">
+            <button class="retour" onclick="allerAide('accueil')">← Retour</button>
+            <h3 class="titre-ecran">🚦 Modes de sécurité</h3>
             <ul>
-              <li><strong>Comment faire :</strong> Remplissez les informations du formulaire, puis cliquez sur <strong>Valider</strong>.</li>
-              <li>🟢 <strong>Bandeau Vert :</strong> Saisie acceptée et enregistrée. Aucun doublon détecté.</li>
-              <li>🟠 <strong>Bandeau Orange (Homonyme possible) :</strong> Le système a détecté le <strong>même Nom</strong>, mais avec une <strong>Pièce d'identité différente</strong>.</li>
-              <li>🔴 <strong>Bandeau Rouge (Doublon ou Usurpation) :</strong> Ce <strong>Numéro de Pièce</strong> a déjà été enregistré (soit par le même client, soit sous un nom différent).</li>
-              <li>🔁 <strong>Plusieurs passages autorisés :</strong> si le réglage le permet (⚙️ → Réglages, « Passages autorisés par client »), un même client (même nom + même pièce) peut revenir jusqu'à ce nombre ; ses passages sont notés « ℹ️ Passage 2/3 ». Au-delà : doublon. Une pièce sous un autre nom, ou le même nom avec une autre pièce, reste toujours signalé.</li>
+              <li>🟡 <strong>SIGNALER</strong> : l'application alerte mais laisse <strong>forcer</strong> l'ajout.</li>
+              <li>🔴 <strong>BLOQUANT</strong> : les alertes rouges refusent la saisie, sans possibilité de forcer. L'homonyme (orange) reste forçable.</li>
+              <li>Réglage : ⚙️ → Espace responsable → tuile <strong>🛡️ Sécurité</strong>.</li>
             </ul>
           </div>
 
-          <button class="accordion">🔎 Vérifications automatiques (N° de pièce)</button>
-          <div class="panel">
+          <div class="sous-ecran" data-aide="code">
+            <button class="retour" onclick="allerAide('accueil')">← Retour</button>
+            <h3 class="titre-ecran">🔑 Code &amp; tablettes</h3>
             <ul>
-              <li><strong>Doublon sur l'offre en cours :</strong> dès que tu saisis le <strong>N° de pièce</strong> (puis passes au champ suivant), s'il est <strong>déjà enregistré sur cette offre</strong>, une fenêtre t'avertit et montre la ligne concernée. Tu peux corriger ou continuer — la décision finale reste à la validation.</li>
-              <li><strong>Client déjà venu (offres précédentes) :</strong> si le numéro est connu d'une <strong>offre passée</strong>, le <strong>Nom</strong> et le <strong>Prénom</strong> se <strong>pré-remplissent</strong> automatiquement (ou une fenêtre te le propose, selon le réglage ⚙️). <strong>Vérifie toujours</strong> avec le document avant de valider.</li>
+              <li><strong>Code responsable</strong> : 6 chiffres. Il ouvre l'espace responsable (mode, dates, corrections, archives, réglages, clôture). À la 1ʳᵉ utilisation, l'application demande de le choisir.</li>
+              <li>L'espace se reverrouille à la fermeture du panneau ou après 10 min sans action.</li>
+              <li>Après un code faux, patientez 10 s ; 5 codes faux bloquent 15 min.</li>
+              <li><strong>Tablettes</strong> : chacune est autorisée une fois avec le code. Une tablette non autorisée ne voit rien, même avec le lien. Liste et retrait : tuile <strong>🔑 Code &amp; tablettes</strong>.</li>
+              <li><strong>Code oublié</strong> : il se réinitialise depuis le panneau ⚙️ du Google Sheets (personnes ayant accès au fichier).</li>
             </ul>
           </div>
 
-          <button class="accordion">🚦 Les Modes de Sécurité (Bouton ⚙️)</button>
-          <div class="panel">
-            <p>Dans l'espace responsable (⚙️, code responsable), vous définissez la rigueur du système :</p>
+          <div class="sous-ecran" data-aide="dates">
+            <button class="retour" onclick="allerAide('accueil')">← Retour</button>
+            <h3 class="titre-ecran">📅 Dates &amp; clôture</h3>
             <ul>
-              <li>🟡 <strong>Mode SIGNALER :</strong> Souple. L'application vous alerte (Orange ou Rouge) mais vous laisse le bouton pour "Forcer" la validation manuellement.</li>
-              <li>🔴 <strong>Mode BLOQUANT :</strong> Strict. En cas d'alerte Rouge (doublon ou pièce déjà utilisée), la saisie est refusée : aucun bouton pour forcer.</li>
+              <li><strong>Lancer ou prolonger</strong> : ⚙️ → Espace responsable → tuile <strong>📅 Opération</strong>, puis modifiez les dates.</li>
+              <li><strong>Fin de l'offre</strong> : rien à faire. La nuit suivant le dernier jour, l'offre est clôturée et archivée automatiquement.</li>
+              <li>Clôture immédiate possible : bouton <strong>⚠️ CLÔTURER L'OFFRE</strong> de l'espace responsable.</li>
             </ul>
           </div>
 
-          <button class="accordion">🔒 Espace responsable (code)</button>
-          <div class="panel">
+          <div class="sous-ecran" data-aide="corrections">
+            <button class="retour" onclick="allerAide('accueil')">← Retour</button>
+            <h3 class="titre-ecran">📋 Corrections &amp; archives</h3>
             <ul>
-              <li><strong>Libre pour tous :</strong> la saisie et l'impression (⚙️, en haut).</li>
-              <li><strong>Avec le code responsable :</strong> mode de sécurité, dates de l'offre, corrections, archives, réglages, clôture.</li>
-              <li><strong>1ʳᵉ utilisation :</strong> l'application demande de choisir le code (6 chiffres).</li>
-              <li><strong>Tablettes autorisées :</strong> chaque tablette doit être autorisée une fois par un responsable (avec le code). Une tablette non autorisée ne voit rien, même avec le lien. Liste et retrait : ⚙️ → Espace responsable → <strong>🔑 Code &amp; tablettes</strong>.</li>
-              <li><strong>Sécurité :</strong> l'espace se reverrouille à la fermeture du panneau ou après 10 min sans action. Après un code faux, il faut patienter 10 s ; 5 codes faux bloquent 15 min.</li>
-              <li><strong>Code oublié :</strong> il se réinitialise depuis le panneau ⚙️ du Google Sheets (réservé aux personnes qui ont accès au fichier).</li>
-            </ul>
-          </div>
-
-          <button class="accordion">📅 Dates de l'offre et Clôture automatique</button>
-          <div class="panel">
-            <ul>
-              <li><strong>Lancer ou modifier :</strong> Cliquez sur ⚙️, ouvrez l'espace responsable puis la tuile <strong>📅 Opération</strong>. S'il y a une erreur ou une prolongation, modifiez simplement la date de fin ici.</li>
-              <li><strong>Fin de l'offre (Auto-Pilote) :</strong> Vous n'avez rien à faire ! L'opération se clôture, s'archive et verrouille la tablette <strong>toute seule</strong> la nuit suivant le dernier jour.</li>
-            </ul>
-          </div>
-
-          <button class="accordion">🖨️ Corrections, Impressions et Archives</button>
-          <div class="panel">
-            <ul>
-              <li><strong>Corriger ou supprimer une saisie :</strong> ⚙️ → espace responsable → tuile <strong>📋 Saisies</strong>. Recherchez la ligne par nom ou n° de pièce. Une correction est <strong>re-vérifiée</strong> (doublon, usurpation, homonyme) comme une nouvelle saisie.</li>
-              <li><strong>Imprimer le jour actuel :</strong> Cliquez sur ⚙️ puis sur le bouton bleu <strong>🖨️ IMPRIMER AUJOURD'HUI</strong> pour sortir la liste des saisies du jour.</li>
-              <li><strong>Imprimer un jour oublié :</strong> Toujours dans ⚙️, utilisez le calendrier <em>"Imprimer un jour précédent"</em> pour sortir la liste d'une journée passée.</li>
-              <li><strong>Imprimer une ancienne offre clôturée :</strong> ⚙️ → espace responsable → tuile <strong>🗄️ Archives</strong>, choisissez l'offre puis imprimez.</li>
+              <li><strong>Corriger ou supprimer une saisie</strong> : tuile <strong>📋 Saisies</strong>, recherchez par nom ou N°. Une correction est <strong>re-vérifiée</strong> comme une nouvelle saisie.</li>
+              <li><strong>Anciennes offres</strong> : tuile <strong>🗄️ Archives</strong>, choisissez l'offre puis imprimez.</li>
             </ul>
           </div>
 
@@ -579,7 +628,13 @@
       };
 
       // NOUVEAU : Fonctions pour ouvrir et fermer l'aide
-      function ouvrirAide() { document.getElementById('modalAide').style.display = "flex"; }
+      function ouvrirAide() { allerAide('accueil'); document.getElementById('modalAide').style.display = "flex"; }
+      // Aide : accueil (tuiles) <-> une rubrique par écran
+      function allerAide(nom) {
+        var ecrans = document.querySelectorAll('#modalAide .sous-ecran');
+        for (var i = 0; i < ecrans.length; i++) ecrans[i].classList.toggle('actif', ecrans[i].getAttribute('data-aide') === nom);
+        document.querySelector('#modalAide .modal-content').scrollTop = 0;
+      }
       function fermerAide() { document.getElementById('modalAide').style.display = "none"; }
 
       function ouvrirPanneau() {
@@ -1034,20 +1089,6 @@
             }, function () { document.body.style.cursor = "default"; });
         }
       }
-
-      // --- ANIMATION DE L'ACCORDÉON (AIDE) ---
-    var accordions = document.getElementsByClassName("accordion");
-    for (var i = 0; i < accordions.length; i++) {
-      accordions[i].addEventListener("click", function() {
-        this.classList.toggle("active");
-        var panel = this.nextElementSibling;
-        if (panel.style.maxHeight) {
-          panel.style.maxHeight = null;
-        } else {
-          panel.style.maxHeight = panel.scrollHeight + "px";
-        }
-      });
-    }
 
     // --- GESTION DE L'AFFICHAGE ET DU VERROUILLAGE ---
       function formaterDateAffichage(dateString) {

@@ -25,7 +25,7 @@ const { ouvrir } = require('./navigateur');
     // Espace responsable -> Code & tablettes : cette tablette listée, puis « tout retirer »
     await page.click('button[title="Panneau de contrôle"]'); await page.waitForTimeout(150);
     await page.fill('#pinSaisi', '258025'); await page.press('#pinSaisi', 'Enter'); await page.waitForTimeout(200);
-    await page.click('.tuile:has-text("Code")'); await page.waitForTimeout(200);
+    await page.click('#modalParametres .tuile:has-text("Code")'); await page.waitForTimeout(200);
     assert.match(await txt('#listeTablettes'), /Caisse centrale 1\s+\(cette tablette\)/);
     await page.click('text=RETIRER TOUTES LES TABLETTES'); await page.waitForTimeout(250);
     assert.ok(await vis('#ecranAppairage') && !(await vis('#modalParametres')));

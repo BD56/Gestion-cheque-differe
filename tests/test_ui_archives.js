@@ -15,7 +15,7 @@ const { FakeSheet } = require('./fakesheet');
     assert.throws(() => env.ctx.donneesArchive('Saisies', j), /inconnue/); // pas d'accès à d'autres onglets
     await page.click('button[title="Panneau de contrôle"]'); await page.waitForTimeout(100);
     await page.fill('#pinSaisi', '258025'); await page.press('#pinSaisi', 'Enter'); await page.waitForTimeout(150);
-    await page.click('.tuile:has-text("Archives")'); await page.waitForTimeout(150);
+    await page.click('#modalParametres .tuile:has-text("Archives")'); await page.waitForTimeout(150);
     const options = await page.$$eval('#selArchive option', os => os.map(o => o.textContent));
     assert.deepStrictEqual(options, ['Clôturée le 15/09/2026 à 23h05 — 1 ligne(s)', 'Clôturée le 01/03/2026 à 23h05 — 2 ligne(s)']);
     await page.selectOption('#selArchive', 'Archives_01-03-2026_23-05');

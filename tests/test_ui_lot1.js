@@ -24,12 +24,14 @@ async function remplir(page, piece, nom, prenom, montant) {
     assert.strictEqual(await page.isVisible('#envoiEnCours'), false, 'plus « en cours d\'envoi »');
     // Réseau revenu : RÉESSAYER -> enregistrée
     env.ctx.traiterSaisie = vrai; env.ctx.chargerCacheVerif = vraiCache;
+    await page.waitForTimeout(900); // fenêtre lue (appuis ignorés 0,8 s)
     await page.click('#alerteServeurReessai >> text=RÉESSAYER'); await page.waitForTimeout(300);
     assert.strictEqual(env.sheets.Saisies.getLastRow(), 2, 'saisie enregistrée au 2e envoi');
     assert.ok(!(await page.isVisible('#modalAlerteServeur')));
     // Ressaisie sans réseau, puis ABANDONNER : ressaisir n'est plus pris pour un doublon d'elle-même
     env.ctx.traiterSaisie = ko; env.ctx.chargerCacheVerif = ko;
     await remplir(page, 'QQ1', 'MARTIN', 'ANNE'); await page.click('#btnValider'); await page.waitForTimeout(300);
+    await page.waitForTimeout(900); // fenêtre lue (appuis ignorés 0,8 s)
     await page.click('#alerteServeurReessai >> text=ABANDONNER');
     env.ctx.traiterSaisie = vrai; env.ctx.chargerCacheVerif = vraiCache;
     await page.evaluate(() => rechargerCacheVerif()); await page.waitForTimeout(150);

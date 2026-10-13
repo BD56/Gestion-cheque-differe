@@ -58,6 +58,7 @@
     <button class="btn" id="btnMode" onclick="changerMode()">⏳ Chargement Mode...</button>
     <button class="btn btn-archive" onclick="cloturer()">⚠️ CLÔTURER L'OFFRE</button>
     <button class="btn" style="background-color: #5f6368;" onclick="reinitialiserPin()">🔑 RÉINITIALISER LE CODE RESPONSABLE</button>
+    <button class="btn" style="background-color: #5f6368;" onclick="retirerTablettes()">📱 RETIRER TOUTES LES TABLETTES</button>
 
     <script>
       window.onload = function() {
@@ -67,18 +68,26 @@
         var jour = ("0" + auj.getDate()).slice(-2);
         document.getElementById("dateImpression").value = annee + "-" + mois + "-" + jour;
 
-        google.script.run.withSuccessHandler(majMode).getInfosPanneau();
+        google.script.run.withSuccessHandler(majMode).withFailureHandler(erreurChargement).getInfosPanneau();
       };
+      function erreurChargement(err) {
+        document.getElementById('btnMode').innerHTML = "⚠️ " + (err && err.message ? err.message : "Erreur de chargement");
+      }
 
       // Les actions sensibles sont réservées aux éditeurs du classeur (contrôle serveur).
       function echec(err) {
         alert("⚠️ " + (err && err.message ? err.message : err));
-        google.script.run.withSuccessHandler(majMode).getInfosPanneau();
+        google.script.run.withSuccessHandler(majMode).withFailureHandler(erreurChargement).getInfosPanneau();
       }
 
       function reinitialiserPin() {
         if (!confirm("Effacer le code responsable ?\n\nUn code d'activation va s'afficher : il permet de créer le nouveau code depuis l'application (n'importe quelle tablette).")) return;
         google.script.run.withSuccessHandler(function (msg) { alert(msg); }).withFailureHandler(echec).reinitialiserPinPanneau();
+      }
+
+      function retirerTablettes() {
+        if (!confirm("Retirer TOUTES les tablettes ?\n\nChacune devra être autorisée à nouveau avec le code responsable (liste pleine, tablettes perdues…).")) return;
+        google.script.run.withSuccessHandler(function (msg) { alert(msg); }).withFailureHandler(echec).retirerToutesTablettesPanneau();
       }
 
       function imprimerAuj() { google.script.run.allerVersImpression("aujourdhui"); }
@@ -104,9 +113,8 @@
         if(confirm("🚨 CLÔTURE DE L'OFFRE\n\nÊtes-vous sûr de vouloir archiver et vider la liste ?")) {
           google.script.run.withSuccessHandler(function(msg){
               alert(msg); 
-              // la clôture remet le mode à SIGNALER : on rafraîchit l'affichage
-              // (avant : changerMode() rebasculait à tort en BLOQUANT)
-              google.script.run.withSuccessHandler(majMode).getInfosPanneau();
+              // le mode est conservé à la clôture : simple rafraîchissement de l'affichage
+              google.script.run.withSuccessHandler(majMode).withFailureHandler(erreurChargement).getInfosPanneau();
               
               // NOUVEAU : Met à jour l'affichage des dates sur le panneau (ça les vide)
               document.getElementById('dateDebut').value = "";
@@ -120,6 +128,8 @@
       google.script.run.withSuccessHandler(function(dates) {
         document.getElementById('dateDebut').value = dates.debut;
         document.getElementById('dateFin').value = dates.fin;
+      }).withFailureHandler(function (err) {
+        document.getElementById('msgDates').textContent = "⚠️ " + (err && err.message ? err.message : "Dates non chargées");
       }).getDatesOperation();
 
       function sauvegarderDatesPC() {
@@ -128,8 +138,9 @@
         var msg = document.getElementById('msgDates');
         msg.style.color = "orange"; msg.innerHTML = "Enregistrement...";
         google.script.run.withSuccessHandler(function(rep) {
-          msg.style.color = "green"; msg.innerHTML = rep;
-          setTimeout(function(){ msg.innerHTML = ""; }, 3000);
+          var alerte = rep.indexOf('⚠️') !== -1;
+          msg.style.color = alerte ? "#b06000" : "green"; msg.style.whiteSpace = "pre-line"; msg.textContent = rep;
+          setTimeout(function(){ msg.textContent = ""; }, alerte ? 15000 : 3000);
         }).withFailureHandler(function (err) { msg.innerHTML = ""; echec(err); }).setDatesOperation(debut, fin);
       }
     </script>

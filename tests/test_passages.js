@@ -64,7 +64,7 @@ const saisir = (e, n, p, pi, notes) => J(e.ctx.traiterSaisie(n, p, pi, '10', not
   e = env0(2); saisir(e, 'DUPONT', 'JEAN', 'AB1');
   const Sh = e.sheets.Saisies; Sh._set(3, 2, 'DUPONT'); Sh._set(3, 3, 'JEAN'); Sh._set(3, 4, 'AB1');
   e.ctx.onEdit({ range: Object.assign(Sh.getRange(3, 4), { getSheet: () => Sh }), value: 'AB1' });
-  assert.strictEqual(Sh.getRange(3, 6).getValue(), '', '2e passage autorisé : pas d\'alerte');
+  assert.strictEqual(Sh.getRange(3, 6).getValue(), 'ℹ️ Passage 2/2', '2e passage autorisé : noté comme dans l\'application, sans alerte');
   Sh._set(4, 2, 'DUPONT'); Sh._set(4, 3, 'JEAN'); Sh._set(4, 4, 'AB1');
   e.ctx.onEdit({ range: Object.assign(Sh.getRange(4, 4), { getSheet: () => Sh }), value: 'AB1' });
   assert.match(Sh.getRange(4, 6).getValue(), /Cas A/);

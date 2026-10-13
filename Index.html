@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
   <head>
     <base target="_top">
     <style>
@@ -86,7 +86,7 @@
         html, body { height: auto !important; min-height: auto !important; overflow: visible !important; }
         body { background-color: white !important; display: block !important; padding: 0 !important; margin: 0 !important; }
         .container, .footer-legal { display: none !important; }
-        #modalParametres, #modalMentions, #modalAide, #modalAlerteServeur, #ecranAppairage { display: none !important; }
+        #modalParametres, #modalMentions, #modalAide, #modalAlerteServeur, #ecranAppairage, #modalDoublonPiece, #modalAnnuaire { display: none !important; }
         #zoneImpression { display: block !important; width: 100%; }
         .table-print { width: 100%; border-collapse: collapse; font-family: sans-serif; font-size: 12px; }
         .table-print th, .table-print td { border: 1px solid #000; padding: 8px; text-align: left; }
@@ -116,15 +116,15 @@
         <div id="indiceAnnuaire" style="display:none; font-size:13px; text-align:center; color:#188038; background:#e6f4ea; border-radius:6px; padding:6px; margin-bottom:10px;">⤷ Nom/Prénom pré-remplis depuis l'historique — vérifiez.</div>
         <div class="input-group">
           <label>N° de Pièce *</label>
-          <input type="text" id="piece" placeholder="Saisir le numéro..." autocomplete="off">
+          <input type="text" id="piece" placeholder="Saisir le numéro..." autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false">
         </div>
         <div class="input-group">
           <label>Nom *</label>
-          <input type="text" id="nom" placeholder="Ex: DUPONT" autocomplete="off">
+          <input type="text" id="nom" placeholder="Ex. : DUPONT" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false">
         </div>
         <div class="input-group">
           <label>Prénom *</label>
-          <input type="text" id="prenom" placeholder="Ex: JEAN" autocomplete="off">
+          <input type="text" id="prenom" placeholder="Ex. : JEAN" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false">
         </div>
         <div class="input-group">
           <label id="lblMontant"><?= cfg.LIBELLE_MONTANT ?> (€)<?= cfg.MONTANT_OBLIGATOIRE === "NON" ? "" : " *" ?></label>
@@ -195,7 +195,7 @@
               <li>Remplissez le <strong>N° de pièce</strong>, le <strong>Nom</strong>, le <strong>Prénom</strong>, le montant et les notes. La touche <strong>Entrée</strong> passe au champ suivant.</li>
               <li>Touchez <strong>VÉRIFIER ET VALIDER</strong>.</li>
               <li class="encadre-aide vert">🟢 <strong>Bandeau vert</strong> : saisie enregistrée. Le formulaire se vide pour le client suivant.</li>
-              <li>En dehors des dates de l'offre, la saisie est impossible : « 🛑 Aucune opération en cours ».</li>
+              <li>En dehors des dates de l'offre, la saisie est impossible : le haut de l'écran indique « Opération à venir », « Opération terminée » ou « Aucune opération en cours ».</li>
             </ul>
           </div>
 
@@ -436,7 +436,7 @@
     <div id="modalMentions" class="modal-overlay">
       <div class="modal-content" style="max-width: 500px;">
         <button class="btn-close-modal" onclick="fermerMentions()">✖</button>
-        <h2 style="margin-top:0; text-align:center; font-size:18px;">⚖️ Mentions Légales</h2>
+        <h2 style="margin-top:0; text-align:center; font-size:18px;">⚖️ Mentions légales</h2>
         <hr style="border: 0; height: 1px; background: #ddd; margin: 15px 0;">
         
         <div class="texte-mentions">
@@ -639,7 +639,13 @@
             fusionnerEnAttente();
           }
           appliquerDates(rep.dates);
-        }).withFailureHandler(siNonAutorisee).demarrage(CLE_TABLETTE);
+        }).withFailureHandler(function (err) {
+          if (siNonAutorisee(err)) return;
+          // serveur injoignable : on le dit, et on réessaie tout seul
+          document.getElementById('btnMode').innerHTML = "⚠️ Serveur injoignable";
+          afficherMessage("⚠️ Connexion au serveur impossible : nouvel essai dans 20 s (vérifiez le Wi-Fi).", "error");
+          setTimeout(function () { if (CLE_TABLETTE) demarrerApplication(); }, 20000);
+        }).demarrage(CLE_TABLETTE);
       }
 
       window.onload = function() {
@@ -651,7 +657,7 @@
         if (CLE_TABLETTE) demarrerApplication(); else afficherEcranAppairage();
       };
 
-      // NOUVEAU : Fonctions pour ouvrir et fermer l'aide
+      // Aide : ouvrir / fermer
       function ouvrirAide() { allerAide('accueil'); document.getElementById('modalAide').style.display = "flex"; }
       // Aide : accueil (tuiles) <-> une rubrique par écran
       function allerAide(nom) {
@@ -674,6 +680,7 @@
       function ouvrirMentions() { document.getElementById('modalMentions').style.display = "flex"; }
       function fermerMentions() { document.getElementById('modalMentions').style.display = "none"; }
 
+      var derniereValidation = 0;
       function envoyerSaisie() {
         memNom = document.getElementById('nom').value;
         memPrenom = document.getElementById('prenom').value;
@@ -681,7 +688,11 @@
         memMontant = document.getElementById('montant').value;
         memNotes = document.getElementById('notes').value;
 
-        if (memNom === "" || memPrenom === "" || memPiece === "" || (MONTANT_OBLIGATOIRE && memMontant === "")) {
+        // Double appui sur VALIDER : le 2e arrive sur le formulaire tout juste vidé -> ignoré
+        var toutVide = (memNom + memPrenom + memPiece + memMontant + memNotes).trim() === "";
+        if (toutVide && Date.now() - derniereValidation < 2000) return;
+        // « vide » = rien de comparable (espaces, tirets seuls…), comme le serveur
+        if (normIdJS(memNom) === "" || normIdJS(memPrenom) === "" || normPieceJS(memPiece) === "" || (MONTANT_OBLIGATOIRE && memMontant.trim() === "")) {
           afficherMessage(MONTANT_OBLIGATOIRE
             ? "Veuillez remplir le Nom, Prénom, N° de Pièce et le " + CONFIG.LIBELLE_MONTANT + "."
             : "Veuillez remplir le Nom, Prénom et N° de Pièce.", "error");
@@ -724,6 +735,7 @@
         var reponse = analyserDoublonLocal(memNom, memPrenom, memPiece);
         if (reponse.status === "SUCCES") {
           afficherMessage(reponse.message, "success");
+          derniereValidation = Date.now();
           reinitialiserFormulaire();
           envoyerEnArrierePlan(saisie);
         } else {
@@ -750,6 +762,7 @@
         
         if (reponse.status === "SUCCES") {
           afficherMessage(reponse.message, "success");
+          derniereValidation = Date.now();
           reinitialiserFormulaire();
           rechargerCacheVerif();
         } else if (reponse.status === "CONFIRMATION") {
@@ -819,7 +832,7 @@
       function envoyerForcage(saisie) {
         saisie.forcee = true;
         saisie.id = ajoutOptimisteCache(saisie);
-        afficherMessage("⚠️ Saisie forcée et enregistrée en rouge.", "error");
+        afficherMessage("⚠️ Saisie forcée envoyée (marquée en rouge).", "error");
         google.script.run
           .withSuccessHandler(function (rep) { confirmerForcage(rep, saisie); })
           .withFailureHandler(function (err) { echecEnregistrement(err, saisie); })
@@ -868,11 +881,11 @@
         if (mode === "BLOQUANT") {
           if (pireCas === 'A') { isBloque = true; titre = "🛑 SAISIE REFUSÉE"; msg = "Ce client a déjà profité de l'offre." + limiteTxt; }
           else if (pireCas === 'B') { isBloque = true; titre = "🛑 SAISIE REFUSÉE"; msg = "Ce numéro de pièce d'identité est déjà associé à un autre client."; }
-          else { couleur = "ORANGE"; titre = "⚠️ HOMONYME DÉTECTÉ"; msg = "Un client porte ce nom avec une autre pièce. Demandez une 2ème pièce d'identité pour confirmer qu'il s'agit bien d'une personne différente avant de forcer l'ajout."; }
+          else { couleur = "ORANGE"; titre = "⚠️ HOMONYME DÉTECTÉ"; msg = "Un client porte ce nom avec une autre pièce. Demandez une 2e pièce d'identité pour confirmer qu'il s'agit bien d'une personne différente avant de forcer l'ajout."; }
         } else {
           if (pireCas === 'A') { titre = "🛑 ALERTE FRAUDE"; msg = "Ce client a déjà été enregistré avec ce numéro de pièce d'identité." + limiteTxt; }
           else if (pireCas === 'B') { titre = "🛑 ANOMALIE GRAVE"; msg = "Ce numéro de pièce d'identité est déjà utilisé dans la base sous un autre nom !"; }
-          else { couleur = "ORANGE"; titre = "⚠️ HOMONYME DÉTECTÉ"; msg = "Un client porte ce nom avec une autre pièce. Demandez une 2ème pièce d'identité pour confirmer qu'il s'agit bien d'une personne différente avant de forcer l'ajout."; }
+          else { couleur = "ORANGE"; titre = "⚠️ HOMONYME DÉTECTÉ"; msg = "Un client porte ce nom avec une autre pièce. Demandez une 2e pièce d'identité pour confirmer qu'il s'agit bien d'une personne différente avant de forcer l'ajout."; }
         }
         if (isBloque) return { status: "BLOQUE", titre: titre, message: msg, details: details };
         return { status: "CONFIRMATION", titre: titre, message: msg, couleur: couleur, details: details,
@@ -1032,15 +1045,22 @@
         document.getElementById('alerteServeurReessai').style.display = reessai ? "flex" : "none";
         document.getElementById('btnAlerteOk').style.display = (forcable || reessai) ? "none" : "block";
         m.style.display = "flex";
+        alerteAfficheeA = Date.now();
       }
-      function fermerAlerteServeur() { alerteSuivante(); }
+      // Une fenêtre qui vient de s'ouvrir ignore les appuis pendant 0,8 s : un double appui
+      // sur la précédente ne doit pas décider pour la suivante sans qu'elle soit lue.
+      var alerteAfficheeA = 0;
+      function alerteTropRecente() { return Date.now() - alerteAfficheeA < 800; }
+      function fermerAlerteServeur() { if (alerteTropRecente()) return; alerteSuivante(); }
       function forcerDepuisAlerte() {
+        if (alerteTropRecente()) return;
         var sa = alerteCourante && alerteCourante.saisie;
         alerteSuivante();
         if (sa) envoyerForcage({ nom: sa.nom, prenom: sa.prenom, piece: sa.piece, montant: sa.montant, notes: sa.notes });
       }
       // Renvoie exactement la même saisie (le serveur refait tout le contrôle)
       function reessayerDepuisAlerte() {
+        if (alerteTropRecente()) return;
         var sa = alerteCourante && alerteCourante.saisie;
         alerteSuivante();
         if (!sa) return;
@@ -1105,12 +1125,17 @@
       // Total à l'impression : un montant illisible compte pour 0
       function parseMontant(s) { var n = lireMontant(s); return n === null ? 0 : n; }
 
+      var impressionEnCours = false; // le curseur « attente » est invisible sur tablette
       function preparerImpression(type, dateStr, titreRapport) {
+        if (impressionEnCours) return;
+        impressionEnCours = true;
         document.body.style.cursor = "wait";
         google.script.run.withSuccessHandler(function(donnees) {
+            impressionEnCours = false;
             document.body.style.cursor = "default";
             imprimerTableau(donnees, titreRapport);
           }).withFailureHandler(function(err) { 
+            impressionEnCours = false;
             document.body.style.cursor = "default"; 
             if (!siNonAutorisee(err)) alert("Erreur : " + err.message); 
           })
@@ -1147,13 +1172,17 @@
         window.print();
       }
 
+      var modeEnCours = false;
       function changerMode() {
-        var btn = document.getElementById('btnMode'); 
+        if (modeEnCours) return; // un double appui ne rebascule pas
+        var btn = document.getElementById('btnMode'), avant = btn.innerHTML;
+        modeEnCours = true;
         btn.innerHTML = "⏳ MAJ...";
         appelAdmin('basculerModeWebApp', [], function (mode) {
+          modeEnCours = false;
           majAffichageMode(mode);
           if (cacheVerif) cacheVerif.mode = mode; // contrôle local A/B/C à jour tout de suite
-        });
+        }, function () { modeEnCours = false; btn.innerHTML = avant; });
       }
 
       function majAffichageMode(mode) {
@@ -1163,17 +1192,21 @@
         btn.className = (mode === "BLOQUANT") ? "btn-action btn-mode-bloquant" : "btn-action btn-mode-signaler";
       }
 
+      var clotureEnCours = false;
       function cloturerOffre() {
+        if (clotureEnCours) return;
         if (confirm("🚨 CLÔTURE DE L'OFFRE\n\nÊtes-vous sûr de vouloir archiver et vider la liste ?")) {
+          clotureEnCours = true;
           // (on ne ferme le panneau qu'après la réponse : la fermeture reverrouille)
           document.body.style.cursor = "wait"; 
           appelAdmin('archiverOffreWebApp', [], function(message) {
+              clotureEnCours = false;
               document.body.style.cursor = "default"; 
               fermerPanneau();
               alert(message); 
               chargerDatesAffichage(); // le mode (SIGNALER / BLOQUANT) est conservé
               rechargerCacheVerif();
-            }, function () { document.body.style.cursor = "default"; });
+            }, function () { clotureEnCours = false; document.body.style.cursor = "default"; });
         }
       }
 
@@ -1237,10 +1270,12 @@
           formulaire.style.display = isVerrouille ? "none" : "block";
         }
 
-        // Mise à jour des cases dans la modale
-        if (document.getElementById('modalDateDebut')) {
-          document.getElementById('modalDateDebut').value = dates.debut;
-          document.getElementById('modalDateFin').value = dates.fin;
+        // Mise à jour des cases dans la modale (sauf si le responsable est en train de
+        // les modifier : le rafraîchissement automatique n'écrase pas sa saisie)
+        var dD = document.getElementById('modalDateDebut'), dF = document.getElementById('modalDateFin');
+        if (dD && !dD.dataset.modifie && !dF.dataset.modifie) {
+          dD.value = dates.debut;
+          dF.value = dates.fin;
         }
 
         // L'offre vient de démarrer (ou démarrage hors période) : charger le cache
@@ -1265,11 +1300,15 @@
         msg.innerHTML = "Mise à jour en cours...";
         
         appelAdmin('setDatesOperation', [debut, fin], function(reponse) {
-           msg.style.color = "green"; 
-           msg.innerHTML = "✅ Dates mises à jour !";
+           delete document.getElementById('modalDateDebut').dataset.modifie;
+           delete document.getElementById('modalDateFin').dataset.modifie;
+           var alerte = (reponse || "").indexOf('⚠️') !== -1;
+           msg.style.color = alerte ? "#b06000" : "green"; 
+           msg.style.whiteSpace = "pre-line";
+           msg.textContent = alerte ? "✅ Dates mises à jour." + reponse.slice(reponse.indexOf('\n')) : "✅ Dates mises à jour !";
            majResumeOperation(debut, fin);
            chargerDatesAffichage();
-           setTimeout(function(){ msg.innerHTML = ""; }, 3000);
+           setTimeout(function(){ msg.textContent = ""; }, alerte ? 15000 : 3000);
         }, function () { msg.innerHTML = ""; });
       }
 
@@ -1353,17 +1392,18 @@
 
       // Comparaison des noms (miroir de Code.gs::_normId_) : majuscules, sans accents,
       // ligatures dépliées, sans espaces, tirets, apostrophes ni points.
+      var SEPARATEURS_NOM_JS = /[\s\-\u2010-\u2015\u2212'’‘ʼ`´′.,_\/\u200B-\u200D\uFEFF]/g;
       function normIdJS(p) {
         if (p === null || p === undefined) return "";
-        return p.toString().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-          .replace(/Œ/g, 'OE').replace(/Æ/g, 'AE').replace(/[\s\-'’.]/g, '');
+        return p.toString().toUpperCase().replace(/Œ/g, 'OE').replace(/Æ/g, 'AE').replace(/Ø/g, 'O').replace(/Ł/g, 'L').replace(/Đ/g, 'D')
+          .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(SEPARATEURS_NOM_JS, '');
       }
-      // Comparaison des N° de pièce (miroir de Code.gs::_normPiece_) : majuscules, sans
-      // espaces ni tirets ; N° entièrement numérique sans ses 0 initiaux (Sheets a pu
+      // Comparaison des N° de pièce (miroir de Code.gs::_normPiece_) : majuscules, lettres
+      // et chiffres seulement ; N° entièrement numérique sans ses 0 initiaux (Sheets a pu
       // stocker "0123" en 123).
       function normPieceJS(p) {
         if (p === null || p === undefined) return "";
-        var n = p.toString().toUpperCase().replace(/[\s-]/g, '');
+        var n = p.toString().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Z0-9]/g, '');
         return /^\d+$/.test(n) ? n.replace(/^0+(?=\d)/, '') : n;
       }
       // #16 : toute donnée (nom, notes…) insérée dans du HTML passe par echapper()
@@ -1423,7 +1463,7 @@
           // (même pièce, autre personne = cas B) en « vrai doublon » A si elle ne corrigeait pas.
           return;
         }
-        // Niveau 3 (dormant) : pièce connue d'une offre passée, pas sur l'offre en cours
+        // Niveau 3 (annuaire) : pièce connue d'une offre passée, pas sur l'offre en cours
         if (res.annuaire) {
           if (res.modeAnnuaire === 'B') proposerAnnuaire(res.annuaire);
           else remplirAnnuaire(res.annuaire); // 'C' = pré-remplissage doux (défaut)
@@ -1484,12 +1524,17 @@
         btn.style.display = "block";
         btn.innerHTML = "🪪 Auto-complétion : " + (mode === 'B' ? "Demander (modale)" : "Auto (doux)");
       }
+      var modeAnnuaireEnCours = false;
       function changerModeAnnuaire() {
-        document.getElementById('btnModeAnnuaire').innerHTML = "⏳ MAJ...";
+        if (modeAnnuaireEnCours) return;
+        var btn = document.getElementById('btnModeAnnuaire'), avant = btn.innerHTML;
+        modeAnnuaireEnCours = true;
+        btn.innerHTML = "⏳ MAJ...";
         appelAdmin('basculerModeAnnuaire', [], function (mode) {
+          modeAnnuaireEnCours = false;
           majAffichageModeAnnuaire(mode);
           if (cacheVerif) cacheVerif.modeAnnuaire = mode;
-        });
+        }, function () { modeAnnuaireEnCours = false; btn.innerHTML = avant; });
       }
 
       // =================================================================
@@ -1566,6 +1611,11 @@
         if (jetonAdmin) google.script.run.withFailureHandler(function () {}).fermerSessionAdmin(jetonAdmin);
         jetonAdmin = null;
         saisieEnCours = null;
+        // rien d'une session ne survit à la suivante : réglages rechargés, dates relues
+        reglagesCharges = false;
+        document.getElementById('champsReglages').innerHTML = "";
+        delete document.getElementById('modalDateDebut').dataset.modifie;
+        delete document.getElementById('modalDateFin').dataset.modifie;
         allerEcran('accueil');
         document.getElementById('zoneAdmin').style.display = "none";
         document.getElementById('zoneVerrou').style.display = "block";
@@ -1693,6 +1743,13 @@
         document.getElementById('vueCorrection').style.display = "block";
       }
       function annulerCorrection() { saisieEnCours = null; afficherVueListe(); }
+      // Champ modifié après une alerte : l'ancienne alerte (et son bouton FORCER) ne
+      // vaut plus pour les nouvelles valeurs -> masquée, nouveau contrôle à l'envoi.
+      ['corPiece', 'corNom', 'corPrenom', 'corMontant', 'corNotes'].forEach(function (id) {
+        document.getElementById(id).addEventListener('input', function () {
+          document.getElementById('corAlerte').style.display = "none";
+        });
+      });
 
       function enregistrerCorrection(forcer) {
         if (!saisieEnCours) return;
@@ -1790,7 +1847,9 @@
         ['PRECISION_NOTES', "Précision du champ Notes, entre parenthèses (facultatif)"],
         ['PASSAGES_MAX', "Passages autorisés par client et par offre (1 à 10)"]
       ];
+      var reglagesCharges = false;
       function remplirFormulaireReglages(cfg) {
+        reglagesCharges = true;
         var zone = document.getElementById('champsReglages');
         zone.innerHTML = "";
         CHAMPS_CONFIG.forEach(function (c) {
@@ -1807,6 +1866,13 @@
         document.getElementById('cfg_MONTANT_OBLIGATOIRE').checked = (cfg.MONTANT_OBLIGATOIRE !== "NON");
       }
       function enregistrerReglages() {
+        // Réglages pas (encore) chargés pour cette session : on n'enregistre rien (sinon
+        // des valeurs vides ou d'une session précédente écraseraient les vraies)
+        if (!reglagesCharges || !document.getElementById('cfg_NOM_OFFRE')) {
+          var m0 = document.getElementById('msgReglages');
+          m0.style.color = "#d93025"; m0.textContent = "Réglages pas encore chargés : patientez puis réessayez.";
+          return;
+        }
         var valeurs = {};
         CHAMPS_CONFIG.forEach(function (c) { valeurs[c[0]] = document.getElementById("cfg_" + c[0]).value; });
         valeurs.MONTANT_OBLIGATOIRE = document.getElementById('cfg_MONTANT_OBLIGATOIRE').checked ? "OUI" : "NON";
@@ -1886,10 +1952,24 @@
       }
 
       // Entrée dans les champs de code = valider
-      ['pinSaisi', 'pinConfirme'].forEach(function (id) {
+      ['pinSaisi', 'pinConfirme', 'activationVerrou'].forEach(function (id) {
         document.getElementById(id).addEventListener('keydown', function (e) {
           if (e.key === 'Enter') { e.preventDefault(); deverrouillerAdmin(); }
         });
+      });
+      ['pinApp', 'pinApp2', 'activationApp', 'nomTablette'].forEach(function (id) {
+        document.getElementById(id).addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') { e.preventDefault(); appairerCetteTablette(); }
+        });
+      });
+      ['pinNouveau', 'pinNouveau2'].forEach(function (id) {
+        document.getElementById(id).addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') { e.preventDefault(); changerPin(); }
+        });
+      });
+      // Dates en cours de modification : protégées du rafraîchissement automatique
+      ['modalDateDebut', 'modalDateFin'].forEach(function (id) {
+        document.getElementById(id).addEventListener('input', function () { this.dataset.modifie = "1"; });
       });
     </script>
 

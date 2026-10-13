@@ -36,6 +36,7 @@ async function saisirClavier(page, piece, nom, prenom) {
     assert.match(await page.textContent('#alerteServeurTitre'), /ALERTE FRAUDE/);
     assert.match(await page.textContent('#alerteServeurSaisie'), /MARTIN PAUL/);
     assert.ok(await page.isVisible('#alerteServeurChoix'), 'SIGNALER : choix NE PAS ENREGISTRER / FORCER');
+    await page.waitForTimeout(900); // fenêtre lue (appuis ignorés 0,8 s)
     await page.click('#alerteServeurChoix >> text=FORCER L\'AJOUT'); await page.waitForTimeout(200);
     assert.ok(!(await page.isVisible('#modalAlerteServeur')));
     const derniere = env.sheets.Saisies.getRange(env.sheets.Saisies.getLastRow(), 1, 1, 6).getValues()[0];

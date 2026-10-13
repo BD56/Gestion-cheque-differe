@@ -21,6 +21,7 @@ const { FakeSheet } = require('./fakesheet');
     assert.match(await page.textContent('#alerteServeurTitre'), /REFUSÉE/);
     assert.match(await page.textContent('#alerteServeurMsg'), /PAS été enregistrée.*déjà profité/);
     assert.ok(!(await page.isVisible('#alerteServeurChoix')), 'BLOQUANT : pas de bouton forcer');
+    await page.waitForTimeout(900); // fenêtre lue (appuis ignorés 0,8 s)
     await page.click('#btnAlerteOk');
     await page.waitForTimeout(100);
     assert.strictEqual(await page.evaluate(() => cacheVerif.mode), 'BLOQUANT', 'cache resynchronisé');

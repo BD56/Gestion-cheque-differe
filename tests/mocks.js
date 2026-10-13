@@ -20,11 +20,11 @@ function makeEnv(opts = {}) {
       get: k => (cacheStore[k] && cacheStore[k].exp > Date.now()) ? cacheStore[k].v : null,
       put: (k, v, ttl) => { cacheStore[k] = { v, exp: Date.now() + ttl * 1000 }; },
       remove: k => { delete cacheStore[k]; } }) },
-    LockService: { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }) },
+    LockService: { getScriptLock: () => ({ waitLock() {}, tryLock() { return true; }, releaseLock() {} }) },
     ScriptApp: { getProjectTriggers: () => env.triggers.map(h => ({ getHandlerFunction: () => h, getUniqueId: () => 'uid-' + h })),
       newTrigger: h => { const b = { timeBased: () => b, everyDays: () => b, atHour: () => b, create: () => { env.triggers.push(h); } }; return b; } },
     Logger: { log() {} },
-    Session: { getActiveUser: () => ({ getEmail: () => env.activeEmail }) },
+    Session: { getActiveUser: () => ({ getEmail: () => env.activeEmail }), getScriptTimeZone: () => 'Europe/Paris' },
     SpreadsheetApp: { getActiveSpreadsheet: () => ss, flush() {}, getUi: () => ({
       createMenu: (t) => { const m = { addItem: (l, f) => { env.menus.push(f); return m; }, addToUi: () => m }; return m; },
       alert: (titre, msg) => { env.alertes.push(titre + ' | ' + msg); }, ButtonSet: { OK: 'OK' },

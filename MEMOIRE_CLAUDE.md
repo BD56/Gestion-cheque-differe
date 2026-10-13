@@ -109,7 +109,16 @@ gauche + vue d'ensemble chiffrée) et 2 « Nuit » (portrait sombre : N° de pi�
 héros avec verdict en direct, bouton « Enregistrer · montant » ; alerte plein écran
 « DÉJÀ VENU », forcer = maintenir 2 s ; responsable façon Réglages de téléphone).
 Idées nouvelles marquées : journal du jour, vue d'ensemble chiffrée, maintien pour
-forcer, dernière saisie. EN ATTENTE du choix de Bryan. Défaut vu :
+forcer, dernière saisie. Retour de Bryan : PAS de sombre (clair uniquement) ; il ADORE
+« Comptoir ». Journal du jour : FERMÉ par défaut, languette « Aujourd'hui · N » avec
+compteur, flèche ouvrir/fermer, état mémorisé par tablette (localStorage), noms abrégés
+(« DURAND S. ») et N° masqués (••••8132) pour la confidentialité (écran visible du
+client), journal sous le voile pendant une alerte, tiroir en bas en portrait. Montants
+dans le journal : question ouverte (option dans le prototype). Prototype interactif
+publié (artefact privé « Comptoir — prototype » : https://claude.ai/artifact/FUmo7ZsUu5iDgi9YCow3dT ;
+source dans l'espace temporaire de la session, non versionnée) : saisie 3 étapes,
+verdict N° en direct, alertes A/B/C comparatives, forçage confirmé dans la page,
+mode Bloquant effectif, espace responsable (code, vue d'ensemble, mode, saisies). Défaut vu :
 sur écran étroit (~420 px) la carte actuelle déborde à droite (container 100 % +
 padding sans box-sizing).
 Plus tard : fusion `refonte` → `generalisation` (ou `main` après Vannes), seulement

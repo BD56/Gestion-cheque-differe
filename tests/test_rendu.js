@@ -10,7 +10,7 @@ fs.writeFileSync(__dirname + "/rendu_defaut.html", rendu);
 // Syntaxe JS des <script> rendus
 const vm = require("vm");
 let n = 0;
-for (const m of rendu.matchAll(/<script(?:\s+type="module")?>([\s\S]*?)<\/script>/g)) {
+for (const m of rendu.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)) {
   n++;
   try {
     new vm.Script(m[1].replace(/^\s*(import|export)\b.*$/gm, ""));

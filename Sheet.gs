@@ -2,7 +2,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Sheet_() {
-  return "2026.10.13-1";
+  return "2026.10.13-2";
 }
 
 function onOpen() {

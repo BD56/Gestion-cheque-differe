@@ -7,7 +7,9 @@
 //   node outils/version.js --verifier   contrôle seulement (erreur si numéros différents)
 //
 // Marques : dans un .gs, `function version_<Nom>_() { return "…"; }` ;
-//           dans un .html, `<!-- version : … -->`.
+//           dans un .html, attribut `data-version="…"` sur <html> (pages complètes) ou
+//           sur la 1re balise <script> / <style> (morceaux). Pas de commentaire <!-- --> :
+//           Apps Script les retire quand il relit le fichier (constaté sur un vrai Sheet).
 const fs = require("fs");
 const path = require("path");
 const racine = path.join(__dirname, "..");
@@ -19,7 +21,7 @@ const fichiers = () =>
     .sort();
 const nomGs = (f) => f.replace(/\.gs$/, "");
 const RE_GS = /function version_(\w+)_\(\) \{\s*return "([^"]*)";\s*\}/;
-const RE_HTML = /<!-- version : (\S+) -->/;
+const RE_HTML = /data-version="([^"]*)"/;
 
 function lire(f) {
   const src = fs.readFileSync(path.join(racine, f), "utf8");
@@ -47,10 +49,10 @@ function marquer(f, version) {
       src = src.slice(0, i + 2) + ligne + "\n" + src.slice(i + 2);
     }
   } else {
-    const marque = "<!-- version : " + version + " -->";
+    const marque = 'data-version="' + version + '"';
     if (RE_HTML.test(src)) src = src.replace(RE_HTML, marque);
-    else if (/^<!doctype/i.test(src)) src = src.replace(/(<head>\n)(\s*)/, "$1$2" + marque + "\n$2");
-    else src = src.replace(/^(.*\n)/, "$1" + marque + "\n"); // après la ligne de description
+    else if (/<html[\s>]/.test(src)) src = src.replace(/<html([^>]*)>/, "<html$1 " + marque + ">");
+    else src = src.replace(/<(script|style)([^>]*)>/, "<$1$2 " + marque + ">");
   }
   fs.writeFileSync(chemin, src);
 }

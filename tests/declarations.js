@@ -17,7 +17,7 @@ function nomsDeclares(js) {
   return noms;
 }
 function scriptsClassiques(html) {
-  return [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
+  return [...html.matchAll(/<script(?![^>]*type="module")[^>]*>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
 }
 function fichiersGs(repo) {
   return fs

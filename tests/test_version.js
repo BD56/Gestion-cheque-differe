@@ -87,6 +87,26 @@ try {
   };
   assert.ok(e.ctx.doGet({}).normale, "lecture impossible : application quand même ouverte");
 
+  // ... ou marque illisible dans Index.html (témoin) : contrôle hors service, application ouverte
+  e = env1();
+  const lire2 = e.ctx.HtmlService.createHtmlOutputFromFile;
+  e.ctx.HtmlService.createHtmlOutputFromFile = (nom) =>
+    nom === "Index" ? { getContent: () => "<html><head></head></html>" } : lire2(nom);
+  assert.ok(e.ctx.doGet({}).normale, "Index sans marque lisible : application ouverte");
+
+  // 5 bis) Comme sur un vrai Sheet : Apps Script retire les commentaires <!-- --> en relisant
+  //        un fichier -> la marque (attribut data-version) doit rester lisible
+  e = env1();
+  const lire3 = e.ctx.HtmlService.createHtmlOutputFromFile;
+  e.ctx.HtmlService.createHtmlOutputFromFile = (nom) => {
+    const c = lire3(nom)
+      .getContent()
+      .replace(/<!--[\s\S]*?-->/g, "");
+    return { getContent: () => c };
+  };
+  assert.deepStrictEqual([...e.ctx.verifierInstallation_()], [], "marques lisibles sans les commentaires");
+  assert.ok(e.ctx.doGet({}).normale);
+
   // 6) Installer sur une installation complète : numéro de version affiché
   e = env1();
   e.activeEmail = e.owner;

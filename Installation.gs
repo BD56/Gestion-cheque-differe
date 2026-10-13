@@ -2,7 +2,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Installation_() {
-  return "2026.10.13-1";
+  return "2026.10.13-2";
 }
 
 // =================================================================
@@ -176,7 +176,11 @@ function verifierInstallation_() {
       problemes.push(nom + ".html : absent");
       return;
     }
-    const m = /<!-- version : (\S+) -->/.exec(contenu);
+    // Marque en attribut data-version="…" (les commentaires <!-- --> sont retirés par Apps Script)
+    const m = /data-version=(?:"|'|&quot;)?([\w.-]+)/.exec(contenu);
+    // Index.html sert de témoin : sans marque lisible chez lui, c'est le contrôle qui ne
+    // fonctionne pas sur cette installation -> erreur, et l'application s'ouvre quand même.
+    if (!m && nom === "Index") throw new Error("marque de version illisible dans Index.html");
     if (!m) problemes.push(nom + ".html : sans numéro de version (ancienne version)");
     else if (m[1] !== attendue) problemes.push(nom + ".html : version " + m[1] + " au lieu de " + attendue);
   });

@@ -77,14 +77,17 @@ les 430 éléments de la page et 37 du panneau ; les éléments créés par JS g
 leurs `.style.x = …`), 5e commentaires d'époque nettoyés, `\/` inutile retiré des
 2 regex de séparateurs (équivalence vérifiée sur les 65 536 caractères). 29 séries
 vertes, ESLint 0 erreur 0 avertissement. ✅ étape 6 (contrôle de version : `function version_<Nom>_()` dans chaque .gs,
-`<!-- version : … -->` dans chaque .html (après `<head>` pour Index/Panneau, jamais
-avant le doctype) ; listes `FICHIERS_SERVEUR` / `FICHIERS_PAGE` dans 00_Constantes
+attribut `data-version="…"` dans chaque .html (sur `<html>` pour Index/Panneau, sur la
+1re balise `<script>`/`<style>` des morceaux). ⚠️ CONSTATÉ PAR BRYAN SUR UN VRAI SHEET
+(13/10) : Apps Script RETIRE les commentaires `<!-- -->` quand on relit un fichier
+(`getContent`) → la 1re version (marque en commentaire) bloquait tout à tort ; corrigé
+en 2026.10.13-2. Index.html sans marque lisible = contrôle hors service → app ouverte ; listes `FICHIERS_SERVEUR` / `FICHIERS_PAGE` dans 00_Constantes
 (test : = fichiers sur disque) ; `verifierInstallation_()` (Installation.gs, référence
 = version d'Installation.gs) appelée par doGet → page « Installation incomplète » ;
 panne du contrôle (ou Index.html illisible) = application ouverte quand même ;
 « Installer » affiche les problèmes et « Version X. » ; `npm run nouvelle-version`
 (numéro AAAA.MM.JJ-HHMM de Paris) / `verifier-version` ; `npm run push` vérifie avant
-`clasp push` ; test `test_version.js`. Version actuelle 2026.10.13-1. 30 séries
+`clasp push` ; test `test_version.js`. Version actuelle 2026.10.13-2. 30 séries
 vertes. Limite : un ancien Code.gs laissé à côté → doublons de `const` → Google refuse
 de charger le projet (erreur visible, pas de fonctionnement à moitié) : le dire dans
 DEPLOIEMENT.md). Prochaine : étape 7 (docs).
@@ -202,10 +205,10 @@ quand Bryan le demande.
    renvoie bien l'e-mail dans le menu du Sheet (sinon « Installer » est refusé).
 8. (Refonte) `include_` : la page s'affiche complète (styles, scripts, scan OCR en
    `<script type="module">`) — `createHtmlOutputFromFile(nom).getContent()`.
-9. (Refonte) Contrôle de version : `globalThis["version_X_"]` voit bien les fonctions
-   de tous les .gs, et `createHtmlOutputFromFile('Index').getContent()` renvoie le
-   texte brut (avec la marque de version). Sinon le contrôle se met en panne → app
-   ouverte quand même (rien de bloqué à tort), mais le contrôle ne sert à rien.
+9. (Refonte) Contrôle de version : ✅ `globalThis["version_X_"]` voit bien les .gs
+   (testé par Bryan sur « Gestion Chèques Différés — REFONTE (test) », 13/10) ; les
+   commentaires HTML sont retirés par `getContent` (constaté) → marque en attribut
+   `data-version` depuis 2026.10.13-2 : à revérifier (« Installer » sans INCOMPLÈTE).
 
 ## 4. Points ouverts / idées non faites
 - Pull request `generalisation` → `main` : à ouvrir **après** le test de Bryan (il n'a pas

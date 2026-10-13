@@ -11,8 +11,8 @@
         <h2>📝 Saisie Client</h2>
         <div class="header-buttons">
           <button class="btn-settings" id="btnScan" title="Scanner la pièce" style="display:none;">📷</button>
-          <button class="btn-settings" onclick="ouvrirAide()" title="Aide et consignes">❓</button>
-          <button class="btn-settings" onclick="ouvrirPanneau()" title="Panneau de contrôle">⚙️</button>
+          <button class="btn-settings" data-action="ouvrirAide" title="Aide et consignes">❓</button>
+          <button class="btn-settings" data-action="ouvrirPanneau" title="Panneau de contrôle">⚙️</button>
         </div>
       </div>
       <div class="subtitle" id="txtNomOffre"><?= cfg.NOM_OFFRE ?></div>
@@ -43,7 +43,7 @@
           <label id="lblNotes"><?= cfg.LIBELLE_NOTES ?><?= cfg.PRECISION_NOTES ? " (" + cfg.PRECISION_NOTES + ")" : "" ?></label>
           <input type="text" id="notes" placeholder="Commentaire..." autocomplete="off">
         </div>
-        <button class="btn-submit" id="btnValider" onclick="envoyerSaisie()">VÉRIFIER ET VALIDER</button>
+        <button class="btn-submit" id="btnValider" data-action="envoyerSaisie">VÉRIFIER ET VALIDER</button>
       </div>
 
       <div id="boxConfirmation">
@@ -53,12 +53,12 @@
         
         <div id="actionSignaler">
           <div class="flex-btn">
-            <button class="btn-cancel" onclick="annulerSaisie()">ABANDONNER</button>
-            <button class="btn-force" onclick="forcerAjout()">FORCER L'AJOUT</button>
+            <button class="btn-cancel" data-action="annulerSaisie">ABANDONNER</button>
+            <button class="btn-force" data-action="forcerAjout">FORCER L'AJOUT</button>
           </div>
         </div>
         <div id="actionBloquant" style="display: none;">
-          <button class="btn-retour-bloquant" onclick="annulerSaisie()">RETOUR À LA SAISIE</button>
+          <button class="btn-retour-bloquant" data-action="annulerSaisie">RETOUR À LA SAISIE</button>
         </div>
       </div>
       
@@ -67,12 +67,12 @@
     </div>
 
     <div class="footer-legal">
-      <a onclick="ouvrirMentions()">© 2026 DESJARDINS Bryan - Mentions légales</a>
+      <a data-action="ouvrirMentions">© 2026 DESJARDINS Bryan - Mentions légales</a>
     </div>
 
     <div id="modalAide" class="modal-overlay">
       <div class="modal-content" style="max-width: 550px;">
-        <button class="btn-close-modal" onclick="fermerAide()">✖</button>
+        <button class="btn-close-modal" data-action="fermerAide">✖</button>
         <h2 style="margin-top:0; text-align:center; font-size:18px;">❓ Guide d'utilisation et Aide</h2>
         <hr style="border: 0; height: 1px; background: #ddd; margin: 15px 0;">
 
@@ -82,23 +82,23 @@
           <div class="sous-ecran actif" data-aide="accueil">
             <div class="groupe-aide">👤 Pour la saisie</div>
             <div class="tuiles">
-              <button class="tuile" onclick="allerAide('saisir')"><span class="ico">📝</span>Saisir un client<small>formulaire, validation</small></button>
-              <button class="tuile" onclick="allerAide('alertes')"><span class="ico">🚨</span>Les alertes<small>doublon, usurpation, homonyme</small></button>
-              <button class="tuile" onclick="allerAide('numero')"><span class="ico">🔎</span>Vérification du N°<small>dès la saisie du numéro</small></button>
-              <button class="tuile" onclick="allerAide('imprimer')"><span class="ico">🖨️</span>Imprimer<small>jour, jour précédent</small></button>
-              <button class="tuile" id="aideOCR" style="display:none;" onclick="allerAide('scan')"><span class="ico">📷</span>Scanner une pièce<small>lecture automatique</small></button>
+              <button class="tuile" data-action="allerAide" data-args='["saisir"]'><span class="ico">📝</span>Saisir un client<small>formulaire, validation</small></button>
+              <button class="tuile" data-action="allerAide" data-args='["alertes"]'><span class="ico">🚨</span>Les alertes<small>doublon, usurpation, homonyme</small></button>
+              <button class="tuile" data-action="allerAide" data-args='["numero"]'><span class="ico">🔎</span>Vérification du N°<small>dès la saisie du numéro</small></button>
+              <button class="tuile" data-action="allerAide" data-args='["imprimer"]'><span class="ico">🖨️</span>Imprimer<small>jour, jour précédent</small></button>
+              <button class="tuile" id="aideOCR" style="display:none;" data-action="allerAide" data-args='["scan"]'><span class="ico">📷</span>Scanner une pièce<small>lecture automatique</small></button>
             </div>
             <div class="groupe-aide resp">🔒 Pour le responsable (code)</div>
             <div class="tuiles">
-              <button class="tuile resp" onclick="allerAide('modes')"><span class="ico">🚦</span>Modes de sécurité<small>signaler ou bloquer</small></button>
-              <button class="tuile resp" onclick="allerAide('code')"><span class="ico">🔑</span>Code &amp; tablettes<small>code, autorisations</small></button>
-              <button class="tuile resp" onclick="allerAide('dates')"><span class="ico">📅</span>Dates &amp; clôture<small>lancer, prolonger, finir</small></button>
-              <button class="tuile resp" onclick="allerAide('corrections')"><span class="ico">📋</span>Corrections &amp; archives<small>modifier, anciennes offres</small></button>
+              <button class="tuile resp" data-action="allerAide" data-args='["modes"]'><span class="ico">🚦</span>Modes de sécurité<small>signaler ou bloquer</small></button>
+              <button class="tuile resp" data-action="allerAide" data-args='["code"]'><span class="ico">🔑</span>Code &amp; tablettes<small>code, autorisations</small></button>
+              <button class="tuile resp" data-action="allerAide" data-args='["dates"]'><span class="ico">📅</span>Dates &amp; clôture<small>lancer, prolonger, finir</small></button>
+              <button class="tuile resp" data-action="allerAide" data-args='["corrections"]'><span class="ico">📋</span>Corrections &amp; archives<small>modifier, anciennes offres</small></button>
             </div>
           </div>
 
           <div class="sous-ecran" data-aide="saisir">
-            <button class="retour" onclick="allerAide('accueil')">← Retour</button>
+            <button class="retour" data-action="allerAide" data-args='["accueil"]'>← Retour</button>
             <h3 class="titre-ecran">📝 Saisir un client</h3>
             <ul>
               <li>Remplissez le <strong>N° de pièce</strong>, le <strong>Nom</strong>, le <strong>Prénom</strong>, le montant et les notes. La touche <strong>Entrée</strong> passe au champ suivant.</li>
@@ -109,7 +109,7 @@
           </div>
 
           <div class="sous-ecran" data-aide="alertes">
-            <button class="retour" onclick="allerAide('accueil')">← Retour</button>
+            <button class="retour" data-action="allerAide" data-args='["accueil"]'>← Retour</button>
             <h3 class="titre-ecran">🚨 Les alertes</h3>
             <p>Si le client pose problème, un encadré s'affiche à la place du formulaire :</p>
             <ul>
@@ -125,7 +125,7 @@
           </div>
 
           <div class="sous-ecran" data-aide="numero">
-            <button class="retour" onclick="allerAide('accueil')">← Retour</button>
+            <button class="retour" data-action="allerAide" data-args='["accueil"]'>← Retour</button>
             <h3 class="titre-ecran">🔎 Vérification du N°</h3>
             <ul>
               <li>Dès que vous quittez le champ <strong>N° de pièce</strong>, l'application le vérifie.</li>
@@ -135,7 +135,7 @@
           </div>
 
           <div class="sous-ecran" data-aide="imprimer">
-            <button class="retour" onclick="allerAide('accueil')">← Retour</button>
+            <button class="retour" data-action="allerAide" data-args='["accueil"]'>← Retour</button>
             <h3 class="titre-ecran">🖨️ Imprimer</h3>
             <ul>
               <li>Touchez <strong>⚙️</strong> puis <strong>🖨️ IMPRIMER AUJOURD'HUI</strong>, ou <strong>📚 TOUTE L'OFFRE</strong> pour toute l'offre en cours.</li>
@@ -145,7 +145,7 @@
           </div>
 
           <div class="sous-ecran" data-aide="scan">
-            <button class="retour" onclick="allerAide('accueil')">← Retour</button>
+            <button class="retour" data-action="allerAide" data-args='["accueil"]'>← Retour</button>
             <h3 class="titre-ecran">📷 Scanner une pièce d'identité</h3>
             <ul>
               <li><strong>Quelle face ?</strong> Le côté qui porte la <strong>bande de symboles &lt;&lt;&lt;</strong> (en bas du document). Sur les <strong>cartes</strong> (CNI, titre de séjour), c'est en général <strong>le dos</strong> ; sur le <strong>passeport</strong>, la <strong>page avec la photo</strong>.</li>
@@ -159,7 +159,7 @@
           </div>
 
           <div class="sous-ecran" data-aide="modes">
-            <button class="retour" onclick="allerAide('accueil')">← Retour</button>
+            <button class="retour" data-action="allerAide" data-args='["accueil"]'>← Retour</button>
             <h3 class="titre-ecran">🚦 Modes de sécurité</h3>
             <ul>
               <li>🟡 <strong>SIGNALER</strong> : l'application alerte mais laisse <strong>forcer</strong> l'ajout.</li>
@@ -170,7 +170,7 @@
           </div>
 
           <div class="sous-ecran" data-aide="code">
-            <button class="retour" onclick="allerAide('accueil')">← Retour</button>
+            <button class="retour" data-action="allerAide" data-args='["accueil"]'>← Retour</button>
             <h3 class="titre-ecran">🔑 Code &amp; tablettes</h3>
             <ul>
               <li><strong>Code responsable</strong> : 6 chiffres. Il ouvre l'espace responsable (mode, dates, corrections, archives, réglages, clôture). Pour le créer, l'application demande le <strong>code d'activation</strong> affiché dans le Google Sheets (menu 🚀 APPLICATION → 🔑 Code d'activation).</li>
@@ -182,7 +182,7 @@
           </div>
 
           <div class="sous-ecran" data-aide="dates">
-            <button class="retour" onclick="allerAide('accueil')">← Retour</button>
+            <button class="retour" data-action="allerAide" data-args='["accueil"]'>← Retour</button>
             <h3 class="titre-ecran">📅 Dates &amp; clôture</h3>
             <ul>
               <li><strong>Lancer ou prolonger</strong> : ⚙️ → Espace responsable → tuile <strong>📅 Opération</strong>, puis modifiez les dates.</li>
@@ -192,7 +192,7 @@
           </div>
 
           <div class="sous-ecran" data-aide="corrections">
-            <button class="retour" onclick="allerAide('accueil')">← Retour</button>
+            <button class="retour" data-action="allerAide" data-args='["accueil"]'>← Retour</button>
             <h3 class="titre-ecran">📋 Corrections &amp; archives</h3>
             <ul>
               <li><strong>Corriger ou supprimer une saisie</strong> : tuile <strong>📋 Saisies</strong>, recherchez par nom ou N°. Une correction est <strong>re-vérifiée</strong> comme une nouvelle saisie.</li>
@@ -207,23 +207,23 @@
 
     <div id="modalParametres" class="modal-overlay">
       <div class="modal-content">
-        <button class="btn-close-modal" onclick="fermerPanneau()">✖</button>
+        <button class="btn-close-modal" data-action="fermerPanneau">✖</button>
         <h2 style="margin-top:0;">⚙️ Paramètres</h2>
         <hr style="border: 0; height: 1px; background: #ddd; margin: 15px 0;">
 
         <!-- ===== ACCUEIL : impression (libre) + espace responsable ===== -->
         <div class="sous-ecran actif" data-ecran="accueil">
-        <button class="btn-action btn-print-jour" onclick="preparerImpression('jour', 'aujourdhui', 'Impression du Jour')">🖨️ IMPRIMER AUJOURD'HUI</button>
+        <button class="btn-action btn-print-jour" data-action="preparerImpression" data-args='["jour","aujourdhui","Impression du Jour"]'>🖨️ IMPRIMER AUJOURD'HUI</button>
         
         <div style="background: #f1f3f4; padding: 15px; border-radius: 8px; margin-bottom: 10px; text-align: center;">
           <label style="font-size: 13px; color: #5f6368; margin-bottom: 8px;">📅 Imprimer un jour précédent :</label>
           <div class="print-row">
             <input type="date" id="dateImpression" class="input-date">
-            <button class="btn-action" style="flex: 1; background-color: #5f6368; margin-bottom: 0;" onclick="preparerImpressionAncien()">IMPRIMER</button>
+            <button class="btn-action" style="flex: 1; background-color: #5f6368; margin-bottom: 0;" data-action="preparerImpressionAncien">IMPRIMER</button>
           </div>
         </div>
 
-        <button class="btn-action btn-print-offre" onclick="preparerImpression('offre', '', 'Impression Offre Complète')">📚 TOUTE L'OFFRE</button>
+        <button class="btn-action btn-print-offre" data-action="preparerImpression" data-args='["offre","","Impression Offre Complète"]'>📚 TOUTE L'OFFRE</button>
         
         <hr style="border: 0; height: 1px; background: #ddd; margin: 20px 0;">
 
@@ -234,7 +234,7 @@
           <input type="text" id="activationVerrou" inputmode="numeric" autocomplete="off" maxlength="9" placeholder="Code d'activation (affiché dans le Google Sheets)" style="display: none; margin-bottom: 10px;">
           <input type="password" id="pinSaisi" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="Code (6 chiffres)" style="margin-bottom: 10px;">
           <input type="password" id="pinConfirme" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="Confirmer le code" style="display: none; margin-bottom: 10px;">
-          <button class="btn-action" id="btnDeverrouiller" style="background-color: #1a73e8;" onclick="deverrouillerAdmin()">DÉVERROUILLER</button>
+          <button class="btn-action" id="btnDeverrouiller" style="background-color: #1a73e8;" data-action="deverrouillerAdmin">DÉVERROUILLER</button>
           <div id="msgVerrou" style="text-align: center; font-weight: bold; font-size: 13px; color: #d93025;"></div>
         </div>
 
@@ -242,23 +242,23 @@
           <h3 style="text-align: center; margin-top: 0;">🔓 Espace responsable</h3>
           <div id="alerteAdmin" style="display:none; background:#fff3cd; border:1px solid #ffeeba; color:#856404; border-radius:8px; padding:10px; font-size:13px; margin-bottom:10px;"></div>
           <div class="tuiles">
-            <button class="tuile" onclick="ouvrirSaisies()"><span class="ico">📋</span>Saisies<small>corriger / supprimer</small></button>
-            <button class="tuile" onclick="ouvrirArchives()"><span class="ico">🗄️</span>Archives<small>offres clôturées</small></button>
-            <button class="tuile" onclick="allerEcran('operation')"><span class="ico">📅</span>Opération<small id="resumeOperation">—</small></button>
-            <button class="tuile" onclick="allerEcran('securite')"><span class="ico">🛡️</span>Sécurité<small id="resumeSecurite">—</small></button>
-            <button class="tuile" onclick="allerEcran('reglages')"><span class="ico">🏷️</span>Réglages<small>textes de la structure</small></button>
-            <button class="tuile" onclick="ouvrirCodeTablettes()"><span class="ico">🔑</span>Code &amp; tablettes<small>code, tablettes autorisées</small></button>
+            <button class="tuile" data-action="ouvrirSaisies"><span class="ico">📋</span>Saisies<small>corriger / supprimer</small></button>
+            <button class="tuile" data-action="ouvrirArchives"><span class="ico">🗄️</span>Archives<small>offres clôturées</small></button>
+            <button class="tuile" data-action="allerEcran" data-args='["operation"]'><span class="ico">📅</span>Opération<small id="resumeOperation">—</small></button>
+            <button class="tuile" data-action="allerEcran" data-args='["securite"]'><span class="ico">🛡️</span>Sécurité<small id="resumeSecurite">—</small></button>
+            <button class="tuile" data-action="allerEcran" data-args='["reglages"]'><span class="ico">🏷️</span>Réglages<small>textes de la structure</small></button>
+            <button class="tuile" data-action="ouvrirCodeTablettes"><span class="ico">🔑</span>Code &amp; tablettes<small>code, tablettes autorisées</small></button>
           </div>
           <div class="pied">
-            <button class="btn-action btn-archive" onclick="cloturerOffre()">⚠️ CLÔTURER L'OFFRE</button>
-            <button class="btn-action" style="background-color: #3c4043;" onclick="verrouillerAdmin()">🔒 VERROUILLER</button>
+            <button class="btn-action btn-archive" data-action="cloturerOffre">⚠️ CLÔTURER L'OFFRE</button>
+            <button class="btn-action" style="background-color: #3c4043;" data-action="verrouillerAdmin">🔒 VERROUILLER</button>
           </div>
         </div>
         </div>
 
         <!-- ===== SOUS-ÉCRANS DE L'ESPACE RESPONSABLE ===== -->
         <div class="sous-ecran" data-ecran="saisies">
-          <button class="retour" onclick="fermerSaisies()">← Retour</button>
+          <button class="retour" data-action="fermerSaisies">← Retour</button>
           <h3 class="titre-ecran">📋 Saisies de l'offre en cours</h3>
           <div id="vueListeSaisies">
             <input type="text" id="rechercheSaisie" placeholder="Rechercher (nom, prénom, pièce)…" autocomplete="off" style="margin-bottom: 10px;">
@@ -275,24 +275,24 @@
               <div class="doublon-titre" id="corAlerteTitre"></div>
               <div class="message-alerte" id="corAlerteMsg"></div>
               <div id="corAlerteListe"></div>
-              <button class="btn-action" id="btnForcerCorrection" style="background-color: #f2994a;" onclick="enregistrerCorrection(true)">FORCER LA CORRECTION</button>
+              <button class="btn-action" id="btnForcerCorrection" style="background-color: #f2994a;" data-action="enregistrerCorrection" data-args='[true]'>FORCER LA CORRECTION</button>
             </div>
             <div class="flex-btn">
-              <button class="btn-cancel" onclick="annulerCorrection()">ANNULER</button>
-              <button class="btn-force" style="background: #34a853;" onclick="enregistrerCorrection(false)">ENREGISTRER</button>
+              <button class="btn-cancel" data-action="annulerCorrection">ANNULER</button>
+              <button class="btn-force" style="background: #34a853;" data-action="enregistrerCorrection" data-args='[false]'>ENREGISTRER</button>
             </div>
           </div>
         </div>
 
         <div class="sous-ecran" data-ecran="archives">
-          <button class="retour" onclick="allerEcran('accueil')">← Retour</button>
+          <button class="retour" data-action="allerEcran" data-args='["accueil"]'>← Retour</button>
           <h3 class="titre-ecran">🗄️ Archives (offres clôturées)</h3>
           <select id="selArchive" style="width: 100%; padding: 10px; font-size: 14px; border: 2px solid #ccc; border-radius: 8px; margin-bottom: 10px;"></select>
-          <button class="btn-action" style="background-color: #1a73e8;" onclick="imprimerArchive()">🖨️ IMPRIMER CETTE ARCHIVE</button>
+          <button class="btn-action" style="background-color: #1a73e8;" data-action="imprimerArchive">🖨️ IMPRIMER CETTE ARCHIVE</button>
         </div>
 
         <div class="sous-ecran" data-ecran="operation">
-          <button class="retour" onclick="allerEcran('accueil')">← Retour</button>
+          <button class="retour" data-action="allerEcran" data-args='["accueil"]'>← Retour</button>
           <h3 class="titre-ecran">📅 Opération en cours</h3>
           <div style="display: flex; gap: 10px; margin-bottom: 15px;">
             <div style="flex: 1;">
@@ -304,47 +304,47 @@
               <input type="date" id="modalDateFin" style="padding: 8px; font-size: 14px; border-radius: 5px; border: 1px solid #ccc;">
             </div>
           </div>
-          <button class="btn-action" style="background-color: #34a853;" onclick="sauvegarderDatesTablette()">METTRE À JOUR LES DATES</button>
+          <button class="btn-action" style="background-color: #34a853;" data-action="sauvegarderDatesTablette">METTRE À JOUR LES DATES</button>
           <div id="msgRetourModal" style="text-align: center; font-weight: bold; margin-top: 10px; font-size: 13px;"></div>
         </div>
 
         <div class="sous-ecran" data-ecran="securite">
-          <button class="retour" onclick="allerEcran('accueil')">← Retour</button>
+          <button class="retour" data-action="allerEcran" data-args='["accueil"]'>← Retour</button>
           <h3 class="titre-ecran">🛡️ Sécurité</h3>
-          <button class="btn-action" id="btnMode" onclick="changerMode()">⏳ Chargement Mode...</button>
-          <button class="btn-action" id="btnModeAnnuaire" style="display:none; background-color:#5f6368;" onclick="changerModeAnnuaire()"></button>
+          <button class="btn-action" id="btnMode" data-action="changerMode">⏳ Chargement Mode...</button>
+          <button class="btn-action" id="btnModeAnnuaire" style="display:none; background-color:#5f6368;" data-action="changerModeAnnuaire"></button>
         </div>
 
         <div class="sous-ecran" data-ecran="reglages">
-          <button class="retour" onclick="allerEcran('accueil')">← Retour</button>
+          <button class="retour" data-action="allerEcran" data-args='["accueil"]'>← Retour</button>
           <h3 class="titre-ecran">🏷️ Réglages de la structure</h3>
           <div id="champsReglages"></div>
           <label style="display: flex; align-items: center; gap: 8px; font-size: 14px;">
             <input type="checkbox" id="cfg_MONTANT_OBLIGATOIRE" style="width: auto;"> Montant obligatoire
           </label>
-          <button class="btn-action" style="background-color: #34a853; margin-top: 10px;" onclick="enregistrerReglages()">ENREGISTRER LES RÉGLAGES</button>
+          <button class="btn-action" style="background-color: #34a853; margin-top: 10px;" data-action="enregistrerReglages">ENREGISTRER LES RÉGLAGES</button>
           <div id="msgReglages" style="text-align: center; font-weight: bold; font-size: 13px;"></div>
         </div>
 
         <div class="sous-ecran" data-ecran="code">
-          <button class="retour" onclick="allerEcran('accueil')">← Retour</button>
+          <button class="retour" data-action="allerEcran" data-args='["accueil"]'>← Retour</button>
           <h3 class="titre-ecran">🔑 Code responsable</h3>
           <input type="password" id="pinNouveau" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="Nouveau code (6 chiffres)" style="margin-bottom: 10px;">
           <input type="password" id="pinNouveau2" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="Confirmer le nouveau code" style="margin-bottom: 10px;">
-          <button class="btn-action" style="background-color: #34a853;" onclick="changerPin()">ENREGISTRER LE CODE</button>
+          <button class="btn-action" style="background-color: #34a853;" data-action="changerPin">ENREGISTRER LE CODE</button>
           <div id="msgPin" style="text-align: center; font-weight: bold; font-size: 13px;"></div>
           <hr style="border: 0; height: 1px; background: #ddd; margin: 20px 0;">
           <h3 class="titre-ecran">📱 Tablettes autorisées</h3>
           <div id="msgTablettes" style="text-align: center; font-size: 13px; margin-bottom: 8px;"></div>
           <div id="listeTablettes"></div>
-          <button class="btn-action btn-archive" style="margin-top: 10px;" onclick="retirerToutesLesTablettes()">⚠️ RETIRER TOUTES LES TABLETTES</button>
+          <button class="btn-action btn-archive" style="margin-top: 10px;" data-action="retirerToutesLesTablettes">⚠️ RETIRER TOUTES LES TABLETTES</button>
         </div>
       </div>
     </div>
 
     <div id="modalMentions" class="modal-overlay">
       <div class="modal-content" style="max-width: 500px;">
-        <button class="btn-close-modal" onclick="fermerMentions()">✖</button>
+        <button class="btn-close-modal" data-action="fermerMentions">✖</button>
         <h2 style="margin-top:0; text-align:center; font-size:18px;">⚖️ Mentions légales</h2>
         <hr style="border: 0; height: 1px; background: #ddd; margin: 15px 0;">
         
@@ -370,7 +370,7 @@
         <h2 style="margin-top:0; color:#d93025; font-size:18px;">⚠️ N° de pièce déjà enregistré</h2>
         <p id="msgDoublonPiece" style="font-size:14px; font-weight:bold; color:#721c24;"></p>
         <div id="listeDoublonPiece"></div>
-        <button class="btn-action" style="background:#1a73e8; margin-top:10px;" onclick="fermerDoublonPiece()">OK</button>
+        <button class="btn-action" style="background:#1a73e8; margin-top:10px;" data-action="fermerDoublonPiece">OK</button>
       </div>
     </div>
 
@@ -394,7 +394,7 @@
           <label>Nom de cette tablette</label>
           <input type="text" id="nomTablette" value="Tablette caisse" maxlength="40" autocomplete="off">
         </div>
-        <button class="btn-action" id="btnAppairer" style="background:#1a73e8;" onclick="appairerCetteTablette()">AUTORISER CETTE TABLETTE</button>
+        <button class="btn-action" id="btnAppairer" style="background:#1a73e8;" data-action="appairerCetteTablette">AUTORISER CETTE TABLETTE</button>
         <div id="msgAppairage" style="text-align:center; font-weight:bold; font-size:13px; color:#d93025;"></div>
       </div>
     </div>
@@ -406,14 +406,14 @@
         <div id="alerteServeurSaisie" class="doublon-carte" style="border-left-color:#d93025;"></div>
         <div id="alerteServeurListe"></div>
         <div class="flex-btn" id="alerteServeurChoix">
-          <button class="btn-cancel" onclick="fermerAlerteServeur()">NE PAS ENREGISTRER</button>
-          <button class="btn-force" onclick="forcerDepuisAlerte()">FORCER L'AJOUT</button>
+          <button class="btn-cancel" data-action="fermerAlerteServeur">NE PAS ENREGISTRER</button>
+          <button class="btn-force" data-action="forcerDepuisAlerte">FORCER L'AJOUT</button>
         </div>
         <div class="flex-btn" id="alerteServeurReessai" style="display:none;">
-          <button class="btn-cancel" onclick="fermerAlerteServeur()">ABANDONNER</button>
-          <button class="btn-force" style="background:#1a73e8;" onclick="reessayerDepuisAlerte()">RÉESSAYER</button>
+          <button class="btn-cancel" data-action="fermerAlerteServeur">ABANDONNER</button>
+          <button class="btn-force" style="background:#1a73e8;" data-action="reessayerDepuisAlerte">RÉESSAYER</button>
         </div>
-        <button class="btn-action" id="btnAlerteOk" style="background:#d93025; margin-top:10px;" onclick="fermerAlerteServeur()">OK, COMPRIS</button>
+        <button class="btn-action" id="btnAlerteOk" style="background:#d93025; margin-top:10px;" data-action="fermerAlerteServeur">OK, COMPRIS</button>
       </div>
     </div>
 
@@ -422,8 +422,8 @@
         <h2 style="margin-top:0; color:#1a73e8; font-size:18px;">👤 Client connu</h2>
         <p id="msgAnnuaire" style="font-size:14px;"></p>
         <div class="flex-btn">
-          <button class="btn-cancel" onclick="ignorerAnnuaire()">IGNORER</button>
-          <button class="btn-force" style="background:#34a853;" onclick="utiliserAnnuaire()">UTILISER</button>
+          <button class="btn-cancel" data-action="ignorerAnnuaire">IGNORER</button>
+          <button class="btn-force" style="background:#34a853;" data-action="utiliserAnnuaire">UTILISER</button>
         </div>
       </div>
     </div>
@@ -446,6 +446,7 @@
     <?!= include_('ScriptOffre') ?>
     <?!= include_('ScriptFormulaire') ?>
     <?!= include_('ScriptResponsable') ?>
+    <?!= include_('ScriptActions') ?>
 
     <?!= include_('ScriptOcr') ?>
   </body>

@@ -1,0 +1,54 @@
+<!-- Boutons de la page : data-action="nomDeLaFonction" (+ data-args='[…]' en JSON). -->
+<script>
+  // Fonctions qu'un bouton peut appeler. Liste explicite : ESLint vérifie que chacune
+  // existe, et une action inconnue est signalée au lieu d'appeler n'importe quoi.
+  const ACTIONS = {
+    allerAide,
+    allerEcran,
+    annulerCorrection,
+    annulerSaisie,
+    appairerCetteTablette,
+    changerMode,
+    changerModeAnnuaire,
+    changerPin,
+    cloturerOffre,
+    deverrouillerAdmin,
+    enregistrerCorrection,
+    enregistrerReglages,
+    envoyerSaisie,
+    fermerAide,
+    fermerAlerteServeur,
+    fermerDoublonPiece,
+    fermerMentions,
+    fermerPanneau,
+    fermerSaisies,
+    forcerAjout,
+    forcerDepuisAlerte,
+    ignorerAnnuaire,
+    imprimerArchive,
+    ouvrirAide,
+    ouvrirArchives,
+    ouvrirCodeTablettes,
+    ouvrirMentions,
+    ouvrirPanneau,
+    ouvrirSaisies,
+    preparerImpression,
+    preparerImpressionAncien,
+    reessayerDepuisAlerte,
+    retirerToutesLesTablettes,
+    sauvegarderDatesTablette,
+    utiliserAnnuaire,
+    verrouillerAdmin,
+  };
+  // Un seul écouteur pour toute la page (y compris les éléments ajoutés plus tard)
+  document.addEventListener("click", function (e) {
+    const el = e.target.closest("[data-action]");
+    if (!el) return;
+    const action = ACTIONS[el.dataset.action];
+    if (!action) {
+      console.error("Action inconnue : " + el.dataset.action);
+      return;
+    }
+    action.apply(null, el.dataset.args ? JSON.parse(el.dataset.args) : []);
+  });
+</script>

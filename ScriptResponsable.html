@@ -235,16 +235,16 @@
       bSup.className = "btn-cancel";
       bSup.style.background = "#d93025";
       bSup.textContent = "🗑️ SUPPRIMER";
-      bSup.onclick = function () {
+      bSup.addEventListener("click", function () {
         supprimerUneSaisie(sa);
-      };
+      });
       const bCor = document.createElement("button");
       bCor.className = "btn-force";
       bCor.style.background = "#1a73e8";
       bCor.textContent = "✏️ CORRIGER";
-      bCor.onclick = function () {
+      bCor.addEventListener("click", function () {
         corrigerUneSaisie(sa);
-      };
+      });
       actions.appendChild(bSup);
       actions.appendChild(bCor);
       carte.appendChild(actions);
@@ -518,9 +518,9 @@
         b.style.background = "#d93025";
         b.style.marginTop = "8px";
         b.textContent = "RETIRER";
-        b.onclick = function () {
+        b.addEventListener("click", function () {
           retirerUneTablette(t);
-        };
+        });
         carte.appendChild(b);
         zone.appendChild(carte);
       });

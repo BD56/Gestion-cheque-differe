@@ -103,17 +103,17 @@
   <body>
     <h3>⚙️ Paramètres</h3>
 
-    <button class="btn btn-print" onclick="imprimerAuj()">🖨️ VOIR JOUR (AUJ)</button>
+    <button class="btn btn-print" data-action="imprimerAuj">🖨️ VOIR JOUR (AUJ)</button>
 
     <div class="date-box">
       <label>📅 Voir un jour précédent :</label>
       <input type="date" id="dateImpression" />
-      <button class="btn" style="background-color: #5f6368; margin-bottom: 0" onclick="imprimerAncien()">
+      <button class="btn" style="background-color: #5f6368; margin-bottom: 0" data-action="imprimerAncien">
         VOIR CE JOUR
       </button>
     </div>
 
-    <button class="btn btn-offre" onclick="voirOffre()">📚 TOUTE L'OFFRE</button>
+    <button class="btn btn-offre" data-action="voirOffre">📚 TOUTE L'OFFRE</button>
 
     <hr />
 
@@ -129,17 +129,17 @@
       <label>📅 Opération en cours :</label>
       <input type="date" id="dateDebut" title="Date de début" />
       <input type="date" id="dateFin" title="Date de fin" />
-      <button class="btn btn-offre" style="margin-bottom: 0" onclick="sauvegarderDatesPC()">
+      <button class="btn btn-offre" style="margin-bottom: 0" data-action="sauvegarderDatesPC">
         METTRE À JOUR
       </button>
       <div id="msgDates" style="font-size: 11px; font-weight: bold; margin-top: 5px"></div>
     </div>
-    <button class="btn" id="btnMode" onclick="changerMode()">⏳ Chargement Mode...</button>
-    <button class="btn btn-archive" onclick="cloturer()">⚠️ CLÔTURER L'OFFRE</button>
-    <button class="btn" style="background-color: #5f6368" onclick="reinitialiserPin()">
+    <button class="btn" id="btnMode" data-action="changerMode">⏳ Chargement Mode...</button>
+    <button class="btn btn-archive" data-action="cloturer">⚠️ CLÔTURER L'OFFRE</button>
+    <button class="btn" style="background-color: #5f6368" data-action="reinitialiserPin">
       🔑 RÉINITIALISER LE CODE RESPONSABLE
     </button>
-    <button class="btn" style="background-color: #5f6368" onclick="retirerTablettes()">
+    <button class="btn" style="background-color: #5f6368" data-action="retirerTablettes">
       📱 RETIRER TOUTES LES TABLETTES
     </button>
 
@@ -274,6 +274,22 @@
           })
           .setDatesOperation(debut, fin);
       }
+
+      // Boutons : data-action="nomDeLaFonction" ; un seul écouteur, liste explicite.
+      const ACTIONS = {
+        changerMode,
+        cloturer,
+        imprimerAncien,
+        imprimerAuj,
+        reinitialiserPin,
+        retirerTablettes,
+        sauvegarderDatesPC,
+        voirOffre,
+      };
+      document.addEventListener("click", function (e) {
+        const el = e.target.closest("[data-action]");
+        if (el && ACTIONS[el.dataset.action]) ACTIONS[el.dataset.action]();
+      });
     </script>
   </body>
 </html>

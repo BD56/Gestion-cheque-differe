@@ -10,7 +10,7 @@
 - Bryan a choisi de **tout perfectionner sur `generalisation`** (Vannes n'a pas d'offre en
   cours) plutôt qu'un correctif séparé sur `main`.
 - **Rien n'a encore été testé sur un vrai Google Sheet** : uniquement en simulation
-  (`tests/`, 24 séries, toutes vertes). Prochaine étape : test sur une copie, puis
+  (`tests/`, 26 séries, toutes vertes). Prochaine étape : test sur une copie, puis
   déploiement à Vannes (`DEPLOIEMENT.md`).
 - Bryan n'a temporairement **pas accès à GitHub** : il a demandé `INSTALLATION.md` en
   fichier ; je lui ai proposé de lui fournir les 4 fichiers à coller (`Code.gs`,
@@ -90,6 +90,10 @@
     fuseau horaire, notes-dates, 20 tablettes, petits défauts d'écran) et **lot 3**
     (docs + liste de déploiement Vannes : archiver les autres déploiements, vérifier les
     déclencheurs, `backupQuotidien`, onglet `Logs`/sauvegardes CSV à nettoyer — RGPD).
+11. **Lots 2 et 3 faits** : voir AGENTS.md (« Lot 2 de l'audit ») et la liste à cocher
+    Vannes dans DEPLOIEMENT.md. Non faits volontairement : tri de la feuille (la
+    chronologie suit l'ordre des lignes), annuaire laissé tel quel après correction ou
+    suppression d'une ligne, nom par défaut des tablettes.
 
 ## 3. À vérifier sur un vrai Google Sheet (la simulation ne peut pas le garantir)
 1. La tablette **garde sa clé** d'un jour à l'autre (localStorage dans l'iframe Apps Script).
@@ -113,8 +117,8 @@
   l'annuaire) : non faite (#18 accepté).
 - Détection « usurpation inter-offres » (pièce d'une offre passée présentée sous un autre
   nom) : jamais faite, idée seulement.
-- Dette assumée : logique A/B/C à **4 endroits** (`traiterSaisie`, `analyserDoublonLocal`,
-  `onEdit`/`controlerLigneEditee_`, `detecterDoublons_`) — à garder synchro.
+- Dette assumée : logique A/B/C à **3 endroits** (`detecterDoublons_` pour tout le
+  serveur, `recalculerMarquages_`, `analyserDoublonLocal`) — à garder synchro.
 
 ## 5. Comment travailler avec Bryan (rappel)
 - **Discuter et faire valider avant de coder** ; il répond souvent « go » ; poser les

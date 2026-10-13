@@ -31,6 +31,8 @@ Aucun copier-coller de code.
    autorisations. *(« Google n'a pas validé cette application » → Paramètres avancés
    → Accéder au projet : normal pour un script personnel.)*
    Ça crée la feuille « Saisies » et **marque** le modèle (voir « Sécurité » plus bas).
+   *(Ça crée aussi les robots de nuit et affiche un code d'activation : sans effet sur
+   un modèle vide, à ignorer. Les copies n'héritent ni des robots ni du code.)*
 5. **Partager** le modèle : *Partager → Accès général → « Tous les utilisateurs
    disposant du lien » → Lecteur*.
 6. Le **lien à donner aux structures** : celui du modèle, en remplaçant la fin

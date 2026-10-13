@@ -81,13 +81,16 @@ Même détection via `onEdit` (édition manuelle directe dans le Sheets).
 - `getDatesOperation` / `setDatesOperation` — dates d'offre dans `PropertiesService`.
 - `verificationClotureNocturne` — robot de nuit : archive quand la date de fin passe.
 - `archiverOffreWebApp` (protégée) → `archiverOffre_` (sous verrou) — clôture : copie
-  « Saisies » → `Archives_<date>`, vide, repasse en SIGNALER, efface les dates.
+  « Saisies » → `Archives_<date>`, vide, efface les dates ; le **mode est conservé**.
 
 ## Triggers Apps Script
 - `verificationClotureNocturne` — trigger temporel (nuit) : purge d'abord les archives
   de plus de 3 ans (`purgerArchives_`, date lue dans le nom `Archives_jj-mm-aaaa_hh-mm`,
   nom non reconnu = jamais supprimé), puis clôture si l'offre est finie.
-- `purgerAnnuaire` — trigger temporel (nuit). Les deux sont créés par `installer()`.
+- `purgerAnnuaire` — trigger temporel (nuit). Créés par `installer()` (la purge seulement
+  si `ANNUAIRE_ACTIF`) ; recréés à l'ouverture de l'espace responsable s'ils manquent.
+  Les deux refusent un appel qui ne vient ni de leur déclencheur (`triggerUid`) ni d'un
+  éditeur.
 - `onEdit` / `onOpen` — triggers simples automatiques.
 
 ## Synchronisation (IMPORTANT pour Vibe)
@@ -235,9 +238,17 @@ Décision : `docs/retours-vibe/decisions/2026-10-11_generalisation.md`.
   `recalculerMarquages_` (recalcul aussi quand le réglage change), `onEdit`, client
   (`analyserDoublonLocal`, avertissement N°). Notes système : `NOTES_SYSTEME_REGEX`.
   Côté client, les saisies en attente retiennent leur **rang** (passages identiques comptés).
-- **Dette assumée** : la logique A/B/C existe à **4 endroits** — `traiterSaisie`,
-  `analyserDoublonLocal` (client), `onEdit`, et `detecterDoublons_` (partagée par
-  `forcerSaisie` et `modifierSaisie`). À garder synchro si la détection change.
+- **Dette assumée** : la logique A/B/C existe à **3 endroits** — `detecterDoublons_`
+  (serveur : `traiterSaisie`, `forcerSaisie`, `modifierSaisie`, `onEdit`),
+  `recalculerMarquages_` (marquage chronologique de toute l'offre) et
+  `analyserDoublonLocal` (client). Normalisation : `_normId_`/`_normPiece_` ↔
+  `normIdJS`/`normPieceJS` (test_lot2 vérifie qu'elles donnent le même résultat).
+- **Lot 2 de l'audit** : N° comparés sur lettres + chiffres ; noms sans aucun séparateur
+  (toutes apostrophes, invisibles) ; saisie « vide » (rien de comparable) refusée ;
+  annuaire jamais réécrit par un usurpateur (`aUneUsurpation_`), reconstruction = 1er
+  titulaire ; `onEdit` : en BLOQUANT seule une modif de nom/prénom/N° est annulée
+  (ancienne valeur remise), puis `recalculerMarquages_` ; un seul fuseau (`fuseau_()`) ;
+  mode Z1 tolérant (`modeSecurite_`) ; flush avant de rendre le verrou (`libererVerrou_`).
 
 ## Historique des choix (ne pas réintroduire sans raison nouvelle)
 - **Logs d'audit** — retirés (redondants avec « Saisies » déjà horodaté).

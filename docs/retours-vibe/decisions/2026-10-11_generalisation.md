@@ -25,8 +25,9 @@
    efface les réglages hérités, guide modèle + mise à jour du modèle.
 
 ## 🛡️ Garde-fous
-- « Saisies » reste l'**unique source de vérité** ; `traiterSaisie` / `forcerSaisie` /
-  `onEdit` **non modifiés**.
+- « Saisies » reste l'**unique source de vérité**. (Au départ, `traiterSaisie` /
+  `forcerSaisie` / `onEdit` n'étaient pas modifiés ; ils l'ont été ensuite par les
+  correctifs validés : recontrôle serveur, période, passages, lots 1 et 2 de l'audit.)
 - Une **correction** est recontrôlée A/B/C contre toutes les autres lignes (BLOQUANT :
   A/B refusés ; sinon confirmation explicite puis marquage rouge, comme `onEdit`).
 - Correction/suppression refusée si la ligne a changé depuis l'affichage.
@@ -93,6 +94,13 @@
   (stockage, tablettes, responsable du traitement) ; « licence d'utilisation
   personnelle » → « licence d'utilisation » ; **archives supprimées 3 ans après la
   clôture** (purge nocturne), comme l'annuaire.
-- Constat (non corrigé, panneau laissé tel quel) : dans `Panneau.html`, après une
-  clôture, `changerMode()` est appelé → le mode repasse en **BLOQUANT** au lieu de
-  rester SIGNALER.
+- Constat corrigé (#11) : dans `Panneau.html`, la clôture rebasculait le mode. Depuis,
+  la clôture **conserve** le mode (décision de Bryan, audit d'octobre).
+- **Audit complet d'octobre (4 analyses) — décisions de Bryan** :
+  - code responsable créé avec un **code d'activation** affiché dans le Google Sheets
+    (plus fluide qu'une création réservée au Sheet, aussi sûr) ;
+  - ✅ immédiat **gardé** si la copie locale a moins de **2 minutes** (sinon on attend le
+    serveur), avec indicateur « en cours d'envoi » ;
+  - mode **conservé** à la clôture ;
+  - lot 1 (sécurité, saisies perdues), lot 2 (détection, onEdit, écrans), lot 3 (docs,
+    liste de déploiement Vannes).

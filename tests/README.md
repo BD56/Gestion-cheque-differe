@@ -14,5 +14,10 @@ faux `google.script.run` branché sur le serveur simulé.
 - Limites : ce sont des **simulations**. Les comportements réels de Google (conversion
   des valeurs, e-mail du visiteur, stockage du navigateur dans l'iframe Apps Script) sont
   à vérifier sur une copie du Sheet.
+- `lancer.sh` fixe le fuseau à **Europe/Paris** (celui du projet Apps Script) : les
+  dates ne dépendent pas de la machine. La clôture de nuit est testée sur « dernier
+  jour » / « lendemain » (`test_lot2.js`).
+- Tests par lot de l'audit : `test_ui_lot1.js` (tablette), `test_lot2.js` (serveur),
+  `test_ui_lot2.js` (tablette).
 - Ce dossier est **exclu** de l'envoi vers Apps Script (`.claspignore`) : ne jamais le
   copier dans l'éditeur Apps Script.

@@ -25,9 +25,10 @@ C'est **ce déploiement-là** qu'on met à jour (jamais un nouveau).
 4. Astuce : copier le **« raw »** sur GitHub (bouton *Raw*) pour récupérer le texte
    brut sans mise en forme.
 
-> Note : `appsscript.json` (le manifeste) change rarement. Ne le touche que si Vibe
-> l'a explicitement modifié (il faut activer « Afficher le fichier manifeste » dans les
-> paramètres du projet pour le voir).
+> Note : `appsscript.json` (le manifeste) change rarement. Ne le touche que s'il a été
+> modifié (il faut activer « Afficher le fichier manifeste » dans les paramètres du
+> projet pour le voir). **La version « généralisation » le modifie** (accès « Tout le
+> monde ») : pour cette migration, le recopier aussi.
 
 ## Étape 1 bis — Lancer « Installer » (si le code a changé côté serveur)
 Après avoir collé un nouveau `Code.gs` : dans le **Google Sheets**, menu
@@ -40,6 +41,11 @@ Google en demande.
 - C'est **sans risque** pour un classeur déjà en service : ça ne crée que ce qui manque
   (feuilles, déclencheurs) et n'écrase aucune donnée ni aucun réglage. Le compte rendu
   dit ce qui a été fait.
+- À faire **juste après** le collage : le code collé est actif tout de suite pour le
+  robot de nuit et le panneau du Sheet (pas seulement après le redéploiement) ; sans
+  les nouvelles autorisations, le robot de la nuit suivante échouerait.
+- À savoir : dès la nuit suivante, le robot supprime les archives de **plus de 3 ans**
+  et la purge de l'annuaire tourne (voir la liste Vannes ci-dessous).
 
 ## Étape 2 — Redéployer sur la MÊME URL
 1. En haut à droite : **Déployer → Gérer les déploiements**.
@@ -77,6 +83,35 @@ Google en demande.
   tablettes de caisse** (voir `INSTALLATION.md`, « Qui fait quoi »).
 - Le panneau du Google Sheets fonctionne comme avant (secours), pour les personnes
   ayant accès au fichier.
+
+### ✅ Liste à cocher — migration de Vannes vers la version « généralisation »
+1. **Entre deux offres** (aucune en cours). Fermer l'onglet de l'application sur les
+   tablettes avant de commencer, et les rouvrir à la fin.
+2. **Recopier les 4 fichiers** (`Code.gs`, `Index.html`, `Panneau.html`,
+   `appsscript.json`), enregistrer.
+3. **Aussitôt** : menu 🚀 APPLICATION → 🧰 Installer → accepter les autorisations.
+   **Noter le code d'activation** affiché.
+4. **Un seul déploiement** : *Déployer → Gérer les déploiements* → **archiver tout
+   déploiement autre que celui de l'URL des tablettes**. Un ancien déploiement continue
+   de faire tourner l'ancien code (sans code responsable ni contrôle des tablettes).
+5. Modifier le déploiement des tablettes : **Nouvelle version** + **Qui a accès : Tout
+   le monde** → Déployer (même URL).
+6. Sur la tablette : saisir le code d'activation, choisir le code responsable (6
+   chiffres), nommer la tablette → AUTORISER. Puis chaque autre tablette.
+7. **Déclencheurs** (Apps Script → ⏰ Déclencheurs) : `verificationClotureNocturne` et
+   `purgerAnnuaire`, **une seule fois chacun**, au nom du compte qui détient le Sheet.
+   Supprimer les doublons et tout ancien déclencheur (`backupQuotidien`…).
+8. **Données personnelles laissées par d'anciennes versions (RGPD)** : vérifier et
+   supprimer si elles existent — l'onglet **`Logs`** du Sheet, un **Google Sheets de
+   sauvegarde** et des fichiers **`Backup_Saisies_*.csv`** dans le Drive. La purge
+   automatique ne les touche pas.
+9. **Noms des onglets d'archives** : seuls ceux au format `Archives_jj-mm-aaaa_hh-mm`
+   sont supprimés automatiquement après 3 ans ; les autres sont à gérer à la main.
+10. **Compte Google du Sheet** : déconnecté de toutes les tablettes de caisse.
+11. Ouvrir l'espace responsable : pas d'alerte « robot de nuit » ; vérifier le mode
+    (SIGNALER / BLOQUANT), désormais conservé d'une offre à l'autre.
+12. À savoir : la colonne F s'imprime avec le libellé des réglages (« Notes ou Infos »
+    par défaut, au lieu de « CODE ») — à changer dans 🏷️ Réglages si besoin.
 
 ## Étape 3 bis — Mettre à jour le MODÈLE (si des structures copient le modèle)
 Pour que les **prochaines** structures aient la nouvelle version, reporter aussi le

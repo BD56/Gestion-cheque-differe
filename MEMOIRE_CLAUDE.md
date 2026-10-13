@@ -114,7 +114,8 @@ forcer, dernière saisie. Retour de Bryan : PAS de sombre (clair uniquement) ; i
 compteur, flèche ouvrir/fermer, état mémorisé par tablette (localStorage), noms abrégés
 (« DURAND S. ») et N° masqués (••••8132) pour la confidentialité (écran visible du
 client), journal sous le voile pendant une alerte, tiroir en bas en portrait. Montants
-dans le journal : question ouverte (option dans le prototype). Prototype interactif
+dans le journal : GARDÉS (décision Bryan) ; bouton « Imprimer la journée » en pied du
+journal (remis à sa demande). Question en cours : autoriser le mode portrait ? Prototype interactif
 publié (artefact privé « Comptoir — prototype » : https://claude.ai/artifact/FUmo7ZsUu5iDgi9YCow3dT ;
 source dans l'espace temporaire de la session, non versionnée) : saisie 3 étapes,
 verdict N° en direct, alertes A/B/C comparatives, forçage confirmé dans la page,

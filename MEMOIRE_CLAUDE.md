@@ -59,10 +59,14 @@ Panneau.html ; captures avant / après de chaque écran. Ne pas oublier : la car
 actuelle déborde sur écran étroit (~420 px : container 100 % + padding sans
 box-sizing) → corrigé par la refonte.
 
-**En attente côté Bryan** : (a) résultat de `git pull` + `npm run push` + « Installer »
-sur le Sheet « Gestion Chèques Différés — REFONTE (test) » (doit afficher « Version
-2026.10.13-2. » sans INCOMPLÈTE), puis déploiement et parcours complet sur tablette ;
-(b) modèle des tablettes de Vannes (iPad / Samsung…).
+**Tranché par Bryan (13/10, après relecture du plan)** : journal = chèques de TOUTES
+les tablettes (copie locale, décalage ≤ 2 min pour les autres tablettes). Pas de modèle
+de tablette unique (plusieurs magasins, plusieurs modèles) → mise en page adaptée à
+toute taille, aide de rotation générique iPad / Android. Choix techniques laissés à
+Claude : chiffres de la vue d'ensemble calculés par le serveur depuis « Saisies » ;
+numéro de version renouvelé par Claude à chaque étape poussée (Bryan n'a qu'à faire
+`git pull` + `npm run push`). **Reste : le « go » de Bryan pour créer `design`.**
+« Installer » sur le Sheet REFONTE (test) en 2026.10.13-2 : ✅ OK (Bryan, 13/10).
 
 ## 0 bis. Refonte du code (branche `refonte`) — FAITE (étapes 1 à 6), étape 7 reportée
 But : maintenabilité sans changement de comportement. 30 séries de tests (`npm test`),
@@ -213,7 +217,7 @@ quand Bryan le demande.
 9. (Refonte) Contrôle de version : ✅ `globalThis["version_X_"]` voit bien les .gs
    (testé par Bryan sur « Gestion Chèques Différés — REFONTE (test) », 13/10) ; les
    commentaires HTML sont retirés par `getContent` (constaté) → marque en attribut
-   `data-version` depuis 2026.10.13-2 : à revérifier (« Installer » sans INCOMPLÈTE).
+   `data-version` depuis 2026.10.13-2 : ✅ vérifié par Bryan (« Installer » OK, 13/10).
 
 ## 4. Points ouverts / idées non faites
 - Pull request `generalisation` → `main` : à ouvrir **après** le test de Bryan (il n'a pas

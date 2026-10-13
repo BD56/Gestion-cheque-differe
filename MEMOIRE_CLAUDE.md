@@ -101,7 +101,15 @@ A « Clair premium » (cartes blanches, bleu nuit #1e3a8a, ombres douces), B « 
 caisse » (en-tête noir, champs 60 px, VALIDER vert, alerte plein écran rouge avec
 ABANDONNER en gros bouton et « Forcer » secondaire), C « Couleur de la structure »
 (comme A + en-tête à la couleur réglable, nouveau réglage à prévoir). Icônes SVG
-intégrées (plus d'emojis), police système. EN ATTENTE du choix de Bryan. Défaut vu :
+intégrées (plus d'emojis), police système. Puis, à sa demande, 2 maquettes « à partir
+de zéro » : 1 « Comptoir » (paysage : saisie en 3 étapes + journal du jour à droite ;
+alerte = tableau comparatif maintenant / déjà enregistré avec IDENTIQUE par champ, gros
+bouton « Ne pas enregistrer », lien « Enregistrer quand même » ; responsable = menu à
+gauche + vue d'ensemble chiffrée) et 2 « Nuit » (portrait sombre : N° de pièce en
+héros avec verdict en direct, bouton « Enregistrer · montant » ; alerte plein écran
+« DÉJÀ VENU », forcer = maintenir 2 s ; responsable façon Réglages de téléphone).
+Idées nouvelles marquées : journal du jour, vue d'ensemble chiffrée, maintien pour
+forcer, dernière saisie. EN ATTENTE du choix de Bryan. Défaut vu :
 sur écran étroit (~420 px) la carte actuelle déborde à droite (container 100 % +
 padding sans box-sizing).
 Plus tard : fusion `refonte` → `generalisation` (ou `main` après Vannes), seulement

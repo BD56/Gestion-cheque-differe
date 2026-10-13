@@ -10,7 +10,7 @@
 - Bryan a choisi de **tout perfectionner sur `generalisation`** (Vannes n'a pas d'offre en
   cours) plutôt qu'un correctif séparé sur `main`.
 - **Rien n'a encore été testé sur un vrai Google Sheet** : uniquement en simulation
-  (`tests/`, 23 séries, toutes vertes). Prochaine étape : test sur une copie, puis
+  (`tests/`, 24 séries, toutes vertes). Prochaine étape : test sur une copie, puis
   déploiement à Vannes (`DEPLOIEMENT.md`).
 - Bryan n'a temporairement **pas accès à GitHub** : il a demandé `INSTALLATION.md` en
   fichier ; je lui ai proposé de lui fournir les 4 fichiers à coller (`Code.gs`,
@@ -78,6 +78,19 @@
    (décision Bryan, RGPD) : `purgerArchives_` lancée chaque nuit par
    `verificationClotureNocturne` ; onglet au nom non reconnu jamais supprimé.
 
+10. **Audit complet (4 analyses parallèles) puis lot 1 de corrections** (validé par Bryan) :
+    code d'activation (création du code responsable), compteurs de codes faux séparés,
+    jeton lié à la tablette, copie locale ≤ 2 min (✅ immédiat gardé, sinon attente du
+    serveur), indicateur « en cours d'envoi » + avertissement à la fermeture, saisie en
+    échec retirée de la copie + RÉESSAYER, encadré de doublon protégé, pré-remplissage
+    sélectionné, réglages envoyés à chaque rechargement, robots de nuit recréés/signalés,
+    fonctions sensibles réservées, montant protégé, URL du Sheet plus envoyée, mode
+    conservé à la clôture (décision b). Restent : **lot 2** (🟠 de l'audit : onEdit en
+    BLOQUANT qui efface une cellule, normalisation N°/noms, annuaire et usurpateur,
+    fuseau horaire, notes-dates, 20 tablettes, petits défauts d'écran) et **lot 3**
+    (docs + liste de déploiement Vannes : archiver les autres déploiements, vérifier les
+    déclencheurs, `backupQuotidien`, onglet `Logs`/sauvegardes CSV à nettoyer — RGPD).
+
 ## 3. À vérifier sur un vrai Google Sheet (la simulation ne peut pas le garantir)
 1. La tablette **garde sa clé** d'un jour à l'autre (localStorage dans l'iframe Apps Script).
 2. L'accès **« Tout le monde »** fonctionne sans compte Google (et `google.script.run`).
@@ -89,6 +102,9 @@
    `Archives_jj-mm-aaaa_hh-mm` est purgé ; la 1re nuit supprimera ceux de plus de 3 ans).
 6. Parcours complet : autorisation, saisie, doublons, passages, correction, impression,
    archives, clôture.
+7. Le robot de nuit passe la vérification `triggerUid` (sinon l'espace responsable
+   affichera « robot n'a pas fonctionné depuis… » après 36 h) ; `Session.getActiveUser`
+   renvoie bien l'e-mail dans le menu du Sheet (sinon « Installer » est refusé).
 
 ## 4. Points ouverts / idées non faites
 - Pull request `generalisation` → `main` : à ouvrir **après** le test de Bryan (il n'a pas

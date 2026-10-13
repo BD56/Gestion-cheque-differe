@@ -14,7 +14,7 @@ const { FakeSheet } = require('./fakesheet');
   const S = env.sheets.Saisies;
   try {
     await page.click('button[title="Panneau de contrôle"]'); await page.waitForTimeout(100);
-    await page.fill('#pinSaisi', '258025'); await page.fill('#pinConfirme', '258025'); await page.click('#btnDeverrouiller'); await page.waitForTimeout(150);
+    await page.fill('#activationVerrou', env.activation()); await page.fill('#pinSaisi', '258025'); await page.fill('#pinConfirme', '258025'); await page.click('#btnDeverrouiller'); await page.waitForTimeout(150);
     await page.click('#modalParametres .tuile:has-text("Saisies")'); await page.waitForTimeout(150);
     assert.strictEqual(await page.$$eval('#listeSaisies .doublon-carte', x => x.length), 3);
     assert.strictEqual(await page.$$eval('#listeSaisies img', x => x.length), 0, 'pas d\'injection HTML');

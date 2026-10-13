@@ -29,7 +29,7 @@ Principe : **tout passe par l'application** ; le Google Sheets n'est qu'un stock
 - **Code.gs** — backend Apps Script (logique serveur).
 - **Index.html** — la web app servie par `doGet` (tablette caisse).
 - **Panneau.html** — sidebar admin dans le Sheets (menu `🚀 APPLICATION`).
-- **appsscript.json** — manifeste (V8, `Europe/Paris`, webapp `access: ANYONE`).
+- **appsscript.json** — manifeste (V8, `Europe/Paris`, webapp `access: ANYONE_ANONYMOUS`).
 - **INSTALLATION.md** — créer le **modèle** (une fois) et installer l'appli pour une
   nouvelle structure (copie du modèle → menu Installer → déploiement).
 - **prototype-ocr/** — banc d'essai OCR isolé (hors app, voir plus bas).
@@ -136,8 +136,9 @@ Décision : `docs/retours-vibe/decisions/2026-10-11_generalisation.md`.
   précision des notes. Devise **euro**, conservation annuaire **3 ans** et
   archives **3 ans** après clôture : fixes.
   `doGet` passe en **template** (`<?= cfg.X ?>`, échappé) pour les injecter.
-- **Espace responsable** (⚙️) : code PIN 4-8 chiffres (SHA-256 + sel, jamais en clair),
-  jeton de session `CacheService` (10 min d'inactivité), 5 échecs → blocage 15 min.
+- **Espace responsable** (⚙️) : code PIN 6 chiffres (SHA-256 + sel, jamais en clair),
+  jeton de session `CacheService` (10 min d'inactivité) **lié à la tablette** (envoyé
+  `{ j: jeton, c: clé }`), 5 échecs → blocage 15 min.
   Protège : réglages, mode, mode annuaire, dates, clôture, archives, corrections.
   Présentation : **6 tuiles** (Saisies, Archives, Opération, Sécurité, Réglages, Code)
   ouvrant chacune un sous-écran (« ← Retour ») + Clôturer / Verrouiller à part.
@@ -201,9 +202,25 @@ Décision : `docs/retours-vibe/decisions/2026-10-11_generalisation.md`.
   empreinte côté serveur (`TABLETTES` en propriétés). `exigerTablette_(cle)` en tête
   de toutes les fonctions utilisées par la tablette (le panneau du Sheet passe via
   `estEditeurDuClasseur_`). Accès du déploiement : **Tout le monde** (`ANYONE_ANONYMOUS`).
-  Après une réinitialisation du code, seule une tablette autorisée peut le recréer.
+- **Code d'activation** (lot 1 de l'audit) : créer le code responsable (aucun code :
+  1re installation ou après « Réinitialiser ») exige un code à 8 chiffres affiché
+  **uniquement dans le Google Sheets** (menu « 🧰 Installer », « 🔑 Code d'activation »,
+  réinitialisation depuis le panneau). Usage unique, 24 h, 10 essais. Empêche la prise
+  de contrôle par la première personne qui ouvre le lien.
 - **Code responsable** : exactement **6 chiffres** ; pause serveur de 10 s après chaque
-  code faux (compteur global) ; blocage 15 min après 5 erreurs (jamais plus long).
+  code faux ; blocage 15 min après 5 erreurs (jamais plus long). Compteurs **séparés**
+  (`PIN_ESSAIS_<groupe>`) : un par tablette autorisée, un pour les appareils non
+  autorisés (écran d'autorisation), un pour le panneau du Sheet ; un inconnu ne peut
+  plus bloquer l'espace responsable. Codes faux d'inconnus signalés (`PIN_INCONNUS`).
+- **Fonctions réservées** : `installer`, `allerVers*` (éditeurs du classeur) ;
+  `verificationClotureNocturne` / `purgerAnnuaire` (leur déclencheur, vérifié par
+  `triggerUid`, ou un éditeur). Passage du robot noté (`DERNIERE_NUIT`) ; l'espace
+  responsable recrée les robots absents et signale un robot arrêté (> 36 h).
+- **Copie locale de la tablette** : âge maximum 2 min (`copieFraiche`) pour décider sans
+  attendre le serveur ; au-delà, on attend sa réponse. Rechargée au focus et à la 1re
+  frappe du N° ; porte les réglages (`config`). Indicateur « en cours d'envoi » ;
+  saisie refusée/non envoyée retirée de la copie, bouton RÉESSAYER. Mode conservé à la
+  clôture. Montant jamais écrit comme formule (`montantSur_`).
 - **Règle d'installation (#5)** : le manager détient le Sheet (idéalement compte Google du
   magasin) et ne transmet que le lien `/exec` ; ce compte n'est jamais connecté sur une
   tablette de caisse (sinon le code ne protège rien).

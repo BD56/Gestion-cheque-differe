@@ -7,12 +7,15 @@ const { ouvrir } = require('./navigateur');
     await page.waitForTimeout(200);
     // Tablette neuve, 1re installation : écran d'autorisation, rien d'autre n'a été chargé
     assert.ok(await vis('#ecranAppairage'));
-    assert.match(await txt('#txtAppairage'), /Première installation/);
-    assert.ok(await vis('#blocPinApp2'));
+    assert.match(await txt('#txtAppairage'), /code d'activation/);
+    assert.ok(await vis('#blocPinApp2') && await vis('#blocActivationApp'));
     assert.strictEqual(await page.evaluate(() => cacheVerif), null, 'aucune donnée chargée avant autorisation');
     await page.fill('#pinApp', '1234'); await page.click('#btnAppairer');
     assert.match(await txt('#msgAppairage'), /6 chiffres/);
     await page.fill('#pinApp', '258025'); await page.fill('#pinApp2', '258025'); await page.fill('#nomTablette', 'Caisse centrale 1');
+    await page.click('#btnAppairer'); await page.waitForTimeout(100);
+    assert.match(await txt('#msgAppairage'), /code d'activation/, 'sans code d\'activation : rien n\'est envoyé');
+    await page.fill('#activationApp', env.activation());
     await page.click('#btnAppairer'); await page.waitForTimeout(300);
     assert.ok(!(await vis('#ecranAppairage')), 'écran fermé après autorisation');
     assert.ok(await page.evaluate(() => !!window.__store.cdTabletteCle), 'clé mémorisée');

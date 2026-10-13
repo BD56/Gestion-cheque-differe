@@ -22,33 +22,70 @@ function doGet(e) {
 //     Seule exception : une COPIE d'un autre classeur repart sans les réglages
 //     hérités (code responsable, dates, réglages) — cf. nettoyerSiCopie_.
 // =================================================================
+// Réservé aux personnes ayant accès au fichier (menu du Sheet, éditeur Apps Script) :
+// un visiteur de l'application ne peut pas le lancer.
 function installer() {
+  exigerEditeur_();
   var rapport = [];
   if (nettoyerSiCopie_()) rapport.push("Nouvelle copie détectée : code responsable, dates et réglages hérités effacés.");
-  rapport = rapport.concat(installerFeuilles_());
-  var existants = ScriptApp.getProjectTriggers().map(function (t) { return t.getHandlerFunction(); });
-  if (existants.indexOf('verificationClotureNocturne') === -1) {
-    ScriptApp.newTrigger('verificationClotureNocturne').timeBased().everyDays(1).atHour(1).create();
-    rapport.push("Déclencheur créé : clôture automatique (chaque nuit vers 1h).");
-  }
-  if (ANNUAIRE_ACTIF && existants.indexOf('purgerAnnuaire') === -1) {
-    ScriptApp.newTrigger('purgerAnnuaire').timeBased().everyDays(1).atHour(3).create();
-    rapport.push("Déclencheur créé : purge de l'annuaire (chaque nuit vers 3h).");
-  }
+  rapport = rapport.concat(installerFeuilles_(), installerDeclencheurs_());
   if (rapport.length === 0) rapport.push("Rien à faire : tout est déjà en place.");
   Logger.log(rapport.join("\n"));
   return rapport.join("\n");
 }
 
-// Depuis le menu du Sheet : installe puis affiche le compte rendu + la suite.
+// Crée les robots de nuit manquants. Renvoie la liste de ce qui a été fait.
+function installerDeclencheurs_() {
+  var faits = [];
+  var existants = ScriptApp.getProjectTriggers().map(function (t) { return t.getHandlerFunction(); });
+  if (existants.indexOf('verificationClotureNocturne') === -1) {
+    ScriptApp.newTrigger('verificationClotureNocturne').timeBased().everyDays(1).atHour(1).create();
+    faits.push("Déclencheur créé : clôture automatique et suppression des archives de plus de 3 ans (chaque nuit vers 1h).");
+  }
+  if (ANNUAIRE_ACTIF && existants.indexOf('purgerAnnuaire') === -1) {
+    ScriptApp.newTrigger('purgerAnnuaire').timeBased().everyDays(1).atHour(3).create();
+    faits.push("Déclencheur créé : purge de l'annuaire (chaque nuit vers 3h).");
+  }
+  return faits;
+}
+
+// État des robots de nuit (affiché dans l'espace responsable).
+function etatRobots_() {
+  var noms = ScriptApp.getProjectTriggers().map(function (t) { return t.getHandlerFunction(); });
+  var props = PropertiesService.getDocumentProperties();
+  return {
+    cloture: noms.indexOf('verificationClotureNocturne') !== -1,
+    purge: !ANNUAIRE_ACTIF || noms.indexOf('purgerAnnuaire') !== -1,
+    derniereNuit: props.getProperty('DERNIERE_NUIT') || "",
+    derniereNuitMs: Number(props.getProperty('DERNIERE_NUIT_MS') || 0)
+  };
+}
+
+// Depuis le menu du Sheet : installe puis affiche le compte rendu + la suite
+// (et le code d'activation si le code responsable n'existe pas encore).
 function installerDepuisMenu() {
+  var ui = SpreadsheetApp.getUi(); // échoue hors du Google Sheets : rien n'est fait
   var rapport = installer();
-  var ui = SpreadsheetApp.getUi();
+  var props = PropertiesService.getDocumentProperties();
+  if (!props.getProperty('ADMIN_PIN_HASH')) rapport += "\n\n" + texteActivation_(genererCodeActivation_());
   ui.alert("🧰 Installation",
     rapport +
     "\n\nSi l'application n'est pas encore en ligne : Extensions → Apps Script → " +
     "Déployer → Nouveau déploiement → Application Web (voir INSTALLATION.md).",
     ui.ButtonSet.OK);
+}
+
+// Menu du Sheet « 🔑 Code d'activation » : pour créer le code responsable depuis
+// l'application (1re installation, ou après « Réinitialiser le code »).
+function afficherCodeActivation() {
+  var ui = SpreadsheetApp.getUi();
+  exigerEditeur_();
+  if (PropertiesService.getDocumentProperties().getProperty('ADMIN_PIN_HASH')) {
+    ui.alert("🔑 Code d'activation", "Un code responsable existe déjà : il sert à autoriser les tablettes.\n\n" +
+      "Code oublié ? Panneau ⚙️ (à droite) → « Réinitialiser le code responsable » : un code d'activation sera alors affiché.", ui.ButtonSet.OK);
+    return;
+  }
+  ui.alert("🔑 Code d'activation", texteActivation_(genererCodeActivation_()), ui.ButtonSet.OK);
 }
 
 // Les réglages (PropertiesService du document) sont marqués avec l'ID du
@@ -192,17 +229,27 @@ function etatAdmin() {
   return { pinDefini: !!PropertiesService.getDocumentProperties().getProperty('ADMIN_PIN_HASH') };
 }
 
-function creerJetonAdmin_() {
+// Le jeton est LIÉ à la tablette qui a saisi le code : il ne sert à rien depuis un
+// autre appareil. La tablette l'envoie avec sa clé : { j: jeton, c: clé }.
+// (« E » = jeton sans tablette : panneau du Sheet ou code d'activation.)
+function creerJetonAdmin_(tablette) {
   var jeton = Utilities.getUuid();
-  CacheService.getScriptCache().put('ADM_' + jeton, '1', ADMIN_SESSION_SEC);
+  CacheService.getScriptCache().put('ADM_' + jeton, tablette ? 'T:' + tablette.id : 'E', ADMIN_SESSION_SEC);
   return jeton;
 }
 
 function jetonValide_(jeton) {
-  if (!jeton || typeof jeton !== 'string') return false;
+  var j = jeton, cle = null;
+  if (jeton && typeof jeton === 'object') { j = jeton.j; cle = jeton.c; }
+  if (!j || typeof j !== 'string') return false;
   var cache = CacheService.getScriptCache();
-  if (cache.get('ADM_' + jeton) !== '1') return false;
-  cache.put('ADM_' + jeton, '1', ADMIN_SESSION_SEC); // prolonge (10 min d'inactivité)
+  var lien = cache.get('ADM_' + j);
+  if (!lien) return false;
+  if (lien !== 'E') {
+    var t = tabletteDeCle_(cle);
+    if (!t || lien !== 'T:' + t.id) return false;
+  }
+  cache.put('ADM_' + j, lien, ADMIN_SESSION_SEC); // prolonge (10 min d'inactivité)
   return true;
 }
 
@@ -226,88 +273,178 @@ function exigerAdmin_(jeton) {
   throw new Error("ADMIN_REQUIS : code responsable requis (session expirée ?)");
 }
 
-// Vérifie le code responsable avec les protections contre les essais au hasard
-// (compteur GLOBAL côté serveur, quel que soit l'appareil) :
+function exigerEditeur_() {
+  if (!estEditeurDuClasseur_()) throw new Error("Réservé aux personnes ayant accès au Google Sheets.");
+}
+
+// Robot de nuit : lancé par SON déclencheur (ou à la main par un éditeur). Un visiteur
+// de l'application ne peut pas le déclencher (identifiant du déclencheur inconnu).
+function exigerDeclencheurOuEditeur_(e) {
+  if (e && e.triggerUid && ScriptApp.getProjectTriggers().some(function (t) {
+    return String(t.getUniqueId()) === String(e.triggerUid);
+  })) return;
+  exigerEditeur_();
+}
+
+// Vérifie le code responsable avec les protections contre les essais au hasard.
+// Compteurs SÉPARÉS par « groupe » : un par tablette autorisée (« T_<id> »), un pour
+// les appareils non autorisés (« INCONNU » : écran d'autorisation), un pour le panneau
+// du Sheet. Un inconnu qui a le lien ne peut donc PAS bloquer l'espace responsable des
+// tablettes autorisées (au pire, l'autorisation de nouvelles tablettes, 15 min).
 //  - après chaque code faux : 10 s de pause pendant lesquelles tout essai est refusé ;
-//  - après 5 codes faux : blocage 15 min (jamais plus long : le vrai responsable
-//    n'est pas bloqué durablement ; déblocage immédiat possible depuis le Sheet).
+//  - après 5 codes faux : blocage 15 min (jamais plus long).
 // À appeler sous verrou. Renvoie { ok:true } ou { ok:false, message }.
-function verifierPin_(props, pin) {
+function verifierPin_(props, pin, groupe) {
   var hash = props.getProperty('ADMIN_PIN_HASH');
   if (!hash) return { ok: false, message: "Aucun code défini : créez-le d'abord." };
+  var cleEtat = 'PIN_ESSAIS_' + (groupe || 'EDITEUR');
+  var etat = {};
+  try { etat = JSON.parse(props.getProperty(cleEtat) || '{}'); } catch (e) { etat = {}; }
   var maintenant = Date.now();
-  var bloque = Number(props.getProperty('ADMIN_BLOQUE_JUSQUA') || 0);
-  if (bloque > maintenant) {
-    return { ok: false, message: "Trop d'essais. Réessayez dans " + Math.ceil((bloque - maintenant) / 60000) + " min." };
+  if ((etat.bloque || 0) > maintenant) {
+    return { ok: false, message: "Trop d'essais. Réessayez dans " + Math.ceil((etat.bloque - maintenant) / 60000) + " min." };
   }
-  var dernierEchec = Number(props.getProperty('ADMIN_DERNIER_ECHEC') || 0);
-  if (maintenant - dernierEchec < ADMIN_PAUSE_MS) {
-    return { ok: false, message: "Patientez " + Math.ceil((ADMIN_PAUSE_MS - (maintenant - dernierEchec)) / 1000) + " s avant un nouvel essai." };
+  if (maintenant - (etat.dernier || 0) < ADMIN_PAUSE_MS) {
+    return { ok: false, message: "Patientez " + Math.ceil((ADMIN_PAUSE_MS - (maintenant - etat.dernier)) / 1000) + " s avant un nouvel essai." };
   }
   if (empreintePin_(props.getProperty('ADMIN_PIN_SEL'), (pin || "").toString()) === hash) {
-    props.setProperty('ADMIN_ECHECS', '0');
+    props.deleteProperty(cleEtat);
     return { ok: true };
   }
-  var echecs = Number(props.getProperty('ADMIN_ECHECS') || 0) + 1;
+  if (groupe === 'INCONNU') { // trace visible dans l'espace responsable
+    var inc = {};
+    try { inc = JSON.parse(props.getProperty('PIN_INCONNUS') || '{}'); } catch (e) { inc = {}; }
+    props.setProperty('PIN_INCONNUS', JSON.stringify({ n: (inc.n || 0) + 1, dernier: Utilities.formatDate(new Date(), "Europe/Paris", "dd/MM/yyyy HH:mm") }));
+  }
+  var echecs = (etat.echecs || 0) + 1;
   if (echecs >= ADMIN_ESSAIS_MAX) {
-    props.setProperties({ ADMIN_ECHECS: '0', ADMIN_DERNIER_ECHEC: String(maintenant), ADMIN_BLOQUE_JUSQUA: String(maintenant + ADMIN_BLOCAGE_MIN * 60000) });
+    props.setProperty(cleEtat, JSON.stringify({ echecs: 0, dernier: maintenant, bloque: maintenant + ADMIN_BLOCAGE_MIN * 60000 }));
     return { ok: false, message: "Code faux. Trop d'essais : bloqué " + ADMIN_BLOCAGE_MIN + " min." };
   }
-  props.setProperties({ ADMIN_ECHECS: String(echecs), ADMIN_DERNIER_ECHEC: String(maintenant) });
+  props.setProperty(cleEtat, JSON.stringify({ echecs: echecs, dernier: maintenant, bloque: 0 }));
   return { ok: false, message: "Code faux (" + (ADMIN_ESSAIS_MAX - echecs) + " essai(s) restant(s)). Patientez 10 s." };
+}
+
+// Efface les compteurs d'essais (tous, ou ceux d'une tablette).
+function effacerEssais_(props, groupe) {
+  var tout = props.getProperties();
+  for (var k in tout) {
+    if (groupe ? k === 'PIN_ESSAIS_' + groupe : k.indexOf('PIN_ESSAIS_') === 0) props.deleteProperty(k);
+  }
 }
 
 // Code juste -> { ok:true, jeton } ; sinon { ok:false, message }. Tablette autorisée requise.
 function ouvrirSessionAdmin(pin, cle) {
   exigerTablette_(cle);
+  var t = tabletteDeCle_(cle);
   var lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
-    var v = verifierPin_(PropertiesService.getDocumentProperties(), pin);
-    return v.ok ? { ok: true, jeton: creerJetonAdmin_() } : v;
+    var v = verifierPin_(PropertiesService.getDocumentProperties(), pin, t ? 'T_' + t.id : 'EDITEUR');
+    return v.ok ? { ok: true, jeton: creerJetonAdmin_(t) } : v;
   } finally {
     lock.releaseLock();
   }
 }
 
-// Création (si aucun code) ou changement (session responsable requise).
-// Création : libre à la toute première installation (aucune tablette autorisée) ;
-// ensuite (ex. après une réinitialisation depuis le Sheet), seulement depuis une
-// tablette déjà autorisée — sinon n'importe qui ayant le lien pourrait la faire.
-function definirPin(nouveauPin, jeton, cle) {
+// --- CODE D'ACTIVATION : prouve l'accès au Google Sheets ---
+// Créer le code responsable (1re installation, ou après « Réinitialiser le code »)
+// exige ce code à 8 chiffres, affiché UNIQUEMENT dans le Google Sheets (menu
+// « 🧰 Installer », « 🔑 Code d'activation », ou réinitialisation du code). Sinon,
+// la première personne qui ouvre le lien pourrait choisir le code responsable.
+// Usage unique, valable 24 h, 10 essais au plus. Seule son empreinte est gardée.
+var ACTIVATION_DUREE_H = 24;
+var ACTIVATION_ESSAIS_MAX = 10;
+
+function genererCodeActivation_() {
+  var chiffres = "";
+  while (chiffres.length < 8) {
+    var octets = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, Utilities.getUuid() + Utilities.getUuid(), Utilities.Charset.UTF_8);
+    for (var i = 0; i < octets.length && chiffres.length < 8; i++) {
+      var b = octets[i] & 255;
+      if (b < 250) chiffres += String(b % 10); // 250 = 25 × 10 : pas de biais
+    }
+  }
+  var sel = Utilities.getUuid();
+  PropertiesService.getDocumentProperties().setProperties({
+    ACTIVATION_SEL: sel,
+    ACTIVATION_HASH: empreintePin_(sel, chiffres),
+    ACTIVATION_EXPIRE: String(Date.now() + ACTIVATION_DUREE_H * 3600000),
+    ACTIVATION_ESSAIS: '0'
+  });
+  return chiffres.slice(0, 4) + "-" + chiffres.slice(4);
+}
+
+function texteActivation_(code) {
+  return "🔑 Code d'activation : " + code + "\n(valable " + ACTIVATION_DUREE_H + " h, une seule fois)\n\n" +
+    "Sur la tablette, ouvrez l'application : elle demande ce code, puis de choisir le code " +
+    "responsable (6 chiffres). Ne le communiquez qu'au responsable.";
+}
+
+function effacerActivation_(props) {
+  ['ACTIVATION_SEL', 'ACTIVATION_HASH', 'ACTIVATION_EXPIRE', 'ACTIVATION_ESSAIS'].forEach(function (k) { props.deleteProperty(k); });
+}
+
+// À appeler sous verrou. Renvoie { ok:true } ou { ok:false, message }.
+function verifierActivation_(props, code) {
+  var obtenir = " Obtenez-en un dans le Google Sheets : menu 🚀 APPLICATION → 🔑 Code d'activation.";
+  var hash = props.getProperty('ACTIVATION_HASH');
+  if (!hash) return { ok: false, message: "Code d'activation requis." + obtenir };
+  if (Date.now() > Number(props.getProperty('ACTIVATION_EXPIRE') || 0)) {
+    effacerActivation_(props);
+    return { ok: false, message: "Code d'activation expiré." + obtenir };
+  }
+  var essais = Number(props.getProperty('ACTIVATION_ESSAIS') || 0);
+  if (essais >= ACTIVATION_ESSAIS_MAX) {
+    effacerActivation_(props);
+    return { ok: false, message: "Trop d'essais : ce code d'activation n'est plus valable." + obtenir };
+  }
+  var chiffres = (code || "").toString().replace(/\D/g, '');
+  if (chiffres.length === 8 && empreintePin_(props.getProperty('ACTIVATION_SEL'), chiffres) === hash) return { ok: true };
+  props.setProperty('ACTIVATION_ESSAIS', String(essais + 1));
+  return { ok: false, message: "Code d'activation incorrect." };
+}
+
+// Création (si aucun code : code d'activation exigé, sauf panneau du Sheet) ou
+// changement (session responsable requise).
+function definirPin(nouveauPin, jeton, cle, activation) {
   var lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
     var props = PropertiesService.getDocumentProperties();
-    if (props.getProperty('ADMIN_PIN_HASH')) exigerAdmin_(jeton);
-    else if (lireTablettes_().length > 0) exigerTablette_(cle);
+    var creation = !props.getProperty('ADMIN_PIN_HASH');
+    if (!creation) exigerAdmin_(jeton);
     nouveauPin = (nouveauPin || "").toString();
     if (!ADMIN_PIN_REGEX.test(nouveauPin)) return { ok: false, message: "Le code doit contenir exactement 6 chiffres." };
+    if (creation && !estEditeurDuClasseur_()) {
+      var a = verifierActivation_(props, activation);
+      if (!a.ok) return a;
+    }
     var sel = Utilities.getUuid();
-    props.setProperties({
-      ADMIN_PIN_SEL: sel,
-      ADMIN_PIN_HASH: empreintePin_(sel, nouveauPin),
-      ADMIN_ECHECS: '0',
-      ADMIN_BLOQUE_JUSQUA: '0',
-      ADMIN_DERNIER_ECHEC: '0'
-    });
-    return { ok: true, jeton: (jeton && jetonValide_(jeton)) ? jeton : creerJetonAdmin_() };
+    props.setProperties({ ADMIN_PIN_SEL: sel, ADMIN_PIN_HASH: empreintePin_(sel, nouveauPin) });
+    effacerEssais_(props);
+    effacerActivation_(props);
+    props.deleteProperty('PIN_INCONNUS'); // nouveau code : l'avertissement est soldé
+    var garde = !creation && jetonValide_(jeton);
+    return { ok: true, jeton: garde ? (typeof jeton === 'object' ? jeton.j : jeton) : creerJetonAdmin_(tabletteDeCle_(cle)) };
   } finally {
     lock.releaseLock();
   }
 }
 
 function fermerSessionAdmin(jeton) {
-  if (jeton && typeof jeton === 'string') CacheService.getScriptCache().remove('ADM_' + jeton);
+  var j = (jeton && typeof jeton === 'object') ? jeton.j : jeton;
+  if (j && typeof j === 'string') CacheService.getScriptCache().remove('ADM_' + j);
 }
 
-// Secours (panneau du Sheet, éditeurs uniquement) : efface le code. Le prochain
-// passage dans l'espace responsable demandera d'en créer un nouveau.
+// Secours (panneau du Sheet, éditeurs uniquement) : efface le code et affiche un
+// code d'activation pour en créer un nouveau depuis n'importe quelle tablette.
 function reinitialiserPinPanneau() {
-  if (!estEditeurDuClasseur_()) throw new Error("Réservé aux éditeurs du classeur.");
+  exigerEditeur_();
   var props = PropertiesService.getDocumentProperties();
   ['ADMIN_PIN_HASH', 'ADMIN_PIN_SEL', 'ADMIN_ECHECS', 'ADMIN_BLOQUE_JUSQUA', 'ADMIN_DERNIER_ECHEC'].forEach(function (k) { props.deleteProperty(k); });
-  return "✅ Code responsable effacé. Il sera redemandé (création) dans l'application.";
+  effacerEssais_(props);
+  return "✅ Code responsable effacé.\n\n" + texteActivation_(genererCodeActivation_());
 }
 
 // =================================================================
@@ -361,7 +498,7 @@ function appairerTablette(pin, nom) {
   lock.waitLock(10000);
   try {
     var props = PropertiesService.getDocumentProperties();
-    var v = verifierPin_(props, pin);
+    var v = verifierPin_(props, pin, 'INCONNU');
     if (!v.ok) return v;
     var liste = lireTablettes_();
     if (liste.length >= TABLETTES_MAX) return { ok: false, message: TABLETTES_MAX + " tablettes maximum : retirez-en une depuis l'espace responsable." };
@@ -391,6 +528,7 @@ function retirerTablette(id, jeton) {
   try {
     ecrireTablettes_(lireTablettes_().filter(function (t) { return t.id !== id; }));
     PropertiesService.getDocumentProperties().deleteProperty('TABLETTE_VUE_' + id);
+    PropertiesService.getDocumentProperties().deleteProperty('PIN_ESSAIS_T_' + id);
     return "Tablette retirée.";
   } finally {
     lock.releaseLock();
@@ -403,7 +541,7 @@ function retirerToutesTablettes(jeton) {
   lock.waitLock(10000);
   try {
     var props = PropertiesService.getDocumentProperties();
-    lireTablettes_().forEach(function (t) { props.deleteProperty('TABLETTE_VUE_' + t.id); });
+    lireTablettes_().forEach(function (t) { props.deleteProperty('TABLETTE_VUE_' + t.id); props.deleteProperty('PIN_ESSAIS_T_' + t.id); });
     ecrireTablettes_([]);
     return "Toutes les tablettes ont été retirées : chacune devra être autorisée à nouveau.";
   } finally {
@@ -415,12 +553,20 @@ function retirerToutesTablettes(jeton) {
 function getInfosAdmin(jeton) {
   exigerAdmin_(jeton);
   var f = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Saisies");
+  // Robots de nuit absents (application ouverte avant « Installer »…) : on les recrée.
+  var robotsCrees = [];
+  try { robotsCrees = installerDeclencheurs_(); } catch (e) { Logger.log("Robots de nuit : " + e); }
+  var inconnus = {};
+  try { inconnus = JSON.parse(PropertiesService.getDocumentProperties().getProperty('PIN_INCONNUS') || '{}'); } catch (e) { inconnus = {}; }
   return {
     mode: f ? (f.getRange("Z1").getValue() || "SIGNALER") : "SIGNALER",
     dates: lireDates_(),
     annuaireActif: ANNUAIRE_ACTIF,
     modeAnnuaire: getModeAnnuaire(),
-    config: getConfig()
+    config: getConfig(),
+    robots: etatRobots_(),
+    robotsCrees: robotsCrees.length,
+    essaisInconnus: inconnus
   };
 }
 
@@ -546,7 +692,7 @@ function traiterSaisie(nom, prenom, piece, montant, notes, cle) {
     } else {
       // Passage supplémentaire autorisé : trace dans les notes (« ℹ️ Passage 2/3 »), sans rouge
       if (passagesClient > 0) notes = ajouterNote_(notes, notePassage_(passagesClient + 1, passagesMax));
-      feuille.appendRow([new Date(), texte_(nom), texte_(prenom), texte_(piece), montant, texte_(notes), ""]);
+      feuille.appendRow([new Date(), texte_(nom), texte_(prenom), texte_(piece), montantSur_(montant), texte_(notes), ""]);
       majAnnuaire_(nom, prenom, piece);
       return { status: "SUCCES", passage: passagesClient + 1, passagesMax: passagesMax,
                message: passagesClient > 0 ? "✅ Saisie enregistrée ! (passage " + (passagesClient + 1) + "/" + passagesMax + ")" : "✅ Saisie enregistrée !" };
@@ -627,7 +773,7 @@ function forcerSaisie(nom, prenom, piece, montant, notes, messageErreur, flagIde
     if (pireCas) noteFinale = ajouterNote_(notes, "⚠️ Ajout forcé (Cas " + pireCas + ")");
     else if (det.passages > 0) noteFinale = ajouterNote_(notes, notePassage_(det.passages + 1, passagesMax_()));
     
-    feuille.appendRow([new Date(), texte_(nom), texte_(prenom), texte_(piece), montant, texte_(noteFinale), ""]);
+    feuille.appendRow([new Date(), texte_(nom), texte_(prenom), texte_(piece), montantSur_(montant), texte_(noteFinale), ""]);
     var indexLigne = feuille.getLastRow();
     
     // 🧹 LE CORRECTIF : On efface l'héritage automatique de Google Sheets sur les 7 colonnes
@@ -727,6 +873,12 @@ function texte_(v) {
   return (typeof v === 'string' && v !== "") ? "'" + v : v;
 }
 
+// Montant : laissé tel quel (Sheets le lit comme un nombre), sauf s'il pourrait être
+// pris pour une formule (= + - @) -> écrit en texte.
+function montantSur_(m) {
+  return (typeof m === 'string' && /^\s*[=+\-@]/.test(m)) ? "'" + m : m;
+}
+
 // Upsert (appelé après une saisie réussie) : met à jour Nom/Prénom + date de vue.
 function majAnnuaire_(nom, prenom, piece) {
   if (!ANNUAIRE_ACTIF) return;
@@ -798,7 +950,8 @@ function reconstruireAnnuaire() {
 }
 
 // Purge des entrées inactives depuis ANNUAIRE_RETENTION_ANS ans (à mettre sur trigger).
-function purgerAnnuaire() {
+function purgerAnnuaire(e) {
+  exigerDeclencheurOuEditeur_(e);
   if (!ANNUAIRE_ACTIF) return;
   var lock = LockService.getScriptLock();
   lock.waitLock(30000); // pas de saisie (qui met l'annuaire à jour) pendant la réécriture
@@ -862,7 +1015,9 @@ function cacheVerif_() {
     }
   }
 
-  return { mode: mode, offre: offre, annuaire: annuaire, annuaireActif: ANNUAIRE_ACTIF, modeAnnuaire: getModeAnnuaire() };
+  // Réglages joints : un réglage changé sur une autre tablette (passages autorisés,
+  // montant obligatoire…) est appliqué ici dès le rechargement suivant.
+  return { mode: mode, offre: offre, annuaire: annuaire, annuaireActif: ANNUAIRE_ACTIF, modeAnnuaire: getModeAnnuaire(), config: getConfig() };
 }
 
 // Démarrage de la tablette : UN seul appel (au lieu de trois) pour le mode, les
@@ -873,6 +1028,7 @@ function demarrage(cle) {
   return {
     infos: infosPanneau_(),
     dates: lireDates_(),
+    config: getConfig(),
     cache: controlerPeriode_() ? null : cacheVerif_()
   };
 }
@@ -887,7 +1043,7 @@ function infosPanneau_() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var f = ss.getSheetByName("Saisies");
   var mode = f.getRange("Z1").getValue() || "SIGNALER";
-  return { success: true, mode: mode, urlFichier: ss.getUrl(), annuaireActif: ANNUAIRE_ACTIF, modeAnnuaire: getModeAnnuaire() };
+  return { success: true, mode: mode, annuaireActif: ANNUAIRE_ACTIF, modeAnnuaire: getModeAnnuaire() };
 }
 
 // Impression calculée directement depuis « Saisies » (colonnes A-F). Ne dépend
@@ -1172,7 +1328,7 @@ function modifierSaisie(ligne, attendu, nouveau, forcer, jeton) {
       if (!forcer) return { status: "CONFIRMATION", titre: m.titre, message: m.message, couleur: m.couleur, details: details };
     }
 
-    feuille.getRange(ligne, 2, 1, 5).setValues([[texte_(nom), texte_(prenom), texte_(piece), montant, texte_(notesPropres)]]);
+    feuille.getRange(ligne, 2, 1, 5).setValues([[texte_(nom), texte_(prenom), texte_(piece), montantSur_(montant), texte_(notesPropres)]]);
     // Note d'alerte + rouge recalculés pour TOUTES les lignes (la correction peut créer
     // ou faire disparaître un doublon ailleurs dans l'offre)
     recalculerMarquages_(feuille);
@@ -1245,8 +1401,8 @@ function archiverOffreSousVerrou_() {
     message = "✅ L'offre a été clôturée (aucune saisie : pas d'archive créée).";
   }
   
-  feuilleSaisies.getRange("Z1").setValue("SIGNALER");
-  
+  // Le mode (SIGNALER / BLOQUANT) est conservé pour l'offre suivante.
+
   // 🧹 NOUVEAU : On efface les dates en mémoire pour verrouiller les tablettes
   enregistrerDates_("", "");
 
@@ -1258,6 +1414,7 @@ function onOpen() {
   ui.createMenu('🚀 APPLICATION')
     .addItem('⚙️ Ouvrir le panneau de contrôle', 'afficherPanneau')
     .addItem('🧰 Installer / vérifier l\'installation', 'installerDepuisMenu')
+    .addItem('🔑 Code d\'activation (créer le code responsable)', 'afficherCodeActivation')
     .addToUi();
   if (estCopieNonInstallee_()) {
     try { SpreadsheetApp.getActiveSpreadsheet().toast("Nouvelle copie : menu 🚀 APPLICATION → 🧰 Installer.", "Installation", 20); } catch (e) {}
@@ -1272,6 +1429,7 @@ function afficherPanneau() {
 }
 
 function allerVersImpression(dateChoisieStr) {
+  exigerEditeur_();
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var f = ss.getSheetByName("A_IMPRIMER");
   if (!f) return;
@@ -1281,6 +1439,7 @@ function allerVersImpression(dateChoisieStr) {
 }
 
 function allerVersOffre() {
+  exigerEditeur_();
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var f = ss.getSheetByName("OFFRE_COMPLETE");
   if (f) ss.setActiveSheet(f);
@@ -1449,7 +1608,12 @@ function controlerLigneEditee_(feuille, ligneEdit, modeSecurite, plageAnnulee) {
 // --- ROBOT DE NUIT : CLÔTURE AUTOMATIQUE ---
 // =================================================================
 
-function verificationClotureNocturne() {
+function verificationClotureNocturne(e) {
+  exigerDeclencheurOuEditeur_(e);
+  // Passage du robot noté : l'espace responsable signale un robot qui ne tourne plus
+  var props = PropertiesService.getDocumentProperties();
+  props.setProperties({ DERNIERE_NUIT: Utilities.formatDate(new Date(), "Europe/Paris", "dd/MM/yyyy HH:mm"), DERNIERE_NUIT_MS: String(Date.now()) });
+
   // Archives de plus de 3 ans : supprimées (n'empêche jamais la clôture)
   try { purgerArchives_(); } catch (e) { Logger.log("Purge des archives : " + e); }
 

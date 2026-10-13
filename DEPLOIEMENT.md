@@ -62,10 +62,14 @@ Google en demande.
 - À l'étape 2 (« Modifier » le déploiement existant), régler **Qui a accès : Tout le
   monde** : les tablettes n'ont plus besoin de compte Google (c'est l'autorisation
   des tablettes qui protège l'accès). L'URL ne change pas.
+- **Avant**, à l'étape 1 bis, le compte rendu d'« Installer » affiche un **code
+  d'activation** (8 chiffres, valable 24 h ; sinon menu 🚀 APPLICATION → 🔑 Code
+  d'activation) : le noter.
 - **Tout de suite après**, sur la tablette de caisse : l'écran **« 🔒 Tablette non
-  autorisée »** s'affiche → **créer le code responsable (6 chiffres)** et nommer la
-  tablette → AUTORISER. Faire de même (avec ce code) pour chaque autre tablette.
-  Tant que le code n'est pas créé, la première personne qui ouvre le lien le choisit.
+  autorisée »** s'affiche → saisir le **code d'activation**, **choisir le code
+  responsable (6 chiffres)** et nommer la tablette → AUTORISER. Faire de même (avec le
+  code responsable) pour chaque autre tablette. Sans le code d'activation, personne
+  ne peut choisir le code responsable.
 - Les actions sensibles (mode, dates, clôture, corrections, archives, réglages)
   demandent ce code ; la saisie et l'impression sont libres **sur les tablettes
   autorisées**.

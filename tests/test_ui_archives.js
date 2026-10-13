@@ -11,7 +11,7 @@ const { FakeSheet } = require('./fakesheet');
     // Accès direct sans jeton refusé
     assert.throws(() => env.ctx.listerArchives(null), /ADMIN_REQUIS/);
     assert.throws(() => env.ctx.donneesArchive('Archives_01-03-2026_23-05', null), /ADMIN_REQUIS/);
-    const j = env.ctx.definirPin('258025', null).jeton;
+    const j = env.creerCode('258025').jeton;
     assert.throws(() => env.ctx.donneesArchive('Saisies', j), /inconnue/); // pas d'accès à d'autres onglets
     await page.click('button[title="Panneau de contrôle"]'); await page.waitForTimeout(100);
     await page.fill('#pinSaisi', '258025'); await page.press('#pinSaisi', 'Enter'); await page.waitForTimeout(150);

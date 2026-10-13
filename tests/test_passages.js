@@ -44,7 +44,7 @@ const saisir = (e, n, p, pi, notes) => J(e.ctx.traiterSaisie(n, p, pi, '10', not
   // Changement du réglage en cours d'offre -> marquages recalculés
   e = env0(3);
   ['', '', ''].forEach(() => saisir(e, 'DUPONT', 'JEAN', 'AB1'));
-  const j = e.ctx.definirPin('258025', null).jeton;
+  const j = e.creerCode('258025').jeton;
   e.ctx.setConfig({ PASSAGES_MAX: '2' }, j);
   assert.strictEqual(e.sheets.Saisies.getRange(3, 6).getValue(), 'ℹ️ Passage 2/2');
   assert.strictEqual(e.sheets.Saisies.getRange(4, 6).getValue(), '⚠️ Ajout forcé (Cas A)', '3e passage au-delà de la nouvelle limite');

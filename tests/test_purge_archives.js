@@ -11,6 +11,7 @@ env.sheets.Saisies = new FakeSheet('Saisies', [['Date','Nom','Prénom','N° Piè
 const vieille = nomArchive(ilYa(3, 2)), limite = nomArchive(ilYa(2, 360)), recente = nomArchive(ilYa(0, 10));
 for (const n of [vieille, vieille + '_2', limite, recente, 'Archives_ancienne Vannes', 'A_IMPRIMER']) env.sheets[n] = new FakeSheet(n, [['Date']]);
 
+env.activeEmail = env.owner; // lancement manuel par un éditeur
 env.ctx.verificationClotureNocturne();
 const restants = Object.keys(env.sheets);
 assert.ok(!restants.includes(vieille) && !restants.includes(vieille + '_2'), 'archives de plus de 3 ans supprimées');
@@ -21,6 +22,7 @@ assert.strictEqual(env.props.getProperty('DATE_FIN'), '2099-12-31', 'offre en co
 const env2 = makeEnv({ repo, props: { DATE_DEBUT: '2000-01-01', DATE_FIN: '2000-01-02' } });
 env2.sheets.Saisies = new FakeSheet('Saisies', [['Date','Nom','Prénom','N° Pièce','Montant','Notes ou Infos','']]);
 env2.ctx.purgerArchives_ = () => { throw new Error('panne'); };
+env2.activeEmail = env2.owner;
 env2.ctx.verificationClotureNocturne();
 assert.strictEqual(env2.props.getProperty('DATE_FIN'), '', 'clôture faite malgré la panne de purge');
 console.log('test_purge_archives: OK');

@@ -12,7 +12,7 @@ function nouvelEnv() {
     [t,'DURAND','ANNE','EF789','30 €','note\n⚠️ Ajout forcé (Cas C)'],
   ]);
   env.sheets.Saisies.getRange('Z1').setValue('SIGNALER');
-  env.jeton = env.ctx.definirPin('258025', null).jeton;
+  env.jeton = env.creerCode('258025').jeton;
   return env;
 }
 const att = (n, p, pi) => ({ nom: n, prenom: p, piece: pi });

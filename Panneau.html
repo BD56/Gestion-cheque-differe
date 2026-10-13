@@ -77,7 +77,7 @@
       }
 
       function reinitialiserPin() {
-        if (!confirm("Effacer le code responsable ?\n\nLe prochain passage dans l'espace responsable de l'application demandera d'en créer un nouveau.")) return;
+        if (!confirm("Effacer le code responsable ?\n\nUn code d'activation va s'afficher : il permet de créer le nouveau code depuis l'application (n'importe quelle tablette).")) return;
         google.script.run.withSuccessHandler(function (msg) { alert(msg); }).withFailureHandler(echec).reinitialiserPinPanneau();
       }
 

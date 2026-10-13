@@ -12,9 +12,19 @@ const { ouvrir } = require('./navigateur');
     await page.waitForTimeout(100);
     assert.ok(await vis('.btn-print-jour') && await vis('#zoneVerrou') && !(await vis('#zoneAdmin')));
     assert.match(await txt('#txtVerrou'), /Aucun code/);
-    assert.ok(await vis('#pinConfirme'));
+    assert.ok(await vis('#pinConfirme') && await vis('#activationVerrou'), 'code d\'activation demandé');
     await page.fill('#pinSaisi', '258025'); await page.fill('#pinConfirme', '258026'); await page.click('#btnDeverrouiller');
     assert.match(await txt('#msgVerrou'), /correspondent pas/);
+    await page.fill('#pinSaisi', '258025'); await page.fill('#pinConfirme', '258025'); await page.click('#btnDeverrouiller');
+    assert.match(await txt('#msgVerrou'), /code d'activation/, 'sans code d\'activation : refusé');
+    await page.fill('#activationVerrou', '0000-0000'); await page.click('#btnDeverrouiller'); await page.waitForTimeout(150);
+    assert.match(await txt('#msgVerrou'), /activation requis/, 'aucun code d\'activation généré dans le Sheet');
+    const act = env.activation(); // le responsable l'obtient dans le Google Sheets
+    await page.fill('#pinSaisi', '258025'); await page.fill('#pinConfirme', '258025');
+    await page.fill('#activationVerrou', '0000-0000'); await page.click('#btnDeverrouiller'); await page.waitForTimeout(150);
+    assert.match(await txt('#msgVerrou'), /incorrect/);
+    assert.strictEqual(env.ctx.etatAdmin().pinDefini, false);
+    await page.fill('#activationVerrou', act);
     await page.fill('#pinSaisi', '258025'); await page.fill('#pinConfirme', '258025'); await page.click('#btnDeverrouiller');
     await page.waitForTimeout(150);
     assert.ok(await vis('#zoneAdmin') && !(await vis('#zoneVerrou')), 'zone admin ouverte');
@@ -57,7 +67,7 @@ const { ouvrir } = require('./navigateur');
     assert.strictEqual(await txt('#btnDeverrouiller'), 'DÉVERROUILLER');
     await page.fill('#pinSaisi', '111111'); await page.press('#pinSaisi', 'Enter'); await page.waitForTimeout(100);
     assert.match(await txt('#msgVerrou'), /Code faux/);
-    env.props._store.ADMIN_DERNIER_ECHEC = '0'; // on saute la pause de 10 s
+    for (const k in env.props._store) if (k.indexOf('PIN_ESSAIS_') === 0) delete env.props._store[k]; // on saute la pause de 10 s
     await page.fill('#pinSaisi', '258025'); await page.press('#pinSaisi', 'Enter'); await page.waitForTimeout(150);
     assert.ok(await vis('#zoneAdmin'));
     // Session expirée côté serveur -> retour au verrou avec message

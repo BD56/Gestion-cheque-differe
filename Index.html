@@ -154,6 +154,7 @@
       </div>
       
       <div id="statusMessage"></div>
+      <div id="envoiEnCours" style="display:none; margin-top:8px; text-align:center; font-size:13px; color:#5f6368;"></div>
     </div>
 
     <div class="footer-legal">
@@ -210,6 +211,7 @@
               <li>En mode <strong>BLOQUANT</strong>, les alertes rouges deviennent <strong>SAISIE REFUSÉE</strong> : impossible de forcer.</li>
               <li><strong>Plusieurs passages autorisés</strong> (selon le réglage) : un même client peut revenir jusqu'à ce nombre, noté « ℹ️ Passage 2/3 ». Au-delà : ALERTE FRAUDE.</li>
               <li>Rarement, une fenêtre <strong>rouge</strong> apparaît juste après une saisie acceptée : le serveur a trouvé un doublon (par exemple saisi au même moment sur une autre tablette). Choisissez <strong>NE PAS ENREGISTRER</strong> ou <strong>FORCER L'AJOUT</strong>.</li>
+              <li>Sous le bandeau vert, « ⏳ 1 saisie en cours d'envoi » s'affiche une ou deux secondes, le temps que le serveur confirme. En cas de coupure, une fenêtre <strong>SAISIE NON ENREGISTRÉE</strong> propose <strong>RÉESSAYER</strong>.</li>
             </ul>
           </div>
 
@@ -253,6 +255,7 @@
             <ul>
               <li>🟡 <strong>SIGNALER</strong> : l'application alerte mais laisse <strong>forcer</strong> l'ajout.</li>
               <li>🔴 <strong>BLOQUANT</strong> : les alertes rouges refusent la saisie, sans possibilité de forcer. L'homonyme (orange) reste forçable.</li>
+              <li>Le mode est <strong>conservé</strong> d'une offre à l'autre.</li>
               <li>Réglage : ⚙️ → Espace responsable → tuile <strong>🛡️ Sécurité</strong>.</li>
             </ul>
           </div>
@@ -261,11 +264,11 @@
             <button class="retour" onclick="allerAide('accueil')">← Retour</button>
             <h3 class="titre-ecran">🔑 Code &amp; tablettes</h3>
             <ul>
-              <li><strong>Code responsable</strong> : 6 chiffres. Il ouvre l'espace responsable (mode, dates, corrections, archives, réglages, clôture). À la 1ʳᵉ utilisation, l'application demande de le choisir.</li>
+              <li><strong>Code responsable</strong> : 6 chiffres. Il ouvre l'espace responsable (mode, dates, corrections, archives, réglages, clôture). Pour le créer, l'application demande le <strong>code d'activation</strong> affiché dans le Google Sheets (menu 🚀 APPLICATION → 🔑 Code d'activation).</li>
               <li>L'espace se reverrouille à la fermeture du panneau ou après 10 min sans action.</li>
               <li>Après un code faux, patientez 10 s ; 5 codes faux bloquent 15 min.</li>
               <li><strong>Tablettes</strong> : chacune est autorisée une fois avec le code. Une tablette non autorisée ne voit rien, même avec le lien. Liste et retrait : tuile <strong>🔑 Code &amp; tablettes</strong>.</li>
-              <li><strong>Code oublié</strong> : il se réinitialise depuis le panneau ⚙️ du Google Sheets (personnes ayant accès au fichier).</li>
+              <li><strong>Code oublié</strong> : il se réinitialise depuis le panneau ⚙️ du Google Sheets (personnes ayant accès au fichier), qui affiche un code d'activation pour en créer un nouveau.</li>
             </ul>
           </div>
 
@@ -319,6 +322,7 @@
         <div id="zoneVerrou">
           <h3 style="text-align: center; margin-top: 0;">🔒 Espace responsable</h3>
           <p id="txtVerrou" style="font-size: 13px; text-align: center; color: #5f6368; margin-top: 0;"></p>
+          <input type="text" id="activationVerrou" inputmode="numeric" autocomplete="off" maxlength="9" placeholder="Code d'activation (affiché dans le Google Sheets)" style="display: none; margin-bottom: 10px;">
           <input type="password" id="pinSaisi" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="Code (6 chiffres)" style="margin-bottom: 10px;">
           <input type="password" id="pinConfirme" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="Confirmer le code" style="display: none; margin-bottom: 10px;">
           <button class="btn-action" id="btnDeverrouiller" style="background-color: #1a73e8;" onclick="deverrouillerAdmin()">DÉVERROUILLER</button>
@@ -327,6 +331,7 @@
 
         <div id="zoneAdmin" style="display: none;">
           <h3 style="text-align: center; margin-top: 0;">🔓 Espace responsable</h3>
+          <div id="alerteAdmin" style="display:none; background:#fff3cd; border:1px solid #ffeeba; color:#856404; border-radius:8px; padding:10px; font-size:13px; margin-bottom:10px;"></div>
           <div class="tuiles">
             <button class="tuile" onclick="ouvrirSaisies()"><span class="ico">📋</span>Saisies<small>corriger / supprimer</small></button>
             <button class="tuile" onclick="ouvrirArchives()"><span class="ico">🗄️</span>Archives<small>offres clôturées</small></button>
@@ -464,6 +469,10 @@
       <div class="modal-content" style="max-width: 420px;">
         <h2 style="margin-top:0; text-align:center;">🔒 Tablette non autorisée</h2>
         <p id="txtAppairage" style="font-size:14px; color:#3c4043; line-height:1.4;"></p>
+        <div class="input-group" id="blocActivationApp" style="display:none;">
+          <label>Code d'activation (affiché dans le Google Sheets)</label>
+          <input type="text" id="activationApp" inputmode="numeric" maxlength="9" autocomplete="off" placeholder="1234-5678">
+        </div>
         <div class="input-group">
           <label id="lblPinApp">Code responsable (6 chiffres)</label>
           <input type="password" id="pinApp" inputmode="numeric" maxlength="6" autocomplete="off">
@@ -490,6 +499,10 @@
         <div class="flex-btn" id="alerteServeurChoix">
           <button class="btn-cancel" onclick="fermerAlerteServeur()">NE PAS ENREGISTRER</button>
           <button class="btn-force" onclick="forcerDepuisAlerte()">FORCER L'AJOUT</button>
+        </div>
+        <div class="flex-btn" id="alerteServeurReessai" style="display:none;">
+          <button class="btn-cancel" onclick="fermerAlerteServeur()">ABANDONNER</button>
+          <button class="btn-force" style="background:#1a73e8;" onclick="reessayerDepuisAlerte()">RÉESSAYER</button>
         </div>
         <button class="btn-action" id="btnAlerteOk" style="background:#d93025; margin-top:10px;" onclick="fermerAlerteServeur()">OK, COMPRIS</button>
       </div>
@@ -554,9 +567,10 @@
           pinDefiniAppairage = etat.pinDefini;
           document.getElementById('txtAppairage').textContent = pinDefiniAppairage
             ? "Pour utiliser l'application sur cette tablette, un responsable doit l'autoriser une fois avec son code."
-            : "Première installation : choisissez le code responsable (6 chiffres). Il servira à autoriser les tablettes et à ouvrir l'espace responsable.";
+            : "Aucun code responsable n'existe : saisissez le code d'activation affiché dans le Google Sheets (menu 🚀 APPLICATION → 🔑 Code d'activation), puis choisissez le code responsable (6 chiffres). Il servira à autoriser les tablettes et à ouvrir l'espace responsable.";
           document.getElementById('lblPinApp').textContent = pinDefiniAppairage ? "Code responsable (6 chiffres)" : "Nouveau code responsable (6 chiffres)";
           document.getElementById('blocPinApp2').style.display = pinDefiniAppairage ? "none" : "block";
+          document.getElementById('blocActivationApp').style.display = pinDefiniAppairage ? "none" : "block";
           if (!STOCKAGE_OK) document.getElementById('msgAppairage').textContent =
             "⚠️ Ce navigateur ne peut pas mémoriser l'autorisation : elle sera redemandée à chaque ouverture.";
         }).withFailureHandler(function () {
@@ -586,17 +600,22 @@
         };
         btn.disabled = true;
         if (pinDefiniAppairage) { autoriser(); return; }
-        // Première installation : création du code, puis autorisation de cette tablette
+        // Aucun code : création (code d'activation exigé), puis autorisation de cette tablette
         if (pin !== document.getElementById('pinApp2').value.trim()) { fin("Les deux codes ne correspondent pas."); return; }
+        var activation = document.getElementById('activationApp').value.trim();
+        if (activation.replace(/\D/g, '').length !== 8) { fin("Saisissez le code d'activation (8 chiffres) affiché dans le Google Sheets."); return; }
         google.script.run.withSuccessHandler(function (r) {
           if (!r || !r.ok) { fin((r && r.message) || "Refusé."); return; }
+          // le code existe désormais : en cas d'échec de l'autorisation, un nouvel essai
+          // ne doit plus chercher à le créer
+          pinDefiniAppairage = true;
+          document.getElementById('activationApp').value = "";
+          document.getElementById('blocActivationApp').style.display = "none";
+          document.getElementById('blocPinApp2').style.display = "none";
           autoriser();
         }).withFailureHandler(function (err) {
-          var m = (err && err.message) ? err.message : String(err);
-          fin(m.indexOf('TABLETTE_NON_AUTORISEE') !== -1
-            ? "Le code a été réinitialisé : créez-le depuis une tablette déjà autorisée (⚙️ → Espace responsable)."
-            : "Erreur : " + m);
-        }).definirPin(pin, null, CLE_TABLETTE);
+          fin("Erreur : " + ((err && err.message) ? err.message : String(err)));
+        }).definirPin(pin, null, CLE_TABLETTE, activation);
       }
 
       // Lance l'application (une fois la tablette autorisée)
@@ -612,9 +631,11 @@
           } else {
             document.getElementById('btnMode').innerHTML = "⚠️ ERREUR Serveur";
           }
+          if (rep.config) appliquerConfig(rep.config);
           if (rep.cache && seq >= seqCacheApplique) {
             seqCacheApplique = seq;
             cacheVerif = rep.cache;
+            cacheRecuA = Date.now();
             fusionnerEnAttente();
           }
           appliquerDates(rep.dates);
@@ -682,38 +703,47 @@
           return;
         }
 
-        if (!cacheVerif) {
-          // Cache pas encore prêt -> repli serveur (ancien flux, avec attente)
+        // Cette saisie, figée : l'encadré de doublon et le forçage s'appliquent à ELLE,
+        // même si le formulaire est retapé entre-temps.
+        var saisie = { nom: memNom, prenom: memPrenom, piece: memPiece, montant: memMontant, notes: memNotes };
+
+        if (!copieFraiche()) {
+          // Copie locale absente ou trop ancienne (réseau en panne ?) -> on attend le serveur
           var btn = document.getElementById('btnValider');
           btn.innerHTML = "⏳ Recherche...";
           btn.disabled = true;
-          google.script.run.withSuccessHandler(traitementTermine).withFailureHandler(function (err) {
+          google.script.run.withSuccessHandler(function (rep) { traitementTermine(rep, saisie); }).withFailureHandler(function (err) {
             btn.innerHTML = "VÉRIFIER ET VALIDER";
             btn.disabled = false;
-            if (!siNonAutorisee(err)) afficherMessage("Erreur : " + err.message, "error");
-          }).traiterSaisie(memNom, memPrenom, memPiece, memMontant, memNotes, CLE_TABLETTE);
+            if (!siNonAutorisee(err)) afficherMessage("⚠️ Connexion impossible : saisie NON enregistrée. Vérifiez le Wi-Fi puis validez à nouveau.", "error");
+          }).traiterSaisie(saisie.nom, saisie.prenom, saisie.piece, saisie.montant, saisie.notes, CLE_TABLETTE);
           return;
         }
 
-        // Contrôle A/B/C EN LOCAL -> feedback instantané
+        // Contrôle A/B/C EN LOCAL (copie de moins de 2 min) -> feedback instantané
         var reponse = analyserDoublonLocal(memNom, memPrenom, memPiece);
         if (reponse.status === "SUCCES") {
-          var saisie = { nom: memNom, prenom: memPrenom, piece: memPiece, montant: memMontant, notes: memNotes };
-          saisie.id = ajoutOptimisteCache(saisie);
           afficherMessage(reponse.message, "success");
           reinitialiserFormulaire();
-          // Écriture autoritaire en arrière-plan : le serveur reconfirme ET écrit.
-          google.script.run
-            .withSuccessHandler(function (rep) { confirmerEnregistrement(rep, saisie); })
-            .withFailureHandler(function (err) { echecEnregistrement(err, saisie); })
-            .traiterSaisie(saisie.nom, saisie.prenom, saisie.piece, saisie.montant, saisie.notes, CLE_TABLETTE);
+          envoyerEnArrierePlan(saisie);
         } else {
-          // Doublon détecté en local -> modale (réutilise l'affichage existant)
-          traitementTermine(reponse);
+          // Doublon détecté en local -> encadré (réutilise l'affichage existant)
+          traitementTermine(reponse, saisie);
         }
       }
 
-      function traitementTermine(reponse) {
+      // Écriture autoritaire en arrière-plan : le serveur reconfirme ET écrit.
+      function envoyerEnArrierePlan(saisie) {
+        saisie.forcee = false;
+        saisie.id = ajoutOptimisteCache(saisie);
+        google.script.run
+          .withSuccessHandler(function (rep) { confirmerEnregistrement(rep, saisie); })
+          .withFailureHandler(function (err) { echecEnregistrement(err, saisie); })
+          .traiterSaisie(saisie.nom, saisie.prenom, saisie.piece, saisie.montant, saisie.notes, CLE_TABLETTE);
+      }
+
+      var saisieEncadre = null; // la saisie affichée dans l'encadré de doublon
+      function traitementTermine(reponse, saisie) {
         var btn = document.getElementById('btnValider'); 
         btn.innerHTML = "VÉRIFIER ET VALIDER"; 
         btn.disabled = false;
@@ -723,9 +753,12 @@
           reinitialiserFormulaire();
           rechargerCacheVerif();
         } else if (reponse.status === "CONFIRMATION") {
+          saisieEncadre = saisie;
           afficherDetailsDoublon(reponse.details, false, reponse.titre, reponse.message, reponse.couleur);
         } else if (reponse.status === "BLOQUE") {
-          afficherDetailsDoublon(reponse.details, true, reponse.titre, reponse.message, "ROUGE");
+          saisieEncadre = saisie;
+          afficherDetailsDoublon(reponse.details || [], true, reponse.titre, reponse.message, "ROUGE");
+          if (reponse.horsPeriode) chargerDatesAffichage();
         }
       }
 
@@ -759,7 +792,7 @@
         }
 
         var listeHTML = "";
-        details.forEach(function(d) {
+        (details || []).forEach(function(d) {
           listeHTML += "<div class='doublon-carte'>";
           listeHTML += "📅 <b>Passage du :</b> " + echapper(d.date) + " (Ligne " + echapper(d.ligne) + ")<br>";
           listeHTML += "👤 <b>Identité :</b> " + echapper(d.nom) + " " + echapper(d.prenom) + "<br>";
@@ -774,14 +807,17 @@
       }
 
       function forcerAjout() {
+        var sa = saisieEncadre;
+        saisieEncadre = null;
         document.getElementById('boxConfirmation').style.display = "none";
-        document.getElementById('formulaireSaisie').style.display = "block";
+        document.getElementById('formulaireSaisie').style.display = dansPeriode() ? "block" : "none";
         reinitialiserFormulaire();
-        envoyerForcage({ nom: memNom, prenom: memPrenom, piece: memPiece, montant: memMontant, notes: memNotes });
+        if (sa) envoyerForcage({ nom: sa.nom, prenom: sa.prenom, piece: sa.piece, montant: sa.montant, notes: sa.notes });
       }
 
       // Écriture forcée en arrière-plan : le serveur refait la détection (autoritaire)
       function envoyerForcage(saisie) {
+        saisie.forcee = true;
         saisie.id = ajoutOptimisteCache(saisie);
         afficherMessage("⚠️ Saisie forcée et enregistrée en rouge.", "error");
         google.script.run
@@ -861,7 +897,22 @@
       }
       function ajouterAuCache(e) {
         cacheVerif.offre.push(e);
-        if (cacheVerif.annuaireActif && e.pieceNorm) cacheVerif.annuaire[e.pieceNorm] = { nom: e.nom, prenom: e.prenom };
+        if (cacheVerif.annuaireActif && e.pieceNorm) {
+          if (!('annuaireAvant' in e)) e.annuaireAvant = cacheVerif.annuaire[e.pieceNorm] || null;
+          e.annuaireAjoute = { nom: e.nom, prenom: e.prenom };
+          cacheVerif.annuaire[e.pieceNorm] = e.annuaireAjoute;
+        }
+      }
+      // Saisie refusée ou non envoyée : elle disparaît AUSSI de la copie locale (sinon,
+      // ressaisie, elle passait pour un doublon d'elle-même et n'était jamais enregistrée).
+      function retirerDuCache(e) {
+        if (!cacheVerif) return;
+        var i = cacheVerif.offre.indexOf(e);
+        if (i !== -1) cacheVerif.offre.splice(i, 1);
+        if (cacheVerif.annuaire && e.pieceNorm && cacheVerif.annuaire[e.pieceNorm] === e.annuaireAjoute) {
+          if (e.annuaireAvant) cacheVerif.annuaire[e.pieceNorm] = e.annuaireAvant;
+          else delete cacheVerif.annuaire[e.pieceNorm];
+        }
       }
       function memeClient(o, e) {
         return o.pieceNorm === e.pieceNorm && normIdJS(o.nom) === normIdJS(e.nom) && normIdJS(o.prenom) === normIdJS(e.prenom);
@@ -876,13 +927,32 @@
         var suivi = { id: ++compteurSaisies, entree: e, rang: deja, ecriteA: 0 };
         saisiesEnAttente.push(suivi);
         if (cacheVerif) ajouterAuCache(e);
+        majIndicateurEnvoi();
         return suivi.id;
       }
+
+      // « ⏳ 1 saisie en cours d'envoi » tant que le serveur n'a pas confirmé (en général
+      // 1 à 2 s) ; avertissement si l'on ferme la page avant.
+      function nbEnvoisEnCours() { return saisiesEnAttente.filter(function (s) { return !s.ecriteA; }).length; }
+      function majIndicateurEnvoi() {
+        var n = nbEnvoisEnCours(), z = document.getElementById('envoiEnCours');
+        z.textContent = n ? "⏳ " + n + (n > 1 ? " saisies en cours d'envoi…" : " saisie en cours d'envoi…") : "";
+        z.style.display = n ? "block" : "none";
+      }
+      window.addEventListener('beforeunload', function (ev) {
+        if (nbEnvoisEnCours() > 0) { ev.preventDefault(); ev.returnValue = ""; return ""; }
+      });
       function saisieConfirmee(saisie) {
         saisiesEnAttente.forEach(function (s) { if (s.id === saisie.id) s.ecriteA = Date.now(); });
+        majIndicateurEnvoi();
       }
       function retirerEnAttente(saisie) {
-        saisiesEnAttente = saisiesEnAttente.filter(function (s) { return s.id !== saisie.id; });
+        saisiesEnAttente = saisiesEnAttente.filter(function (s) {
+          if (s.id !== saisie.id) return true;
+          retirerDuCache(s.entree);
+          return false;
+        });
+        majIndicateurEnvoi();
         rechargerCacheVerif();
       }
       // Après chaque rechargement : on remet les saisies encore en attente.
@@ -931,8 +1001,10 @@
         var sa = alerteCourante.saisie, rep = alerteCourante.rep;
         var titre, msg, forcable = false;
         if (!rep) {
-          titre = "⚠️ ENREGISTREMENT NON CONFIRMÉ";
-          msg = "La connexion a échoué : cette saisie n'est peut-être PAS enregistrée. Ressaisissez-la — si elle l'était déjà, l'application la signalera comme doublon (dans ce cas, ne forcez pas).";
+          titre = "⚠️ SAISIE NON ENREGISTRÉE";
+          msg = (sa.forcee ? "Le forçage n'a pas pu être envoyé" : "La connexion avec le serveur a échoué") +
+            " : cette saisie n'a PAS été enregistrée. Vérifiez le Wi-Fi puis touchez RÉESSAYER." +
+            " (Si un doublon de cette même personne enregistré « à l'instant » apparaît ensuite, c'est que le premier envoi avait abouti : choisissez alors NE PAS ENREGISTRER.)";
         } else {
           titre = rep.titre || "🛑 SAISIE REFUSÉE";
           msg = "Cette saisie n'a PAS été enregistrée. " + (rep.message || "");
@@ -955,8 +1027,10 @@
           c.textContent = "Déjà enregistré : " + d.date + " (Ligne " + d.ligne + ") — " + d.nom + " " + d.prenom + " — 💳 " + d.piece;
           liste.appendChild(c);
         });
+        var reessai = !rep; // échec de connexion : on propose de renvoyer la même saisie
         document.getElementById('alerteServeurChoix').style.display = forcable ? "flex" : "none";
-        document.getElementById('btnAlerteOk').style.display = forcable ? "none" : "block";
+        document.getElementById('alerteServeurReessai').style.display = reessai ? "flex" : "none";
+        document.getElementById('btnAlerteOk').style.display = (forcable || reessai) ? "none" : "block";
         m.style.display = "flex";
       }
       function fermerAlerteServeur() { alerteSuivante(); }
@@ -965,10 +1039,19 @@
         alerteSuivante();
         if (sa) envoyerForcage({ nom: sa.nom, prenom: sa.prenom, piece: sa.piece, montant: sa.montant, notes: sa.notes });
       }
+      // Renvoie exactement la même saisie (le serveur refait tout le contrôle)
+      function reessayerDepuisAlerte() {
+        var sa = alerteCourante && alerteCourante.saisie;
+        alerteSuivante();
+        if (!sa) return;
+        var copie = { nom: sa.nom, prenom: sa.prenom, piece: sa.piece, montant: sa.montant, notes: sa.notes };
+        if (sa.forcee) envoyerForcage(copie); else envoyerEnArrierePlan(copie);
+      }
 
       function annulerSaisie() {
+        saisieEncadre = null;
         document.getElementById('boxConfirmation').style.display = "none"; 
-        document.getElementById('formulaireSaisie').style.display = "block";
+        document.getElementById('formulaireSaisie').style.display = dansPeriode() ? "block" : "none";
         document.getElementById('statusMessage').style.display = "none"; 
         reinitialiserFormulaire();
       }
@@ -979,6 +1062,8 @@
         document.getElementById('piece').value = ""; 
         document.getElementById('montant').value = "";
         document.getElementById('notes').value = "";
+        delete document.getElementById('nom').dataset.prerempli;
+        delete document.getElementById('prenom').dataset.prerempli;
         var ind = document.getElementById('indiceAnnuaire');
         if (ind) ind.style.display = "none";
         document.getElementById('piece').focus();
@@ -1086,8 +1171,7 @@
               document.body.style.cursor = "default"; 
               fermerPanneau();
               alert(message); 
-              majAffichageMode("SIGNALER"); 
-              chargerDatesAffichage();
+              chargerDatesAffichage(); // le mode (SIGNALER / BLOQUANT) est conservé
               rechargerCacheVerif();
             }, function () { document.body.style.cursor = "default"; });
         }
@@ -1146,8 +1230,10 @@
           affichage.style.color = "#cc0000";
         }
 
-        // Verrouillage/Déverrouillage visuel du formulaire
-        if (formulaire) {
+        // Verrouillage/Déverrouillage visuel du formulaire (pas par-dessus un encadré de
+        // doublon en attente de décision : il réapparaît à ABANDONNER / FORCER)
+        var encadreOuvert = document.getElementById('boxConfirmation').style.display === "block";
+        if (formulaire && !encadreOuvert) {
           formulaire.style.display = isVerrouille ? "none" : "block";
         }
 
@@ -1226,13 +1312,21 @@
       // Cache pré-chargé (offre en cours + annuaire) pour une vérif LOCALE instantanée.
       var cacheVerif = null;
       var seqCache = 0, seqCacheApplique = 0;
+      // Âge maximum de la copie locale pour décider SANS attendre le serveur. Au-delà
+      // (réseau en panne : les rechargements échouent), la tablette attend la réponse
+      // du serveur avant d'afficher le résultat.
+      var cacheRecuA = 0, AGE_MAX_COPIE_MS = 2 * 60 * 1000;
+      function copieFraiche() { return !!cacheVerif && (Date.now() - cacheRecuA) <= AGE_MAX_COPIE_MS; }
       function rechargerCacheVerif() {
         var seq = ++seqCache;
+        dernierRechargementDemande = Date.now();
         google.script.run
           .withSuccessHandler(function (c) {
             if (seq < seqCacheApplique) return; // réponse plus ancienne qu'une copie déjà appliquée
             seqCacheApplique = seq;
             cacheVerif = c;
+            cacheRecuA = Date.now();
+            if (c.config) appliquerConfig(c.config);
             fusionnerEnAttente();
           })
           .withFailureHandler(siNonAutorisee)
@@ -1248,6 +1342,14 @@
       // Re-synchroniser au DÉBUT de chaque saisie (focus du N°) : l'appel chevauche la
       // frappe du numéro -> cache frais au moment du blur, sans latence perçue.
       document.getElementById('piece').addEventListener('focus', function () { if (CLE_TABLETTE) rechargerCacheVerif(); });
+      // Le curseur peut attendre longtemps dans « N° » entre deux clients : on rafraîchit
+      // aussi dès la 1re frappe si la copie a plus de 20 s (fraîche à la validation).
+      var dernierRechargementDemande = 0;
+      document.getElementById('piece').addEventListener('input', function () {
+        if (!CLE_TABLETTE || !dansPeriode()) return;
+        var t = Date.now();
+        if (t - cacheRecuA > 20000 && t - dernierRechargementDemande > 5000) rechargerCacheVerif();
+      });
 
       // Comparaison des noms (miroir de Code.gs::_normId_) : majuscules, sans accents,
       // ligatures dépliées, sans espaces, tirets, apostrophes ni points.
@@ -1273,8 +1375,8 @@
       document.getElementById('piece').addEventListener('blur', function () {
         var val = this.value.trim();
         if (val === "") return; // champ vide -> rien
-        if (!cacheVerif) {
-          // cache pas encore chargé -> repli serveur (rare)
+        if (!copieFraiche()) {
+          // copie absente ou trop ancienne -> repli serveur (rare)
           google.script.run.withSuccessHandler(afficherVerifPiece).withFailureHandler(siNonAutorisee).verifierPiece(val, CLE_TABLETTE);
           return;
         }
@@ -1337,11 +1439,26 @@
       // Option C : pré-remplissage doux (remplit si vide + indice discret).
       function remplirAnnuaire(a) {
         var n = document.getElementById('nom'), p = document.getElementById('prenom');
-        if (n.value.trim() === "") n.value = a.nom || "";
-        if (p.value.trim() === "") p.value = a.prenom || "";
+        [[n, a.nom], [p, a.prenom]].forEach(function (x) {
+          if (x[0].value.trim() !== "" || !x[1]) return;
+          x[0].value = x[1];
+          x[0].dataset.prerempli = "1"; // taper dans le champ REMPLACE le texte proposé
+          if (document.activeElement === x[0]) x[0].select();
+        });
         var ind = document.getElementById('indiceAnnuaire');
         if (ind) ind.style.display = "block";
       }
+      // Champ pré-rempli : sélectionné à l'arrivée, la frappe remplace (et ne s'ajoute pas :
+      // sinon « DUPONT » + « DUPONT » tapé = « DUPONTDUPONT »).
+      ['nom', 'prenom'].forEach(function (id) {
+        var champ = document.getElementById(id);
+        champ.addEventListener('focus', function () {
+          if (!champ.dataset.prerempli) return;
+          champ.select(); // tout de suite (frappe rapide) et après le toucher (sinon désélectionné)
+          setTimeout(function () { if (document.activeElement === champ && champ.dataset.prerempli) champ.select(); }, 0);
+        });
+        champ.addEventListener('input', function () { delete champ.dataset.prerempli; });
+      });
       // Option B : modale qui demande la confirmation.
       function proposerAnnuaire(a) {
         var m = document.getElementById('modalAnnuaire');
@@ -1398,7 +1515,8 @@
               alert("Erreur : " + m);
             }
           });
-        runner[nomFonction].apply(runner, args.concat([jetonAdmin]));
+        // jeton lié à cette tablette : il est envoyé avec sa clé
+        runner[nomFonction].apply(runner, args.concat([{ j: jetonAdmin, c: CLE_TABLETTE }]));
       }
 
       function afficherZoneVerrou(message) {
@@ -1410,8 +1528,9 @@
           pinDefini = etat.pinDefini;
           document.getElementById('txtVerrou').textContent = pinDefini
             ? "Saisissez le code responsable."
-            : "Aucun code n'existe encore : choisissez le code responsable (6 chiffres).";
+            : "Aucun code n'existe : saisissez le code d'activation affiché dans le Google Sheets (menu 🚀 APPLICATION → 🔑 Code d'activation), puis choisissez le code responsable (6 chiffres).";
           document.getElementById('pinConfirme').style.display = pinDefini ? "none" : "block";
+          document.getElementById('activationVerrou').style.display = pinDefini ? "none" : "block";
           document.getElementById('btnDeverrouiller').textContent = pinDefini ? "DÉVERROUILLER" : "CRÉER LE CODE";
         }).withFailureHandler(function () {
           document.getElementById('txtVerrou').textContent = "⚠️ Serveur injoignable.";
@@ -1432,7 +1551,12 @@
         var surErreur = function (err) { if (!siNonAutorisee(err)) msg.textContent = "Erreur : " + (err && err.message ? err.message : err); };
         if (!pinDefini) {
           if (pin !== document.getElementById('pinConfirme').value.trim()) { msg.textContent = "Les deux codes ne correspondent pas."; return; }
-          google.script.run.withSuccessHandler(surReponse).withFailureHandler(surErreur).definirPin(pin, null, CLE_TABLETTE);
+          var activation = document.getElementById('activationVerrou').value.trim();
+          if (activation.replace(/\D/g, '').length !== 8) { msg.textContent = "Saisissez le code d'activation (8 chiffres) affiché dans le Google Sheets."; return; }
+          google.script.run.withSuccessHandler(function (r) {
+            if (r && r.ok) document.getElementById('activationVerrou').value = "";
+            surReponse(r);
+          }).withFailureHandler(surErreur).definirPin(pin, null, CLE_TABLETTE, activation);
         } else {
           google.script.run.withSuccessHandler(surReponse).withFailureHandler(surErreur).ouvrirSessionAdmin(pin, CLE_TABLETTE);
         }
@@ -1458,7 +1582,25 @@
           document.getElementById('modalDateFin').value = infos.dates.fin;
           majResumeOperation(infos.dates.debut, infos.dates.fin);
           remplirFormulaireReglages(infos.config);
+          afficherAlertesAdmin(infos);
         });
+      }
+
+      // Points d'attention en tête de l'espace responsable : robot de nuit absent ou
+      // arrêté, codes faux tapés depuis des appareils non autorisés.
+      function afficherAlertesAdmin(infos) {
+        var lignes = [], r = infos.robots || {};
+        if (!r.cloture || !r.purge) {
+          lignes.push("⚠️ Robot de nuit absent : la clôture automatique et la suppression des données anciennes ne se feront pas. Ouvrez le Google Sheets → menu 🚀 APPLICATION → 🧰 Installer.");
+        } else if (r.derniereNuitMs && Date.now() - r.derniereNuitMs > 36 * 3600000) {
+          lignes.push("⚠️ Le robot de nuit n'a pas fonctionné depuis le " + r.derniereNuit + ". Ouvrez le Google Sheets → menu 🚀 APPLICATION → 🧰 Installer (et acceptez les autorisations).");
+        }
+        var e = infos.essaisInconnus || {};
+        if (e.n) lignes.push("🔐 " + e.n + " code(s) faux tapé(s) depuis des appareils non autorisés (dernier le " + e.dernier + "). Si ce n'était pas vous, changez le code (tuile 🔑).");
+        var z = document.getElementById('alerteAdmin');
+        z.textContent = "";
+        lignes.forEach(function (t) { var d = document.createElement('div'); d.textContent = t; d.style.margin = "2px 0"; z.appendChild(d); });
+        z.style.display = lignes.length ? "block" : "none";
       }
 
       // Navigation : accueil (tuiles) <-> sous-écrans de l'espace responsable

@@ -3,6 +3,9 @@ const { makeEnv } = require('./mocks');
 const { FakeSheet } = require('./fakesheet');
 // 1) Classeur vierge (nouvelle structure)
 let env = makeEnv({ repo: process.argv[2], sheets: { 'Feuille 1': new FakeSheet('Feuille 1') } });
+assert.throws(() => env.ctx.installer(), /Google Sheets/, 'un visiteur de l\'application ne peut pas installer');
+assert.strictEqual(env.triggers.length, 0);
+env.activeEmail = env.owner;
 let rap = env.ctx.installer();
 assert.match(rap, /Saisies/); assert.match(rap, /_Annuaire/); assert.match(rap, /clôture/); assert.match(rap, /purge/);
 assert.deepStrictEqual(env.sheets.Saisies.getRange(1, 1, 1, 6).getValues()[0], ['Date','Nom','Prénom','N° Pièce','Montant','Notes ou Infos']);
@@ -17,7 +20,7 @@ assert.strictEqual(env.triggers.length, 2);
 const t = new Date();
 const saisies = new FakeSheet('Saisies', [['Date','Nom','Prénom','N° Pièce','Montant','CODE ',''], [t,'TEST','A','P1','1 €','']]);
 saisies.getRange('Z1').setValue('BLOQUANT');
-env = makeEnv({ repo: process.argv[2], sheets: { Saisies: saisies, _Annuaire: new FakeSheet('_Annuaire', [['Piece','Nom','Prenom','DerniereVue']]) }, triggers: ['verificationClotureNocturne'] });
+env = makeEnv({ repo: process.argv[2], activeEmail: 'editeur@example.com', sheets: { Saisies: saisies, _Annuaire: new FakeSheet('_Annuaire', [['Piece','Nom','Prenom','DerniereVue']]) }, triggers: ['verificationClotureNocturne'] });
 rap = env.ctx.installer();
 assert.strictEqual(rap, "Déclencheur créé : purge de l'annuaire (chaque nuit vers 3h).");
 assert.strictEqual(saisies.getRange(1, 6).getValue(), 'CODE '); assert.strictEqual(saisies.getRange('Z1').getValue(), 'BLOQUANT');
@@ -27,4 +30,12 @@ env = makeEnv({ repo: process.argv[2] });
 env.ctx.HtmlService = { createTemplateFromFile: () => ({ evaluate: () => ({ setTitle() { return this; }, addMetaTag() { return this; } }) }) };
 env.ctx.doGet({});
 assert.ok(env.sheets.Saisies); assert.strictEqual(env.triggers.length, 0);
+// 5) Robots absents (application ouverte avant « Installer ») : recréés à l'ouverture
+//    de l'espace responsable, et signalés
+env.props.setProperty('ID_CLASSEUR', 'ID-CLASSEUR');
+const jet = env.creerCode('258025').jeton;
+const infos = env.ctx.getInfosAdmin(jet);
+assert.strictEqual(infos.robotsCrees, 2); assert.ok(infos.robots.cloture && infos.robots.purge);
+assert.deepStrictEqual(env.triggers.sort(), ['purgerAnnuaire', 'verificationClotureNocturne']);
+assert.strictEqual(env.ctx.getInfosAdmin(jet).robotsCrees, 0, 'pas de doublon');
 console.log('test_installation : OK');

@@ -73,6 +73,8 @@ Avec le **compte Google qui détiendra les données** (voir ci-dessus) :
    accepter les autorisations. Ça crée ce qui manque (feuilles, **clôture automatique
    de nuit**, **purge de l'annuaire** ; les archives sont supprimées 3 ans après la
    clôture de l'offre) et efface tout réglage hérité du modèle.
+   Le compte rendu affiche un **code d'activation** (8 chiffres, valable 24 h) : le
+   noter pour l'étape 4. *(Expiré ? Menu 🚀 APPLICATION → 🔑 Code d'activation.)*
    *(Si le menu n'apparaît pas : recharger la page.)*
 3. **Mettre l'application en ligne** : *Extensions → Apps Script → **Déployer** →
    **Nouveau déploiement*** → type **Application Web** :
@@ -84,8 +86,10 @@ Avec le **compte Google qui détiendra les données** (voir ci-dessus) :
    *(C'est la seule étape que Google ne permet pas d'automatiser simplement.)*
 4. **Sur la 1re tablette**, ouvrir l'URL : l'écran **« 🔒 Tablette non autorisée »**
    s'affiche.
-   - **Créer le code responsable** (**6 chiffres**, connu des seuls responsables) et
-     donner un nom à la tablette (ex. « Caisse centrale 1 ») → **AUTORISER** ;
+   - saisir le **code d'activation** (étape 2), **choisir le code responsable**
+     (**6 chiffres**, connu des seuls responsables) et donner un nom à la tablette
+     (ex. « Caisse centrale 1 ») → **AUTORISER**. Sans le code d'activation, personne
+     ne peut choisir le code responsable, même avec le lien ;
    - **chaque autre tablette** : ouvrir le même lien, saisir le code, nommer la
      tablette → **AUTORISER** (une seule fois par tablette).
    - Une tablette non autorisée ne voit **rien**, même avec le lien.
@@ -116,11 +120,16 @@ Ce nettoyage a lieu à l'installation ou à la première ouverture de l'applicat
   responsable → tuile **🔑 Code & tablettes** → **Retirer** (ou « Retirer toutes les
   tablettes », puis ré-autoriser celles du magasin).
 - **Code responsable** : 6 chiffres. Après un code faux il faut patienter 10 s ;
-  5 codes faux bloquent 15 min.
-- **Code responsable oublié** : ouvrir le Google Sheets → panneau ⚙️ (à droite) →
-  **Réinitialiser le code responsable** (réservé aux personnes ayant accès au fichier).
-  Le nouveau code se crée ensuite depuis une **tablette déjà autorisée** (⚙️ →
-  Espace responsable).
+  5 codes faux bloquent 15 min. Chaque tablette autorisée a son propre compteur : des
+  codes faux tapés depuis un appareil non autorisé ne bloquent pas l'espace
+  responsable (ils sont signalés en tête de l'espace responsable).
+- **Code responsable oublié** (ou tablette volée) : ouvrir le Google Sheets → panneau
+  ⚙️ (à droite) → **Réinitialiser le code responsable** (réservé aux personnes ayant
+  accès au fichier). Un **code d'activation** s'affiche : sur n'importe quelle tablette,
+  ⚙️ → Espace responsable (ou écran d'autorisation) → saisir ce code puis choisir le
+  nouveau code responsable. Ensuite, retirer la tablette volée (tuile 🔑).
+- **Mode SIGNALER / BLOQUANT** : il est **conservé** d'une offre à l'autre (la clôture
+  ne le change pas).
 - **Navigateur de la tablette** : l'autorisation est mémorisée par le navigateur. Si
   ses données sont effacées (ou en navigation privée), il faut ré-autoriser la
   tablette (1 minute avec le code).

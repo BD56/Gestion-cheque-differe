@@ -21,7 +21,7 @@ function makeEnv(opts = {}) {
       put: (k, v, ttl) => { cacheStore[k] = { v, exp: Date.now() + ttl * 1000 }; },
       remove: k => { delete cacheStore[k]; } }) },
     LockService: { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }) },
-    ScriptApp: { getProjectTriggers: () => env.triggers.map(h => ({ getHandlerFunction: () => h })),
+    ScriptApp: { getProjectTriggers: () => env.triggers.map(h => ({ getHandlerFunction: () => h, getUniqueId: () => 'uid-' + h })),
       newTrigger: h => { const b = { timeBased: () => b, everyDays: () => b, atHour: () => b, create: () => { env.triggers.push(h); } }; return b; } },
     Logger: { log() {} },
     Session: { getActiveUser: () => ({ getEmail: () => env.activeEmail }) },
@@ -39,6 +39,10 @@ function makeEnv(opts = {}) {
     },
   });
   if (!opts.tabletteReelle) env.ctx.exigerTablette_ = function () {};
+  // Code d'activation (normalement affiché dans le Google Sheets)
+  env.activation = () => env.ctx.genererCodeActivation_();
+  // Crée le code responsable comme à la 1re installation et renvoie la réponse
+  env.creerCode = (pin) => env.ctx.definirPin(pin, null, null, env.activation());
   return env;
 }
 module.exports = { makeEnv };

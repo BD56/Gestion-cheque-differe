@@ -1,3 +1,25 @@
+// =================================================================
+// --- STRUCTURE DE LA FEUILLE « Saisies » (source de vérité) ---
+//     Les archives (« Archives_… ») ont la même structure : une copie de « Saisies ».
+//     Ne pas changer ces valeurs sans adapter les feuilles existantes.
+// =================================================================
+var FEUILLE_SAISIES = "Saisies";
+var CELLULE_MODE = "Z1"; // mode de sécurité : SIGNALER ou BLOQUANT
+var ENTETES_SAISIES = ["Date", "Nom", "Prénom", "N° Pièce", "Montant", "Notes ou Infos"];
+// Numéros de colonnes (A = 1), pour getRange(ligne, colonne…)
+var COL = { DATE: 1, NOM: 2, PRENOM: 3, PIECE: 4, MONTANT: 5, NOTES: 6 };
+// Positions dans une ligne lue par getValues() (A = 0) : toujours COL - 1
+var IDX = { DATE: 0, NOM: 1, PRENOM: 2, PIECE: 3, MONTANT: 4, NOTES: 5 };
+var NB_COLONNES = 6;          // A à F : la ligne complète
+var NB_COLONNES_SAISIE = 5;   // B à F : ce qui est tapé (tout sauf la date)
+var NB_COLONNES_LIGNE = 7;    // A à G : largeur vidée / décolorée (G reste vide)
+var PREFIXE_ARCHIVES = "Archives_";
+
+// Autres onglets (anciens écrans du Sheet, gardés pour le panneau ⚙️)
+var FEUILLE_IMPRESSION = "A_IMPRIMER";
+var CELLULE_JOUR_IMPRESSION = "Z1"; // jour choisi (vide = aujourd'hui)
+var FEUILLE_OFFRE_COMPLETE = "OFFRE_COMPLETE";
+
 // Fuseau horaire de référence (réglage du projet Apps Script : Europe/Paris par défaut).
 // Un seul fuseau pour les dates d'offre, les noms d'archives, l'impression, le robot.
 function fuseau_() {
@@ -6,7 +28,7 @@ function fuseau_() {
 
 // Mode de sécurité de « Saisies »!Z1 (tolère « Bloquant », espaces…).
 function modeSecurite_(feuille) {
-  var v = feuille ? (feuille.getRange("Z1").getValue() || "").toString().trim().toUpperCase() : "";
+  var v = feuille ? (feuille.getRange(CELLULE_MODE).getValue() || "").toString().trim().toUpperCase() : "";
   return v === "BLOQUANT" ? "BLOQUANT" : "SIGNALER";
 }
 
@@ -19,7 +41,7 @@ function libererVerrou_(lock) {
 function doGet(e) {
   nettoyerSiCopie_(); // copie du modèle (ou d'un autre classeur) : repart sans code/dates/réglages hérités
   // Nouvelle structure : crée « Saisies » si elle n'existe pas encore (rien n'est écrasé)
-  if (!SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Saisies")) installerFeuilles_();
+  if (!SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FEUILLE_SAISIES)) installerFeuilles_();
   var cfg = getConfig();
   var page = HtmlService.createTemplateFromFile('Index');
   page.cfg = cfg;
@@ -136,13 +158,13 @@ function estCopieNonInstallee_() {
 function installerFeuilles_() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var faits = [];
-  if (!ss.getSheetByName("Saisies")) {
-    var f = ss.insertSheet("Saisies", 0);
-    f.getRange(1, 1, 1, 6).setValues([["Date", "Nom", "Prénom", "N° Pièce", "Montant", "Notes ou Infos"]]).setFontWeight("bold");
+  if (!ss.getSheetByName(FEUILLE_SAISIES)) {
+    var f = ss.insertSheet(FEUILLE_SAISIES, 0);
+    f.getRange(1, 1, 1, NB_COLONNES).setValues([ENTETES_SAISIES]).setFontWeight("bold");
     f.getRange("A2:A").setNumberFormat("dd/MM/yyyy HH:mm:ss");
-    f.getRange("Z1").setValue("SIGNALER");
+    f.getRange(CELLULE_MODE).setValue("SIGNALER");
     f.setFrozenRows(1);
-    faits.push("Feuille « Saisies » créée.");
+    faits.push("Feuille « " + FEUILLE_SAISIES + " » créée.");
   }
   if (ANNUAIRE_ACTIF && !ss.getSheetByName(ANNUAIRE_FEUILLE)) {
     _feuilleAnnuaire_();
@@ -212,7 +234,7 @@ function setConfig(valeurs, jeton) {
     PropertiesService.getDocumentProperties().setProperties(aEcrire);
     // Limite de passages changée : marquages de l'offre recalculés avec la nouvelle règle
     if (passagesMax_() !== ancienMax) {
-      var f = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Saisies");
+      var f = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FEUILLE_SAISIES);
       if (f) recalculerMarquages_(f);
     }
   } finally {
@@ -586,7 +608,7 @@ function retirerToutesTablettesPanneau() {
 // Tout ce qu'affiche l'espace responsable, en un appel.
 function getInfosAdmin(jeton) {
   exigerAdmin_(jeton);
-  var f = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Saisies");
+  var f = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FEUILLE_SAISIES);
   // Robots de nuit absents (application ouverte avant « Installer »…) : on les recrée.
   var robotsCrees = [];
   try { robotsCrees = installerDeclencheurs_(); } catch (e) { Logger.log("Robots de nuit : " + e); }
@@ -615,8 +637,8 @@ function traiterSaisie(nom, prenom, piece, montant, notes, cle) {
     lock.waitLock(10000); // Verrou pour éviter les race conditions
 
     var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var feuille = ss.getSheetByName("Saisies");
-    if (!feuille) return { status: "BLOQUE", titre: "Erreur Serveur", message: "La feuille 'Saisies' est introuvable." };
+    var feuille = ss.getSheetByName(FEUILLE_SAISIES);
+    if (!feuille) return { status: "BLOQUE", titre: "Erreur Serveur", message: "La feuille '" + FEUILLE_SAISIES + "' est introuvable." };
 
     var horsPeriode = controlerPeriode_();
     if (horsPeriode) return horsPeriode;
@@ -679,7 +701,7 @@ function traiterSaisie(nom, prenom, piece, montant, notes, cle) {
       if (passagesClient > 0) notes = ajouterNote_(notes, notePassage_(passagesClient + 1, passagesMax));
       feuille.appendRow([new Date(), texte_(nom), texte_(prenom), texte_(piece), montantSur_(montant), texte_(notes), ""]);
       // pas de rouge hérité de la ligne du dessus (mise en forme automatique de Sheets)
-      feuille.getRange(feuille.getLastRow(), 1, 1, 7).setBackground(null);
+      feuille.getRange(feuille.getLastRow(), 1, 1, NB_COLONNES_LIGNE).setBackground(null);
       majAnnuaire_(nom, prenom, piece);
       return { status: "SUCCES", passage: passagesClient + 1, passagesMax: passagesMax,
                message: passagesClient > 0 ? "✅ Saisie enregistrée ! (passage " + (passagesClient + 1) + "/" + passagesMax + ")" : "✅ Saisie enregistrée !" };
@@ -732,8 +754,8 @@ function forcerSaisie(nom, prenom, piece, montant, notes, messageErreur, flagIde
     lock.waitLock(10000); // Verrou pour éviter les doublons forcés
 
     var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var feuille = ss.getSheetByName("Saisies");
-    if (!feuille) return { status: "BLOQUE", titre: "Erreur Serveur", message: "La feuille 'Saisies' est introuvable." };
+    var feuille = ss.getSheetByName(FEUILLE_SAISIES);
+    if (!feuille) return { status: "BLOQUE", titre: "Erreur Serveur", message: "La feuille '" + FEUILLE_SAISIES + "' est introuvable." };
     var horsPeriode = controlerPeriode_();
     if (horsPeriode) return horsPeriode;
     var incomplet = controlerChamps_(nom, prenom, piece, montant);
@@ -766,13 +788,13 @@ function forcerSaisie(nom, prenom, piece, montant, notes, messageErreur, flagIde
     var indexLigne = feuille.getLastRow();
     
     // 🧹 LE CORRECTIF : On efface l'héritage automatique de Google Sheets sur les 7 colonnes
-    feuille.getRange(indexLigne, 1, 1, 7).setBackground(null);
+    feuille.getRange(indexLigne, 1, 1, NB_COLONNES_LIGNE).setBackground(null);
     
     // 🎨 Couleurs selon le cas RÉEL (mêmes règles que onEdit)
     if (pireCas) {
-      feuille.getRange(indexLigne, 6).setBackground("#f4cccc");
-      if (pireCas === 'A' || pireCas === 'C') feuille.getRange(indexLigne, 2, 1, 2).setBackground("#f4cccc");
-      if (pireCas === 'A' || pireCas === 'B') feuille.getRange(indexLigne, 4).setBackground("#f4cccc");
+      feuille.getRange(indexLigne, COL.NOTES).setBackground("#f4cccc");
+      if (pireCas === 'A' || pireCas === 'C') feuille.getRange(indexLigne, COL.NOM, 1, 2).setBackground("#f4cccc"); // nom + prénom
+      if (pireCas === 'A' || pireCas === 'B') feuille.getRange(indexLigne, COL.PIECE).setBackground("#f4cccc");
     }
 
     // Usurpation : la pièce figure déjà sous un AUTRE nom (même si le pire cas est A,
@@ -794,24 +816,24 @@ function forcerSaisie(nom, prenom, piece, montant, notes, messageErreur, flagIde
 function verifierPiece(piece, cle) {
   exigerTablette_(cle);
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var feuille = ss.getSheetByName("Saisies");
+  var feuille = ss.getSheetByName(FEUILLE_SAISIES);
   if (!feuille) return { trouve: false };
 
-  var mode = feuille.getRange("Z1").getValue() || "SIGNALER";
+  var mode = feuille.getRange(CELLULE_MODE).getValue() || "SIGNALER";
   var pieceNorm = _normPiece_(piece);
   if (pieceNorm === "") return { trouve: false, mode: mode };
 
   var donnees = feuille.getDataRange().getValues();
   var matches = [];
   for (var i = 1; i < donnees.length; i++) {
-    var pieceHisto = _normPiece_(donnees[i][3]);
+    var pieceHisto = _normPiece_(donnees[i][IDX.PIECE]);
     if (pieceHisto !== "" && pieceHisto === pieceNorm) {
       matches.push({
         ligne: i + 1,
-        date: (donnees[i][0] instanceof Date) ? Utilities.formatDate(donnees[i][0], fuseau_(), "dd/MM/yyyy HH:mm") : (donnees[i][0] ? donnees[i][0].toString() : ""),
-        nom: donnees[i][1] ? donnees[i][1].toString() : "",
-        prenom: donnees[i][2] ? donnees[i][2].toString() : "",
-        montant: donnees[i][4] ? donnees[i][4].toString() : ""
+        date: (donnees[i][IDX.DATE] instanceof Date) ? Utilities.formatDate(donnees[i][IDX.DATE], fuseau_(), "dd/MM/yyyy HH:mm") : (donnees[i][IDX.DATE] ? donnees[i][IDX.DATE].toString() : ""),
+        nom: donnees[i][IDX.NOM] ? donnees[i][IDX.NOM].toString() : "",
+        prenom: donnees[i][IDX.PRENOM] ? donnees[i][IDX.PRENOM].toString() : "",
+        montant: donnees[i][IDX.MONTANT] ? donnees[i][IDX.MONTANT].toString() : ""
       });
     }
   }
@@ -936,16 +958,16 @@ function reconstruireAnnuaireSousVerrou_() {
   var feuilles = ss.getSheets();
   for (var s = 0; s < feuilles.length; s++) {
     var nomF = feuilles[s].getName();
-    if (nomF !== "Saisies" && nomF.indexOf("Archives_") !== 0) continue;
+    if (nomF !== FEUILLE_SAISIES && nomF.indexOf(PREFIXE_ARCHIVES) !== 0) continue;
     var data = feuilles[s].getDataRange().getValues();
     for (var i = 1; i < data.length; i++) {
-      var pieceNorm = _normPiece_(data[i][3]);
-      if (pieceNorm === "" || !(data[i][0] instanceof Date)) continue;
-      if (/Cas B\)/.test(data[i][5] ? data[i][5].toString() : "")) continue;
-      var d = data[i][0], x = index[pieceNorm];
-      if (!x) index[pieceNorm] = { nom: data[i][1], prenom: data[i][2], date: d, premiere: d };
+      var pieceNorm = _normPiece_(data[i][IDX.PIECE]);
+      if (pieceNorm === "" || !(data[i][IDX.DATE] instanceof Date)) continue;
+      if (/Cas B\)/.test(data[i][IDX.NOTES] ? data[i][IDX.NOTES].toString() : "")) continue;
+      var d = data[i][IDX.DATE], x = index[pieceNorm];
+      if (!x) index[pieceNorm] = { nom: data[i][IDX.NOM], prenom: data[i][IDX.PRENOM], date: d, premiere: d };
       else {
-        if (d < x.premiere) { x.nom = data[i][1]; x.prenom = data[i][2]; x.premiere = d; }
+        if (d < x.premiere) { x.nom = data[i][IDX.NOM]; x.prenom = data[i][IDX.PRENOM]; x.premiere = d; }
         if (d > x.date) x.date = d;
       }
     }
@@ -990,25 +1012,25 @@ function chargerCacheVerif(cle) {
 
 function cacheVerif_() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var feuille = ss.getSheetByName("Saisies");
+  var feuille = ss.getSheetByName(FEUILLE_SAISIES);
   var mode = modeSecurite_(feuille);
 
   var offre = [];
   if (feuille) {
     var donnees = feuille.getDataRange().getValues();
     for (var i = 1; i < donnees.length; i++) {
-      var pn = _normPiece_(donnees[i][3]);
+      var pn = _normPiece_(donnees[i][IDX.PIECE]);
       // lignes sans N° gardées si elles ont un nom (un homonyme reste détectable)
-      if (pn === "" && _normId_(donnees[i][1]) === "") continue;
+      if (pn === "" && _normId_(donnees[i][IDX.NOM]) === "") continue;
       offre.push({
         pieceNorm: pn,
         ligne: i + 1,
-        date: (donnees[i][0] instanceof Date) ? Utilities.formatDate(donnees[i][0], fuseau_(), "dd/MM/yyyy HH:mm") : (donnees[i][0] ? donnees[i][0].toString() : ""),
-        nom: donnees[i][1] ? donnees[i][1].toString() : "",
-        prenom: donnees[i][2] ? donnees[i][2].toString() : "",
-        piece: donnees[i][3] ? donnees[i][3].toString() : "",
-        montant: donnees[i][4] ? donnees[i][4].toString() : "",
-        notes: donnees[i][5] ? donnees[i][5].toString() : ""
+        date: (donnees[i][IDX.DATE] instanceof Date) ? Utilities.formatDate(donnees[i][IDX.DATE], fuseau_(), "dd/MM/yyyy HH:mm") : (donnees[i][IDX.DATE] ? donnees[i][IDX.DATE].toString() : ""),
+        nom: donnees[i][IDX.NOM] ? donnees[i][IDX.NOM].toString() : "",
+        prenom: donnees[i][IDX.PRENOM] ? donnees[i][IDX.PRENOM].toString() : "",
+        piece: donnees[i][IDX.PIECE] ? donnees[i][IDX.PIECE].toString() : "",
+        montant: donnees[i][IDX.MONTANT] ? donnees[i][IDX.MONTANT].toString() : "",
+        notes: donnees[i][IDX.NOTES] ? donnees[i][IDX.NOTES].toString() : ""
       });
     }
   }
@@ -1049,7 +1071,7 @@ function getInfosPanneau(cle) {
 
 function infosPanneau_() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var f = ss.getSheetByName("Saisies");
+  var f = ss.getSheetByName(FEUILLE_SAISIES);
   var mode = modeSecurite_(f);
   return { success: true, mode: mode, annuaireActif: ANNUAIRE_ACTIF, modeAnnuaire: getModeAnnuaire() };
 }
@@ -1064,7 +1086,7 @@ function infosPanneau_() {
 function genererDonneesImpression(type, dateChoisieStr, cle) {
   exigerTablette_(cle);
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var feuille = ss.getSheetByName("Saisies");
+  var feuille = ss.getSheetByName(FEUILLE_SAISIES);
   if (!feuille) return [];
   var tz = ss.getSpreadsheetTimeZone(); // même référence que INT()/TODAY() dans A_IMPRIMER
   var jour = null;
@@ -1081,18 +1103,18 @@ function tableauImpression_(feuille, jour, tz) {
   var derniere = feuille.getLastRow();
   if (derniere < 2) return [];
   var cfg = getConfig();
-  var entete = ["Date", "Nom", "Prénom", "N° Pièce", cfg.LIBELLE_MONTANT, cfg.LIBELLE_NOTES];
-  var plage = feuille.getRange(2, 1, derniere - 1, 6);
+  var entete = ENTETES_SAISIES.slice(0, IDX.MONTANT).concat([cfg.LIBELLE_MONTANT, cfg.LIBELLE_NOTES]);
+  var plage = feuille.getRange(2, 1, derniere - 1, NB_COLONNES);
   var valeurs = plage.getValues();
   var affichage = plage.getDisplayValues();
 
   var lignes = [];
   for (var i = 0; i < valeurs.length; i++) {
     if (jour) {
-      var d = valeurs[i][0];
+      var d = valeurs[i][IDX.DATE];
       if (!(d instanceof Date) || Utilities.formatDate(d, tz, "yyyy-MM-dd") !== jour) continue;
       var ligne = affichage[i].slice();
-      ligne[0] = Utilities.formatDate(d, tz, "dd/MM/yyyy");
+      ligne[IDX.DATE] = Utilities.formatDate(d, tz, "dd/MM/yyyy");
       lignes.push(ligne);
     } else {
       if (affichage[i].join("") === "") continue;
@@ -1128,7 +1150,7 @@ function purgerArchives_() {
     var supprimees = [];
     ss.getSheets().forEach(function (f) {
       var nom = f.getName();
-      if (nom.indexOf("Archives_") !== 0) return;
+      if (nom.indexOf(PREFIXE_ARCHIVES) !== 0) return;
       var tri = infosNomArchive_(nom).tri;
       if (tri && tri < cleLimite) { ss.deleteSheet(f); supprimees.push(nom); }
     });
@@ -1144,7 +1166,7 @@ function listerArchives(jeton) {
   var liste = [];
   SpreadsheetApp.getActiveSpreadsheet().getSheets().forEach(function (f) {
     var nom = f.getName();
-    if (nom.indexOf("Archives_") !== 0) return;
+    if (nom.indexOf(PREFIXE_ARCHIVES) !== 0) return;
     var infos = infosNomArchive_(nom);
     liste.push({ nom: nom, libelle: infos.libelle, tri: infos.tri, lignes: Math.max(0, f.getLastRow() - 1) });
   });
@@ -1156,7 +1178,7 @@ function listerArchives(jeton) {
 function donneesArchive(nom, jeton) {
   exigerAdmin_(jeton);
   nom = (nom || "").toString();
-  if (nom.indexOf("Archives_") !== 0) throw new Error("Archive inconnue.");
+  if (nom.indexOf(PREFIXE_ARCHIVES) !== 0) throw new Error("Archive inconnue.");
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var f = ss.getSheetByName(nom);
   if (!f) throw new Error("Archive introuvable : " + nom);
@@ -1189,24 +1211,24 @@ function _normId_(v) {
 // Saisies de l'offre en cours, la plus récente d'abord.
 function listerSaisies(jeton) {
   exigerAdmin_(jeton);
-  var feuille = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Saisies");
+  var feuille = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FEUILLE_SAISIES);
   if (!feuille) return [];
   var derniere = feuille.getLastRow();
   if (derniere < 2) return [];
-  var plage = feuille.getRange(2, 1, derniere - 1, 6);
+  var plage = feuille.getRange(2, 1, derniere - 1, NB_COLONNES);
   var valeurs = plage.getValues();
   var affichage = plage.getDisplayValues();
   var liste = [];
   for (var i = 0; i < valeurs.length; i++) {
     if (affichage[i].join("") === "") continue;
-    var notes = valeurs[i][5] ? valeurs[i][5].toString() : "";
+    var notes = valeurs[i][IDX.NOTES] ? valeurs[i][IDX.NOTES].toString() : "";
     liste.push({
       ligne: i + 2,
-      date: affichage[i][0],
-      nom: valeurs[i][1] ? valeurs[i][1].toString() : "",
-      prenom: valeurs[i][2] ? valeurs[i][2].toString() : "",
-      piece: valeurs[i][3] ? valeurs[i][3].toString() : "",
-      montant: affichage[i][4],
+      date: affichage[i][IDX.DATE],
+      nom: valeurs[i][IDX.NOM] ? valeurs[i][IDX.NOM].toString() : "",
+      prenom: valeurs[i][IDX.PRENOM] ? valeurs[i][IDX.PRENOM].toString() : "",
+      piece: valeurs[i][IDX.PIECE] ? valeurs[i][IDX.PIECE].toString() : "",
+      montant: affichage[i][IDX.MONTANT],
       notes: notes.replace(NOTES_SYSTEME_REGEX, '').trim(),
       alerte: notes !== notes.replace(ALERTE_FORCE_REGEX, '')
     });
@@ -1220,7 +1242,7 @@ function verifierLigneAttendue_(feuille, ligne, attendu) {
   if (!(ligne >= 2 && ligne <= feuille.getLastRow() && Math.floor(ligne) === ligne)) {
     throw new Error("Ligne introuvable : rechargez la liste.");
   }
-  var v = feuille.getRange(ligne, 2, 1, 3).getValues()[0];
+  var v = feuille.getRange(ligne, COL.NOM, 1, 3).getValues()[0]; // nom, prénom, N°
   var a = attendu || {};
   if ((v[0] || "").toString() !== (a.nom || "") || (v[1] || "").toString() !== (a.prenom || "") || (v[2] || "").toString() !== (a.piece || "")) {
     throw new Error("Cette ligne a changé entre-temps : rechargez la liste.");
@@ -1239,8 +1261,8 @@ function detecterDoublons_(feuille, nom, prenom, piece, ligneExclue) {
   var pireCas = null, details = [], passages = 0;
   for (var i = 1; i < donnees.length; i++) {
     if (i === ligneExclue - 1) continue;
-    var memeId = (nomN !== "" && prenomN !== "" && _normId_(donnees[i][1]) === nomN && _normId_(donnees[i][2]) === prenomN);
-    var memePiece = (pieceN !== "" && _normPiece_(donnees[i][3]) === pieceN);
+    var memeId = (nomN !== "" && prenomN !== "" && _normId_(donnees[i][IDX.NOM]) === nomN && _normId_(donnees[i][IDX.PRENOM]) === prenomN);
+    var memePiece = (pieceN !== "" && _normPiece_(donnees[i][IDX.PIECE]) === pieceN);
     if (!memeId && !memePiece) continue;
     var t = (memeId && memePiece) ? 'A' : (memePiece ? 'B' : 'C');
     if (t === 'A') passages++;
@@ -1248,10 +1270,10 @@ function detecterDoublons_(feuille, nom, prenom, piece, ligneExclue) {
     else if (t === 'C' && pireCas !== 'B') pireCas = 'C';
     details.push({
       ligne: i + 1, type: t,
-      date: (donnees[i][0] instanceof Date) ? Utilities.formatDate(donnees[i][0], fuseau_(), "dd/MM/yyyy HH:mm") : (donnees[i][0] ? donnees[i][0].toString() : ""),
-      nom: donnees[i][1] ? donnees[i][1].toString() : "", prenom: donnees[i][2] ? donnees[i][2].toString() : "",
-      piece: donnees[i][3] ? donnees[i][3].toString() : "", montant: donnees[i][4] ? donnees[i][4].toString() : "",
-      notes: donnees[i][5] ? donnees[i][5].toString() : ""
+      date: (donnees[i][IDX.DATE] instanceof Date) ? Utilities.formatDate(donnees[i][IDX.DATE], fuseau_(), "dd/MM/yyyy HH:mm") : (donnees[i][IDX.DATE] ? donnees[i][IDX.DATE].toString() : ""),
+      nom: donnees[i][IDX.NOM] ? donnees[i][IDX.NOM].toString() : "", prenom: donnees[i][IDX.PRENOM] ? donnees[i][IDX.PRENOM].toString() : "",
+      piece: donnees[i][IDX.PIECE] ? donnees[i][IDX.PIECE].toString() : "", montant: donnees[i][IDX.MONTANT] ? donnees[i][IDX.MONTANT].toString() : "",
+      notes: donnees[i][IDX.NOTES] ? donnees[i][IDX.NOTES].toString() : ""
     });
   }
   if (passages >= passagesMax_()) pireCas = 'A';
@@ -1270,29 +1292,29 @@ function aUneUsurpation_(det) {
 function recalculerMarquages_(feuille) {
   var derniere = feuille.getLastRow();
   if (derniere < 2) return;
-  var plage = feuille.getRange(2, 1, derniere - 1, 7);
+  var plage = feuille.getRange(2, 1, derniere - 1, NB_COLONNES_LIGNE);
   var v = plage.getValues();
   // Notes lues TELLES QU'AFFICHÉES : une note que Sheets a prise pour une date (« 3/4 »)
   // reste « 03/04 » et n'est pas réécrite en « Fri Apr 03 2026 00:00:00 GMT… »
-  var notesAffichees = feuille.getRange(2, 6, derniere - 1, 1).getDisplayValues();
+  var notesAffichees = feuille.getRange(2, COL.NOTES, derniere - 1, 1).getDisplayValues();
   var notesChangees = false;
   var rouge = "#f4cccc";
   var max = passagesMax_();
   var notes = [], fonds = [];
   for (var i = 0; i < v.length; i++) {
-    var nomN = _normId_(v[i][1]), prenomN = _normId_(v[i][2]), pieceN = _normPiece_(v[i][3]);
+    var nomN = _normId_(v[i][IDX.NOM]), prenomN = _normId_(v[i][IDX.PRENOM]), pieceN = _normPiece_(v[i][IDX.PIECE]);
     var pireCas = null, passages = 0;
     if (nomN || prenomN || pieceN) {
       for (var j = 0; j < i; j++) {
-        var memeId = (nomN !== "" && prenomN !== "" && _normId_(v[j][1]) === nomN && _normId_(v[j][2]) === prenomN);
-        var memePiece = (pieceN !== "" && _normPiece_(v[j][3]) === pieceN);
+        var memeId = (nomN !== "" && prenomN !== "" && _normId_(v[j][IDX.NOM]) === nomN && _normId_(v[j][IDX.PRENOM]) === prenomN);
+        var memePiece = (pieceN !== "" && _normPiece_(v[j][IDX.PIECE]) === pieceN);
         if (memeId && memePiece) passages++;
         else if (memePiece) pireCas = 'B';
         else if (memeId && pireCas !== 'B') pireCas = 'C';
       }
       if (passages >= max) pireCas = 'A';
     }
-    var noteActuelle = (v[i][5] instanceof Date) ? notesAffichees[i][0] : (v[i][5] === null || v[i][5] === undefined ? "" : v[i][5].toString());
+    var noteActuelle = (v[i][IDX.NOTES] instanceof Date) ? notesAffichees[i][0] : (v[i][IDX.NOTES] === null || v[i][IDX.NOTES] === undefined ? "" : v[i][IDX.NOTES].toString());
     var notePropre = noteActuelle.replace(NOTES_SYSTEME_REGEX, '').trim();
     var noteSysteme = pireCas ? "⚠️ Ajout forcé (Cas " + pireCas + ")" : (passages > 0 ? notePassage_(passages + 1, max) : "");
     var noteVoulue = noteSysteme ? ajouterNote_(notePropre, noteSysteme) : notePropre;
@@ -1302,7 +1324,7 @@ function recalculerMarquages_(feuille) {
       (pireCas === 'A' || pireCas === 'C') ? rouge : null, (pireCas === 'A' || pireCas === 'C') ? rouge : null,
       (pireCas === 'A' || pireCas === 'B') ? rouge : null, null, pireCas ? rouge : null, null]);
   }
-  if (notesChangees) feuille.getRange(2, 6, v.length, 1).setValues(notes);
+  if (notesChangees) feuille.getRange(2, COL.NOTES, v.length, 1).setValues(notes);
   plage.setBackgrounds(fonds);
 }
 
@@ -1326,8 +1348,8 @@ function modifierSaisie(ligne, attendu, nouveau, forcer, jeton) {
   var lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
-    var feuille = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Saisies");
-    if (!feuille) throw new Error("La feuille 'Saisies' est introuvable.");
+    var feuille = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FEUILLE_SAISIES);
+    if (!feuille) throw new Error("La feuille '" + FEUILLE_SAISIES + "' est introuvable.");
     ligne = verifierLigneAttendue_(feuille, ligne, attendu);
 
     var n = nouveau || {};
@@ -1351,7 +1373,7 @@ function modifierSaisie(ligne, attendu, nouveau, forcer, jeton) {
       if (!forcer) return { status: "CONFIRMATION", titre: m.titre, message: m.message, couleur: m.couleur, details: details };
     }
 
-    feuille.getRange(ligne, 2, 1, 5).setValues([[texte_(nom), texte_(prenom), texte_(piece), montantSur_(montant), texte_(notesPropres)]]);
+    feuille.getRange(ligne, COL.NOM, 1, NB_COLONNES_SAISIE).setValues([[texte_(nom), texte_(prenom), texte_(piece), montantSur_(montant), texte_(notesPropres)]]);
     // Note d'alerte + rouge recalculés pour TOUTES les lignes (la correction peut créer
     // ou faire disparaître un doublon ailleurs dans l'offre)
     recalculerMarquages_(feuille);
@@ -1367,8 +1389,8 @@ function supprimerSaisie(ligne, attendu, jeton) {
   var lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
-    var feuille = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Saisies");
-    if (!feuille) throw new Error("La feuille 'Saisies' est introuvable.");
+    var feuille = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FEUILLE_SAISIES);
+    if (!feuille) throw new Error("La feuille '" + FEUILLE_SAISIES + "' est introuvable.");
     ligne = verifierLigneAttendue_(feuille, ligne, attendu);
     feuille.deleteRow(ligne);
     recalculerMarquages_(feuille); // un doublon de la ligne supprimée n'en est peut-être plus un
@@ -1380,11 +1402,11 @@ function supprimerSaisie(ligne, attendu, jeton) {
 
 function basculerModeWebApp(jeton) {
   exigerAdmin_(jeton);
-  var feuille = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Saisies");
-  if (!feuille) throw new Error("La feuille 'Saisies' est introuvable.");
+  var feuille = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FEUILLE_SAISIES);
+  if (!feuille) throw new Error("La feuille '" + FEUILLE_SAISIES + "' est introuvable.");
   var modeActuel = modeSecurite_(feuille);
   var nouveauMode = (modeActuel === "SIGNALER") ? "BLOQUANT" : "SIGNALER";
-  feuille.getRange("Z1").setValue(nouveauMode); return nouveauMode;
+  feuille.getRange(CELLULE_MODE).setValue(nouveauMode); return nouveauMode;
 }
 
 function archiverOffreWebApp(jeton) {
@@ -1406,20 +1428,20 @@ function archiverOffre_() {
 
 function archiverOffreSousVerrou_() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var feuilleSaisies = ss.getSheetByName("Saisies");
-  if (!feuilleSaisies) { enregistrerDates_("", ""); return "✅ L'offre a été clôturée (feuille « Saisies » absente : rien à archiver)."; }
+  var feuilleSaisies = ss.getSheetByName(FEUILLE_SAISIES);
+  if (!feuilleSaisies) { enregistrerDates_("", ""); return "✅ L'offre a été clôturée (feuille « " + FEUILLE_SAISIES + " » absente : rien à archiver)."; }
   var derniereLigne = feuilleSaisies.getLastRow();
   var message;
 
   if (derniereLigne > 1) {
     // Nom unique : deux clôtures dans la même minute ne doivent pas échouer
-    var base = 'Archives_' + Utilities.formatDate(new Date(), fuseau_(), "dd-MM-yyyy_HH-mm");
+    var base = PREFIXE_ARCHIVES + Utilities.formatDate(new Date(), fuseau_(), "dd-MM-yyyy_HH-mm");
     var nom = base, n = 2;
     while (ss.getSheetByName(nom)) nom = base + "_" + (n++);
     var archive = ss.insertSheet(nom, ss.getNumSheets());
     feuilleSaisies.getDataRange().copyTo(archive.getRange(1, 1));
     archive.setFrozenRows(1);
-    feuilleSaisies.getRange(2, 1, derniereLigne - 1, 7).clearContent().setBackground(null);
+    feuilleSaisies.getRange(2, 1, derniereLigne - 1, NB_COLONNES_LIGNE).clearContent().setBackground(null);
     message = "✅ L'offre a été clôturée et archivée avec succès !";
   } else {
     // Aucune saisie : on clôture sans créer d'archive vide
@@ -1456,17 +1478,17 @@ function afficherPanneau() {
 function allerVersImpression(dateChoisieStr) {
   exigerEditeur_();
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var f = ss.getSheetByName("A_IMPRIMER");
+  var f = ss.getSheetByName(FEUILLE_IMPRESSION);
   if (!f) return;
-  if (dateChoisieStr === "aujourdhui") f.getRange("Z1").clearContent();
-  else f.getRange("Z1").setValue("'" + dateChoisieStr);
+  if (dateChoisieStr === "aujourdhui") f.getRange(CELLULE_JOUR_IMPRESSION).clearContent();
+  else f.getRange(CELLULE_JOUR_IMPRESSION).setValue("'" + dateChoisieStr);
   SpreadsheetApp.flush(); ss.setActiveSheet(f);
 }
 
 function allerVersOffre() {
   exigerEditeur_();
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var f = ss.getSheetByName("OFFRE_COMPLETE");
+  var f = ss.getSheetByName(FEUILLE_OFFRE_COMPLETE);
   if (f) ss.setActiveSheet(f);
 }
 
@@ -1478,7 +1500,7 @@ function onEdit(e) {
   var feuille = e.range.getSheet();
   
   // On ne déclenche la magie que sur la bonne feuille
-  if (feuille.getName() !== "Saisies") return;
+  if (feuille.getName() !== FEUILLE_SAISIES) return;
   
   var premiere = e.range.getRow();
   var colEdit = e.range.getColumn();
@@ -1487,11 +1509,11 @@ function onEdit(e) {
   var derniere = premiere + nbLignes - 1;
   
   // On ignore la ligne 1 (en-têtes) et on s'arrête à la colonne F
-  if (derniere < 2 || colEdit > 6) return;
+  if (derniere < 2 || colEdit > COL.NOTES) return;
   var uneCellule = (nbLignes === 1 && nbCols === 1);
   var debut = Math.max(2, premiere);
   // Nom, prénom ou N° touchés ? (sinon : montant / notes seulement, jamais annulé)
-  var toucheIdentite = colEdit <= 4 && colEdit + nbCols - 1 >= 2;
+  var toucheIdentite = colEdit <= COL.PIECE && colEdit + nbCols - 1 >= COL.NOM;
 
   // Même verrou que les tablettes : une saisie ne peut pas s'intercaler pendant le contrôle
   var lock = null, verrou = false;
@@ -1510,15 +1532,15 @@ function onEdit(e) {
     var refus = [];
     if (modeSecurite === "BLOQUANT" && toucheIdentite) {
       for (var ligne = debut; ligne <= derniere; ligne++) {
-        var plageAnnulee = uneCellule ? e.range : feuille.getRange(ligne, colEdit, 1, Math.min(nbCols, 7 - colEdit));
+        var plageAnnulee = uneCellule ? e.range : feuille.getRange(ligne, colEdit, 1, Math.min(nbCols, COL.NOTES - colEdit + 1));
         var cas = controlerLigneEditee_(feuille, ligne, plageAnnulee, uneCellule ? e.oldValue : undefined, colEdit);
         if (cas) refus.push("ligne " + ligne + " (Cas " + cas + ")");
       }
     }
     // Ligne entièrement vidée : on efface aussi sa date
-    var bloc = feuille.getRange(debut, 2, derniere - debut + 1, 5).getValues();
+    var bloc = feuille.getRange(debut, COL.NOM, derniere - debut + 1, NB_COLONNES_SAISIE).getValues();
     bloc.forEach(function (r, k) {
-      if (r.every(function (v) { return v === "" || v === null; })) feuille.getRange(debut + k, 1).clearContent();
+      if (r.every(function (v) { return v === "" || v === null; })) feuille.getRange(debut + k, COL.DATE).clearContent();
     });
     // 4️⃣ Notes « ⚠️ Ajout forcé » / « ℹ️ Passage » et rouge recalculés pour toute l'offre,
     //    avec les mêmes règles que l'application (la 1re occurrence reste propre).
@@ -1541,17 +1563,17 @@ function onEdit(e) {
 // QU'AFFICHÉES : un N° pris pour une date ou un grand nombre reste lisible).
 function preparerLigneEditee_(feuille, ligne, colEdit, nbCols, valeur, uneCellule) {
   // 1️⃣ HORODATAGE AUTOMATIQUE
-  var celluleDate = feuille.getRange(ligne, 1);
-  if (celluleDate.isBlank() && colEdit + nbCols - 1 > 1) {
-    var rempli = uneCellule ? !!valeur : feuille.getRange(ligne, 2, 1, 5).getValues()[0].some(function (v) { return v !== "" && v !== null; });
-    if (rempli && (colEdit > 1 || !uneCellule)) celluleDate.setValue(new Date());
+  var celluleDate = feuille.getRange(ligne, COL.DATE);
+  if (celluleDate.isBlank() && colEdit + nbCols - 1 > COL.DATE) {
+    var rempli = uneCellule ? !!valeur : feuille.getRange(ligne, COL.NOM, 1, NB_COLONNES_SAISIE).getValues()[0].some(function (v) { return v !== "" && v !== null; });
+    if (rempli && (colEdit > COL.DATE || !uneCellule)) celluleDate.setValue(new Date());
   }
   // 2️⃣ FORMATAGE AUTOMATIQUE (Majuscules, virgules)
-  for (var c = Math.max(colEdit, 2); c <= Math.min(colEdit + nbCols - 1, 5); c++) {
+  for (var c = Math.max(colEdit, COL.NOM); c <= Math.min(colEdit + nbCols - 1, COL.MONTANT); c++) {
     var v = uneCellule ? valeur : feuille.getRange(ligne, c).getValue();
-    if (!uneCellule && c <= 4 && (v instanceof Date || typeof v === 'number')) v = feuille.getRange(ligne, c).getDisplayValue();
+    if (!uneCellule && c <= COL.PIECE && (v instanceof Date || typeof v === 'number')) v = feuille.getRange(ligne, c).getDisplayValue();
     if (v === undefined || v === null || v === "" || v instanceof Date) continue;
-    if (c <= 4) {
+    if (c <= COL.PIECE) {
       // en texte : Sheets a déjà converti la frappe (ex. N° "0123" -> 123), on rétablit la valeur
       feuille.getRange(ligne, c).setValue(texte_(v.toString().toUpperCase().trim()));
     } else if (v.toString().indexOf('.') !== -1 && typeof v === 'string') {
@@ -1566,18 +1588,18 @@ function preparerLigneEditee_(feuille, ligne, colEdit, nbCols, valeur, uneCellul
 // renvoyé (pour l'alerte) ; sinon null. Le marquage est fait ensuite pour toute
 // l'offre par recalculerMarquages_.
 function controlerLigneEditee_(feuille, ligneEdit, plageAnnulee, ancienneValeur, colEdit) {
-  var rowData = feuille.getRange(ligneEdit, 1, 1, 6).getValues()[0];
-  if (!_normId_(rowData[1]) && !_normPiece_(rowData[3])) return null;
-  var det = detecterDoublons_(feuille, rowData[1], rowData[2], rowData[3], ligneEdit);
+  var rowData = feuille.getRange(ligneEdit, 1, 1, NB_COLONNES).getValues()[0];
+  if (!_normId_(rowData[IDX.NOM]) && !_normPiece_(rowData[IDX.PIECE])) return null;
+  var det = detecterDoublons_(feuille, rowData[IDX.NOM], rowData[IDX.PRENOM], rowData[IDX.PIECE], ligneEdit);
   if (det.pireCas !== 'A' && det.pireCas !== 'B') return null;
   if (ancienneValeur !== undefined && ancienneValeur !== null) {
-    plageAnnulee.setValue(colEdit >= 2 && colEdit <= 4 ? texte_(ancienneValeur.toString()) : ancienneValeur);
+    plageAnnulee.setValue(colEdit >= COL.NOM && colEdit <= COL.PIECE ? texte_(ancienneValeur.toString()) : ancienneValeur);
   } else {
     plageAnnulee.clearContent();
   }
   // Ligne redevenue vide (ex. nouvelle ligne refusée) : pas de date orpheline
-  var reste = feuille.getRange(ligneEdit, 2, 1, 5).getValues()[0];
-  if (reste.every(function (v) { return v === "" || v === null; })) feuille.getRange(ligneEdit, 1).clearContent();
+  var reste = feuille.getRange(ligneEdit, COL.NOM, 1, NB_COLONNES_SAISIE).getValues()[0];
+  if (reste.every(function (v) { return v === "" || v === null; })) feuille.getRange(ligneEdit, COL.DATE).clearContent();
   return det.pireCas;
 }
 
@@ -1646,7 +1668,7 @@ function setDatesOperation(dateDebut, dateFin, jeton) {
   var message = enregistrerDates_(dateDebut, dateFin);
   // Offre qui commence plus tard alors que « Saisies » contient encore des lignes :
   // l'ancienne offre n'a pas été clôturée -> elles seraient mélangées avec la nouvelle.
-  var f = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Saisies");
+  var f = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FEUILLE_SAISIES);
   var auj = Utilities.formatDate(new Date(), fuseau_(), "yyyy-MM-dd");
   if (dateDebut > auj && f && f.getLastRow() > 1) {
     message += "\n⚠️ Des saisies sont encore dans la liste : clôturez l'offre précédente avant le " +

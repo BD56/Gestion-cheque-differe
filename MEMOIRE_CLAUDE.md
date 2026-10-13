@@ -8,7 +8,7 @@
 **Refonte du code sur la nouvelle branche `refonte`** (créée depuis `generalisation`,
 validée par Bryan : « go pour la branche refonte »). But : maintenabilité, **aucun
 changement de comportement**. Bryan utilisera **clasp** (copier-coller plus nécessaire).
-Règles : une étape = un commit ; les **26 séries de tests** (`bash tests/lancer.sh`)
+Règles : une étape = un commit ; les **séries de tests** (`npm test`, 27 depuis l'étape 2)
 vertes à chaque étape (les adapter quand les fichiers bougent : `tests/harness.js`
 lit `Code.gs`, `tests/navigateur.js` / `test_rendu.js` lisent `Index.html`) ; faire un
 **point à Bryan à la fin de chaque étape** ; ne pas toucher `generalisation` / `main`.
@@ -39,7 +39,15 @@ Feuille de route validée :
 **Avancement** : ✅ étape 1 (outillage : `npm test`, `npm run lint`, Prettier configuré
 mais Code.gs/tests/HTML exclus jusqu'à l'étape 5, `.claspignore` en **liste blanche**
 — l'ancien aurait envoyé `node_modules` —, `.clasp.json.exemple`, `npx clasp status`
-pour vérifier ; ESLint signale un nom déclaré dans deux `.gs`). Prochaine : étape 2.
+pour vérifier ; ESLint signale un nom déclaré dans deux `.gs`). ✅ étape 2 (en tête de
+Code.gs : `FEUILLE_SAISIES`, `CELLULE_MODE`, `ENTETES_SAISIES`, `COL` (1-based, getRange)
+et `IDX` (0-based, getValues), `NB_COLONNES` 6 / `NB_COLONNES_SAISIE` 5 /
+`NB_COLONNES_LIGNE` 7, `PREFIXE_ARCHIVES`, `FEUILLE_IMPRESSION`, `CELLULE_JOUR_IMPRESSION`,
+`FEUILLE_OFFRE_COMPLETE` ; test `test_constantes.js`). Les réglages fixes (ADMIN_*,
+ACTIVATION_*, TABLETTES_MAX, ANNUAIRE_*, ARCHIVES_RETENTION_ANS…) iront dans
+`00_Constantes.gs` à l'étape 3. Vu en passant, NON corrigé (règle « aucun changement de
+comportement ») : `verifierPiece` renvoie Z1 brut au lieu de `modeSecurite_` (cosmétique :
+« (sera refusé à la validation) » absent si Z1 = « Bloquant » tapé à la main). Prochaine : étape 3.
 Plus tard : fusion `refonte` → `generalisation` (ou `main` après Vannes), seulement
 quand Bryan le demande.
 
@@ -50,7 +58,7 @@ quand Bryan le demande.
 - **Audit complet d'octobre** (4 analyses) puis **lots 1, 2 et 3** faits et poussés
   (voir §2 points 10-11 et AGENTS.md).
 - **Rien n'a encore été testé sur un vrai Google Sheet** : uniquement en simulation
-  (`tests/`, 26 séries, toutes vertes). Prochaines étapes côté Bryan : test sur une
+  (`tests/`, toutes les séries vertes). Prochaines étapes côté Bryan : test sur une
   copie, puis migration de Vannes avec la **liste à cocher de `DEPLOIEMENT.md`**.
 - Discussions closes récemment : licence (« non exclusive, non cessible, révocable…
   dans les conditions convenues par écrit » ; nom de la structure conservé ; mentions

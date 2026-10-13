@@ -4,7 +4,11 @@
 // Fuseau horaire de référence (réglage du projet Apps Script : Europe/Paris par défaut).
 // Un seul fuseau pour les dates d'offre, les noms d'archives, l'impression, le robot.
 function fuseau_() {
-  try { return Session.getScriptTimeZone() || "Europe/Paris"; } catch (e) { return "Europe/Paris"; }
+  try {
+    return Session.getScriptTimeZone() || "Europe/Paris";
+  } catch (e) {
+    return "Europe/Paris";
+  }
 }
 
 // Mode de sécurité de « Saisies »!Z1 (tolère « Bloquant », espaces…).
@@ -15,7 +19,9 @@ function modeSecurite_(feuille) {
 
 // Avant de rendre le verrou : écritures envoyées au tableur (la saisie suivante les lit).
 function libererVerrou_(lock) {
-  try { SpreadsheetApp.flush(); } catch (e) {}
+  try {
+    SpreadsheetApp.flush();
+  } catch (e) {}
   lock.releaseLock();
 }
 
@@ -24,14 +30,15 @@ function doGet(e) {
   // Nouvelle structure : crée « Saisies » si elle n'existe pas encore (rien n'est écrasé)
   if (!SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FEUILLE_SAISIES)) installerFeuilles_();
   var cfg = getConfig();
-  var page = HtmlService.createTemplateFromFile('Index');
+  var page = HtmlService.createTemplateFromFile("Index");
   page.cfg = cfg;
   // Dates de l'offre glissées dans la page : la tablette affiche tout de suite le bon
   // écran (saisie ou « aucune opération »), sans attendre un appel au serveur.
   page.dates = lireDates_();
-  return page.evaluate()
-      .setTitle(cfg.TITRE_APP)
-      .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+  return page
+    .evaluate()
+    .setTitle(cfg.TITRE_APP)
+    .addMetaTag("viewport", "width=device-width, initial-scale=1");
 }
 
 // Morceaux de la page (Style.html, Script*.html), insérés tels quels dans Index.html
@@ -44,13 +51,13 @@ function include_(nom) {
 // (invisible) empêche Google Sheets de la convertir (nombre -> 0 perdu, date,
 // formule « = »). Les valeurs vides ou non textuelles sont écrites telles quelles.
 function texte_(v) {
-  return (typeof v === 'string' && v !== "") ? "'" + v : v;
+  return typeof v === "string" && v !== "" ? "'" + v : v;
 }
 
 // Montant : laissé tel quel (Sheets le lit comme un nombre), sauf s'il pourrait être
 // pris pour une formule (= + - @) -> écrit en texte.
 function montantSur_(m) {
-  return (typeof m === 'string' && /^\s*[=+\-@]/.test(m)) ? "'" + m : m;
+  return typeof m === "string" && /^\s*[=+\-@]/.test(m) ? "'" + m : m;
 }
 
 // Données pré-chargées au démarrage pour la vérif IMMÉDIATE (locale) au blur :
@@ -76,12 +83,17 @@ function cacheVerif_() {
       offre.push({
         pieceNorm: pn,
         ligne: i + 1,
-        date: (donnees[i][IDX.DATE] instanceof Date) ? Utilities.formatDate(donnees[i][IDX.DATE], fuseau_(), "dd/MM/yyyy HH:mm") : (donnees[i][IDX.DATE] ? donnees[i][IDX.DATE].toString() : ""),
+        date:
+          donnees[i][IDX.DATE] instanceof Date
+            ? Utilities.formatDate(donnees[i][IDX.DATE], fuseau_(), "dd/MM/yyyy HH:mm")
+            : donnees[i][IDX.DATE]
+              ? donnees[i][IDX.DATE].toString()
+              : "",
         nom: donnees[i][IDX.NOM] ? donnees[i][IDX.NOM].toString() : "",
         prenom: donnees[i][IDX.PRENOM] ? donnees[i][IDX.PRENOM].toString() : "",
         piece: donnees[i][IDX.PIECE] ? donnees[i][IDX.PIECE].toString() : "",
         montant: donnees[i][IDX.MONTANT] ? donnees[i][IDX.MONTANT].toString() : "",
-        notes: donnees[i][IDX.NOTES] ? donnees[i][IDX.NOTES].toString() : ""
+        notes: donnees[i][IDX.NOTES] ? donnees[i][IDX.NOTES].toString() : "",
       });
     }
   }
@@ -92,13 +104,24 @@ function cacheVerif_() {
     var ad = fa.getDataRange().getValues();
     for (var j = 1; j < ad.length; j++) {
       var p = _normPiece_(ad[j][0]);
-      if (p !== "") annuaire[p] = { nom: ad[j][1] ? ad[j][1].toString() : "", prenom: ad[j][2] ? ad[j][2].toString() : "" };
+      if (p !== "")
+        annuaire[p] = {
+          nom: ad[j][1] ? ad[j][1].toString() : "",
+          prenom: ad[j][2] ? ad[j][2].toString() : "",
+        };
     }
   }
 
   // Réglages joints : un réglage changé sur une autre tablette (passages autorisés,
   // montant obligatoire…) est appliqué ici dès le rechargement suivant.
-  return { mode: mode, offre: offre, annuaire: annuaire, annuaireActif: ANNUAIRE_ACTIF, modeAnnuaire: getModeAnnuaire(), config: getConfig() };
+  return {
+    mode: mode,
+    offre: offre,
+    annuaire: annuaire,
+    annuaireActif: ANNUAIRE_ACTIF,
+    modeAnnuaire: getModeAnnuaire(),
+    config: getConfig(),
+  };
 }
 
 // Démarrage de la tablette : UN seul appel (au lieu de trois) pour le mode, les
@@ -110,7 +133,7 @@ function demarrage(cle) {
     infos: infosPanneau_(),
     dates: lireDates_(),
     config: getConfig(),
-    cache: controlerPeriode_() ? null : cacheVerif_()
+    cache: controlerPeriode_() ? null : cacheVerif_(),
   };
 }
 
@@ -141,8 +164,9 @@ function genererDonneesImpression(type, dateChoisieStr, cle) {
   if (!feuille) return [];
   var tz = ss.getSpreadsheetTimeZone(); // même référence que INT()/TODAY() dans A_IMPRIMER
   var jour = null;
-  if (type === 'jour') {
-    jour = (dateChoisieStr === "aujourdhui") ? Utilities.formatDate(new Date(), tz, "yyyy-MM-dd") : dateChoisieStr;
+  if (type === "jour") {
+    jour =
+      dateChoisieStr === "aujourdhui" ? Utilities.formatDate(new Date(), tz, "yyyy-MM-dd") : dateChoisieStr;
   }
   return tableauImpression_(feuille, jour, tz);
 }

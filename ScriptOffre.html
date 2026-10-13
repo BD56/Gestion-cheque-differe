@@ -3,21 +3,30 @@
   var modeEnCours = false;
   function changerMode() {
     if (modeEnCours) return; // un double appui ne rebascule pas
-    var btn = document.getElementById('btnMode'), avant = btn.innerHTML;
+    var btn = document.getElementById("btnMode"),
+      avant = btn.innerHTML;
     modeEnCours = true;
     btn.innerHTML = "⏳ MAJ...";
-    appelAdmin('basculerModeWebApp', [], function (mode) {
-      modeEnCours = false;
-      majAffichageMode(mode);
-      if (cacheVerif) cacheVerif.mode = mode; // contrôle local A/B/C à jour tout de suite
-    }, function () { modeEnCours = false; btn.innerHTML = avant; });
+    appelAdmin(
+      "basculerModeWebApp",
+      [],
+      function (mode) {
+        modeEnCours = false;
+        majAffichageMode(mode);
+        if (cacheVerif) cacheVerif.mode = mode; // contrôle local A/B/C à jour tout de suite
+      },
+      function () {
+        modeEnCours = false;
+        btn.innerHTML = avant;
+      }
+    );
   }
 
   function majAffichageMode(mode) {
-    var btn = document.getElementById('btnMode'); 
+    var btn = document.getElementById("btnMode");
     btn.innerHTML = "🛡️ MODE : " + mode;
-    document.getElementById('resumeSecurite').textContent = mode;
-    btn.className = (mode === "BLOQUANT") ? "btn-action btn-mode-bloquant" : "btn-action btn-mode-signaler";
+    document.getElementById("resumeSecurite").textContent = mode;
+    btn.className = mode === "BLOQUANT" ? "btn-action btn-mode-bloquant" : "btn-action btn-mode-signaler";
   }
 
   var clotureEnCours = false;
@@ -26,23 +35,31 @@
     if (confirm("🚨 CLÔTURE DE L'OFFRE\n\nÊtes-vous sûr de vouloir archiver et vider la liste ?")) {
       clotureEnCours = true;
       // (on ne ferme le panneau qu'après la réponse : la fermeture reverrouille)
-      document.body.style.cursor = "wait"; 
-      appelAdmin('archiverOffreWebApp', [], function(message) {
+      document.body.style.cursor = "wait";
+      appelAdmin(
+        "archiverOffreWebApp",
+        [],
+        function (message) {
           clotureEnCours = false;
-          document.body.style.cursor = "default"; 
+          document.body.style.cursor = "default";
           fermerPanneau();
-          alert(message); 
+          alert(message);
           chargerDatesAffichage(); // le mode (SIGNALER / BLOQUANT) est conservé
           rechargerCacheVerif();
-        }, function () { clotureEnCours = false; document.body.style.cursor = "default"; });
+        },
+        function () {
+          clotureEnCours = false;
+          document.body.style.cursor = "default";
+        }
+      );
     }
   }
 
-// --- GESTION DE L'AFFICHAGE ET DU VERROUILLAGE ---
+  // --- GESTION DE L'AFFICHAGE ET DU VERROUILLAGE ---
   function formaterDateAffichage(dateString) {
     if (!dateString) return "";
-    var parts = dateString.split('-');
-    return (parts.length === 3) ? parts[2] + "/" + parts[1] : dateString;
+    var parts = dateString.split("-");
+    return parts.length === 3 ? parts[2] + "/" + parts[1] : dateString;
   }
 
   // Période de l'offre connue de la tablette (null tant que non chargée)
@@ -50,30 +67,38 @@
   function dansPeriode() {
     if (!periodeOperation) return true; // pas encore chargée : le serveur tranchera
     if (!periodeOperation.debut || !periodeOperation.fin) return false;
-    var j = new Date(); j.setHours(0,0,0,0);
-    var d = new Date(periodeOperation.debut); d.setHours(0,0,0,0);
-    var f = new Date(periodeOperation.fin); f.setHours(0,0,0,0);
+    var j = new Date();
+    j.setHours(0, 0, 0, 0);
+    var d = new Date(periodeOperation.debut);
+    d.setHours(0, 0, 0, 0);
+    var f = new Date(periodeOperation.fin);
+    f.setHours(0, 0, 0, 0);
     return j >= d && j <= f;
   }
 
   function chargerDatesAffichage() {
-    google.script.run.withSuccessHandler(appliquerDates)
-      .withFailureHandler(siNonAutorisee).getDatesOperation(CLE_TABLETTE);
+    google.script.run
+      .withSuccessHandler(appliquerDates)
+      .withFailureHandler(siNonAutorisee)
+      .getDatesOperation(CLE_TABLETTE);
   }
 
   // Affiche l'état de l'offre et montre/masque le formulaire selon les dates.
   function appliquerDates(dates, sansCache) {
     periodeOperation = dates;
-    var affichage = document.getElementById('sousTitreOperation');
-    var formulaire = document.getElementById('formulaireSaisie');
+    var affichage = document.getElementById("sousTitreOperation");
+    var formulaire = document.getElementById("formulaireSaisie");
     var isVerrouille = true;
-    var dateJour = new Date(); dateJour.setHours(0,0,0,0);
+    var dateJour = new Date();
+    dateJour.setHours(0, 0, 0, 0);
 
     if (dates.debut && dates.fin) {
       var strDebut = formaterDateAffichage(dates.debut);
       var strFin = formaterDateAffichage(dates.fin);
-      var debutObj = new Date(dates.debut); debutObj.setHours(0,0,0,0);
-      var finObj = new Date(dates.fin); finObj.setHours(0,0,0,0);
+      var debutObj = new Date(dates.debut);
+      debutObj.setHours(0, 0, 0, 0);
+      var finObj = new Date(dates.fin);
+      finObj.setHours(0, 0, 0, 0);
 
       if (dateJour >= debutObj && dateJour <= finObj) {
         affichage.innerHTML = "Opération du " + strDebut + " au " + strFin;
@@ -93,14 +118,15 @@
 
     // Verrouillage/Déverrouillage visuel du formulaire (pas par-dessus un encadré de
     // doublon en attente de décision : il réapparaît à ABANDONNER / FORCER)
-    var encadreOuvert = document.getElementById('boxConfirmation').style.display === "block";
+    var encadreOuvert = document.getElementById("boxConfirmation").style.display === "block";
     if (formulaire && !encadreOuvert) {
       formulaire.style.display = isVerrouille ? "none" : "block";
     }
 
     // Mise à jour des cases dans la modale (sauf si le responsable est en train de
     // les modifier : le rafraîchissement automatique n'écrase pas sa saisie)
-    var dD = document.getElementById('modalDateDebut'), dF = document.getElementById('modalDateFin');
+    var dD = document.getElementById("modalDateDebut"),
+      dF = document.getElementById("modalDateFin");
     if (dD && !dD.dataset.modifie && !dF.dataset.modifie) {
       dD.value = dates.debut;
       dF.value = dates.fin;
@@ -112,31 +138,59 @@
   appliquerDates(DATES_INITIALES, true); // tout de suite, sans attendre le serveur
 
   function sauvegarderDatesTablette() {
-    var debut = document.getElementById('modalDateDebut').value;
-    var fin = document.getElementById('modalDateFin').value;
-    var msg = document.getElementById('msgRetourModal');
-    var dateFinObj = new Date(fin); 
-    var dateJour = new Date(); dateJour.setHours(0,0,0,0);
+    var debut = document.getElementById("modalDateDebut").value;
+    var fin = document.getElementById("modalDateFin").value;
+    var msg = document.getElementById("msgRetourModal");
+    var dateFinObj = new Date(fin);
+    var dateJour = new Date();
+    dateJour.setHours(0, 0, 0, 0);
 
-    if ((debut === "") !== (fin === "")) { msg.style.color = "#d93025"; msg.textContent = "Saisissez les deux dates (ou aucune pour arrêter l'opération)."; return; }
-    if (debut !== "" && debut > fin) { msg.style.color = "#d93025"; msg.textContent = "La date de début doit précéder la date de fin."; return; }
+    if ((debut === "") !== (fin === "")) {
+      msg.style.color = "#d93025";
+      msg.textContent = "Saisissez les deux dates (ou aucune pour arrêter l'opération).";
+      return;
+    }
+    if (debut !== "" && debut > fin) {
+      msg.style.color = "#d93025";
+      msg.textContent = "La date de début doit précéder la date de fin.";
+      return;
+    }
     if (fin !== "" && dateFinObj < dateJour) {
-       if (!confirm("⚠️ ATTENTION : La date de fin est déjà passée !\nSi vous validez, l'opération sera clôturée cette nuit.\nVoulez-vous vraiment continuer ?")) return;
+      if (
+        !confirm(
+          "⚠️ ATTENTION : La date de fin est déjà passée !\nSi vous validez, l'opération sera clôturée cette nuit.\nVoulez-vous vraiment continuer ?"
+        )
+      )
+        return;
     }
 
-    msg.style.color = "orange"; 
+    msg.style.color = "orange";
     msg.innerHTML = "Mise à jour en cours...";
 
-    appelAdmin('setDatesOperation', [debut, fin], function(reponse) {
-       delete document.getElementById('modalDateDebut').dataset.modifie;
-       delete document.getElementById('modalDateFin').dataset.modifie;
-       var alerte = (reponse || "").indexOf('⚠️') !== -1;
-       msg.style.color = alerte ? "#b06000" : "green"; 
-       msg.style.whiteSpace = "pre-line";
-       msg.textContent = alerte ? "✅ Dates mises à jour." + reponse.slice(reponse.indexOf('\n')) : "✅ Dates mises à jour !";
-       majResumeOperation(debut, fin);
-       chargerDatesAffichage();
-       setTimeout(function(){ msg.textContent = ""; }, alerte ? 15000 : 3000);
-    }, function () { msg.innerHTML = ""; });
+    appelAdmin(
+      "setDatesOperation",
+      [debut, fin],
+      function (reponse) {
+        delete document.getElementById("modalDateDebut").dataset.modifie;
+        delete document.getElementById("modalDateFin").dataset.modifie;
+        var alerte = (reponse || "").indexOf("⚠️") !== -1;
+        msg.style.color = alerte ? "#b06000" : "green";
+        msg.style.whiteSpace = "pre-line";
+        msg.textContent = alerte
+          ? "✅ Dates mises à jour." + reponse.slice(reponse.indexOf("\n"))
+          : "✅ Dates mises à jour !";
+        majResumeOperation(debut, fin);
+        chargerDatesAffichage();
+        setTimeout(
+          function () {
+            msg.textContent = "";
+          },
+          alerte ? 15000 : 3000
+        );
+      },
+      function () {
+        msg.innerHTML = "";
+      }
+    );
   }
 </script>

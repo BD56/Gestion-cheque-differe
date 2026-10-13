@@ -8,30 +8,37 @@ function verificationClotureNocturne(e) {
   exigerDeclencheurOuEditeur_(e);
   // Passage du robot noté : l'espace responsable signale un robot qui ne tourne plus
   var props = PropertiesService.getDocumentProperties();
-  props.setProperties({ DERNIERE_NUIT: Utilities.formatDate(new Date(), fuseau_(), "dd/MM/yyyy HH:mm"), DERNIERE_NUIT_MS: String(Date.now()) });
+  props.setProperties({
+    DERNIERE_NUIT: Utilities.formatDate(new Date(), fuseau_(), "dd/MM/yyyy HH:mm"),
+    DERNIERE_NUIT_MS: String(Date.now()),
+  });
 
   // Archives de plus de 3 ans : supprimées (n'empêche jamais la clôture)
-  try { purgerArchives_(); } catch (e) { Logger.log("Purge des archives : " + e); }
+  try {
+    purgerArchives_();
+  } catch (e) {
+    Logger.log("Purge des archives : " + e);
+  }
 
   var dates = lireDates_();
-  
+
   // S'il n'y a pas de date de fin enregistrée, le robot se rendort
   if (!dates.fin || dates.fin === "") {
-    return; 
+    return;
   }
-  
+
   // Jour d'aujourd'hui dans le fuseau du projet, comparé au texte « aaaa-mm-jj »
   // (pas de new Date("aaaa-mm-jj"), lu en UTC : décalage hors métropole)
   var aujourdhui = Utilities.formatDate(new Date(), fuseau_(), "yyyy-MM-dd");
-  
+
   // Si la date d'aujourd'hui est STRICTEMENT supérieure à la date de fin
   // Ça veut dire que l'offre s'est terminée hier. On archive !
   if (aujourdhui > dates.fin) {
     // On appelle ta fonction d'archivage existante
-    archiverOffre_(); 
-    
+    archiverOffre_();
+
     // On efface les dates en mémoire pour verrouiller la tablette le matin
-    enregistrerDates_("", ""); 
+    enregistrerDates_("", "");
   }
 }
 
@@ -47,8 +54,8 @@ function getDatesOperation(cle) {
 function lireDates_() {
   var memoire = PropertiesService.getDocumentProperties();
   return {
-    debut: memoire.getProperty('DATE_DEBUT') || '',
-    fin: memoire.getProperty('DATE_FIN') || ''
+    debut: memoire.getProperty("DATE_DEBUT") || "",
+    fin: memoire.getProperty("DATE_FIN") || "",
   };
 }
 
@@ -58,7 +65,10 @@ function setDatesOperation(dateDebut, dateFin, jeton) {
   dateFin = (dateFin || "").toString().trim();
   var iso = /^\d{4}-\d{2}-\d{2}$/;
   if (dateDebut !== "" || dateFin !== "") {
-    if (!iso.test(dateDebut) || !iso.test(dateFin)) throw new Error("Saisissez la date de début ET la date de fin (ou aucune des deux pour arrêter l'opération).");
+    if (!iso.test(dateDebut) || !iso.test(dateFin))
+      throw new Error(
+        "Saisissez la date de début ET la date de fin (ou aucune des deux pour arrêter l'opération)."
+      );
     if (dateDebut > dateFin) throw new Error("La date de début doit précéder la date de fin.");
   }
   var message = enregistrerDates_(dateDebut, dateFin);
@@ -67,16 +77,18 @@ function setDatesOperation(dateDebut, dateFin, jeton) {
   var f = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FEUILLE_SAISIES);
   var auj = Utilities.formatDate(new Date(), fuseau_(), "yyyy-MM-dd");
   if (dateDebut > auj && f && f.getLastRow() > 1) {
-    message += "\n⚠️ Des saisies sont encore dans la liste : clôturez l'offre précédente avant le " +
-      dateDebut.split('-').reverse().join('/') + ", sinon elles seront mélangées avec la nouvelle.";
+    message +=
+      "\n⚠️ Des saisies sont encore dans la liste : clôturez l'offre précédente avant le " +
+      dateDebut.split("-").reverse().join("/") +
+      ", sinon elles seront mélangées avec la nouvelle.";
   }
   return message;
 }
 
 function enregistrerDates_(dateDebut, dateFin) {
   var memoire = PropertiesService.getDocumentProperties();
-  memoire.setProperty('DATE_DEBUT', dateDebut);
-  memoire.setProperty('DATE_FIN', dateFin);
+  memoire.setProperty("DATE_DEBUT", dateDebut);
+  memoire.setProperty("DATE_FIN", dateFin);
 
   return "Dates enregistrées avec succès !";
 }

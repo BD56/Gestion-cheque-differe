@@ -13,12 +13,16 @@
 //       éditeurs du classeur. Il permet aussi de réinitialiser le code.
 // =================================================================
 function empreintePin_(sel, pin) {
-  var octets = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, sel + ":" + pin, Utilities.Charset.UTF_8);
+  var octets = Utilities.computeDigest(
+    Utilities.DigestAlgorithm.SHA_256,
+    sel + ":" + pin,
+    Utilities.Charset.UTF_8
+  );
   return Utilities.base64Encode(octets);
 }
 
 function etatAdmin() {
-  return { pinDefini: !!PropertiesService.getDocumentProperties().getProperty('ADMIN_PIN_HASH') };
+  return { pinDefini: !!PropertiesService.getDocumentProperties().getProperty("ADMIN_PIN_HASH") };
 }
 
 // Le jeton est LIÉ à la tablette qui a saisi le code : il ne sert à rien depuis un
@@ -26,22 +30,26 @@ function etatAdmin() {
 // (« E » = jeton sans tablette : panneau du Sheet ou code d'activation.)
 function creerJetonAdmin_(tablette) {
   var jeton = Utilities.getUuid();
-  CacheService.getScriptCache().put('ADM_' + jeton, tablette ? 'T:' + tablette.id : 'E', ADMIN_SESSION_SEC);
+  CacheService.getScriptCache().put("ADM_" + jeton, tablette ? "T:" + tablette.id : "E", ADMIN_SESSION_SEC);
   return jeton;
 }
 
 function jetonValide_(jeton) {
-  var j = jeton, cle = null;
-  if (jeton && typeof jeton === 'object') { j = jeton.j; cle = jeton.c; }
-  if (!j || typeof j !== 'string') return false;
-  var cache = CacheService.getScriptCache();
-  var lien = cache.get('ADM_' + j);
-  if (!lien) return false;
-  if (lien !== 'E') {
-    var t = tabletteDeCle_(cle);
-    if (!t || lien !== 'T:' + t.id) return false;
+  var j = jeton,
+    cle = null;
+  if (jeton && typeof jeton === "object") {
+    j = jeton.j;
+    cle = jeton.c;
   }
-  cache.put('ADM_' + j, lien, ADMIN_SESSION_SEC); // prolonge (10 min d'inactivité)
+  if (!j || typeof j !== "string") return false;
+  var cache = CacheService.getScriptCache();
+  var lien = cache.get("ADM_" + j);
+  if (!lien) return false;
+  if (lien !== "E") {
+    var t = tabletteDeCle_(cle);
+    if (!t || lien !== "T:" + t.id) return false;
+  }
+  cache.put("ADM_" + j, lien, ADMIN_SESSION_SEC); // prolonge (10 min d'inactivité)
   return true;
 }
 
@@ -54,7 +62,9 @@ function estEditeurDuClasseur_() {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var proprio = ss.getOwner();
     if (proprio && proprio.getEmail() === email) return true;
-    return ss.getEditors().some(function (u) { return u.getEmail() === email; });
+    return ss.getEditors().some(function (u) {
+      return u.getEmail() === email;
+    });
   } catch (e) {
     return false;
   }
@@ -72,9 +82,14 @@ function exigerEditeur_() {
 // Robot de nuit : lancé par SON déclencheur (ou à la main par un éditeur). Un visiteur
 // de l'application ne peut pas le déclencher (identifiant du déclencheur inconnu).
 function exigerDeclencheurOuEditeur_(e) {
-  if (e && e.triggerUid && ScriptApp.getProjectTriggers().some(function (t) {
-    return String(t.getUniqueId()) === String(e.triggerUid);
-  })) return;
+  if (
+    e &&
+    e.triggerUid &&
+    ScriptApp.getProjectTriggers().some(function (t) {
+      return String(t.getUniqueId()) === String(e.triggerUid);
+    })
+  )
+    return;
   exigerEditeur_();
 }
 
@@ -87,41 +102,71 @@ function exigerDeclencheurOuEditeur_(e) {
 //  - après 5 codes faux : blocage 15 min (jamais plus long).
 // À appeler sous verrou. Renvoie { ok:true } ou { ok:false, message }.
 function verifierPin_(props, pin, groupe) {
-  var hash = props.getProperty('ADMIN_PIN_HASH');
+  var hash = props.getProperty("ADMIN_PIN_HASH");
   if (!hash) return { ok: false, message: "Aucun code défini : créez-le d'abord." };
-  var cleEtat = 'PIN_ESSAIS_' + (groupe || 'EDITEUR');
+  var cleEtat = "PIN_ESSAIS_" + (groupe || "EDITEUR");
   var etat = {};
-  try { etat = JSON.parse(props.getProperty(cleEtat) || '{}'); } catch (e) { etat = {}; }
+  try {
+    etat = JSON.parse(props.getProperty(cleEtat) || "{}");
+  } catch (e) {
+    etat = {};
+  }
   var maintenant = Date.now();
   if ((etat.bloque || 0) > maintenant) {
-    return { ok: false, message: "Trop d'essais. Réessayez dans " + Math.ceil((etat.bloque - maintenant) / 60000) + " min." };
+    return {
+      ok: false,
+      message: "Trop d'essais. Réessayez dans " + Math.ceil((etat.bloque - maintenant) / 60000) + " min.",
+    };
   }
   if (maintenant - (etat.dernier || 0) < ADMIN_PAUSE_MS) {
-    return { ok: false, message: "Patientez " + Math.ceil((ADMIN_PAUSE_MS - (maintenant - etat.dernier)) / 1000) + " s avant un nouvel essai." };
+    return {
+      ok: false,
+      message:
+        "Patientez " +
+        Math.ceil((ADMIN_PAUSE_MS - (maintenant - etat.dernier)) / 1000) +
+        " s avant un nouvel essai.",
+    };
   }
-  if (empreintePin_(props.getProperty('ADMIN_PIN_SEL'), (pin || "").toString()) === hash) {
+  if (empreintePin_(props.getProperty("ADMIN_PIN_SEL"), (pin || "").toString()) === hash) {
     props.deleteProperty(cleEtat);
     return { ok: true };
   }
-  if (groupe === 'INCONNU') { // trace visible dans l'espace responsable
+  if (groupe === "INCONNU") {
+    // trace visible dans l'espace responsable
     var inc = {};
-    try { inc = JSON.parse(props.getProperty('PIN_INCONNUS') || '{}'); } catch (e) { inc = {}; }
-    props.setProperty('PIN_INCONNUS', JSON.stringify({ n: (inc.n || 0) + 1, dernier: Utilities.formatDate(new Date(), fuseau_(), "dd/MM/yyyy HH:mm") }));
+    try {
+      inc = JSON.parse(props.getProperty("PIN_INCONNUS") || "{}");
+    } catch (e) {
+      inc = {};
+    }
+    props.setProperty(
+      "PIN_INCONNUS",
+      JSON.stringify({
+        n: (inc.n || 0) + 1,
+        dernier: Utilities.formatDate(new Date(), fuseau_(), "dd/MM/yyyy HH:mm"),
+      })
+    );
   }
   var echecs = (etat.echecs || 0) + 1;
   if (echecs >= ADMIN_ESSAIS_MAX) {
-    props.setProperty(cleEtat, JSON.stringify({ echecs: 0, dernier: maintenant, bloque: maintenant + ADMIN_BLOCAGE_MIN * 60000 }));
+    props.setProperty(
+      cleEtat,
+      JSON.stringify({ echecs: 0, dernier: maintenant, bloque: maintenant + ADMIN_BLOCAGE_MIN * 60000 })
+    );
     return { ok: false, message: "Code faux. Trop d'essais : bloqué " + ADMIN_BLOCAGE_MIN + " min." };
   }
   props.setProperty(cleEtat, JSON.stringify({ echecs: echecs, dernier: maintenant, bloque: 0 }));
-  return { ok: false, message: "Code faux (" + (ADMIN_ESSAIS_MAX - echecs) + " essai(s) restant(s)). Patientez 10 s." };
+  return {
+    ok: false,
+    message: "Code faux (" + (ADMIN_ESSAIS_MAX - echecs) + " essai(s) restant(s)). Patientez 10 s.",
+  };
 }
 
 // Efface les compteurs d'essais (tous, ou ceux d'une tablette).
 function effacerEssais_(props, groupe) {
   var tout = props.getProperties();
   for (var k in tout) {
-    if (groupe ? k === 'PIN_ESSAIS_' + groupe : k.indexOf('PIN_ESSAIS_') === 0) props.deleteProperty(k);
+    if (groupe ? k === "PIN_ESSAIS_" + groupe : k.indexOf("PIN_ESSAIS_") === 0) props.deleteProperty(k);
   }
 }
 
@@ -132,7 +177,7 @@ function ouvrirSessionAdmin(pin, cle) {
   var lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
-    var v = verifierPin_(PropertiesService.getDocumentProperties(), pin, t ? 'T_' + t.id : 'EDITEUR');
+    var v = verifierPin_(PropertiesService.getDocumentProperties(), pin, t ? "T_" + t.id : "EDITEUR");
     return v.ok ? { ok: true, jeton: creerJetonAdmin_(t) } : v;
   } finally {
     lock.releaseLock();
@@ -150,7 +195,11 @@ function ouvrirSessionAdmin(pin, cle) {
 function genererCodeActivation_() {
   var chiffres = "";
   while (chiffres.length < 8) {
-    var octets = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, Utilities.getUuid() + Utilities.getUuid(), Utilities.Charset.UTF_8);
+    var octets = Utilities.computeDigest(
+      Utilities.DigestAlgorithm.SHA_256,
+      Utilities.getUuid() + Utilities.getUuid(),
+      Utilities.Charset.UTF_8
+    );
     for (var i = 0; i < octets.length && chiffres.length < 8; i++) {
       var b = octets[i] & 255;
       if (b < 250) chiffres += String(b % 10); // 250 = 25 × 10 : pas de biais
@@ -161,38 +210,47 @@ function genererCodeActivation_() {
     ACTIVATION_SEL: sel,
     ACTIVATION_HASH: empreintePin_(sel, chiffres),
     ACTIVATION_EXPIRE: String(Date.now() + ACTIVATION_DUREE_H * 3600000),
-    ACTIVATION_ESSAIS: '0'
+    ACTIVATION_ESSAIS: "0",
   });
   return chiffres.slice(0, 4) + "-" + chiffres.slice(4);
 }
 
 function texteActivation_(code) {
-  return "🔑 Code d'activation : " + code + "\n(valable " + ACTIVATION_DUREE_H + " h, une seule fois)\n\n" +
+  return (
+    "🔑 Code d'activation : " +
+    code +
+    "\n(valable " +
+    ACTIVATION_DUREE_H +
+    " h, une seule fois)\n\n" +
     "Sur la tablette, ouvrez l'application : elle demande ce code, puis de choisir le code " +
-    "responsable (6 chiffres). Ne le communiquez qu'au responsable.";
+    "responsable (6 chiffres). Ne le communiquez qu'au responsable."
+  );
 }
 
 function effacerActivation_(props) {
-  ['ACTIVATION_SEL', 'ACTIVATION_HASH', 'ACTIVATION_EXPIRE', 'ACTIVATION_ESSAIS'].forEach(function (k) { props.deleteProperty(k); });
+  ["ACTIVATION_SEL", "ACTIVATION_HASH", "ACTIVATION_EXPIRE", "ACTIVATION_ESSAIS"].forEach(function (k) {
+    props.deleteProperty(k);
+  });
 }
 
 // À appeler sous verrou. Renvoie { ok:true } ou { ok:false, message }.
 function verifierActivation_(props, code) {
   var obtenir = " Obtenez-en un dans le Google Sheets : menu 🚀 APPLICATION → 🔑 Code d'activation.";
-  var hash = props.getProperty('ACTIVATION_HASH');
+  var hash = props.getProperty("ACTIVATION_HASH");
   if (!hash) return { ok: false, message: "Code d'activation requis." + obtenir };
-  if (Date.now() > Number(props.getProperty('ACTIVATION_EXPIRE') || 0)) {
+  if (Date.now() > Number(props.getProperty("ACTIVATION_EXPIRE") || 0)) {
     effacerActivation_(props);
     return { ok: false, message: "Code d'activation expiré." + obtenir };
   }
-  var essais = Number(props.getProperty('ACTIVATION_ESSAIS') || 0);
+  var essais = Number(props.getProperty("ACTIVATION_ESSAIS") || 0);
   if (essais >= ACTIVATION_ESSAIS_MAX) {
     effacerActivation_(props);
     return { ok: false, message: "Trop d'essais : ce code d'activation n'est plus valable." + obtenir };
   }
-  var chiffres = (code || "").toString().replace(/\D/g, '');
-  if (chiffres.length === 8 && empreintePin_(props.getProperty('ACTIVATION_SEL'), chiffres) === hash) return { ok: true };
-  props.setProperty('ACTIVATION_ESSAIS', String(essais + 1));
+  var chiffres = (code || "").toString().replace(/\D/g, "");
+  if (chiffres.length === 8 && empreintePin_(props.getProperty("ACTIVATION_SEL"), chiffres) === hash)
+    return { ok: true };
+  props.setProperty("ACTIVATION_ESSAIS", String(essais + 1));
   return { ok: false, message: "Code d'activation incorrect." };
 }
 
@@ -203,10 +261,11 @@ function definirPin(nouveauPin, jeton, cle, activation) {
   lock.waitLock(10000);
   try {
     var props = PropertiesService.getDocumentProperties();
-    var creation = !props.getProperty('ADMIN_PIN_HASH');
+    var creation = !props.getProperty("ADMIN_PIN_HASH");
     if (!creation) exigerAdmin_(jeton);
     nouveauPin = (nouveauPin || "").toString();
-    if (!ADMIN_PIN_REGEX.test(nouveauPin)) return { ok: false, message: "Le code doit contenir exactement 6 chiffres." };
+    if (!ADMIN_PIN_REGEX.test(nouveauPin))
+      return { ok: false, message: "Le code doit contenir exactement 6 chiffres." };
     if (creation && !estEditeurDuClasseur_()) {
       var a = verifierActivation_(props, activation);
       if (!a.ok) return a;
@@ -215,17 +274,20 @@ function definirPin(nouveauPin, jeton, cle, activation) {
     props.setProperties({ ADMIN_PIN_SEL: sel, ADMIN_PIN_HASH: empreintePin_(sel, nouveauPin) });
     effacerEssais_(props);
     effacerActivation_(props);
-    props.deleteProperty('PIN_INCONNUS'); // nouveau code : l'avertissement est soldé
+    props.deleteProperty("PIN_INCONNUS"); // nouveau code : l'avertissement est soldé
     var garde = !creation && jetonValide_(jeton);
-    return { ok: true, jeton: garde ? (typeof jeton === 'object' ? jeton.j : jeton) : creerJetonAdmin_(tabletteDeCle_(cle)) };
+    return {
+      ok: true,
+      jeton: garde ? (typeof jeton === "object" ? jeton.j : jeton) : creerJetonAdmin_(tabletteDeCle_(cle)),
+    };
   } finally {
     lock.releaseLock();
   }
 }
 
 function fermerSessionAdmin(jeton) {
-  var j = (jeton && typeof jeton === 'object') ? jeton.j : jeton;
-  if (j && typeof j === 'string') CacheService.getScriptCache().remove('ADM_' + j);
+  var j = jeton && typeof jeton === "object" ? jeton.j : jeton;
+  if (j && typeof j === "string") CacheService.getScriptCache().remove("ADM_" + j);
 }
 
 // Secours (panneau du Sheet, éditeurs uniquement) : efface le code et affiche un
@@ -233,7 +295,11 @@ function fermerSessionAdmin(jeton) {
 function reinitialiserPinPanneau() {
   exigerEditeur_();
   var props = PropertiesService.getDocumentProperties();
-  ['ADMIN_PIN_HASH', 'ADMIN_PIN_SEL', 'ADMIN_ECHECS', 'ADMIN_BLOQUE_JUSQUA', 'ADMIN_DERNIER_ECHEC'].forEach(function (k) { props.deleteProperty(k); });
+  ["ADMIN_PIN_HASH", "ADMIN_PIN_SEL", "ADMIN_ECHECS", "ADMIN_BLOQUE_JUSQUA", "ADMIN_DERNIER_ECHEC"].forEach(
+    function (k) {
+      props.deleteProperty(k);
+    }
+  );
   effacerEssais_(props);
   return "✅ Code responsable effacé.\n\n" + texteActivation_(genererCodeActivation_());
 }
@@ -249,17 +315,22 @@ function reinitialiserPinPanneau() {
 //     - Retrait d'une tablette / de toutes : espace responsable, tuile « Tablettes ».
 // =================================================================
 function lireTablettes_() {
-  try { return JSON.parse(PropertiesService.getDocumentProperties().getProperty('TABLETTES') || '[]'); }
-  catch (e) { return []; }
+  try {
+    return JSON.parse(PropertiesService.getDocumentProperties().getProperty("TABLETTES") || "[]");
+  } catch (e) {
+    return [];
+  }
 }
 function ecrireTablettes_(liste) {
-  PropertiesService.getDocumentProperties().setProperty('TABLETTES', JSON.stringify(liste));
+  PropertiesService.getDocumentProperties().setProperty("TABLETTES", JSON.stringify(liste));
 }
 function empreinteCle_(cle) {
-  return Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, "tablette:" + cle, Utilities.Charset.UTF_8));
+  return Utilities.base64Encode(
+    Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, "tablette:" + cle, Utilities.Charset.UTF_8)
+  );
 }
 function tabletteDeCle_(cle) {
-  if (!cle || typeof cle !== 'string' || cle.length < 32) return null;
+  if (!cle || typeof cle !== "string" || cle.length < 32) return null;
   var h = empreinteCle_(cle);
   var liste = lireTablettes_();
   for (var i = 0; i < liste.length; i++) if (liste[i].hash === h) return liste[i];
@@ -274,7 +345,7 @@ function exigerTablette_(cle) {
   if (t) {
     var props = PropertiesService.getDocumentProperties();
     var auj = Utilities.formatDate(new Date(), fuseau_(), "dd/MM/yyyy");
-    if (props.getProperty('TABLETTE_VUE_' + t.id) !== auj) props.setProperty('TABLETTE_VUE_' + t.id, auj);
+    if (props.getProperty("TABLETTE_VUE_" + t.id) !== auj) props.setProperty("TABLETTE_VUE_" + t.id, auj);
     return;
   }
   if (estEditeurDuClasseur_()) return;
@@ -287,14 +358,25 @@ function appairerTablette(pin, nom) {
   lock.waitLock(10000);
   try {
     var props = PropertiesService.getDocumentProperties();
-    var v = verifierPin_(props, pin, 'INCONNU');
+    var v = verifierPin_(props, pin, "INCONNU");
     if (!v.ok) return v;
     var liste = lireTablettes_();
-    if (liste.length >= TABLETTES_MAX) return { ok: false, message: TABLETTES_MAX + " tablettes maximum : retirez-en une depuis l'espace responsable (tuile 🔑), ou toutes depuis le panneau du Google Sheets." };
-    var cle = Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '');
-    var id = Utilities.getUuid().replace(/-/g, '').slice(0, 10);
-    nom = (nom || "").toString().trim().slice(0, 40) || ("Tablette " + (liste.length + 1));
-    liste.push({ id: id, nom: nom, hash: empreinteCle_(cle), creeLe: Utilities.formatDate(new Date(), fuseau_(), "dd/MM/yyyy HH:mm") });
+    if (liste.length >= TABLETTES_MAX)
+      return {
+        ok: false,
+        message:
+          TABLETTES_MAX +
+          " tablettes maximum : retirez-en une depuis l'espace responsable (tuile 🔑), ou toutes depuis le panneau du Google Sheets.",
+      };
+    var cle = Utilities.getUuid().replace(/-/g, "") + Utilities.getUuid().replace(/-/g, "");
+    var id = Utilities.getUuid().replace(/-/g, "").slice(0, 10);
+    nom = (nom || "").toString().trim().slice(0, 40) || "Tablette " + (liste.length + 1);
+    liste.push({
+      id: id,
+      nom: nom,
+      hash: empreinteCle_(cle),
+      creeLe: Utilities.formatDate(new Date(), fuseau_(), "dd/MM/yyyy HH:mm"),
+    });
     ecrireTablettes_(liste);
     return { ok: true, cle: cle, id: id, nom: nom };
   } finally {
@@ -306,7 +388,7 @@ function listerTablettes(jeton) {
   exigerAdmin_(jeton);
   var props = PropertiesService.getDocumentProperties();
   return lireTablettes_().map(function (t) {
-    return { id: t.id, nom: t.nom, creeLe: t.creeLe, vueLe: props.getProperty('TABLETTE_VUE_' + t.id) || "" };
+    return { id: t.id, nom: t.nom, creeLe: t.creeLe, vueLe: props.getProperty("TABLETTE_VUE_" + t.id) || "" };
   });
 }
 
@@ -315,9 +397,13 @@ function retirerTablette(id, jeton) {
   var lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
-    ecrireTablettes_(lireTablettes_().filter(function (t) { return t.id !== id; }));
-    PropertiesService.getDocumentProperties().deleteProperty('TABLETTE_VUE_' + id);
-    PropertiesService.getDocumentProperties().deleteProperty('PIN_ESSAIS_T_' + id);
+    ecrireTablettes_(
+      lireTablettes_().filter(function (t) {
+        return t.id !== id;
+      })
+    );
+    PropertiesService.getDocumentProperties().deleteProperty("TABLETTE_VUE_" + id);
+    PropertiesService.getDocumentProperties().deleteProperty("PIN_ESSAIS_T_" + id);
     return "Tablette retirée.";
   } finally {
     lock.releaseLock();
@@ -330,7 +416,10 @@ function retirerToutesTablettes(jeton) {
   lock.waitLock(10000);
   try {
     var props = PropertiesService.getDocumentProperties();
-    lireTablettes_().forEach(function (t) { props.deleteProperty('TABLETTE_VUE_' + t.id); props.deleteProperty('PIN_ESSAIS_T_' + t.id); });
+    lireTablettes_().forEach(function (t) {
+      props.deleteProperty("TABLETTE_VUE_" + t.id);
+      props.deleteProperty("PIN_ESSAIS_T_" + t.id);
+    });
     ecrireTablettes_([]);
     return "Toutes les tablettes ont été retirées : chacune devra être autorisée à nouveau.";
   } finally {
@@ -346,7 +435,10 @@ function retirerToutesTablettesPanneau() {
   lock.waitLock(10000);
   try {
     var props = PropertiesService.getDocumentProperties();
-    lireTablettes_().forEach(function (t) { props.deleteProperty('TABLETTE_VUE_' + t.id); props.deleteProperty('PIN_ESSAIS_T_' + t.id); });
+    lireTablettes_().forEach(function (t) {
+      props.deleteProperty("TABLETTE_VUE_" + t.id);
+      props.deleteProperty("PIN_ESSAIS_T_" + t.id);
+    });
     ecrireTablettes_([]);
     return "✅ Toutes les tablettes ont été retirées : autorisez à nouveau celles du magasin (avec le code responsable).";
   } finally {
@@ -360,9 +452,17 @@ function getInfosAdmin(jeton) {
   var f = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FEUILLE_SAISIES);
   // Robots de nuit absents (application ouverte avant « Installer »…) : on les recrée.
   var robotsCrees = [];
-  try { robotsCrees = installerDeclencheurs_(); } catch (e) { Logger.log("Robots de nuit : " + e); }
+  try {
+    robotsCrees = installerDeclencheurs_();
+  } catch (e) {
+    Logger.log("Robots de nuit : " + e);
+  }
   var inconnus = {};
-  try { inconnus = JSON.parse(PropertiesService.getDocumentProperties().getProperty('PIN_INCONNUS') || '{}'); } catch (e) { inconnus = {}; }
+  try {
+    inconnus = JSON.parse(PropertiesService.getDocumentProperties().getProperty("PIN_INCONNUS") || "{}");
+  } catch (e) {
+    inconnus = {};
+  }
   return {
     mode: modeSecurite_(f),
     dates: lireDates_(),
@@ -371,6 +471,6 @@ function getInfosAdmin(jeton) {
     config: getConfig(),
     robots: etatRobots_(),
     robotsCrees: robotsCrees.length,
-    essaisInconnus: inconnus
+    essaisInconnus: inconnus,
   };
 }

@@ -4,9 +4,7 @@ package-lock.json
 prototype-ocr/
 docs/
 *.md
-# Pages : les balises de modèle Apps Script (<?= … ?>) ne doivent pas être retouchées.
-*.html
-# Code existant : mis en forme à l'étape 5 de la refonte (modernisation), en un seul
-# commit dédié pour ne pas mélanger mise en forme et changements.
-*.gs
-tests/
+tests/rendu_defaut.html
+# Squelette de la page : les balises de modèle Apps Script (<?= … ?>) ne doivent pas
+# être retouchées.
+Index.html

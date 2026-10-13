@@ -23,7 +23,7 @@ const appsScript = Object.fromEntries(
     "Session",
     "SpreadsheetApp",
     "Utilities",
-  ].map((n) => [n, "readonly"]),
+  ].map((n) => [n, "readonly"])
 );
 
 // Côté serveur, tous les .gs partagent la même portée globale ; côté page, tous les
@@ -36,7 +36,7 @@ function globalesDesAutres(declarations, fichier) {
   return Object.fromEntries(
     Object.entries(declarations)
       .filter(([f]) => f !== fichier)
-      .flatMap(([, noms]) => noms.map((n) => [n, "writable"])),
+      .flatMap(([, noms]) => noms.map((n) => [n, "writable"]))
   );
 }
 const serveur = declarationsServeur(".");
@@ -44,7 +44,7 @@ const page = declarationsPage(".");
 // Variables du <script> d'Index.html (CONFIG, DATES_INITIALES… injectées par le serveur)
 const scriptIndex = fs.readFileSync("Index.html", "utf8").match(/<script>([\s\S]*?)<\/script>/)[1];
 const globalesIndex = Object.fromEntries(
-  nomsDeclares(scriptIndex.replace(/<\?!?=[\s\S]*?\?>/g, "null")).map((n) => [n, "writable"]),
+  nomsDeclares(scriptIndex.replace(/<\?!?=[\s\S]*?\?>/g, "null")).map((n) => [n, "writable"])
 );
 
 const regles = {

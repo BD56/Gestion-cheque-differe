@@ -11,62 +11,84 @@
 
   // Appel d'une fonction serveur protégée (le jeton est ajouté en dernier argument)
   function appelAdmin(nomFonction, args, onOk, onErr) {
-    var runner = google.script.run
-      .withSuccessHandler(onOk)
-      .withFailureHandler(function (err) {
-        var m = (err && err.message) ? err.message : String(err);
-        if (onErr) onErr(err);
-        if (m.indexOf('ADMIN_REQUIS') !== -1) {
-          verrouillerAdmin();
-          afficherZoneVerrou("🔒 Session expirée : ressaisissez le code.");
-        } else {
-          alert("Erreur : " + m);
-        }
-      });
+    var runner = google.script.run.withSuccessHandler(onOk).withFailureHandler(function (err) {
+      var m = err && err.message ? err.message : String(err);
+      if (onErr) onErr(err);
+      if (m.indexOf("ADMIN_REQUIS") !== -1) {
+        verrouillerAdmin();
+        afficherZoneVerrou("🔒 Session expirée : ressaisissez le code.");
+      } else {
+        alert("Erreur : " + m);
+      }
+    });
     // jeton lié à cette tablette : il est envoyé avec sa clé
     runner[nomFonction].apply(runner, args.concat([{ j: jetonAdmin, c: CLE_TABLETTE }]));
   }
 
   function afficherZoneVerrou(message) {
-    document.getElementById('zoneAdmin').style.display = "none";
-    document.getElementById('zoneVerrou').style.display = "block";
-    document.getElementById('msgVerrou').textContent = message || "";
-    document.getElementById('txtVerrou').textContent = "⏳ …";
-    google.script.run.withSuccessHandler(function (etat) {
-      pinDefini = etat.pinDefini;
-      document.getElementById('txtVerrou').textContent = pinDefini
-        ? "Saisissez le code responsable."
-        : "Aucun code n'existe : saisissez le code d'activation affiché dans le Google Sheets (menu 🚀 APPLICATION → 🔑 Code d'activation), puis choisissez le code responsable (6 chiffres).";
-      document.getElementById('pinConfirme').style.display = pinDefini ? "none" : "block";
-      document.getElementById('activationVerrou').style.display = pinDefini ? "none" : "block";
-      document.getElementById('btnDeverrouiller').textContent = pinDefini ? "DÉVERROUILLER" : "CRÉER LE CODE";
-    }).withFailureHandler(function () {
-      document.getElementById('txtVerrou').textContent = "⚠️ Serveur injoignable.";
-    }).etatAdmin();
+    document.getElementById("zoneAdmin").style.display = "none";
+    document.getElementById("zoneVerrou").style.display = "block";
+    document.getElementById("msgVerrou").textContent = message || "";
+    document.getElementById("txtVerrou").textContent = "⏳ …";
+    google.script.run
+      .withSuccessHandler(function (etat) {
+        pinDefini = etat.pinDefini;
+        document.getElementById("txtVerrou").textContent = pinDefini
+          ? "Saisissez le code responsable."
+          : "Aucun code n'existe : saisissez le code d'activation affiché dans le Google Sheets (menu 🚀 APPLICATION → 🔑 Code d'activation), puis choisissez le code responsable (6 chiffres).";
+        document.getElementById("pinConfirme").style.display = pinDefini ? "none" : "block";
+        document.getElementById("activationVerrou").style.display = pinDefini ? "none" : "block";
+        document.getElementById("btnDeverrouiller").textContent = pinDefini
+          ? "DÉVERROUILLER"
+          : "CRÉER LE CODE";
+      })
+      .withFailureHandler(function () {
+        document.getElementById("txtVerrou").textContent = "⚠️ Serveur injoignable.";
+      })
+      .etatAdmin();
   }
 
   function deverrouillerAdmin() {
-    var pin = document.getElementById('pinSaisi').value.trim();
-    var msg = document.getElementById('msgVerrou');
+    var pin = document.getElementById("pinSaisi").value.trim();
+    var msg = document.getElementById("msgVerrou");
     msg.textContent = "";
-    if (!/^\d{6}$/.test(pin)) { msg.textContent = "Le code doit contenir exactement 6 chiffres."; return; }
+    if (!/^\d{6}$/.test(pin)) {
+      msg.textContent = "Le code doit contenir exactement 6 chiffres.";
+      return;
+    }
     var surReponse = function (r) {
-      document.getElementById('pinSaisi').value = "";
-      document.getElementById('pinConfirme').value = "";
-      if (r && r.ok) { jetonAdmin = r.jeton; afficherZoneAdmin(); }
-      else msg.textContent = (r && r.message) || "Refusé.";
+      document.getElementById("pinSaisi").value = "";
+      document.getElementById("pinConfirme").value = "";
+      if (r && r.ok) {
+        jetonAdmin = r.jeton;
+        afficherZoneAdmin();
+      } else msg.textContent = (r && r.message) || "Refusé.";
     };
-    var surErreur = function (err) { if (!siNonAutorisee(err)) msg.textContent = "Erreur : " + (err && err.message ? err.message : err); };
+    var surErreur = function (err) {
+      if (!siNonAutorisee(err)) msg.textContent = "Erreur : " + (err && err.message ? err.message : err);
+    };
     if (!pinDefini) {
-      if (pin !== document.getElementById('pinConfirme').value.trim()) { msg.textContent = "Les deux codes ne correspondent pas."; return; }
-      var activation = document.getElementById('activationVerrou').value.trim();
-      if (activation.replace(/\D/g, '').length !== 8) { msg.textContent = "Saisissez le code d'activation (8 chiffres) affiché dans le Google Sheets."; return; }
-      google.script.run.withSuccessHandler(function (r) {
-        if (r && r.ok) document.getElementById('activationVerrou').value = "";
-        surReponse(r);
-      }).withFailureHandler(surErreur).definirPin(pin, null, CLE_TABLETTE, activation);
+      if (pin !== document.getElementById("pinConfirme").value.trim()) {
+        msg.textContent = "Les deux codes ne correspondent pas.";
+        return;
+      }
+      var activation = document.getElementById("activationVerrou").value.trim();
+      if (activation.replace(/\D/g, "").length !== 8) {
+        msg.textContent = "Saisissez le code d'activation (8 chiffres) affiché dans le Google Sheets.";
+        return;
+      }
+      google.script.run
+        .withSuccessHandler(function (r) {
+          if (r && r.ok) document.getElementById("activationVerrou").value = "";
+          surReponse(r);
+        })
+        .withFailureHandler(surErreur)
+        .definirPin(pin, null, CLE_TABLETTE, activation);
     } else {
-      google.script.run.withSuccessHandler(surReponse).withFailureHandler(surErreur).ouvrirSessionAdmin(pin, CLE_TABLETTE);
+      google.script.run
+        .withSuccessHandler(surReponse)
+        .withFailureHandler(surErreur)
+        .ouvrirSessionAdmin(pin, CLE_TABLETTE);
     }
   }
 
@@ -76,23 +98,23 @@
     saisieEnCours = null;
     // rien d'une session ne survit à la suivante : réglages rechargés, dates relues
     reglagesCharges = false;
-    document.getElementById('champsReglages').innerHTML = "";
-    delete document.getElementById('modalDateDebut').dataset.modifie;
-    delete document.getElementById('modalDateFin').dataset.modifie;
-    allerEcran('accueil');
-    document.getElementById('zoneAdmin').style.display = "none";
-    document.getElementById('zoneVerrou').style.display = "block";
-    if (document.getElementById('modalParametres').style.display === "flex") afficherZoneVerrou();
+    document.getElementById("champsReglages").innerHTML = "";
+    delete document.getElementById("modalDateDebut").dataset.modifie;
+    delete document.getElementById("modalDateFin").dataset.modifie;
+    allerEcran("accueil");
+    document.getElementById("zoneAdmin").style.display = "none";
+    document.getElementById("zoneVerrou").style.display = "block";
+    if (document.getElementById("modalParametres").style.display === "flex") afficherZoneVerrou();
   }
 
   function afficherZoneAdmin() {
-    document.getElementById('zoneVerrou').style.display = "none";
-    document.getElementById('zoneAdmin').style.display = "block";
-    appelAdmin('getInfosAdmin', [], function (infos) {
+    document.getElementById("zoneVerrou").style.display = "none";
+    document.getElementById("zoneAdmin").style.display = "block";
+    appelAdmin("getInfosAdmin", [], function (infos) {
       majAffichageMode(infos.mode);
       if (infos.annuaireActif) majAffichageModeAnnuaire(infos.modeAnnuaire);
-      document.getElementById('modalDateDebut').value = infos.dates.debut;
-      document.getElementById('modalDateFin').value = infos.dates.fin;
+      document.getElementById("modalDateDebut").value = infos.dates.debut;
+      document.getElementById("modalDateFin").value = infos.dates.fin;
       majResumeOperation(infos.dates.debut, infos.dates.fin);
       remplirFormulaireReglages(infos.config);
       afficherAlertesAdmin(infos);
@@ -102,187 +124,270 @@
   // Points d'attention en tête de l'espace responsable : robot de nuit absent ou
   // arrêté, codes faux tapés depuis des appareils non autorisés.
   function afficherAlertesAdmin(infos) {
-    var lignes = [], r = infos.robots || {};
+    var lignes = [],
+      r = infos.robots || {};
     if (!r.cloture || !r.purge) {
-      lignes.push("⚠️ Robot de nuit absent : la clôture automatique et la suppression des données anciennes ne se feront pas. Ouvrez le Google Sheets → menu 🚀 APPLICATION → 🧰 Installer.");
+      lignes.push(
+        "⚠️ Robot de nuit absent : la clôture automatique et la suppression des données anciennes ne se feront pas. Ouvrez le Google Sheets → menu 🚀 APPLICATION → 🧰 Installer."
+      );
     } else if (r.derniereNuitMs && Date.now() - r.derniereNuitMs > 36 * 3600000) {
-      lignes.push("⚠️ Le robot de nuit n'a pas fonctionné depuis le " + r.derniereNuit + ". Ouvrez le Google Sheets → menu 🚀 APPLICATION → 🧰 Installer (et acceptez les autorisations).");
+      lignes.push(
+        "⚠️ Le robot de nuit n'a pas fonctionné depuis le " +
+          r.derniereNuit +
+          ". Ouvrez le Google Sheets → menu 🚀 APPLICATION → 🧰 Installer (et acceptez les autorisations)."
+      );
     }
     var e = infos.essaisInconnus || {};
-    if (e.n) lignes.push("🔐 " + e.n + " code(s) faux tapé(s) depuis des appareils non autorisés (dernier le " + e.dernier + "). Si ce n'était pas vous, changez le code (tuile 🔑).");
-    var z = document.getElementById('alerteAdmin');
+    if (e.n)
+      lignes.push(
+        "🔐 " +
+          e.n +
+          " code(s) faux tapé(s) depuis des appareils non autorisés (dernier le " +
+          e.dernier +
+          "). Si ce n'était pas vous, changez le code (tuile 🔑)."
+      );
+    var z = document.getElementById("alerteAdmin");
     z.textContent = "";
-    lignes.forEach(function (t) { var d = document.createElement('div'); d.textContent = t; d.style.margin = "2px 0"; z.appendChild(d); });
+    lignes.forEach(function (t) {
+      var d = document.createElement("div");
+      d.textContent = t;
+      d.style.margin = "2px 0";
+      z.appendChild(d);
+    });
     z.style.display = lignes.length ? "block" : "none";
   }
 
   // Navigation : accueil (tuiles) <-> sous-écrans de l'espace responsable
   function allerEcran(nom) {
-    var ecrans = document.querySelectorAll('#modalParametres .sous-ecran');
-    for (var i = 0; i < ecrans.length; i++) ecrans[i].classList.toggle('actif', ecrans[i].getAttribute('data-ecran') === nom);
-    document.querySelector('#modalParametres .modal-content').scrollTop = 0;
+    var ecrans = document.querySelectorAll("#modalParametres .sous-ecran");
+    for (var i = 0; i < ecrans.length; i++)
+      ecrans[i].classList.toggle("actif", ecrans[i].getAttribute("data-ecran") === nom);
+    document.querySelector("#modalParametres .modal-content").scrollTop = 0;
   }
   function majResumeOperation(debut, fin) {
-    document.getElementById('resumeOperation').textContent = (debut && fin)
-      ? formaterDateAffichage(debut) + " → " + formaterDateAffichage(fin) : "aucune date";
+    document.getElementById("resumeOperation").textContent =
+      debut && fin ? formaterDateAffichage(debut) + " → " + formaterDateAffichage(fin) : "aucune date";
   }
 
   // --- Correction / suppression d'une saisie ---
   // Le serveur recontrôle A/B/C sur « Saisies » (source de vérité) à chaque correction.
-  var listeSaisies = [], saisieEnCours = null;
+  var listeSaisies = [],
+    saisieEnCours = null;
 
   function ouvrirSaisies() {
-    allerEcran('saisies');
+    allerEcran("saisies");
     afficherVueListe();
     chargerListeSaisies();
   }
   function fermerSaisies() {
     saisieEnCours = null;
-    allerEcran('accueil');
+    allerEcran("accueil");
   }
   function afficherVueListe() {
-    document.getElementById('vueCorrection').style.display = "none";
-    document.getElementById('vueListeSaisies').style.display = "block";
+    document.getElementById("vueCorrection").style.display = "none";
+    document.getElementById("vueListeSaisies").style.display = "block";
   }
   function msgSaisies(texte, couleur) {
-    var m = document.getElementById('msgSaisies');
-    m.textContent = texte || ""; m.style.color = couleur || "#3c4043";
+    var m = document.getElementById("msgSaisies");
+    m.textContent = texte || "";
+    m.style.color = couleur || "#3c4043";
   }
   function chargerListeSaisies(message, couleur) {
     msgSaisies(message || "⏳ Chargement…", couleur);
-    appelAdmin('listerSaisies', [], function (liste) {
+    appelAdmin("listerSaisies", [], function (liste) {
       listeSaisies = liste || [];
-      msgSaisies(message || (listeSaisies.length ? listeSaisies.length + " saisie(s)" : "Aucune saisie sur l'offre en cours."), couleur);
+      msgSaisies(
+        message ||
+          (listeSaisies.length ? listeSaisies.length + " saisie(s)" : "Aucune saisie sur l'offre en cours."),
+        couleur
+      );
       dessinerListeSaisies();
     });
   }
   function dessinerListeSaisies() {
-    var saisi = document.getElementById('rechercheSaisie').value;
-    var filtre = normIdJS(saisi), filtrePiece = normPieceJS(saisi);
-    var zone = document.getElementById('listeSaisies');
+    var saisi = document.getElementById("rechercheSaisie").value;
+    var filtre = normIdJS(saisi),
+      filtrePiece = normPieceJS(saisi);
+    var zone = document.getElementById("listeSaisies");
     zone.innerHTML = "";
     listeSaisies.forEach(function (sa) {
       var botte = normIdJS(sa.nom + sa.prenom + " " + sa.prenom + sa.nom + " " + sa.piece);
       if (filtre && botte.indexOf(filtre) === -1 && botte.indexOf(filtrePiece) === -1) return;
-      var carte = document.createElement('div');
-      carte.className = 'doublon-carte';
+      var carte = document.createElement("div");
+      carte.className = "doublon-carte";
       if (sa.alerte) carte.style.borderLeftColor = "#d93025";
       var lignes = [
         "📅 " + sa.date + " (Ligne " + sa.ligne + ")",
         "👤 " + sa.nom + " " + sa.prenom + (sa.alerte ? "  ⚠️" : ""),
-        "💳 " + sa.piece
+        "💳 " + sa.piece,
       ];
       if (sa.montant) lignes.push("💶 " + sa.montant);
       if (sa.notes) lignes.push("💬 " + sa.notes);
-      lignes.forEach(function (t) { var d = document.createElement('div'); d.textContent = t; carte.appendChild(d); });
-      var actions = document.createElement('div');
-      actions.className = 'flex-btn'; actions.style.marginTop = "8px";
-      var bSup = document.createElement('button');
-      bSup.className = 'btn-cancel'; bSup.style.background = "#d93025"; bSup.textContent = "🗑️ SUPPRIMER";
-      bSup.onclick = function () { supprimerUneSaisie(sa); };
-      var bCor = document.createElement('button');
-      bCor.className = 'btn-force'; bCor.style.background = "#1a73e8"; bCor.textContent = "✏️ CORRIGER";
-      bCor.onclick = function () { corrigerUneSaisie(sa); };
-      actions.appendChild(bSup); actions.appendChild(bCor);
+      lignes.forEach(function (t) {
+        var d = document.createElement("div");
+        d.textContent = t;
+        carte.appendChild(d);
+      });
+      var actions = document.createElement("div");
+      actions.className = "flex-btn";
+      actions.style.marginTop = "8px";
+      var bSup = document.createElement("button");
+      bSup.className = "btn-cancel";
+      bSup.style.background = "#d93025";
+      bSup.textContent = "🗑️ SUPPRIMER";
+      bSup.onclick = function () {
+        supprimerUneSaisie(sa);
+      };
+      var bCor = document.createElement("button");
+      bCor.className = "btn-force";
+      bCor.style.background = "#1a73e8";
+      bCor.textContent = "✏️ CORRIGER";
+      bCor.onclick = function () {
+        corrigerUneSaisie(sa);
+      };
+      actions.appendChild(bSup);
+      actions.appendChild(bCor);
       carte.appendChild(actions);
       zone.appendChild(carte);
     });
   }
-  document.getElementById('rechercheSaisie').addEventListener('input', dessinerListeSaisies);
+  document.getElementById("rechercheSaisie").addEventListener("input", dessinerListeSaisies);
 
-  function attenduDe(sa) { return { nom: sa.nom, prenom: sa.prenom, piece: sa.piece }; }
+  function attenduDe(sa) {
+    return { nom: sa.nom, prenom: sa.prenom, piece: sa.piece };
+  }
 
   function corrigerUneSaisie(sa) {
     saisieEnCours = sa;
-    document.getElementById('corPiece').value = sa.piece;
-    document.getElementById('corNom').value = sa.nom;
-    document.getElementById('corPrenom').value = sa.prenom;
-    document.getElementById('corMontant').value = sa.montant;
-    document.getElementById('corNotes').value = sa.notes;
-    document.getElementById('corLblMontant').textContent = CONFIG.LIBELLE_MONTANT + " (€)" + (MONTANT_OBLIGATOIRE ? " *" : "");
-    document.getElementById('corLblNotes').textContent = CONFIG.LIBELLE_NOTES;
-    document.getElementById('corAlerte').style.display = "none";
-    document.getElementById('vueListeSaisies').style.display = "none";
-    document.getElementById('vueCorrection').style.display = "block";
+    document.getElementById("corPiece").value = sa.piece;
+    document.getElementById("corNom").value = sa.nom;
+    document.getElementById("corPrenom").value = sa.prenom;
+    document.getElementById("corMontant").value = sa.montant;
+    document.getElementById("corNotes").value = sa.notes;
+    document.getElementById("corLblMontant").textContent =
+      CONFIG.LIBELLE_MONTANT + " (€)" + (MONTANT_OBLIGATOIRE ? " *" : "");
+    document.getElementById("corLblNotes").textContent = CONFIG.LIBELLE_NOTES;
+    document.getElementById("corAlerte").style.display = "none";
+    document.getElementById("vueListeSaisies").style.display = "none";
+    document.getElementById("vueCorrection").style.display = "block";
   }
-  function annulerCorrection() { saisieEnCours = null; afficherVueListe(); }
+  function annulerCorrection() {
+    saisieEnCours = null;
+    afficherVueListe();
+  }
   // Champ modifié après une alerte : l'ancienne alerte (et son bouton FORCER) ne
   // vaut plus pour les nouvelles valeurs -> masquée, nouveau contrôle à l'envoi.
-  ['corPiece', 'corNom', 'corPrenom', 'corMontant', 'corNotes'].forEach(function (id) {
-    document.getElementById(id).addEventListener('input', function () {
-      document.getElementById('corAlerte').style.display = "none";
+  ["corPiece", "corNom", "corPrenom", "corMontant", "corNotes"].forEach(function (id) {
+    document.getElementById(id).addEventListener("input", function () {
+      document.getElementById("corAlerte").style.display = "none";
     });
   });
 
   function enregistrerCorrection(forcer) {
     if (!saisieEnCours) return;
-    var montantCor = document.getElementById('corMontant').value.trim();
+    var montantCor = document.getElementById("corMontant").value.trim();
     if (montantCor !== "" && lireMontant(montantCor) === null) {
-      var box0 = document.getElementById('corAlerte');
-      document.getElementById('corAlerteTitre').textContent = "Montant illisible";
-      document.getElementById('corAlerteMsg').textContent = "Saisissez un nombre (ex. 150 ou 150,50).";
-      document.getElementById('corAlerteListe').textContent = "";
-      document.getElementById('btnForcerCorrection').style.display = "none";
-      box0.style.backgroundColor = "#f8d7da"; box0.style.borderColor = "#f5c6cb"; box0.style.display = "block";
+      var box0 = document.getElementById("corAlerte");
+      document.getElementById("corAlerteTitre").textContent = "Montant illisible";
+      document.getElementById("corAlerteMsg").textContent = "Saisissez un nombre (ex. 150 ou 150,50).";
+      document.getElementById("corAlerteListe").textContent = "";
+      document.getElementById("btnForcerCorrection").style.display = "none";
+      box0.style.backgroundColor = "#f8d7da";
+      box0.style.borderColor = "#f5c6cb";
+      box0.style.display = "block";
       return;
     }
     var nouveau = {
-      piece: document.getElementById('corPiece').value,
-      nom: document.getElementById('corNom').value,
-      prenom: document.getElementById('corPrenom').value,
+      piece: document.getElementById("corPiece").value,
+      nom: document.getElementById("corNom").value,
+      prenom: document.getElementById("corPrenom").value,
       montant: montantCor === "" ? "" : formaterMontant(lireMontant(montantCor)),
-      notes: document.getElementById('corNotes').value
+      notes: document.getElementById("corNotes").value,
     };
-    appelAdmin('modifierSaisie', [saisieEnCours.ligne, attenduDe(saisieEnCours), nouveau, !!forcer], function (r) {
-      if (r.status === "SUCCES") {
-        saisieEnCours = null;
-        afficherVueListe();
-        chargerListeSaisies(r.message, r.message.indexOf("✅") === 0 ? "green" : "#d35400");
-        rechargerCacheVerif();
-        return;
+    appelAdmin(
+      "modifierSaisie",
+      [saisieEnCours.ligne, attenduDe(saisieEnCours), nouveau, !!forcer],
+      function (r) {
+        if (r.status === "SUCCES") {
+          saisieEnCours = null;
+          afficherVueListe();
+          chargerListeSaisies(r.message, r.message.indexOf("✅") === 0 ? "green" : "#d35400");
+          rechargerCacheVerif();
+          return;
+        }
+        // Doublon : CONFIRMATION (forçable) ou BLOQUE
+        var box = document.getElementById("corAlerte");
+        var orange = r.couleur === "ORANGE";
+        box.style.backgroundColor = orange ? "#fff3cd" : "#f8d7da";
+        box.style.borderColor = orange ? "#ffeeba" : "#f5c6cb";
+        document.getElementById("corAlerteTitre").textContent = r.titre;
+        document.getElementById("corAlerteMsg").textContent = r.message;
+        var liste = document.getElementById("corAlerteListe");
+        liste.innerHTML = "";
+        (r.details || []).forEach(function (d) {
+          var c = document.createElement("div");
+          c.className = "doublon-carte";
+          c.textContent =
+            "📅 " + d.date + " (Ligne " + d.ligne + ") — " + d.nom + " " + d.prenom + " — 💳 " + d.piece;
+          liste.appendChild(c);
+        });
+        document.getElementById("btnForcerCorrection").style.display =
+          r.status === "CONFIRMATION" ? "block" : "none";
+        box.style.display = "block";
+      },
+      function (err) {
+        // Ligne qui a bougé, champ manquant… : on revient à la liste rechargée
+        var m = err && err.message ? err.message : "";
+        if (m.indexOf("ADMIN_REQUIS") === -1 && m.indexOf("rechargez") !== -1) {
+          saisieEnCours = null;
+          afficherVueListe();
+          chargerListeSaisies();
+        }
       }
-      // Doublon : CONFIRMATION (forçable) ou BLOQUE
-      var box = document.getElementById('corAlerte');
-      var orange = (r.couleur === "ORANGE");
-      box.style.backgroundColor = orange ? "#fff3cd" : "#f8d7da";
-      box.style.borderColor = orange ? "#ffeeba" : "#f5c6cb";
-      document.getElementById('corAlerteTitre').textContent = r.titre;
-      document.getElementById('corAlerteMsg').textContent = r.message;
-      var liste = document.getElementById('corAlerteListe');
-      liste.innerHTML = "";
-      (r.details || []).forEach(function (d) {
-        var c = document.createElement('div');
-        c.className = 'doublon-carte';
-        c.textContent = "📅 " + d.date + " (Ligne " + d.ligne + ") — " + d.nom + " " + d.prenom + " — 💳 " + d.piece;
-        liste.appendChild(c);
-      });
-      document.getElementById('btnForcerCorrection').style.display = (r.status === "CONFIRMATION") ? "block" : "none";
-      box.style.display = "block";
-    }, function (err) {
-      // Ligne qui a bougé, champ manquant… : on revient à la liste rechargée
-      var m = (err && err.message) ? err.message : "";
-      if (m.indexOf('ADMIN_REQUIS') === -1 && m.indexOf('rechargez') !== -1) { saisieEnCours = null; afficherVueListe(); chargerListeSaisies(); }
-    });
+    );
   }
 
   function supprimerUneSaisie(sa) {
-    if (!confirm("🗑️ SUPPRIMER DÉFINITIVEMENT cette saisie ?\n\n" + sa.nom + " " + sa.prenom + " — pièce " + sa.piece + "\n(" + sa.date + ")")) return;
-    appelAdmin('supprimerSaisie', [sa.ligne, attenduDe(sa)], function (message) {
-      chargerListeSaisies(message, "green");
-      rechargerCacheVerif();
-    }, function () { chargerListeSaisies(); });
+    if (
+      !confirm(
+        "🗑️ SUPPRIMER DÉFINITIVEMENT cette saisie ?\n\n" +
+          sa.nom +
+          " " +
+          sa.prenom +
+          " — pièce " +
+          sa.piece +
+          "\n(" +
+          sa.date +
+          ")"
+      )
+    )
+      return;
+    appelAdmin(
+      "supprimerSaisie",
+      [sa.ligne, attenduDe(sa)],
+      function (message) {
+        chargerListeSaisies(message, "green");
+        rechargerCacheVerif();
+      },
+      function () {
+        chargerListeSaisies();
+      }
+    );
   }
 
   // --- Archives (offres clôturées) ---
   function ouvrirArchives() {
-    allerEcran('archives');
-    var sel = document.getElementById('selArchive');
+    allerEcran("archives");
+    var sel = document.getElementById("selArchive");
     sel.innerHTML = "<option value=''>⏳ Chargement…</option>";
-    appelAdmin('listerArchives', [], function (liste) {
+    appelAdmin("listerArchives", [], function (liste) {
       sel.innerHTML = "";
-      if (!liste.length) { sel.innerHTML = "<option value=''>Aucune archive</option>"; return; }
+      if (!liste.length) {
+        sel.innerHTML = "<option value=''>Aucune archive</option>";
+        return;
+      }
       liste.forEach(function (a) {
-        var o = document.createElement('option');
+        var o = document.createElement("option");
         o.value = a.nom;
         o.textContent = a.libelle + " — " + a.lignes + " ligne(s)";
         sel.appendChild(o);
@@ -290,148 +395,223 @@
     });
   }
   function imprimerArchive() {
-    var sel = document.getElementById('selArchive');
+    var sel = document.getElementById("selArchive");
     if (!sel.value) return;
     var libelle = sel.options[sel.selectedIndex].textContent.split(" — ")[0];
     document.body.style.cursor = "wait";
-    appelAdmin('donneesArchive', [sel.value], function (donnees) {
-      document.body.style.cursor = "default";
-      imprimerTableau(donnees, "Archive — " + libelle);
-    }, function () { document.body.style.cursor = "default"; });
+    appelAdmin(
+      "donneesArchive",
+      [sel.value],
+      function (donnees) {
+        document.body.style.cursor = "default";
+        imprimerTableau(donnees, "Archive — " + libelle);
+      },
+      function () {
+        document.body.style.cursor = "default";
+      }
+    );
   }
 
   // --- Réglages de la structure ---
   var CHAMPS_CONFIG = [
-    ['NOM_STRUCTURE', "Nom de la structure, avec l'article (ex. « l'Hypermarché … », « la société … »)"],
-    ['NOM_OFFRE', "Nom de l'offre (sous le titre)"],
-    ['TITRE_APP', "Titre de l'onglet du navigateur"],
-    ['LIBELLE_MONTANT', "Libellé du montant"],
-    ['LIBELLE_NOTES', "Libellé du champ Notes"],
-    ['PRECISION_NOTES', "Précision du champ Notes, entre parenthèses (facultatif)"],
-    ['PASSAGES_MAX', "Passages autorisés par client et par offre (1 à 10)"]
+    ["NOM_STRUCTURE", "Nom de la structure, avec l'article (ex. « l'Hypermarché … », « la société … »)"],
+    ["NOM_OFFRE", "Nom de l'offre (sous le titre)"],
+    ["TITRE_APP", "Titre de l'onglet du navigateur"],
+    ["LIBELLE_MONTANT", "Libellé du montant"],
+    ["LIBELLE_NOTES", "Libellé du champ Notes"],
+    ["PRECISION_NOTES", "Précision du champ Notes, entre parenthèses (facultatif)"],
+    ["PASSAGES_MAX", "Passages autorisés par client et par offre (1 à 10)"],
   ];
   var reglagesCharges = false;
   function remplirFormulaireReglages(cfg) {
     reglagesCharges = true;
-    var zone = document.getElementById('champsReglages');
+    var zone = document.getElementById("champsReglages");
     zone.innerHTML = "";
     CHAMPS_CONFIG.forEach(function (c) {
-      var lab = document.createElement('label');
+      var lab = document.createElement("label");
       lab.style.fontSize = "13px";
       lab.textContent = c[1];
-      var inp = document.createElement('input');
-      inp.type = "text"; inp.id = "cfg_" + c[0]; inp.maxLength = 100; inp.autocomplete = "off";
-      if (c[0] === 'PASSAGES_MAX') { inp.inputMode = "numeric"; inp.maxLength = 2; }
+      var inp = document.createElement("input");
+      inp.type = "text";
+      inp.id = "cfg_" + c[0];
+      inp.maxLength = 100;
+      inp.autocomplete = "off";
+      if (c[0] === "PASSAGES_MAX") {
+        inp.inputMode = "numeric";
+        inp.maxLength = 2;
+      }
       inp.value = cfg[c[0]] || "";
       inp.style.marginBottom = "10px";
-      zone.appendChild(lab); zone.appendChild(inp);
+      zone.appendChild(lab);
+      zone.appendChild(inp);
     });
-    document.getElementById('cfg_MONTANT_OBLIGATOIRE').checked = (cfg.MONTANT_OBLIGATOIRE !== "NON");
+    document.getElementById("cfg_MONTANT_OBLIGATOIRE").checked = cfg.MONTANT_OBLIGATOIRE !== "NON";
   }
   function enregistrerReglages() {
     // Réglages pas (encore) chargés pour cette session : on n'enregistre rien (sinon
     // des valeurs vides ou d'une session précédente écraseraient les vraies)
-    if (!reglagesCharges || !document.getElementById('cfg_NOM_OFFRE')) {
-      var m0 = document.getElementById('msgReglages');
-      m0.style.color = "#d93025"; m0.textContent = "Réglages pas encore chargés : patientez puis réessayez.";
+    if (!reglagesCharges || !document.getElementById("cfg_NOM_OFFRE")) {
+      var m0 = document.getElementById("msgReglages");
+      m0.style.color = "#d93025";
+      m0.textContent = "Réglages pas encore chargés : patientez puis réessayez.";
       return;
     }
     var valeurs = {};
-    CHAMPS_CONFIG.forEach(function (c) { valeurs[c[0]] = document.getElementById("cfg_" + c[0]).value; });
-    valeurs.MONTANT_OBLIGATOIRE = document.getElementById('cfg_MONTANT_OBLIGATOIRE').checked ? "OUI" : "NON";
-    var msg = document.getElementById('msgReglages');
-    msg.style.color = "orange"; msg.textContent = "Enregistrement...";
-    appelAdmin('setConfig', [valeurs], function (cfg) {
-      appliquerConfig(cfg);
-      remplirFormulaireReglages(cfg);
-      msg.style.color = "green";
-      msg.textContent = "✅ Réglages enregistrés (titre de l'onglet : au prochain chargement).";
-    }, function () { msg.textContent = ""; });
+    CHAMPS_CONFIG.forEach(function (c) {
+      valeurs[c[0]] = document.getElementById("cfg_" + c[0]).value;
+    });
+    valeurs.MONTANT_OBLIGATOIRE = document.getElementById("cfg_MONTANT_OBLIGATOIRE").checked ? "OUI" : "NON";
+    var msg = document.getElementById("msgReglages");
+    msg.style.color = "orange";
+    msg.textContent = "Enregistrement...";
+    appelAdmin(
+      "setConfig",
+      [valeurs],
+      function (cfg) {
+        appliquerConfig(cfg);
+        remplirFormulaireReglages(cfg);
+        msg.style.color = "green";
+        msg.textContent = "✅ Réglages enregistrés (titre de l'onglet : au prochain chargement).";
+      },
+      function () {
+        msg.textContent = "";
+      }
+    );
   }
   // Applique les réglages à l'écran sans recharger la page
   function appliquerConfig(cfg) {
     CONFIG = cfg;
-    MONTANT_OBLIGATOIRE = (cfg.MONTANT_OBLIGATOIRE !== "NON");
-    document.getElementById('txtNomOffre').textContent = cfg.NOM_OFFRE;
-    document.getElementById('lblMontant').textContent = cfg.LIBELLE_MONTANT + " (€)" + (MONTANT_OBLIGATOIRE ? " *" : "");
-    document.getElementById('lblNotes').textContent = cfg.LIBELLE_NOTES + (cfg.PRECISION_NOTES ? " (" + cfg.PRECISION_NOTES + ")" : "");
-    document.getElementById('txtNomStructure').textContent = cfg.NOM_STRUCTURE;
+    MONTANT_OBLIGATOIRE = cfg.MONTANT_OBLIGATOIRE !== "NON";
+    document.getElementById("txtNomOffre").textContent = cfg.NOM_OFFRE;
+    document.getElementById("lblMontant").textContent =
+      cfg.LIBELLE_MONTANT + " (€)" + (MONTANT_OBLIGATOIRE ? " *" : "");
+    document.getElementById("lblNotes").textContent =
+      cfg.LIBELLE_NOTES + (cfg.PRECISION_NOTES ? " (" + cfg.PRECISION_NOTES + ")" : "");
+    document.getElementById("txtNomStructure").textContent = cfg.NOM_STRUCTURE;
   }
 
   // --- Tablettes autorisées (liste, retrait) ---
   function ouvrirCodeTablettes() {
-    allerEcran('code');
+    allerEcran("code");
     chargerTablettes();
   }
   function chargerTablettes() {
-    var msg = document.getElementById('msgTablettes');
+    var msg = document.getElementById("msgTablettes");
     msg.textContent = "⏳ Chargement…";
-    appelAdmin('listerTablettes', [], function (liste) {
+    appelAdmin("listerTablettes", [], function (liste) {
       msg.textContent = liste.length + " tablette(s) autorisée(s).";
-      var zone = document.getElementById('listeTablettes');
+      var zone = document.getElementById("listeTablettes");
       zone.textContent = "";
       liste.forEach(function (t) {
-        var carte = document.createElement('div');
-        carte.className = 'doublon-carte';
-        [ "📱 " + t.nom + (t.id === ID_TABLETTE ? "  (cette tablette)" : ""),
-          "Autorisée le " + t.creeLe + (t.vueLe ? " — utilisée le " + t.vueLe : "") ].forEach(function (x) {
-          var d = document.createElement('div'); d.textContent = x; carte.appendChild(d);
+        var carte = document.createElement("div");
+        carte.className = "doublon-carte";
+        [
+          "📱 " + t.nom + (t.id === ID_TABLETTE ? "  (cette tablette)" : ""),
+          "Autorisée le " + t.creeLe + (t.vueLe ? " — utilisée le " + t.vueLe : ""),
+        ].forEach(function (x) {
+          var d = document.createElement("div");
+          d.textContent = x;
+          carte.appendChild(d);
         });
-        var b = document.createElement('button');
-        b.className = 'btn-cancel'; b.style.background = "#d93025"; b.style.marginTop = "8px"; b.textContent = "RETIRER";
-        b.onclick = function () { retirerUneTablette(t); };
+        var b = document.createElement("button");
+        b.className = "btn-cancel";
+        b.style.background = "#d93025";
+        b.style.marginTop = "8px";
+        b.textContent = "RETIRER";
+        b.onclick = function () {
+          retirerUneTablette(t);
+        };
         carte.appendChild(b);
         zone.appendChild(carte);
       });
     });
   }
   function retirerUneTablette(t) {
-    if (!confirm("Retirer l'autorisation de « " + t.nom + " » ?\nElle ne pourra plus utiliser l'application tant qu'un responsable ne l'aura pas autorisée à nouveau.")) return;
-    appelAdmin('retirerTablette', [t.id], function () {
-      if (t.id === ID_TABLETTE) { oublierTablette(); fermerPanneau(); afficherEcranAppairage("Cette tablette n'est plus autorisée."); return; }
+    if (
+      !confirm(
+        "Retirer l'autorisation de « " +
+          t.nom +
+          " » ?\nElle ne pourra plus utiliser l'application tant qu'un responsable ne l'aura pas autorisée à nouveau."
+      )
+    )
+      return;
+    appelAdmin("retirerTablette", [t.id], function () {
+      if (t.id === ID_TABLETTE) {
+        oublierTablette();
+        fermerPanneau();
+        afficherEcranAppairage("Cette tablette n'est plus autorisée.");
+        return;
+      }
       chargerTablettes();
     });
   }
   function retirerToutesLesTablettes() {
-    if (!confirm("⚠️ Retirer TOUTES les tablettes ?\nChacune (y compris celle-ci) devra être autorisée à nouveau avec le code.")) return;
-    appelAdmin('retirerToutesTablettes', [], function (message) {
-      oublierTablette(); fermerPanneau(); afficherEcranAppairage(message);
+    if (
+      !confirm(
+        "⚠️ Retirer TOUTES les tablettes ?\nChacune (y compris celle-ci) devra être autorisée à nouveau avec le code."
+      )
+    )
+      return;
+    appelAdmin("retirerToutesTablettes", [], function (message) {
+      oublierTablette();
+      fermerPanneau();
+      afficherEcranAppairage(message);
     });
   }
 
   function changerPin() {
-    var p1 = document.getElementById('pinNouveau').value.trim();
-    var p2 = document.getElementById('pinNouveau2').value.trim();
-    var msg = document.getElementById('msgPin');
+    var p1 = document.getElementById("pinNouveau").value.trim();
+    var p2 = document.getElementById("pinNouveau2").value.trim();
+    var msg = document.getElementById("msgPin");
     msg.style.color = "#d93025";
-    if (!/^\d{6}$/.test(p1)) { msg.textContent = "Le code doit contenir exactement 6 chiffres."; return; }
-    if (p1 !== p2) { msg.textContent = "Les deux codes ne correspondent pas."; return; }
-    appelAdmin('definirPin', [p1], function (r) {
-      document.getElementById('pinNouveau').value = "";
-      document.getElementById('pinNouveau2').value = "";
-      if (r && r.ok) { jetonAdmin = r.jeton; msg.style.color = "green"; msg.textContent = "✅ Code modifié."; }
-      else msg.textContent = (r && r.message) || "Refusé.";
+    if (!/^\d{6}$/.test(p1)) {
+      msg.textContent = "Le code doit contenir exactement 6 chiffres.";
+      return;
+    }
+    if (p1 !== p2) {
+      msg.textContent = "Les deux codes ne correspondent pas.";
+      return;
+    }
+    appelAdmin("definirPin", [p1], function (r) {
+      document.getElementById("pinNouveau").value = "";
+      document.getElementById("pinNouveau2").value = "";
+      if (r && r.ok) {
+        jetonAdmin = r.jeton;
+        msg.style.color = "green";
+        msg.textContent = "✅ Code modifié.";
+      } else msg.textContent = (r && r.message) || "Refusé.";
     });
   }
 
   // Entrée dans les champs de code = valider
-  ['pinSaisi', 'pinConfirme', 'activationVerrou'].forEach(function (id) {
-    document.getElementById(id).addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') { e.preventDefault(); deverrouillerAdmin(); }
+  ["pinSaisi", "pinConfirme", "activationVerrou"].forEach(function (id) {
+    document.getElementById(id).addEventListener("keydown", function (e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        deverrouillerAdmin();
+      }
     });
   });
-  ['pinApp', 'pinApp2', 'activationApp', 'nomTablette'].forEach(function (id) {
-    document.getElementById(id).addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') { e.preventDefault(); appairerCetteTablette(); }
+  ["pinApp", "pinApp2", "activationApp", "nomTablette"].forEach(function (id) {
+    document.getElementById(id).addEventListener("keydown", function (e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        appairerCetteTablette();
+      }
     });
   });
-  ['pinNouveau', 'pinNouveau2'].forEach(function (id) {
-    document.getElementById(id).addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') { e.preventDefault(); changerPin(); }
+  ["pinNouveau", "pinNouveau2"].forEach(function (id) {
+    document.getElementById(id).addEventListener("keydown", function (e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        changerPin();
+      }
     });
   });
   // Dates en cours de modification : protégées du rafraîchissement automatique
-  ['modalDateDebut', 'modalDateFin'].forEach(function (id) {
-    document.getElementById(id).addEventListener('input', function () { this.dataset.modifie = "1"; });
+  ["modalDateDebut", "modalDateFin"].forEach(function (id) {
+    document.getElementById(id).addEventListener("input", function () {
+      this.dataset.modifie = "1";
+    });
   });
 </script>

@@ -7,22 +7,37 @@
   // ne donne accès à rien).
   // =================================================================
   var STOCKAGE_OK = true;
-  function lireStockage(k) { try { return window.localStorage.getItem(k); } catch (e) { STOCKAGE_OK = false; return null; } }
-  function ecrireStockage(k, v) {
-    try { if (v === null) window.localStorage.removeItem(k); else window.localStorage.setItem(k, v); return true; }
-    catch (e) { STOCKAGE_OK = false; return false; }
+  function lireStockage(k) {
+    try {
+      return window.localStorage.getItem(k);
+    } catch (e) {
+      STOCKAGE_OK = false;
+      return null;
+    }
   }
-  var CLE_TABLETTE = lireStockage('cdTabletteCle');
-  var ID_TABLETTE = lireStockage('cdTabletteId');
+  function ecrireStockage(k, v) {
+    try {
+      if (v === null) window.localStorage.removeItem(k);
+      else window.localStorage.setItem(k, v);
+      return true;
+    } catch (e) {
+      STOCKAGE_OK = false;
+      return false;
+    }
+  }
+  var CLE_TABLETTE = lireStockage("cdTabletteCle");
+  var ID_TABLETTE = lireStockage("cdTabletteId");
 
   function oublierTablette() {
-    CLE_TABLETTE = null; ID_TABLETTE = null;
-    ecrireStockage('cdTabletteCle', null); ecrireStockage('cdTabletteId', null);
+    CLE_TABLETTE = null;
+    ID_TABLETTE = null;
+    ecrireStockage("cdTabletteCle", null);
+    ecrireStockage("cdTabletteId", null);
   }
   // Erreur « tablette non autorisée » (retirée par un responsable, clé perdue…) ?
   function siNonAutorisee(err) {
-    var m = (err && err.message) ? err.message : String(err || "");
-    if (m.indexOf('TABLETTE_NON_AUTORISEE') === -1) return false;
+    var m = err && err.message ? err.message : String(err || "");
+    if (m.indexOf("TABLETTE_NON_AUTORISEE") === -1) return false;
     oublierTablette();
     afficherEcranAppairage("Cette tablette n'est plus autorisée. Un responsable doit l'autoriser à nouveau.");
     return true;
@@ -30,62 +45,99 @@
 
   var pinDefiniAppairage = true;
   function afficherEcranAppairage(message) {
-    document.getElementById('ecranAppairage').style.display = "flex";
-    document.getElementById('msgAppairage').textContent = message || "";
-    document.getElementById('txtAppairage').textContent = "⏳ …";
-    google.script.run.withSuccessHandler(function (etat) {
-      pinDefiniAppairage = etat.pinDefini;
-      document.getElementById('txtAppairage').textContent = pinDefiniAppairage
-        ? "Pour utiliser l'application sur cette tablette, un responsable doit l'autoriser une fois avec son code."
-        : "Aucun code responsable n'existe : saisissez le code d'activation affiché dans le Google Sheets (menu 🚀 APPLICATION → 🔑 Code d'activation), puis choisissez le code responsable (6 chiffres). Il servira à autoriser les tablettes et à ouvrir l'espace responsable.";
-      document.getElementById('lblPinApp').textContent = pinDefiniAppairage ? "Code responsable (6 chiffres)" : "Nouveau code responsable (6 chiffres)";
-      document.getElementById('blocPinApp2').style.display = pinDefiniAppairage ? "none" : "block";
-      document.getElementById('blocActivationApp').style.display = pinDefiniAppairage ? "none" : "block";
-      if (!STOCKAGE_OK) document.getElementById('msgAppairage').textContent =
-        "⚠️ Ce navigateur ne peut pas mémoriser l'autorisation : elle sera redemandée à chaque ouverture.";
-    }).withFailureHandler(function () {
-      document.getElementById('txtAppairage').textContent = "⚠️ Serveur injoignable. Rechargez la page.";
-    }).etatAdmin();
+    document.getElementById("ecranAppairage").style.display = "flex";
+    document.getElementById("msgAppairage").textContent = message || "";
+    document.getElementById("txtAppairage").textContent = "⏳ …";
+    google.script.run
+      .withSuccessHandler(function (etat) {
+        pinDefiniAppairage = etat.pinDefini;
+        document.getElementById("txtAppairage").textContent = pinDefiniAppairage
+          ? "Pour utiliser l'application sur cette tablette, un responsable doit l'autoriser une fois avec son code."
+          : "Aucun code responsable n'existe : saisissez le code d'activation affiché dans le Google Sheets (menu 🚀 APPLICATION → 🔑 Code d'activation), puis choisissez le code responsable (6 chiffres). Il servira à autoriser les tablettes et à ouvrir l'espace responsable.";
+        document.getElementById("lblPinApp").textContent = pinDefiniAppairage
+          ? "Code responsable (6 chiffres)"
+          : "Nouveau code responsable (6 chiffres)";
+        document.getElementById("blocPinApp2").style.display = pinDefiniAppairage ? "none" : "block";
+        document.getElementById("blocActivationApp").style.display = pinDefiniAppairage ? "none" : "block";
+        if (!STOCKAGE_OK)
+          document.getElementById("msgAppairage").textContent =
+            "⚠️ Ce navigateur ne peut pas mémoriser l'autorisation : elle sera redemandée à chaque ouverture.";
+      })
+      .withFailureHandler(function () {
+        document.getElementById("txtAppairage").textContent = "⚠️ Serveur injoignable. Rechargez la page.";
+      })
+      .etatAdmin();
   }
 
   function appairerCetteTablette() {
-    var pin = document.getElementById('pinApp').value.trim();
-    var nom = document.getElementById('nomTablette').value.trim();
-    var msg = document.getElementById('msgAppairage');
+    var pin = document.getElementById("pinApp").value.trim();
+    var nom = document.getElementById("nomTablette").value.trim();
+    var msg = document.getElementById("msgAppairage");
     msg.textContent = "";
-    if (!/^\d{6}$/.test(pin)) { msg.textContent = "Le code doit contenir exactement 6 chiffres."; return; }
-    var btn = document.getElementById('btnAppairer');
-    var fin = function (texte) { btn.disabled = false; if (texte) msg.textContent = texte; };
+    if (!/^\d{6}$/.test(pin)) {
+      msg.textContent = "Le code doit contenir exactement 6 chiffres.";
+      return;
+    }
+    var btn = document.getElementById("btnAppairer");
+    var fin = function (texte) {
+      btn.disabled = false;
+      if (texte) msg.textContent = texte;
+    };
     var autoriser = function () {
-      google.script.run.withSuccessHandler(function (r) {
-        document.getElementById('pinApp').value = ""; document.getElementById('pinApp2').value = "";
-        if (!r || !r.ok) { fin((r && r.message) || "Refusé."); return; }
-        CLE_TABLETTE = r.cle; ID_TABLETTE = r.id;
-        ecrireStockage('cdTabletteCle', r.cle); ecrireStockage('cdTabletteId', r.id);
-        fin();
-        document.getElementById('ecranAppairage').style.display = "none";
-        demarrerApplication();
-      }).withFailureHandler(function (err) { fin("Erreur : " + (err && err.message ? err.message : err)); })
+      google.script.run
+        .withSuccessHandler(function (r) {
+          document.getElementById("pinApp").value = "";
+          document.getElementById("pinApp2").value = "";
+          if (!r || !r.ok) {
+            fin((r && r.message) || "Refusé.");
+            return;
+          }
+          CLE_TABLETTE = r.cle;
+          ID_TABLETTE = r.id;
+          ecrireStockage("cdTabletteCle", r.cle);
+          ecrireStockage("cdTabletteId", r.id);
+          fin();
+          document.getElementById("ecranAppairage").style.display = "none";
+          demarrerApplication();
+        })
+        .withFailureHandler(function (err) {
+          fin("Erreur : " + (err && err.message ? err.message : err));
+        })
         .appairerTablette(pin, nom);
     };
     btn.disabled = true;
-    if (pinDefiniAppairage) { autoriser(); return; }
-    // Aucun code : création (code d'activation exigé), puis autorisation de cette tablette
-    if (pin !== document.getElementById('pinApp2').value.trim()) { fin("Les deux codes ne correspondent pas."); return; }
-    var activation = document.getElementById('activationApp').value.trim();
-    if (activation.replace(/\D/g, '').length !== 8) { fin("Saisissez le code d'activation (8 chiffres) affiché dans le Google Sheets."); return; }
-    google.script.run.withSuccessHandler(function (r) {
-      if (!r || !r.ok) { fin((r && r.message) || "Refusé."); return; }
-      // le code existe désormais : en cas d'échec de l'autorisation, un nouvel essai
-      // ne doit plus chercher à le créer
-      pinDefiniAppairage = true;
-      document.getElementById('activationApp').value = "";
-      document.getElementById('blocActivationApp').style.display = "none";
-      document.getElementById('blocPinApp2').style.display = "none";
+    if (pinDefiniAppairage) {
       autoriser();
-    }).withFailureHandler(function (err) {
-      fin("Erreur : " + ((err && err.message) ? err.message : String(err)));
-    }).definirPin(pin, null, CLE_TABLETTE, activation);
+      return;
+    }
+    // Aucun code : création (code d'activation exigé), puis autorisation de cette tablette
+    if (pin !== document.getElementById("pinApp2").value.trim()) {
+      fin("Les deux codes ne correspondent pas.");
+      return;
+    }
+    var activation = document.getElementById("activationApp").value.trim();
+    if (activation.replace(/\D/g, "").length !== 8) {
+      fin("Saisissez le code d'activation (8 chiffres) affiché dans le Google Sheets.");
+      return;
+    }
+    google.script.run
+      .withSuccessHandler(function (r) {
+        if (!r || !r.ok) {
+          fin((r && r.message) || "Refusé.");
+          return;
+        }
+        // le code existe désormais : en cas d'échec de l'autorisation, un nouvel essai
+        // ne doit plus chercher à le créer
+        pinDefiniAppairage = true;
+        document.getElementById("activationApp").value = "";
+        document.getElementById("blocActivationApp").style.display = "none";
+        document.getElementById("blocPinApp2").style.display = "none";
+        autoriser();
+      })
+      .withFailureHandler(function (err) {
+        fin("Erreur : " + (err && err.message ? err.message : String(err)));
+      })
+      .definirPin(pin, null, CLE_TABLETTE, activation);
   }
 
   // Lance l'application (une fois la tablette autorisée)
@@ -93,60 +145,80 @@
   // dernier seulement si l'offre est en cours).
   function demarrerApplication() {
     var seq = ++seqCache;
-    google.script.run.withSuccessHandler(function(rep) {
-      var infos = rep.infos;
-      if (infos.success) {
-        majAffichageMode(infos.mode);
-        if (infos.annuaireActif) majAffichageModeAnnuaire(infos.modeAnnuaire);
-      } else {
-        document.getElementById('btnMode').innerHTML = "⚠️ ERREUR Serveur";
-      }
-      if (rep.config) appliquerConfig(rep.config);
-      if (rep.cache && seq >= seqCacheApplique) {
-        seqCacheApplique = seq;
-        cacheVerif = rep.cache;
-        cacheRecuA = Date.now();
-        fusionnerEnAttente();
-      }
-      appliquerDates(rep.dates);
-    }).withFailureHandler(function (err) {
-      if (siNonAutorisee(err)) return;
-      // serveur injoignable : on le dit, et on réessaie tout seul
-      document.getElementById('btnMode').innerHTML = "⚠️ Serveur injoignable";
-      afficherMessage("⚠️ Connexion au serveur impossible : nouvel essai dans 20 s (vérifiez le Wi-Fi).", "error");
-      setTimeout(function () { if (CLE_TABLETTE) demarrerApplication(); }, 20000);
-    }).demarrage(CLE_TABLETTE);
+    google.script.run
+      .withSuccessHandler(function (rep) {
+        var infos = rep.infos;
+        if (infos.success) {
+          majAffichageMode(infos.mode);
+          if (infos.annuaireActif) majAffichageModeAnnuaire(infos.modeAnnuaire);
+        } else {
+          document.getElementById("btnMode").innerHTML = "⚠️ ERREUR Serveur";
+        }
+        if (rep.config) appliquerConfig(rep.config);
+        if (rep.cache && seq >= seqCacheApplique) {
+          seqCacheApplique = seq;
+          cacheVerif = rep.cache;
+          cacheRecuA = Date.now();
+          fusionnerEnAttente();
+        }
+        appliquerDates(rep.dates);
+      })
+      .withFailureHandler(function (err) {
+        if (siNonAutorisee(err)) return;
+        // serveur injoignable : on le dit, et on réessaie tout seul
+        document.getElementById("btnMode").innerHTML = "⚠️ Serveur injoignable";
+        afficherMessage(
+          "⚠️ Connexion au serveur impossible : nouvel essai dans 20 s (vérifiez le Wi-Fi).",
+          "error"
+        );
+        setTimeout(function () {
+          if (CLE_TABLETTE) demarrerApplication();
+        }, 20000);
+      })
+      .demarrage(CLE_TABLETTE);
   }
 
-  window.onload = function() {
+  window.onload = function () {
     var auj = new Date();
     var annee = auj.getFullYear();
     var mois = ("0" + (auj.getMonth() + 1)).slice(-2);
     var jour = ("0" + auj.getDate()).slice(-2);
     document.getElementById("dateImpression").value = annee + "-" + mois + "-" + jour;
-    if (CLE_TABLETTE) demarrerApplication(); else afficherEcranAppairage();
+    if (CLE_TABLETTE) demarrerApplication();
+    else afficherEcranAppairage();
   };
 
   // Aide : ouvrir / fermer
-  function ouvrirAide() { allerAide('accueil'); document.getElementById('modalAide').style.display = "flex"; }
+  function ouvrirAide() {
+    allerAide("accueil");
+    document.getElementById("modalAide").style.display = "flex";
+  }
   // Aide : accueil (tuiles) <-> une rubrique par écran
   function allerAide(nom) {
-    var ecrans = document.querySelectorAll('#modalAide .sous-ecran');
-    for (var i = 0; i < ecrans.length; i++) ecrans[i].classList.toggle('actif', ecrans[i].getAttribute('data-aide') === nom);
-    document.querySelector('#modalAide .modal-content').scrollTop = 0;
+    var ecrans = document.querySelectorAll("#modalAide .sous-ecran");
+    for (var i = 0; i < ecrans.length; i++)
+      ecrans[i].classList.toggle("actif", ecrans[i].getAttribute("data-aide") === nom);
+    document.querySelector("#modalAide .modal-content").scrollTop = 0;
   }
-  function fermerAide() { document.getElementById('modalAide').style.display = "none"; }
+  function fermerAide() {
+    document.getElementById("modalAide").style.display = "none";
+  }
 
   function ouvrirPanneau() {
-    document.getElementById('modalParametres').style.display = "flex";
-    allerEcran('accueil');
-    if (jetonAdmin) afficherZoneAdmin(); else afficherZoneVerrou();
+    document.getElementById("modalParametres").style.display = "flex";
+    allerEcran("accueil");
+    if (jetonAdmin) afficherZoneAdmin();
+    else afficherZoneVerrou();
   }
   // Fermer le panneau reverrouille l'espace responsable.
   function fermerPanneau() {
-    document.getElementById('modalParametres').style.display = "none";
+    document.getElementById("modalParametres").style.display = "none";
     verrouillerAdmin();
   }
-  function ouvrirMentions() { document.getElementById('modalMentions').style.display = "flex"; }
-  function fermerMentions() { document.getElementById('modalMentions').style.display = "none"; }
+  function ouvrirMentions() {
+    document.getElementById("modalMentions").style.display = "flex";
+  }
+  function fermerMentions() {
+    document.getElementById("modalMentions").style.display = "none";
+  }
 </script>

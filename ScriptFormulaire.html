@@ -3,32 +3,41 @@
   // Lance la vérification au démarrage de l'application
   // --- FORMATAGE AUTOMATIQUE DU MONTANT ---
   // Montant lisible -> reformaté « 1234,50 € » ; illisible -> laissé tel quel, encadré en rouge
-  ['montant', 'corMontant'].forEach(function (idMontant) {
+  ["montant", "corMontant"].forEach(function (idMontant) {
     var champ = document.getElementById(idMontant);
-    champ.addEventListener('blur', function() {
+    champ.addEventListener("blur", function () {
       var valeur = this.value.trim();
-      if (valeur === "") { this.style.borderColor = ""; return; }
+      if (valeur === "") {
+        this.style.borderColor = "";
+        return;
+      }
       var n = lireMontant(valeur);
-      if (n === null) { this.style.borderColor = "#d93025"; return; }
+      if (n === null) {
+        this.style.borderColor = "#d93025";
+        return;
+      }
       this.style.borderColor = "";
       this.value = formaterMontant(n);
     });
-    champ.addEventListener('input', function () { this.style.borderColor = ""; });
+    champ.addEventListener("input", function () {
+      this.style.borderColor = "";
+    });
   });
 
   // --- ENTRÉE → CHAMP SUIVANT (Nom, Prénom, N° Pièce, Montant ; Notes exclu) ---
   (function () {
-    var ordre = ['piece', 'nom', 'prenom', 'montant'];
+    var ordre = ["piece", "nom", "prenom", "montant"];
     ordre.forEach(function (id, i) {
       var champ = document.getElementById(id);
       if (!champ) return;
-      champ.addEventListener('keydown', function (e) {
-        if (e.key !== 'Enter') return;
+      champ.addEventListener("keydown", function (e) {
+        if (e.key !== "Enter") return;
         e.preventDefault(); // évite toute soumission implicite du formulaire
         // Champ suivant ; après le dernier (Montant), on cible le bouton Valider
-        var suivant = (i + 1 < ordre.length)
-          ? document.getElementById(ordre[i + 1])
-          : document.getElementById('btnValider');
+        var suivant =
+          i + 1 < ordre.length
+            ? document.getElementById(ordre[i + 1])
+            : document.getElementById("btnValider");
         if (suivant) suivant.focus();
       });
     });
@@ -38,12 +47,16 @@
   // Pré-avertissement non bloquant : ce N° est-il déjà sur l'offre en cours ?
   // Cache pré-chargé (offre en cours + annuaire) pour une vérif LOCALE instantanée.
   var cacheVerif = null;
-  var seqCache = 0, seqCacheApplique = 0;
+  var seqCache = 0,
+    seqCacheApplique = 0;
   // Âge maximum de la copie locale pour décider SANS attendre le serveur. Au-delà
   // (réseau en panne : les rechargements échouent), la tablette attend la réponse
   // du serveur avant d'afficher le résultat.
-  var cacheRecuA = 0, AGE_MAX_COPIE_MS = 2 * 60 * 1000;
-  function copieFraiche() { return !!cacheVerif && (Date.now() - cacheRecuA) <= AGE_MAX_COPIE_MS; }
+  var cacheRecuA = 0,
+    AGE_MAX_COPIE_MS = 2 * 60 * 1000;
+  function copieFraiche() {
+    return !!cacheVerif && Date.now() - cacheRecuA <= AGE_MAX_COPIE_MS;
+  }
   function rechargerCacheVerif() {
     var seq = ++seqCache;
     dernierRechargementDemande = Date.now();
@@ -60,19 +73,26 @@
       .chargerCacheVerif(CLE_TABLETTE);
   }
   // Rafraîchir au retour sur la page (réveil tablette, retour d'une autre app)
-  document.addEventListener('visibilitychange', function () {
+  document.addEventListener("visibilitychange", function () {
     if (document.hidden || !CLE_TABLETTE) return;
     if (dansPeriode()) rechargerCacheVerif();
     chargerDatesAffichage(); // la tablette a pu rester ouverte après la fin de l'offre
   });
-  setInterval(function () { if (CLE_TABLETTE) chargerDatesAffichage(); }, 10 * 60 * 1000); // et sans quitter la page
+  setInterval(
+    function () {
+      if (CLE_TABLETTE) chargerDatesAffichage();
+    },
+    10 * 60 * 1000
+  ); // et sans quitter la page
   // Re-synchroniser au DÉBUT de chaque saisie (focus du N°) : l'appel chevauche la
   // frappe du numéro -> cache frais au moment du blur, sans latence perçue.
-  document.getElementById('piece').addEventListener('focus', function () { if (CLE_TABLETTE) rechargerCacheVerif(); });
+  document.getElementById("piece").addEventListener("focus", function () {
+    if (CLE_TABLETTE) rechargerCacheVerif();
+  });
   // Le curseur peut attendre longtemps dans « N° » entre deux clients : on rafraîchit
   // aussi dès la 1re frappe si la copie a plus de 20 s (fraîche à la validation).
   var dernierRechargementDemande = 0;
-  document.getElementById('piece').addEventListener('input', function () {
+  document.getElementById("piece").addEventListener("input", function () {
     if (!CLE_TABLETTE || !dansPeriode()) return;
     var t = Date.now();
     if (t - cacheRecuA > 20000 && t - dernierRechargementDemande > 5000) rechargerCacheVerif();
@@ -83,39 +103,67 @@
   var SEPARATEURS_NOM_JS = /[\s\-\u2010-\u2015\u2212'’‘ʼ`´′.,_\/\u200B-\u200D\uFEFF]/g;
   function normIdJS(p) {
     if (p === null || p === undefined) return "";
-    return p.toString().toUpperCase().replace(/Œ/g, 'OE').replace(/Æ/g, 'AE').replace(/Ø/g, 'O').replace(/Ł/g, 'L').replace(/Đ/g, 'D')
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(SEPARATEURS_NOM_JS, '');
+    return p
+      .toString()
+      .toUpperCase()
+      .replace(/Œ/g, "OE")
+      .replace(/Æ/g, "AE")
+      .replace(/Ø/g, "O")
+      .replace(/Ł/g, "L")
+      .replace(/Đ/g, "D")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(SEPARATEURS_NOM_JS, "");
   }
   // Comparaison des N° de pièce (miroir de Code.gs::_normPiece_) : majuscules, lettres
   // et chiffres seulement ; N° entièrement numérique sans ses 0 initiaux (Sheets a pu
   // stocker "0123" en 123).
   function normPieceJS(p) {
     if (p === null || p === undefined) return "";
-    var n = p.toString().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Z0-9]/g, '');
-    return /^\d+$/.test(n) ? n.replace(/^0+(?=\d)/, '') : n;
+    var n = p
+      .toString()
+      .toUpperCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^A-Z0-9]/g, "");
+    return /^\d+$/.test(n) ? n.replace(/^0+(?=\d)/, "") : n;
   }
   // #16 : toute donnée (nom, notes…) insérée dans du HTML passe par echapper()
   function echapper(v) {
-    return (v === null || v === undefined ? "" : v).toString()
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    return (v === null || v === undefined ? "" : v)
+      .toString()
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
   }
 
-  document.getElementById('piece').addEventListener('blur', function () {
+  document.getElementById("piece").addEventListener("blur", function () {
     var val = this.value.trim();
     if (val === "") return; // champ vide -> rien
     if (!copieFraiche()) {
       // copie absente ou trop ancienne -> repli serveur (rare)
-      google.script.run.withSuccessHandler(afficherVerifPiece).withFailureHandler(siNonAutorisee).verifierPiece(val, CLE_TABLETTE);
+      google.script.run
+        .withSuccessHandler(afficherVerifPiece)
+        .withFailureHandler(siNonAutorisee)
+        .verifierPiece(val, CLE_TABLETTE);
       return;
     }
     // Vérif 100% locale (instantanée)
     var pn = normPieceJS(val);
     if (pn === "") return;
-    var matches = cacheVerif.offre.filter(function (d) { return d.pieceNorm === pn; });
+    var matches = cacheVerif.offre.filter(function (d) {
+      return d.pieceNorm === pn;
+    });
     if (matches.length) {
       afficherVerifPiece({ trouve: true, mode: cacheVerif.mode, matches: matches });
     } else if (cacheVerif.annuaireActif && cacheVerif.annuaire[pn]) {
-      afficherVerifPiece({ trouve: false, annuaire: cacheVerif.annuaire[pn], modeAnnuaire: cacheVerif.modeAnnuaire });
+      afficherVerifPiece({
+        trouve: false,
+        annuaire: cacheVerif.annuaire[pn],
+        modeAnnuaire: cacheVerif.modeAnnuaire,
+      });
     }
   });
 
@@ -123,19 +171,29 @@
     if (!res) return;
     if (res.trouve) {
       // Niveau 2 : doublon sur l'offre en cours -> modale d'avertissement (prioritaire)
-      var max = passagesMaxJS(), nb = (res.matches || []).length;
+      var max = passagesMaxJS(),
+        nb = (res.matches || []).length;
       var msg;
       if (max === 1) {
         msg = "Ce numéro est déjà enregistré sur cette offre.";
         if (res.mode === "BLOQUANT") msg += " (sera refusé à la validation)";
       } else if (nb < max) {
-        msg = "Ce numéro est déjà enregistré " + nb + " fois sur cette offre. Jusqu'à " + max +
-              " passages par client sont autorisés : vérifiez le nom sur la pièce.";
+        msg =
+          "Ce numéro est déjà enregistré " +
+          nb +
+          " fois sur cette offre. Jusqu'à " +
+          max +
+          " passages par client sont autorisés : vérifiez le nom sur la pièce.";
       } else {
-        msg = "Ce numéro est déjà enregistré " + nb + " fois sur cette offre : limite de " + max + " passages atteinte" +
-              (res.mode === "BLOQUANT" ? " (sera refusé à la validation)." : ".");
+        msg =
+          "Ce numéro est déjà enregistré " +
+          nb +
+          " fois sur cette offre : limite de " +
+          max +
+          " passages atteinte" +
+          (res.mode === "BLOQUANT" ? " (sera refusé à la validation)." : ".");
       }
-      document.getElementById('msgDoublonPiece').innerHTML = msg;
+      document.getElementById("msgDoublonPiece").innerHTML = msg;
       var html = "";
       (res.matches || []).forEach(function (d) {
         html += "<div class='doublon-carte'>";
@@ -144,8 +202,8 @@
         if (d.montant !== "") html += "<br>💶 " + echapper(formaterMontantAffiche(d.montant));
         html += "</div>";
       });
-      document.getElementById('listeDoublonPiece').innerHTML = html;
-      document.getElementById('modalDoublonPiece').style.display = "flex";
+      document.getElementById("listeDoublonPiece").innerHTML = html;
+      document.getElementById("modalDoublonPiece").style.display = "flex";
       // Pas de pré-remplissage ici : l'hôtesse doit recopier le nom LU sur la pièce
       // présentée. Pré-remplir avec le nom déjà enregistré transformait une usurpation
       // (même pièce, autre personne = cas B) en « vrai doublon » A si elle ne corrigeait pas.
@@ -153,75 +211,95 @@
     }
     // Niveau 3 (annuaire) : pièce connue d'une offre passée, pas sur l'offre en cours
     if (res.annuaire) {
-      if (res.modeAnnuaire === 'B') proposerAnnuaire(res.annuaire);
+      if (res.modeAnnuaire === "B") proposerAnnuaire(res.annuaire);
       else remplirAnnuaire(res.annuaire); // 'C' = pré-remplissage doux (défaut)
     }
   }
 
   function fermerDoublonPiece() {
-    document.getElementById('modalDoublonPiece').style.display = "none";
-    document.getElementById('nom').focus(); // on continue la saisie
+    document.getElementById("modalDoublonPiece").style.display = "none";
+    document.getElementById("nom").focus(); // on continue la saisie
   }
 
   // --- NIVEAU 3 : auto-complétion depuis l'annuaire inter-offres ---
   // Option C : pré-remplissage doux (remplit si vide + indice discret).
   function remplirAnnuaire(a) {
-    var n = document.getElementById('nom'), p = document.getElementById('prenom');
-    [[n, a.nom], [p, a.prenom]].forEach(function (x) {
+    var n = document.getElementById("nom"),
+      p = document.getElementById("prenom");
+    [
+      [n, a.nom],
+      [p, a.prenom],
+    ].forEach(function (x) {
       if (x[0].value.trim() !== "" || !x[1]) return;
       x[0].value = x[1];
       x[0].dataset.prerempli = "1"; // taper dans le champ REMPLACE le texte proposé
       if (document.activeElement === x[0]) x[0].select();
     });
-    var ind = document.getElementById('indiceAnnuaire');
+    var ind = document.getElementById("indiceAnnuaire");
     if (ind) ind.style.display = "block";
   }
   // Champ pré-rempli : sélectionné à l'arrivée, la frappe remplace (et ne s'ajoute pas :
   // sinon « DUPONT » + « DUPONT » tapé = « DUPONTDUPONT »).
-  ['nom', 'prenom'].forEach(function (id) {
+  ["nom", "prenom"].forEach(function (id) {
     var champ = document.getElementById(id);
-    champ.addEventListener('focus', function () {
+    champ.addEventListener("focus", function () {
       if (!champ.dataset.prerempli) return;
       champ.select(); // tout de suite (frappe rapide) et après le toucher (sinon désélectionné)
-      setTimeout(function () { if (document.activeElement === champ && champ.dataset.prerempli) champ.select(); }, 0);
+      setTimeout(function () {
+        if (document.activeElement === champ && champ.dataset.prerempli) champ.select();
+      }, 0);
     });
-    champ.addEventListener('input', function () { delete champ.dataset.prerempli; });
+    champ.addEventListener("input", function () {
+      delete champ.dataset.prerempli;
+    });
   });
   // Option B : modale qui demande la confirmation.
   function proposerAnnuaire(a) {
-    var m = document.getElementById('modalAnnuaire');
+    var m = document.getElementById("modalAnnuaire");
     m.dataset.nom = a.nom || "";
     m.dataset.prenom = a.prenom || "";
-    document.getElementById('msgAnnuaire').innerHTML =
-      "Client connu d'une offre précédente : <b>" + echapper(a.nom) + " " + echapper(a.prenom) +
+    document.getElementById("msgAnnuaire").innerHTML =
+      "Client connu d'une offre précédente : <b>" +
+      echapper(a.nom) +
+      " " +
+      echapper(a.prenom) +
       "</b>.<br>Pré-remplir le Nom et le Prénom ?";
     m.style.display = "flex";
   }
   function utiliserAnnuaire() {
-    var m = document.getElementById('modalAnnuaire');
+    var m = document.getElementById("modalAnnuaire");
     remplirAnnuaire({ nom: m.dataset.nom, prenom: m.dataset.prenom });
     m.style.display = "none";
   }
   function ignorerAnnuaire() {
-    document.getElementById('modalAnnuaire').style.display = "none";
+    document.getElementById("modalAnnuaire").style.display = "none";
   }
 
   // Réglage B/C dans le Panneau (visible seulement si l'annuaire est actif)
   function majAffichageModeAnnuaire(mode) {
-    var btn = document.getElementById('btnModeAnnuaire');
+    var btn = document.getElementById("btnModeAnnuaire");
     btn.style.display = "block";
-    btn.innerHTML = "🪪 Auto-complétion : " + (mode === 'B' ? "Demander (modale)" : "Auto (doux)");
+    btn.innerHTML = "🪪 Auto-complétion : " + (mode === "B" ? "Demander (modale)" : "Auto (doux)");
   }
   var modeAnnuaireEnCours = false;
   function changerModeAnnuaire() {
     if (modeAnnuaireEnCours) return;
-    var btn = document.getElementById('btnModeAnnuaire'), avant = btn.innerHTML;
+    var btn = document.getElementById("btnModeAnnuaire"),
+      avant = btn.innerHTML;
     modeAnnuaireEnCours = true;
     btn.innerHTML = "⏳ MAJ...";
-    appelAdmin('basculerModeAnnuaire', [], function (mode) {
-      modeAnnuaireEnCours = false;
-      majAffichageModeAnnuaire(mode);
-      if (cacheVerif) cacheVerif.modeAnnuaire = mode;
-    }, function () { modeAnnuaireEnCours = false; btn.innerHTML = avant; });
+    appelAdmin(
+      "basculerModeAnnuaire",
+      [],
+      function (mode) {
+        modeAnnuaireEnCours = false;
+        majAffichageModeAnnuaire(mode);
+        if (cacheVerif) cacheVerif.modeAnnuaire = mode;
+      },
+      function () {
+        modeAnnuaireEnCours = false;
+        btn.innerHTML = avant;
+      }
+    );
   }
 </script>

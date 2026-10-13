@@ -137,7 +137,7 @@ function demarrage(cle) {
   };
 }
 
-// --- FONCTIONS SECONDAIRES ---
+// --- PANNEAU ET IMPRESSION ---
 function getInfosPanneau(cle) {
   exigerTablette_(cle);
   return infosPanneau_();

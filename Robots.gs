@@ -43,7 +43,7 @@ function verificationClotureNocturne(e) {
 }
 
 // =================================================================
-// --- GESTION DES DATES DE L'OPÉRATION (MÉMOIRE SECRÈTE) ---
+// --- DATES DE L'OFFRE (propriétés du document) ---
 // =================================================================
 
 function getDatesOperation(cle) {

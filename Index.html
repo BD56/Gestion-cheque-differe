@@ -5,7 +5,7 @@
     <?!= include_('Style') ?>
   </head>
   <body>
-    
+
     <div class="container">
       <div class="header-app">
         <h2>📝 Saisie Client</h2>
@@ -18,7 +18,7 @@
       <div class="subtitle" id="txtNomOffre"><?= cfg.NOM_OFFRE ?></div>
 
       <div class="sous-titre-operation" id="sousTitreOperation">⏳ Chargement des dates...</div>
-      
+
       <div id="formulaireSaisie" style="display: none"><!-- affiché seulement si l'offre est en cours (appliquerDates) -->
         <input type="file" id="ocrFile" accept="image/*" capture="environment" style="display: none">
         <div class="statut-ocr" id="ocrStatus"></div>
@@ -50,7 +50,7 @@
         <div class="doublon-titre" id="titreDoublon"></div>
         <div class="message-alerte" id="messageAlerte"></div>
         <div id="listeDoublons"></div>
-        
+
         <div id="actionSignaler">
           <div class="flex-btn">
             <button class="btn-cancel" data-action="annulerSaisie">ABANDONNER</button>
@@ -61,7 +61,7 @@
           <button class="btn-retour-bloquant" data-action="annulerSaisie">RETOUR À LA SAISIE</button>
         </div>
       </div>
-      
+
       <div id="statusMessage"></div>
       <div style="display: none" class="envoi-en-cours" id="envoiEnCours"></div>
     </div>
@@ -214,7 +214,7 @@
         <!-- ===== ACCUEIL : impression (libre) + espace responsable ===== -->
         <div class="sous-ecran actif" data-ecran="accueil">
         <button class="btn-action btn-print-jour" data-action="preparerImpression" data-args='["jour","aujourdhui","Impression du Jour"]'>🖨️ IMPRIMER AUJOURD'HUI</button>
-        
+
         <div class="encadre-gris">
           <label class="label-discret">📅 Imprimer un jour précédent :</label>
           <div class="print-row">
@@ -224,7 +224,7 @@
         </div>
 
         <button class="btn-action btn-print-offre" data-action="preparerImpression" data-args='["offre","","Impression Offre Complète"]'>📚 TOUTE L'OFFRE</button>
-        
+
         <hr class="separateur-large">
 
         <!-- Espace responsable (code PIN vérifié côté serveur) -->
@@ -347,17 +347,17 @@
         <button class="btn-close-modal" data-action="fermerMentions">✖</button>
         <h2 class="titre-modal">⚖️ Mentions légales</h2>
         <hr class="separateur">
-        
+
         <div class="texte-mentions">
           <p>© 2026 DESJARDINS Bryan – Tous droits réservés.<br>
           Cette application, son code et sa conception demeurent la propriété exclusive de l'auteur, qui en conserve l'intégralité des droits. L'auteur concède à <span id="txtNomStructure"><?= cfg.NOM_STRUCTURE ?></span> une simple licence d'utilisation non exclusive, non cessible et révocable à tout moment, dans les conditions convenues par écrit avec l'auteur, sans transfert d'aucun droit de propriété. L'auteur reste libre de faire évoluer, suspendre ou retirer cette autorisation quand il le souhaite, ainsi que d'exploiter, céder ou proposer l'outil à toute autre structure de son choix. Toute reproduction, copie, modification ou déploiement de cet outil par un tiers, sans l'accord écrit préalable de l'auteur, est strictement interdit. Les données saisies restent la propriété de l'établissement, qui les conserve en cas de retrait de l'autorisation.</p>
-          
+
           <p>Confidentialité et Données : Cet outil a été pensé et conçu pour un usage strictement interne, dédié à la prévention des fraudes. Les données saisies (identités, N° de pièces, montants, notes) sont enregistrées dans le classeur Google Sheets de l'établissement (services Google), à des fins de traçabilité de l'offre. Elles ne sont accessibles que depuis les tablettes autorisées par un responsable et par les personnes ayant accès à ce classeur, et ne sont en aucun cas prévues pour être cédées ou transmises à des tiers. Les saisies de chaque offre sont archivées à sa clôture, puis supprimées automatiquement 3 ans après.</p>
 
           <p>Historique inter-offres : afin d'accélérer la saisie des clients déjà venus, le nom et le prénom associés à un numéro de pièce peuvent être conservés d'une offre à l'autre et proposés automatiquement lors d'une nouvelle présentation de la pièce. Ces informations sont supprimées après 3 ans sans nouvelle présentation.</p>
 
           <p id="mentionOCR" style="display: none">Lecture assistée des pièces (OCR) : lorsqu'une pièce est scannée, la photographie est analysée localement, dans le navigateur de la tablette, uniquement pour lire la zone de lecture automatique (MRZ). L'image n'est ni enregistrée ni transmise à aucun serveur ; seules les informations reportées dans le formulaire, après vérification par l'hôtesse, sont conservées.</p>
-          
+
           <p>Tablettes et code responsable : pour reconnaître une tablette autorisée, l'application enregistre dans son navigateur une clé technique d'autorisation, sans autre usage. L'application n'utilise elle-même aucun cookie publicitaire ni outil de mesure d'audience. Le code responsable n'est jamais conservé en clair.</p>
 
           <p>Responsabilité : L'auteur fournit uniquement l'outil logiciel. L'établissement utilisateur est le responsable du traitement des données collectées : utilisation conforme de l'outil, information des clients, durée de conservation et accès aux données (respect du RGPD) lui incombent exclusivement. L'auteur décline toute responsabilité en cas d'usage abusif, détourné ou négligent de ces informations par l'établissement.</p>

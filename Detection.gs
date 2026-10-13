@@ -34,8 +34,8 @@ const ALERTE_FORCE_REGEX = /(?:\n|\|)?\s*⚠️ Ajout forcé \(Cas [ABC]\)/g;
 // (HÉLÈNE = HELENE), lettres spéciales dépliées (Œ -> OE, Ø -> O, Ł -> L), sans
 // espaces, tirets, apostrophes (toutes formes), points, virgules, « / », « _ » ni
 // caractères invisibles (D'ARC = D’ARC = DARC). Sinon un homonyme (cas C) passait
-// inaperçu. ⚠️ Miroir : Index.html::normIdJS.
-const SEPARATEURS_NOM_REGEX = /[\s\-\u2010-\u2015\u2212'’‘ʼ`´′.,_\/\u200B-\u200D\uFEFF]/g;
+// inaperçu. ⚠️ Miroir : ScriptFormulaire.html::normIdJS.
+const SEPARATEURS_NOM_REGEX = /[\s\-\u2010-\u2015\u2212'’‘ʼ`´′.,_/\u200B-\u200D\uFEFF]/g;
 function _normId_(v) {
   if (v === null || v === undefined || v === "") return "";
   return v

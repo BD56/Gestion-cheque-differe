@@ -1,6 +1,5 @@
 <!-- Formulaire : montant, touche Entrée, vérification du N°, copie locale, annuaire. -->
 <script>
-  // Lance la vérification au démarrage de l'application
   // --- FORMATAGE AUTOMATIQUE DU MONTANT ---
   // Montant lisible -> reformaté « 1234,50 € » ; illisible -> laissé tel quel, encadré en rouge
   ["montant", "corMontant"].forEach(function (idMontant) {
@@ -98,9 +97,9 @@
     if (t - cacheRecuA > 20000 && t - dernierRechargementDemande > 5000) rechargerCacheVerif();
   });
 
-  // Comparaison des noms (miroir de Code.gs::_normId_) : majuscules, sans accents,
+  // Comparaison des noms (miroir de Detection.gs::_normId_) : majuscules, sans accents,
   // ligatures dépliées, sans espaces, tirets, apostrophes ni points.
-  const SEPARATEURS_NOM_JS = /[\s\-\u2010-\u2015\u2212'’‘ʼ`´′.,_\/\u200B-\u200D\uFEFF]/g;
+  const SEPARATEURS_NOM_JS = /[\s\-\u2010-\u2015\u2212'’‘ʼ`´′.,_/\u200B-\u200D\uFEFF]/g;
   function normIdJS(p) {
     if (p === null || p === undefined) return "";
     return p
@@ -115,7 +114,7 @@
       .replace(/[\u0300-\u036f]/g, "")
       .replace(SEPARATEURS_NOM_JS, "");
   }
-  // Comparaison des N° de pièce (miroir de Code.gs::_normPiece_) : majuscules, lettres
+  // Comparaison des N° de pièce (miroir de Detection.gs::_normPiece_) : majuscules, lettres
   // et chiffres seulement ; N° entièrement numérique sans ses 0 initiaux (Sheets a pu
   // stocker "0123" en 123).
   function normPieceJS(p) {

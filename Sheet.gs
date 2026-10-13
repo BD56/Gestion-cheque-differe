@@ -44,13 +44,13 @@ function allerVersOffre() {
 }
 
 // =================================================================
-// --- CERVEAU INTERNE DU GOOGLE SHEETS (SUR MODIFICATION MANUELLE) ---
+// --- CONTRÔLE DES MODIFICATIONS FAITES À LA MAIN DANS « Saisies » ---
 // =================================================================
 function onEdit(e) {
   if (!e || !e.range) return;
   const feuille = e.range.getSheet();
 
-  // On ne déclenche la magie que sur la bonne feuille
+  // Seule la feuille « Saisies » est contrôlée
   if (feuille.getName() !== FEUILLE_SAISIES) return;
 
   const premiere = e.range.getRow();

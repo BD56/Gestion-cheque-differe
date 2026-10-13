@@ -2,7 +2,7 @@
 // suppression d'une saisie, changement de mode.
 
 // =================================================================
-// --- FONCTIONS PRINCIPALES AVEC LOCKSERVICE POUR ATOMICITÉ ---
+// --- SAISIE ET FORÇAGE (sous verrou : une saisie à la fois) ---
 // =================================================================
 
 function traiterSaisie(nom, prenom, piece, montant, notes, cle) {
@@ -236,7 +236,7 @@ function forcerSaisie(nom, prenom, piece, montant, notes, messageErreur, flagIde
     ]);
     const indexLigne = feuille.getLastRow();
 
-    // 🧹 LE CORRECTIF : On efface l'héritage automatique de Google Sheets sur les 7 colonnes
+    // Pas de couleur héritée de la ligne du dessus (mise en forme automatique de Sheets)
     feuille.getRange(indexLigne, 1, 1, NB_COLONNES_LIGNE).setBackground(null);
 
     // 🎨 Couleurs selon le cas RÉEL (mêmes règles que onEdit)

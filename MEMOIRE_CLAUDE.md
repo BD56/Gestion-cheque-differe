@@ -8,7 +8,7 @@
 **Refonte du code sur la nouvelle branche `refonte`** (créée depuis `generalisation`,
 validée par Bryan : « go pour la branche refonte »). But : maintenabilité, **aucun
 changement de comportement**. Bryan utilisera **clasp** (copier-coller plus nécessaire).
-Règles : une étape = un commit ; les **séries de tests** (`npm test`, 28 depuis l'étape 3)
+Règles : une étape = un commit ; les **séries de tests** (`npm test`, 29 depuis l'étape 5)
 vertes à chaque étape (les adapter quand les fichiers bougent : `tests/harness.js`
 charge tous les `.gs` par ordre alphabétique, `tests/navigateur.js` / `test_rendu.js` lisent `Index.html`) ; faire un
 **point à Bryan à la fin de chaque étape** ; ne pas toucher `generalisation` / `main`.
@@ -64,7 +64,19 @@ ligne perdue (vérifié par script) ; le seul appel exécuté au chargement qui 
 d'autres fonctions, `appliquerDates(DATES_INITIALES, true)`, reste dans ScriptOffre avec
 ses dépendances. Tests : `rendrePage()` dans harness, `tests/declarations.js` (espree)
 partagé avec ESLint, qui contrôle maintenant aussi les Script*.html. 28 séries vertes).
-Prochaine : étape 5 (modernisation).
+✅ étape 5, en 5 commits : 5a Prettier (tout sauf Index.html ; virgules finales
+« es5 » pour les vieux navigateurs ; arbre syntaxique identique vérifié), 5b const/let
+(ESLint no-var + prefer-const imposés ; au premier niveau const si jamais réaffecté ;
+⚠️ const/let ne sont plus des propriétés de l'objet global : les tests lisent les
+constantes par `valeurGlobale()` ; même onglet rechargé = « déjà déclaré »), 5c
+boutons `data-action` (+ `data-args` JSON) et liste explicite `ACTIONS` dans le
+nouveau morceau `ScriptActions.html` (inclus après les autres) et dans Panneau.html ;
+test `test_ui_actions.js`, 5d `style="…"` → classes en fin de Style.html (seuls les
+`display: none` restent : état géré par les scripts ; style calculé identique pour
+les 430 éléments de la page et 37 du panneau ; les éléments créés par JS gardent
+leurs `.style.x = …`), 5e commentaires d'époque nettoyés, `\/` inutile retiré des
+2 regex de séparateurs (équivalence vérifiée sur les 65 536 caractères). 29 séries
+vertes, ESLint 0 erreur 0 avertissement. Prochaine : étape 6 (contrôle de version).
 Plus tard : fusion `refonte` → `generalisation` (ou `main` après Vannes), seulement
 quand Bryan le demande.
 

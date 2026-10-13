@@ -225,7 +225,7 @@
   }
 
   // --- Contrôle A/B/C EN LOCAL (miroir de traiterSaisie, pour feedback instantané) ---
-  // ⚠️ Garder synchro avec Code.gs::traiterSaisie. Le serveur reste autoritaire (il
+  // ⚠️ Garder synchro avec Saisie.gs::traiterSaisie et Detection.gs. Le serveur reste autoritaire (il
   //    reconfirme à l'écriture en arrière-plan) -> aucun faux négatif même si bug ici.
   function passagesMaxJS() {
     const n = parseInt(CONFIG.PASSAGES_MAX, 10);

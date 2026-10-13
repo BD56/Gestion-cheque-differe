@@ -125,7 +125,7 @@ function archiverOffreSousVerrou_() {
 
   // Le mode (SIGNALER / BLOQUANT) est conservé pour l'offre suivante.
 
-  // 🧹 NOUVEAU : On efface les dates en mémoire pour verrouiller les tablettes
+  // Dates de l'offre effacées : les tablettes passent sur « aucune opération »
   enregistrerDates_("", "");
 
   return message;

@@ -73,6 +73,16 @@ try {
   assert.strictEqual(new Set(inclus).size, inclus.length);
   for (const m of morceaux)
     assert.ok(!/<\?/.test(fs.readFileSync(repo + "/" + m, "utf8")), m + " : pas de balise de modèle");
+  // Mise en forme dans Style.html : seul « display: none » (état géré par les scripts) reste dans le HTML
+  for (const [nom, html] of [
+    ["Index.html", index],
+    ["Panneau.html", fs.readFileSync(repo + "/Panneau.html", "utf8")],
+  ]) {
+    const styles = [...html.matchAll(/ style="([^"]*)"/g)]
+      .map((m) => m[1])
+      .filter((v) => v !== "display: none");
+    assert.deepStrictEqual(styles, [], nom + ' : style="…" à mettre dans une classe');
+  }
   const scriptIndex = index.match(/<script>([\s\S]*?)<\/script>/)[1].replace(/<\?!?=[\s\S]*?\?>/g, "null");
   const page = sansDoublon(
     declarationsPage(repo),

@@ -98,6 +98,22 @@
         margin: 4px 0;
         line-height: 1.4;
       }
+      /* Mises en forme autrefois écrites dans le HTML (style="…") */
+      .btn-gris {
+        background-color: #5f6368;
+      }
+      .sans-marge-bas {
+        margin-bottom: 0;
+      }
+      .btn-gris-sans-marge {
+        background-color: #5f6368;
+        margin-bottom: 0;
+      }
+      .msg-dates {
+        font-size: 11px;
+        font-weight: bold;
+        margin-top: 5px;
+      }
     </style>
   </head>
   <body>
@@ -108,9 +124,7 @@
     <div class="date-box">
       <label>📅 Voir un jour précédent :</label>
       <input type="date" id="dateImpression" />
-      <button class="btn" style="background-color: #5f6368; margin-bottom: 0" data-action="imprimerAncien">
-        VOIR CE JOUR
-      </button>
+      <button class="btn btn-gris-sans-marge" data-action="imprimerAncien">VOIR CE JOUR</button>
     </div>
 
     <button class="btn btn-offre" data-action="voirOffre">📚 TOUTE L'OFFRE</button>
@@ -129,19 +143,13 @@
       <label>📅 Opération en cours :</label>
       <input type="date" id="dateDebut" title="Date de début" />
       <input type="date" id="dateFin" title="Date de fin" />
-      <button class="btn btn-offre" style="margin-bottom: 0" data-action="sauvegarderDatesPC">
-        METTRE À JOUR
-      </button>
-      <div id="msgDates" style="font-size: 11px; font-weight: bold; margin-top: 5px"></div>
+      <button class="btn btn-offre sans-marge-bas" data-action="sauvegarderDatesPC">METTRE À JOUR</button>
+      <div class="msg-dates" id="msgDates"></div>
     </div>
     <button class="btn" id="btnMode" data-action="changerMode">⏳ Chargement Mode...</button>
     <button class="btn btn-archive" data-action="cloturer">⚠️ CLÔTURER L'OFFRE</button>
-    <button class="btn" style="background-color: #5f6368" data-action="reinitialiserPin">
-      🔑 RÉINITIALISER LE CODE RESPONSABLE
-    </button>
-    <button class="btn" style="background-color: #5f6368" data-action="retirerTablettes">
-      📱 RETIRER TOUTES LES TABLETTES
-    </button>
+    <button class="btn btn-gris" data-action="reinitialiserPin">🔑 RÉINITIALISER LE CODE RESPONSABLE</button>
+    <button class="btn btn-gris" data-action="retirerTablettes">📱 RETIRER TOUTES LES TABLETTES</button>
 
     <script>
       window.onload = function () {

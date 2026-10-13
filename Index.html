@@ -10,19 +10,19 @@
       <div class="header-app">
         <h2>📝 Saisie Client</h2>
         <div class="header-buttons">
-          <button class="btn-settings" id="btnScan" title="Scanner la pièce" style="display:none;">📷</button>
+          <button class="btn-settings" id="btnScan" title="Scanner la pièce" style="display: none">📷</button>
           <button class="btn-settings" data-action="ouvrirAide" title="Aide et consignes">❓</button>
           <button class="btn-settings" data-action="ouvrirPanneau" title="Panneau de contrôle">⚙️</button>
         </div>
       </div>
       <div class="subtitle" id="txtNomOffre"><?= cfg.NOM_OFFRE ?></div>
 
-      <div id="sousTitreOperation" style="text-align: center; color: #555; font-size: 16px; font-weight: bold; margin-top: -10px; margin-bottom: 20px;">⏳ Chargement des dates...</div>
+      <div class="sous-titre-operation" id="sousTitreOperation">⏳ Chargement des dates...</div>
       
-      <div id="formulaireSaisie" style="display:none;"><!-- affiché seulement si l'offre est en cours (appliquerDates) -->
-        <input type="file" id="ocrFile" accept="image/*" capture="environment" style="display:none;">
-        <div id="ocrStatus" style="font-size:13px; text-align:center; min-height:18px; color:#5f6368; margin-bottom:10px;"></div>
-        <div id="indiceAnnuaire" style="display:none; font-size:13px; text-align:center; color:#188038; background:#e6f4ea; border-radius:6px; padding:6px; margin-bottom:10px;">⤷ Nom/Prénom pré-remplis depuis l'historique — vérifiez.</div>
+      <div id="formulaireSaisie" style="display: none"><!-- affiché seulement si l'offre est en cours (appliquerDates) -->
+        <input type="file" id="ocrFile" accept="image/*" capture="environment" style="display: none">
+        <div class="statut-ocr" id="ocrStatus"></div>
+        <div style="display: none" class="indice-annuaire" id="indiceAnnuaire">⤷ Nom/Prénom pré-remplis depuis l'historique — vérifiez.</div>
         <div class="input-group">
           <label>N° de Pièce *</label>
           <input type="text" id="piece" placeholder="Saisir le numéro..." autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false">
@@ -57,13 +57,13 @@
             <button class="btn-force" data-action="forcerAjout">FORCER L'AJOUT</button>
           </div>
         </div>
-        <div id="actionBloquant" style="display: none;">
+        <div id="actionBloquant" style="display: none">
           <button class="btn-retour-bloquant" data-action="annulerSaisie">RETOUR À LA SAISIE</button>
         </div>
       </div>
       
       <div id="statusMessage"></div>
-      <div id="envoiEnCours" style="display:none; margin-top:8px; text-align:center; font-size:13px; color:#5f6368;"></div>
+      <div style="display: none" class="envoi-en-cours" id="envoiEnCours"></div>
     </div>
 
     <div class="footer-legal">
@@ -71,10 +71,10 @@
     </div>
 
     <div id="modalAide" class="modal-overlay">
-      <div class="modal-content" style="max-width: 550px;">
+      <div class="modal-content largeur-550">
         <button class="btn-close-modal" data-action="fermerAide">✖</button>
-        <h2 style="margin-top:0; text-align:center; font-size:18px;">❓ Guide d'utilisation et Aide</h2>
-        <hr style="border: 0; height: 1px; background: #ddd; margin: 15px 0;">
+        <h2 class="titre-modal">❓ Guide d'utilisation et Aide</h2>
+        <hr class="separateur">
 
         <div class="texte-aide">
 
@@ -86,7 +86,7 @@
               <button class="tuile" data-action="allerAide" data-args='["alertes"]'><span class="ico">🚨</span>Les alertes<small>doublon, usurpation, homonyme</small></button>
               <button class="tuile" data-action="allerAide" data-args='["numero"]'><span class="ico">🔎</span>Vérification du N°<small>dès la saisie du numéro</small></button>
               <button class="tuile" data-action="allerAide" data-args='["imprimer"]'><span class="ico">🖨️</span>Imprimer<small>jour, jour précédent</small></button>
-              <button class="tuile" id="aideOCR" style="display:none;" data-action="allerAide" data-args='["scan"]'><span class="ico">📷</span>Scanner une pièce<small>lecture automatique</small></button>
+              <button class="tuile" id="aideOCR" style="display: none" data-action="allerAide" data-args='["scan"]'><span class="ico">📷</span>Scanner une pièce<small>lecture automatique</small></button>
             </div>
             <div class="groupe-aide resp">🔒 Pour le responsable (code)</div>
             <div class="tuiles">
@@ -208,39 +208,39 @@
     <div id="modalParametres" class="modal-overlay">
       <div class="modal-content">
         <button class="btn-close-modal" data-action="fermerPanneau">✖</button>
-        <h2 style="margin-top:0;">⚙️ Paramètres</h2>
-        <hr style="border: 0; height: 1px; background: #ddd; margin: 15px 0;">
+        <h2 class="titre-haut">⚙️ Paramètres</h2>
+        <hr class="separateur">
 
         <!-- ===== ACCUEIL : impression (libre) + espace responsable ===== -->
         <div class="sous-ecran actif" data-ecran="accueil">
         <button class="btn-action btn-print-jour" data-action="preparerImpression" data-args='["jour","aujourdhui","Impression du Jour"]'>🖨️ IMPRIMER AUJOURD'HUI</button>
         
-        <div style="background: #f1f3f4; padding: 15px; border-radius: 8px; margin-bottom: 10px; text-align: center;">
-          <label style="font-size: 13px; color: #5f6368; margin-bottom: 8px;">📅 Imprimer un jour précédent :</label>
+        <div class="encadre-gris">
+          <label class="label-discret">📅 Imprimer un jour précédent :</label>
           <div class="print-row">
             <input type="date" id="dateImpression" class="input-date">
-            <button class="btn-action" style="flex: 1; background-color: #5f6368; margin-bottom: 0;" data-action="preparerImpressionAncien">IMPRIMER</button>
+            <button class="btn-action btn-gris-ligne" data-action="preparerImpressionAncien">IMPRIMER</button>
           </div>
         </div>
 
         <button class="btn-action btn-print-offre" data-action="preparerImpression" data-args='["offre","","Impression Offre Complète"]'>📚 TOUTE L'OFFRE</button>
         
-        <hr style="border: 0; height: 1px; background: #ddd; margin: 20px 0;">
+        <hr class="separateur-large">
 
         <!-- Espace responsable (code PIN vérifié côté serveur) -->
         <div id="zoneVerrou">
-          <h3 style="text-align: center; margin-top: 0;">🔒 Espace responsable</h3>
-          <p id="txtVerrou" style="font-size: 13px; text-align: center; color: #5f6368; margin-top: 0;"></p>
-          <input type="text" id="activationVerrou" inputmode="numeric" autocomplete="off" maxlength="9" placeholder="Code d'activation (affiché dans le Google Sheets)" style="display: none; margin-bottom: 10px;">
-          <input type="password" id="pinSaisi" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="Code (6 chiffres)" style="margin-bottom: 10px;">
-          <input type="password" id="pinConfirme" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="Confirmer le code" style="display: none; margin-bottom: 10px;">
-          <button class="btn-action" id="btnDeverrouiller" style="background-color: #1a73e8;" data-action="deverrouillerAdmin">DÉVERROUILLER</button>
-          <div id="msgVerrou" style="text-align: center; font-weight: bold; font-size: 13px; color: #d93025;"></div>
+          <h3 class="titre-haut-centre">🔒 Espace responsable</h3>
+          <p class="texte-verrou" id="txtVerrou"></p>
+          <input style="display: none" class="marge-bas-10" type="text" id="activationVerrou" inputmode="numeric" autocomplete="off" maxlength="9" placeholder="Code d'activation (affiché dans le Google Sheets)">
+          <input class="marge-bas-10" type="password" id="pinSaisi" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="Code (6 chiffres)">
+          <input style="display: none" class="marge-bas-10" type="password" id="pinConfirme" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="Confirmer le code">
+          <button class="btn-action btn-bleu" id="btnDeverrouiller" data-action="deverrouillerAdmin">DÉVERROUILLER</button>
+          <div class="message-erreur" id="msgVerrou"></div>
         </div>
 
-        <div id="zoneAdmin" style="display: none;">
-          <h3 style="text-align: center; margin-top: 0;">🔓 Espace responsable</h3>
-          <div id="alerteAdmin" style="display:none; background:#fff3cd; border:1px solid #ffeeba; color:#856404; border-radius:8px; padding:10px; font-size:13px; margin-bottom:10px;"></div>
+        <div id="zoneAdmin" style="display: none">
+          <h3 class="titre-haut-centre">🔓 Espace responsable</h3>
+          <div style="display: none" class="alerte-admin" id="alerteAdmin"></div>
           <div class="tuiles">
             <button class="tuile" data-action="ouvrirSaisies"><span class="ico">📋</span>Saisies<small>corriger / supprimer</small></button>
             <button class="tuile" data-action="ouvrirArchives"><span class="ico">🗄️</span>Archives<small>offres clôturées</small></button>
@@ -251,7 +251,7 @@
           </div>
           <div class="pied">
             <button class="btn-action btn-archive" data-action="cloturerOffre">⚠️ CLÔTURER L'OFFRE</button>
-            <button class="btn-action" style="background-color: #3c4043;" data-action="verrouillerAdmin">🔒 VERROUILLER</button>
+            <button class="btn-action btn-sombre" data-action="verrouillerAdmin">🔒 VERROUILLER</button>
           </div>
         </div>
         </div>
@@ -261,25 +261,25 @@
           <button class="retour" data-action="fermerSaisies">← Retour</button>
           <h3 class="titre-ecran">📋 Saisies de l'offre en cours</h3>
           <div id="vueListeSaisies">
-            <input type="text" id="rechercheSaisie" placeholder="Rechercher (nom, prénom, pièce)…" autocomplete="off" style="margin-bottom: 10px;">
-            <div id="msgSaisies" style="text-align: center; font-weight: bold; font-size: 13px; margin-bottom: 8px;"></div>
+            <input class="marge-bas-10" type="text" id="rechercheSaisie" placeholder="Rechercher (nom, prénom, pièce)…" autocomplete="off">
+            <div class="message-liste" id="msgSaisies"></div>
             <div id="listeSaisies"></div>
           </div>
-          <div id="vueCorrection" style="display: none;">
+          <div id="vueCorrection" style="display: none">
             <div class="input-group"><label>N° de Pièce *</label><input type="text" id="corPiece" autocomplete="off"></div>
             <div class="input-group"><label>Nom *</label><input type="text" id="corNom" autocomplete="off"></div>
             <div class="input-group"><label>Prénom *</label><input type="text" id="corPrenom" autocomplete="off"></div>
             <div class="input-group"><label id="corLblMontant">Montant (€)</label><input type="text" id="corMontant" autocomplete="off"></div>
             <div class="input-group"><label id="corLblNotes">Notes</label><input type="text" id="corNotes" autocomplete="off"></div>
-            <div id="corAlerte" style="display: none; padding: 12px; border-radius: 8px; border: 2px solid; margin-bottom: 10px;">
+            <div style="display: none" class="encadre-correction" id="corAlerte">
               <div class="doublon-titre" id="corAlerteTitre"></div>
               <div class="message-alerte" id="corAlerteMsg"></div>
               <div id="corAlerteListe"></div>
-              <button class="btn-action" id="btnForcerCorrection" style="background-color: #f2994a;" data-action="enregistrerCorrection" data-args='[true]'>FORCER LA CORRECTION</button>
+              <button class="btn-action btn-orange" id="btnForcerCorrection" data-action="enregistrerCorrection" data-args='[true]'>FORCER LA CORRECTION</button>
             </div>
             <div class="flex-btn">
               <button class="btn-cancel" data-action="annulerCorrection">ANNULER</button>
-              <button class="btn-force" style="background: #34a853;" data-action="enregistrerCorrection" data-args='[false]'>ENREGISTRER</button>
+              <button class="btn-force fond-vert" data-action="enregistrerCorrection" data-args='[false]'>ENREGISTRER</button>
             </div>
           </div>
         </div>
@@ -287,66 +287,66 @@
         <div class="sous-ecran" data-ecran="archives">
           <button class="retour" data-action="allerEcran" data-args='["accueil"]'>← Retour</button>
           <h3 class="titre-ecran">🗄️ Archives (offres clôturées)</h3>
-          <select id="selArchive" style="width: 100%; padding: 10px; font-size: 14px; border: 2px solid #ccc; border-radius: 8px; margin-bottom: 10px;"></select>
-          <button class="btn-action" style="background-color: #1a73e8;" data-action="imprimerArchive">🖨️ IMPRIMER CETTE ARCHIVE</button>
+          <select class="liste-archives" id="selArchive"></select>
+          <button class="btn-action btn-bleu" data-action="imprimerArchive">🖨️ IMPRIMER CETTE ARCHIVE</button>
         </div>
 
         <div class="sous-ecran" data-ecran="operation">
           <button class="retour" data-action="allerEcran" data-args='["accueil"]'>← Retour</button>
           <h3 class="titre-ecran">📅 Opération en cours</h3>
-          <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-            <div style="flex: 1;">
-              <label style="font-weight: bold; font-size: 13px;">Début :</label>
-              <input type="date" id="modalDateDebut" style="padding: 8px; font-size: 14px; border-radius: 5px; border: 1px solid #ccc;">
+          <div class="ligne-dates">
+            <div class="colonne">
+              <label class="label-date">Début :</label>
+              <input class="champ-date" type="date" id="modalDateDebut">
             </div>
-            <div style="flex: 1;">
-              <label style="font-weight: bold; font-size: 13px;">Fin :</label>
-              <input type="date" id="modalDateFin" style="padding: 8px; font-size: 14px; border-radius: 5px; border: 1px solid #ccc;">
+            <div class="colonne">
+              <label class="label-date">Fin :</label>
+              <input class="champ-date" type="date" id="modalDateFin">
             </div>
           </div>
-          <button class="btn-action" style="background-color: #34a853;" data-action="sauvegarderDatesTablette">METTRE À JOUR LES DATES</button>
-          <div id="msgRetourModal" style="text-align: center; font-weight: bold; margin-top: 10px; font-size: 13px;"></div>
+          <button class="btn-action btn-vert" data-action="sauvegarderDatesTablette">METTRE À JOUR LES DATES</button>
+          <div class="message-haut" id="msgRetourModal"></div>
         </div>
 
         <div class="sous-ecran" data-ecran="securite">
           <button class="retour" data-action="allerEcran" data-args='["accueil"]'>← Retour</button>
           <h3 class="titre-ecran">🛡️ Sécurité</h3>
           <button class="btn-action" id="btnMode" data-action="changerMode">⏳ Chargement Mode...</button>
-          <button class="btn-action" id="btnModeAnnuaire" style="display:none; background-color:#5f6368;" data-action="changerModeAnnuaire"></button>
+          <button style="display: none" class="btn-action btn-gris" id="btnModeAnnuaire" data-action="changerModeAnnuaire"></button>
         </div>
 
         <div class="sous-ecran" data-ecran="reglages">
           <button class="retour" data-action="allerEcran" data-args='["accueil"]'>← Retour</button>
           <h3 class="titre-ecran">🏷️ Réglages de la structure</h3>
           <div id="champsReglages"></div>
-          <label style="display: flex; align-items: center; gap: 8px; font-size: 14px;">
-            <input type="checkbox" id="cfg_MONTANT_OBLIGATOIRE" style="width: auto;"> Montant obligatoire
+          <label class="case-a-cocher">
+            <input class="largeur-auto" type="checkbox" id="cfg_MONTANT_OBLIGATOIRE"> Montant obligatoire
           </label>
-          <button class="btn-action" style="background-color: #34a853; margin-top: 10px;" data-action="enregistrerReglages">ENREGISTRER LES RÉGLAGES</button>
-          <div id="msgReglages" style="text-align: center; font-weight: bold; font-size: 13px;"></div>
+          <button class="btn-action btn-vert-haut" data-action="enregistrerReglages">ENREGISTRER LES RÉGLAGES</button>
+          <div class="message" id="msgReglages"></div>
         </div>
 
         <div class="sous-ecran" data-ecran="code">
           <button class="retour" data-action="allerEcran" data-args='["accueil"]'>← Retour</button>
           <h3 class="titre-ecran">🔑 Code responsable</h3>
-          <input type="password" id="pinNouveau" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="Nouveau code (6 chiffres)" style="margin-bottom: 10px;">
-          <input type="password" id="pinNouveau2" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="Confirmer le nouveau code" style="margin-bottom: 10px;">
-          <button class="btn-action" style="background-color: #34a853;" data-action="changerPin">ENREGISTRER LE CODE</button>
-          <div id="msgPin" style="text-align: center; font-weight: bold; font-size: 13px;"></div>
-          <hr style="border: 0; height: 1px; background: #ddd; margin: 20px 0;">
+          <input class="marge-bas-10" type="password" id="pinNouveau" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="Nouveau code (6 chiffres)">
+          <input class="marge-bas-10" type="password" id="pinNouveau2" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="Confirmer le nouveau code">
+          <button class="btn-action btn-vert" data-action="changerPin">ENREGISTRER LE CODE</button>
+          <div class="message" id="msgPin"></div>
+          <hr class="separateur-large">
           <h3 class="titre-ecran">📱 Tablettes autorisées</h3>
-          <div id="msgTablettes" style="text-align: center; font-size: 13px; margin-bottom: 8px;"></div>
+          <div class="message-tablettes" id="msgTablettes"></div>
           <div id="listeTablettes"></div>
-          <button class="btn-action btn-archive" style="margin-top: 10px;" data-action="retirerToutesLesTablettes">⚠️ RETIRER TOUTES LES TABLETTES</button>
+          <button class="btn-action btn-archive marge-haut-10" data-action="retirerToutesLesTablettes">⚠️ RETIRER TOUTES LES TABLETTES</button>
         </div>
       </div>
     </div>
 
     <div id="modalMentions" class="modal-overlay">
-      <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-content largeur-500">
         <button class="btn-close-modal" data-action="fermerMentions">✖</button>
-        <h2 style="margin-top:0; text-align:center; font-size:18px;">⚖️ Mentions légales</h2>
-        <hr style="border: 0; height: 1px; background: #ddd; margin: 15px 0;">
+        <h2 class="titre-modal">⚖️ Mentions légales</h2>
+        <hr class="separateur">
         
         <div class="texte-mentions">
           <p>© 2026 DESJARDINS Bryan – Tous droits réservés.<br>
@@ -356,7 +356,7 @@
 
           <p>Historique inter-offres : afin d'accélérer la saisie des clients déjà venus, le nom et le prénom associés à un numéro de pièce peuvent être conservés d'une offre à l'autre et proposés automatiquement lors d'une nouvelle présentation de la pièce. Ces informations sont supprimées après 3 ans sans nouvelle présentation.</p>
 
-          <p id="mentionOCR" style="display:none;">Lecture assistée des pièces (OCR) : lorsqu'une pièce est scannée, la photographie est analysée localement, dans le navigateur de la tablette, uniquement pour lire la zone de lecture automatique (MRZ). L'image n'est ni enregistrée ni transmise à aucun serveur ; seules les informations reportées dans le formulaire, après vérification par l'hôtesse, sont conservées.</p>
+          <p id="mentionOCR" style="display: none">Lecture assistée des pièces (OCR) : lorsqu'une pièce est scannée, la photographie est analysée localement, dans le navigateur de la tablette, uniquement pour lire la zone de lecture automatique (MRZ). L'image n'est ni enregistrée ni transmise à aucun serveur ; seules les informations reportées dans le formulaire, après vérification par l'hôtesse, sont conservées.</p>
           
           <p>Tablettes et code responsable : pour reconnaître une tablette autorisée, l'application enregistre dans son navigateur une clé technique d'autorisation, sans autre usage. L'application n'utilise elle-même aucun cookie publicitaire ni outil de mesure d'audience. Le code responsable n'est jamais conservé en clair.</p>
 
@@ -367,18 +367,18 @@
 
     <div id="modalDoublonPiece" class="modal-overlay">
       <div class="modal-content">
-        <h2 style="margin-top:0; color:#d93025; font-size:18px;">⚠️ N° de pièce déjà enregistré</h2>
-        <p id="msgDoublonPiece" style="font-size:14px; font-weight:bold; color:#721c24;"></p>
+        <h2 class="titre-modal-alerte">⚠️ N° de pièce déjà enregistré</h2>
+        <p class="texte-alerte" id="msgDoublonPiece"></p>
         <div id="listeDoublonPiece"></div>
-        <button class="btn-action" style="background:#1a73e8; margin-top:10px;" data-action="fermerDoublonPiece">OK</button>
+        <button class="btn-action fond-bleu-haut" data-action="fermerDoublonPiece">OK</button>
       </div>
     </div>
 
-    <div id="ecranAppairage" class="modal-overlay" style="z-index: 3000; background-color: #f4f7f6;">
-      <div class="modal-content" style="max-width: 420px;">
-        <h2 style="margin-top:0; text-align:center;">🔒 Tablette non autorisée</h2>
-        <p id="txtAppairage" style="font-size:14px; color:#3c4043; line-height:1.4;"></p>
-        <div class="input-group" id="blocActivationApp" style="display:none;">
+    <div id="ecranAppairage" class="modal-overlay ecran-appairage">
+      <div class="modal-content largeur-420">
+        <h2 class="titre-haut-centre">🔒 Tablette non autorisée</h2>
+        <p class="texte-appairage" id="txtAppairage"></p>
+        <div class="input-group" id="blocActivationApp" style="display: none">
           <label>Code d'activation (affiché dans le Google Sheets)</label>
           <input type="text" id="activationApp" inputmode="numeric" maxlength="9" autocomplete="off" placeholder="1234-5678">
         </div>
@@ -386,7 +386,7 @@
           <label id="lblPinApp">Code responsable (6 chiffres)</label>
           <input type="password" id="pinApp" inputmode="numeric" maxlength="6" autocomplete="off">
         </div>
-        <div class="input-group" id="blocPinApp2" style="display:none;">
+        <div class="input-group" id="blocPinApp2" style="display: none">
           <label>Confirmer le code</label>
           <input type="password" id="pinApp2" inputmode="numeric" maxlength="6" autocomplete="off">
         </div>
@@ -394,36 +394,36 @@
           <label>Nom de cette tablette</label>
           <input type="text" id="nomTablette" value="Tablette caisse" maxlength="40" autocomplete="off">
         </div>
-        <button class="btn-action" id="btnAppairer" style="background:#1a73e8;" data-action="appairerCetteTablette">AUTORISER CETTE TABLETTE</button>
-        <div id="msgAppairage" style="text-align:center; font-weight:bold; font-size:13px; color:#d93025;"></div>
+        <button class="btn-action fond-bleu" id="btnAppairer" data-action="appairerCetteTablette">AUTORISER CETTE TABLETTE</button>
+        <div class="message-erreur" id="msgAppairage"></div>
       </div>
     </div>
 
-    <div id="modalAlerteServeur" class="modal-overlay" style="z-index: 2000;">
-      <div class="modal-content" style="border: 3px solid #d93025;">
-        <h2 id="alerteServeurTitre" style="margin-top:0; color:#d93025; font-size:18px;"></h2>
-        <p id="alerteServeurMsg" style="font-size:14px; font-weight:bold; color:#721c24;"></p>
-        <div id="alerteServeurSaisie" class="doublon-carte" style="border-left-color:#d93025;"></div>
+    <div id="modalAlerteServeur" class="modal-overlay alerte-serveur">
+      <div class="modal-content cadre-alerte">
+        <h2 class="titre-modal-alerte" id="alerteServeurTitre"></h2>
+        <p class="texte-alerte" id="alerteServeurMsg"></p>
+        <div id="alerteServeurSaisie" class="doublon-carte carte-alerte"></div>
         <div id="alerteServeurListe"></div>
         <div class="flex-btn" id="alerteServeurChoix">
           <button class="btn-cancel" data-action="fermerAlerteServeur">NE PAS ENREGISTRER</button>
           <button class="btn-force" data-action="forcerDepuisAlerte">FORCER L'AJOUT</button>
         </div>
-        <div class="flex-btn" id="alerteServeurReessai" style="display:none;">
+        <div class="flex-btn" id="alerteServeurReessai" style="display: none">
           <button class="btn-cancel" data-action="fermerAlerteServeur">ABANDONNER</button>
-          <button class="btn-force" style="background:#1a73e8;" data-action="reessayerDepuisAlerte">RÉESSAYER</button>
+          <button class="btn-force fond-bleu" data-action="reessayerDepuisAlerte">RÉESSAYER</button>
         </div>
-        <button class="btn-action" id="btnAlerteOk" style="background:#d93025; margin-top:10px;" data-action="fermerAlerteServeur">OK, COMPRIS</button>
+        <button class="btn-action fond-rouge-haut" id="btnAlerteOk" data-action="fermerAlerteServeur">OK, COMPRIS</button>
       </div>
     </div>
 
     <div id="modalAnnuaire" class="modal-overlay">
       <div class="modal-content">
-        <h2 style="margin-top:0; color:#1a73e8; font-size:18px;">👤 Client connu</h2>
-        <p id="msgAnnuaire" style="font-size:14px;"></p>
+        <h2 class="titre-modal-info">👤 Client connu</h2>
+        <p class="texte-14" id="msgAnnuaire"></p>
         <div class="flex-btn">
           <button class="btn-cancel" data-action="ignorerAnnuaire">IGNORER</button>
-          <button class="btn-force" style="background:#34a853;" data-action="utiliserAnnuaire">UTILISER</button>
+          <button class="btn-force fond-vert" data-action="utiliserAnnuaire">UTILISER</button>
         </div>
       </div>
     </div>

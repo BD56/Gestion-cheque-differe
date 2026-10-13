@@ -1,8 +1,68 @@
 <!-- Styles de la page (Index.html). -->
-<style data-version="2026.10.13-2">
+<style data-version="2026.10.14-0149">
+  /* Palette « Comptoir » (clair uniquement). Les couleurs d'alerte (danger rouge,
+     orange) ne sont jamais adoucies. Police du système : rien à télécharger. */
+  :root {
+    --fond: #f5f3f0;
+    --surface: #ffffff;
+    --encre: #1c1917;
+    --doux: #6f6863;
+    --trait: #e5dfd8;
+    --trait-fort: #d3cbc2;
+    --champ: #fbfaf8;
+    --accent: #0f766e;
+    --accent-fonce: #0b5d57;
+    --accent-doux: #e3f1ef;
+    --ok: #15803d;
+    --ok-doux: #e7f4eb;
+    --ok-trait: #bfe0ca;
+    --danger: #c81e1e;
+    --danger-doux: #fcebea;
+    --danger-trait: #f3c1bd;
+    --orange: #b45309;
+    --orange-doux: #fdf1e2;
+    --orange-trait: #f3d3a8;
+    --texte: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --chiffres: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    color-scheme: light;
+  }
+  /* Largeur = bordure comprise (la carte ne déborde plus sur écran étroit) */
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+  button,
+  input,
+  select {
+    font-family: inherit;
+  }
+  :focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 2px;
+  }
+  /* Icônes (Icones.html) : traits de la couleur du texte */
+  .sprite {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+  }
+  .ico {
+    width: 1.15em;
+    height: 1.15em;
+    flex: 0 0 auto;
+    vertical-align: -0.2em;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
   body {
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f4f7f6;
+    font-family: var(--texte);
+    color: var(--encre);
+    background-color: var(--fond);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -12,12 +72,12 @@
     box-sizing: border-box;
   }
   .container {
-    background-color: white;
+    background-color: var(--surface);
     padding: 30px;
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     width: 100%;
-    max-width: 450px;
+    max-width: 510px; /* 450 + marges intérieures, comme avant le passage en border-box */
     position: relative;
     margin-top: 20px;
   }
@@ -26,13 +86,13 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 2px solid #f1f3f4;
+    border-bottom: 1px solid var(--trait);
     padding-bottom: 15px;
     margin-bottom: 20px;
   }
   .header-app h2 {
     margin: 0;
-    color: #3c4043;
+    color: var(--encre);
     font-size: 22px;
   }
 
@@ -46,9 +106,10 @@
     border: none;
     font-size: 24px;
     cursor: pointer;
-    color: #5f6368;
+    color: var(--doux);
     transition: transform 0.2s;
-    padding: 5px;
+    padding: 8px;
+    line-height: 0;
   }
   .btn-settings:hover {
     transform: scale(1.1);
@@ -56,7 +117,7 @@
 
   .subtitle {
     text-align: left;
-    color: #70757a;
+    color: var(--doux);
     font-size: 13px;
     margin-top: -12px;
     margin-bottom: 20px;
@@ -69,19 +130,19 @@
     display: block;
     font-weight: bold;
     margin-bottom: 6px;
-    color: #5f6368;
+    color: var(--doux);
     font-size: 14px;
   }
   input {
     width: 100%;
     padding: 12px;
     font-size: 16px;
-    border: 2px solid #ccc;
+    border: 2px solid var(--trait-fort);
     border-radius: 8px;
     box-sizing: border-box;
   }
   input:focus {
-    border-color: #1a73e8;
+    border-color: var(--accent);
     outline: none;
   }
   .btn-submit {
@@ -91,7 +152,7 @@
     font-weight: bold;
     margin-top: 10px;
     color: white;
-    background-color: #1a73e8;
+    background-color: var(--accent);
     border: none;
     border-radius: 8px;
     cursor: pointer;
@@ -117,18 +178,18 @@
     line-height: 1.4;
   }
   .doublon-carte {
-    background: white;
+    background: var(--surface);
     padding: 12px;
     border-radius: 6px;
     margin-bottom: 10px;
-    border-left: 4px solid #5f6368;
+    border-left: 4px solid var(--doux);
     font-size: 14px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     line-height: 1.6;
   }
 
   .btn-force {
-    background-color: #f2994a;
+    background-color: var(--orange);
     color: white;
     padding: 12px;
     width: 48%;
@@ -138,7 +199,7 @@
     cursor: pointer;
   }
   .btn-cancel {
-    background-color: #5f6368;
+    background-color: var(--encre);
     color: white;
     padding: 12px;
     width: 48%;
@@ -148,7 +209,7 @@
     cursor: pointer;
   }
   .btn-retour-bloquant {
-    background-color: #d93025;
+    background-color: var(--danger);
     color: white;
     padding: 12px;
     width: 100%;
@@ -173,12 +234,12 @@
     display: none;
   }
   .success {
-    background-color: #d4edda;
-    color: #155724;
+    background-color: var(--ok-doux);
+    color: var(--ok);
   }
   .error {
-    background-color: #f8d7da;
-    color: #721c24;
+    background-color: var(--danger-doux);
+    color: var(--danger);
   }
 
   .modal-overlay {
@@ -194,11 +255,11 @@
     align-items: center;
   }
   .modal-content {
-    background-color: white;
+    background-color: var(--surface);
     padding: 25px;
     border-radius: 12px;
     width: 90%;
-    max-width: 400px;
+    max-width: 450px;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
     position: relative;
     max-height: 90vh;
@@ -212,7 +273,7 @@
     border: none;
     font-size: 20px;
     cursor: pointer;
-    color: #5f6368;
+    color: var(--doux);
   }
 
   .btn-action {
@@ -234,27 +295,27 @@
   .input-date {
     flex: 1;
     padding: 10px;
-    border: 2px solid #ccc;
+    border: 2px solid var(--trait-fort);
     border-radius: 8px;
     font-size: 14px;
     text-align: center;
   }
   .btn-print-jour {
     flex: 2;
-    background-color: #1a73e8;
+    background-color: var(--accent);
     margin-bottom: 0;
   }
   .btn-print-offre {
-    background-color: #34a853;
+    background-color: var(--ok);
   }
   .btn-mode-signaler {
-    background-color: #f2994a;
+    background-color: var(--orange);
   }
   .btn-mode-bloquant {
-    background-color: #d93025;
+    background-color: var(--danger);
   }
   .btn-archive {
-    background-color: #d93025;
+    background-color: var(--danger);
     margin-top: 20px;
   }
   /* --- Espace responsable : tuiles + sous-écrans --- */
@@ -271,30 +332,35 @@
     margin-bottom: 12px;
   }
   .tuile {
-    background: #f1f3f4;
+    background: var(--fond);
     border: none;
     border-radius: 12px;
     padding: 12px 8px;
     font-size: 14px;
     font-weight: bold;
-    color: #3c4043;
+    color: var(--encre);
     cursor: pointer;
     text-align: center;
     line-height: 1.3;
   }
   .tuile:hover {
-    background: #e8eaed;
+    background: var(--trait);
   }
   .tuile .ico {
-    font-size: 26px;
+    width: 26px;
+    height: 26px;
     display: block;
-    margin-bottom: 4px;
+    margin: 0 auto 6px;
+    color: var(--accent);
+  }
+  .tuile.resp .ico {
+    color: var(--orange);
   }
   .tuile small {
     display: block;
     font-weight: normal;
     font-size: 11px;
-    color: #5f6368;
+    color: var(--doux);
     margin-top: 2px;
   }
   .pied {
@@ -306,9 +372,12 @@
     font-size: 13px;
   }
   .retour {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
     background: none;
     border: none;
-    color: #1a73e8;
+    color: var(--accent);
     font-weight: bold;
     font-size: 15px;
     cursor: pointer;
@@ -327,21 +396,21 @@
     max-width: 450px;
   }
   .footer-legal a {
-    color: #9aa0a6;
+    color: var(--doux);
     font-size: 12px;
     text-decoration: none;
     transition: color 0.2s;
     cursor: pointer;
   }
   .footer-legal a:hover {
-    color: #5f6368;
+    color: var(--doux);
     text-decoration: underline;
   }
   .texte-mentions {
     text-align: justify;
     font-size: 13px;
     line-height: 1.5;
-    color: #3c4043;
+    color: var(--encre);
   }
   .texte-mentions p {
     margin-bottom: 12px;
@@ -351,7 +420,7 @@
   .texte-aide {
     text-align: left;
     font-size: 14px;
-    color: #3c4043;
+    color: var(--encre);
   }
   .texte-aide p {
     margin-top: 10px;
@@ -371,18 +440,18 @@
     font-weight: bold;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: #5f6368;
+    color: var(--doux);
     margin: 4px 2px 8px;
   }
   .groupe-aide.resp {
-    color: #b06000;
+    color: var(--orange);
     margin-top: 14px;
   }
   .tuile.resp {
-    background: #fef7e0;
+    background: var(--orange-doux);
   }
   .tuile.resp:hover {
-    background: #fcefc7;
+    background: var(--orange-trait);
   }
   .encadre-aide {
     border-radius: 6px;
@@ -391,16 +460,16 @@
     margin-left: -20px;
   }
   .encadre-aide.vert {
-    background: #e6f4ea;
-    border: 1px solid #c3e6cb;
+    background: var(--ok-doux);
+    border: 1px solid var(--ok-trait);
   }
   .encadre-aide.orange {
-    background: #fff3cd;
-    border: 1px solid #ffeeba;
+    background: var(--orange-doux);
+    border: 1px solid var(--orange-trait);
   }
   .encadre-aide.rouge {
-    background: #fce8e6;
-    border: 1px solid #f5c6cb;
+    background: var(--danger-doux);
+    border: 1px solid var(--danger-trait);
   }
   #zoneImpression {
     display: none;
@@ -469,7 +538,7 @@
      display:none restent dans le HTML (état modifié par les scripts). */
   .sous-titre-operation {
     text-align: center;
-    color: #555;
+    color: var(--encre);
     font-size: 16px;
     font-weight: bold;
     margin-top: -10px;
@@ -479,14 +548,14 @@
     font-size: 13px;
     text-align: center;
     min-height: 18px;
-    color: #5f6368;
+    color: var(--doux);
     margin-bottom: 10px;
   }
   .indice-annuaire {
     font-size: 13px;
     text-align: center;
-    color: #188038;
-    background: #e6f4ea;
+    color: var(--ok);
+    background: var(--ok-doux);
     border-radius: 6px;
     padding: 6px;
     margin-bottom: 10px;
@@ -495,16 +564,16 @@
     margin-top: 8px;
     text-align: center;
     font-size: 13px;
-    color: #5f6368;
+    color: var(--doux);
   }
   .largeur-550 {
-    max-width: 550px;
+    max-width: 600px;
   }
   .largeur-500 {
-    max-width: 500px;
+    max-width: 550px;
   }
   .largeur-420 {
-    max-width: 420px;
+    max-width: 470px;
   }
   .titre-modal {
     margin-top: 0;
@@ -513,12 +582,12 @@
   }
   .titre-modal-alerte {
     margin-top: 0;
-    color: #d93025;
+    color: var(--danger);
     font-size: 18px;
   }
   .titre-modal-info {
     margin-top: 0;
-    color: #1a73e8;
+    color: var(--accent);
     font-size: 18px;
   }
   .titre-haut {
@@ -531,17 +600,17 @@
   .separateur {
     border: 0;
     height: 1px;
-    background: #ddd;
+    background: var(--trait);
     margin: 15px 0;
   }
   .separateur-large {
     border: 0;
     height: 1px;
-    background: #ddd;
+    background: var(--trait);
     margin: 20px 0;
   }
   .encadre-gris {
-    background: #f1f3f4;
+    background: var(--fond);
     padding: 15px;
     border-radius: 8px;
     margin-bottom: 10px;
@@ -549,18 +618,18 @@
   }
   .label-discret {
     font-size: 13px;
-    color: #5f6368;
+    color: var(--doux);
     margin-bottom: 8px;
   }
   .btn-gris-ligne {
     flex: 1;
-    background-color: #5f6368;
+    background-color: var(--doux);
     margin-bottom: 0;
   }
   .texte-verrou {
     font-size: 13px;
     text-align: center;
-    color: #5f6368;
+    color: var(--doux);
     margin-top: 0;
   }
   .marge-bas-10 {
@@ -570,43 +639,43 @@
     margin-top: 10px;
   }
   .btn-bleu {
-    background-color: #1a73e8;
+    background-color: var(--accent);
   }
   .btn-vert {
-    background-color: #34a853;
+    background-color: var(--ok);
   }
   .btn-orange {
-    background-color: #f2994a;
+    background-color: var(--orange);
   }
   .btn-sombre {
-    background-color: #3c4043;
+    background-color: var(--encre);
   }
   .btn-gris {
-    background-color: #5f6368;
+    background-color: var(--doux);
   }
   .btn-vert-haut {
-    background-color: #34a853;
+    background-color: var(--ok);
     margin-top: 10px;
   }
   .fond-bleu {
-    background: #1a73e8;
+    background: var(--accent);
   }
   .fond-vert {
-    background: #34a853;
+    background: var(--ok);
   }
   .fond-bleu-haut {
-    background: #1a73e8;
+    background: var(--accent);
     margin-top: 10px;
   }
   .fond-rouge-haut {
-    background: #d93025;
+    background: var(--danger);
     margin-top: 10px;
   }
   .message-erreur {
     text-align: center;
     font-weight: bold;
     font-size: 13px;
-    color: #d93025;
+    color: var(--danger);
   }
   .message {
     text-align: center;
@@ -631,9 +700,9 @@
     margin-bottom: 8px;
   }
   .alerte-admin {
-    background: #fff3cd;
-    border: 1px solid #ffeeba;
-    color: #856404;
+    background: var(--orange-doux);
+    border: 1px solid var(--orange-trait);
+    color: var(--orange);
     border-radius: 8px;
     padding: 10px;
     font-size: 13px;
@@ -649,7 +718,7 @@
     width: 100%;
     padding: 10px;
     font-size: 14px;
-    border: 2px solid #ccc;
+    border: 2px solid var(--trait-fort);
     border-radius: 8px;
     margin-bottom: 10px;
   }
@@ -669,7 +738,7 @@
     padding: 8px;
     font-size: 14px;
     border-radius: 5px;
-    border: 1px solid #ccc;
+    border: 1px solid var(--trait-fort);
   }
   .case-a-cocher {
     display: flex;
@@ -683,25 +752,25 @@
   .texte-alerte {
     font-size: 14px;
     font-weight: bold;
-    color: #721c24;
+    color: var(--danger);
   }
   .ecran-appairage {
     z-index: 3000;
-    background-color: #f4f7f6;
+    background-color: var(--fond);
   }
   .texte-appairage {
     font-size: 14px;
-    color: #3c4043;
+    color: var(--encre);
     line-height: 1.4;
   }
   .alerte-serveur {
     z-index: 2000;
   }
   .cadre-alerte {
-    border: 3px solid #d93025;
+    border: 3px solid var(--danger);
   }
   .carte-alerte {
-    border-left-color: #d93025;
+    border-left-color: var(--danger);
   }
   .texte-14 {
     font-size: 14px;

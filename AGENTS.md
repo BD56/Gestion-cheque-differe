@@ -42,12 +42,15 @@ Serveur (une seule portée globale : **un nom déclaré dans deux .gs = erreur**
 
 Page de la tablette :
 - **Index.html** — squelette (HTML + `CONFIG` / `DATES_INITIALES` injectés) qui inclut :
-- **Style.html** et **Script*.html** — Tablette, Saisie, Alertes, Impression, Offre,
-  Formulaire, Responsable, Actions (boutons `data-action`), Ocr (dormant).
+- **Style.html** (palette en variables CSS `--…` dans `:root`), **Icones.html** (icônes
+  SVG : `<svg class="ico"><use href="#i-nom"/></svg>`) et **Script*.html** — Tablette,
+  Saisie, Alertes, Impression, Offre, Formulaire, Responsable, Actions (boutons
+  `data-action`), Ocr (dormant).
 - **Panneau.html** — sidebar admin dans le Sheets (menu `🚀 APPLICATION`).
 
 Chaque fichier porte le même numéro de version (`npm run nouvelle-version`) ;
 outils : `npm test`, `npm run lint`, `npm run push` (clasp), dossier `outils/`.
+Captures d'écran (avant / après) : `NODE_PATH=$(npm root -g) node outils/captures.js <dossier>`.
 - **appsscript.json** — manifeste (V8, `Europe/Paris`, webapp `access: ANYONE_ANONYMOUS`).
 - **INSTALLATION.md** — créer le **modèle** (une fois) et installer l'appli pour une
   nouvelle structure (copie du modèle → menu Installer → déploiement).

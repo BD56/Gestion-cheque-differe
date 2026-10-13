@@ -1,18 +1,19 @@
 <!DOCTYPE html>
-<html lang="fr" data-version="2026.10.13-2">
+<html lang="fr" data-version="2026.10.14-0149">
   <head>
     <base target="_top">
     <?!= include_('Style') ?>
   </head>
   <body>
+    <?!= include_('Icones') ?>
 
     <div class="container">
       <div class="header-app">
-        <h2>📝 Saisie Client</h2>
+        <h2><svg class="ico"><use href="#i-stylo"/></svg> Saisie Client</h2>
         <div class="header-buttons">
-          <button class="btn-settings" id="btnScan" title="Scanner la pièce" style="display: none">📷</button>
-          <button class="btn-settings" data-action="ouvrirAide" title="Aide et consignes">❓</button>
-          <button class="btn-settings" data-action="ouvrirPanneau" title="Panneau de contrôle">⚙️</button>
+          <button class="btn-settings" id="btnScan" title="Scanner la pièce" aria-label="Scanner la pièce" style="display: none"><svg class="ico"><use href="#i-appareil-photo"/></svg></button>
+          <button class="btn-settings" data-action="ouvrirAide" title="Aide et consignes" aria-label="Aide et consignes"><svg class="ico"><use href="#i-aide"/></svg></button>
+          <button class="btn-settings" data-action="ouvrirPanneau" title="Panneau de contrôle" aria-label="Panneau de contrôle"><svg class="ico"><use href="#i-reglages"/></svg></button>
         </div>
       </div>
       <div class="subtitle" id="txtNomOffre"><?= cfg.NOM_OFFRE ?></div>
@@ -72,34 +73,34 @@
 
     <div id="modalAide" class="modal-overlay">
       <div class="modal-content largeur-550">
-        <button class="btn-close-modal" data-action="fermerAide">✖</button>
-        <h2 class="titre-modal">❓ Guide d'utilisation et Aide</h2>
+        <button class="btn-close-modal" data-action="fermerAide" aria-label="Fermer"><svg class="ico"><use href="#i-fermer"/></svg></button>
+        <h2 class="titre-modal"><svg class="ico"><use href="#i-aide"/></svg> Guide d'utilisation et Aide</h2>
         <hr class="separateur">
 
         <div class="texte-aide">
 
           <!-- ===== ACCUEIL : tuiles en 2 groupes ===== -->
           <div class="sous-ecran actif" data-aide="accueil">
-            <div class="groupe-aide">👤 Pour la saisie</div>
+            <div class="groupe-aide"><svg class="ico"><use href="#i-personne"/></svg> Pour la saisie</div>
             <div class="tuiles">
-              <button class="tuile" data-action="allerAide" data-args='["saisir"]'><span class="ico">📝</span>Saisir un client<small>formulaire, validation</small></button>
-              <button class="tuile" data-action="allerAide" data-args='["alertes"]'><span class="ico">🚨</span>Les alertes<small>doublon, usurpation, homonyme</small></button>
-              <button class="tuile" data-action="allerAide" data-args='["numero"]'><span class="ico">🔎</span>Vérification du N°<small>dès la saisie du numéro</small></button>
-              <button class="tuile" data-action="allerAide" data-args='["imprimer"]'><span class="ico">🖨️</span>Imprimer<small>jour, jour précédent</small></button>
-              <button class="tuile" id="aideOCR" style="display: none" data-action="allerAide" data-args='["scan"]'><span class="ico">📷</span>Scanner une pièce<small>lecture automatique</small></button>
+              <button class="tuile" data-action="allerAide" data-args='["saisir"]'><svg class="ico"><use href="#i-stylo"/></svg>Saisir un client<small>formulaire, validation</small></button>
+              <button class="tuile" data-action="allerAide" data-args='["alertes"]'><svg class="ico"><use href="#i-alerte"/></svg>Les alertes<small>doublon, usurpation, homonyme</small></button>
+              <button class="tuile" data-action="allerAide" data-args='["numero"]'><svg class="ico"><use href="#i-loupe"/></svg>Vérification du N°<small>dès la saisie du numéro</small></button>
+              <button class="tuile" data-action="allerAide" data-args='["imprimer"]'><svg class="ico"><use href="#i-imprimer"/></svg>Imprimer<small>jour, jour précédent</small></button>
+              <button class="tuile" id="aideOCR" style="display: none" data-action="allerAide" data-args='["scan"]'><svg class="ico"><use href="#i-appareil-photo"/></svg>Scanner une pièce<small>lecture automatique</small></button>
             </div>
-            <div class="groupe-aide resp">🔒 Pour le responsable (code)</div>
+            <div class="groupe-aide resp"><svg class="ico"><use href="#i-cadenas"/></svg> Pour le responsable (code)</div>
             <div class="tuiles">
-              <button class="tuile resp" data-action="allerAide" data-args='["modes"]'><span class="ico">🚦</span>Modes de sécurité<small>signaler ou bloquer</small></button>
-              <button class="tuile resp" data-action="allerAide" data-args='["code"]'><span class="ico">🔑</span>Code &amp; tablettes<small>code, autorisations</small></button>
-              <button class="tuile resp" data-action="allerAide" data-args='["dates"]'><span class="ico">📅</span>Dates &amp; clôture<small>lancer, prolonger, finir</small></button>
-              <button class="tuile resp" data-action="allerAide" data-args='["corrections"]'><span class="ico">📋</span>Corrections &amp; archives<small>modifier, anciennes offres</small></button>
+              <button class="tuile resp" data-action="allerAide" data-args='["modes"]'><svg class="ico"><use href="#i-bouclier"/></svg>Modes de sécurité<small>signaler ou bloquer</small></button>
+              <button class="tuile resp" data-action="allerAide" data-args='["code"]'><svg class="ico"><use href="#i-cle"/></svg>Code &amp; tablettes<small>code, autorisations</small></button>
+              <button class="tuile resp" data-action="allerAide" data-args='["dates"]'><svg class="ico"><use href="#i-calendrier"/></svg>Dates &amp; clôture<small>lancer, prolonger, finir</small></button>
+              <button class="tuile resp" data-action="allerAide" data-args='["corrections"]'><svg class="ico"><use href="#i-liste"/></svg>Corrections &amp; archives<small>modifier, anciennes offres</small></button>
             </div>
           </div>
 
           <div class="sous-ecran" data-aide="saisir">
-            <button class="retour" data-action="allerAide" data-args='["accueil"]'>← Retour</button>
-            <h3 class="titre-ecran">📝 Saisir un client</h3>
+            <button class="retour" data-action="allerAide" data-args='["accueil"]'><svg class="ico"><use href="#i-chevron"/></svg>Retour</button>
+            <h3 class="titre-ecran"><svg class="ico"><use href="#i-stylo"/></svg> Saisir un client</h3>
             <ul>
               <li>Remplissez le <strong>N° de pièce</strong>, le <strong>Nom</strong>, le <strong>Prénom</strong>, le montant et les notes. La touche <strong>Entrée</strong> passe au champ suivant.</li>
               <li>Touchez <strong>VÉRIFIER ET VALIDER</strong>.</li>
@@ -109,8 +110,8 @@
           </div>
 
           <div class="sous-ecran" data-aide="alertes">
-            <button class="retour" data-action="allerAide" data-args='["accueil"]'>← Retour</button>
-            <h3 class="titre-ecran">🚨 Les alertes</h3>
+            <button class="retour" data-action="allerAide" data-args='["accueil"]'><svg class="ico"><use href="#i-chevron"/></svg>Retour</button>
+            <h3 class="titre-ecran"><svg class="ico"><use href="#i-alerte"/></svg> Les alertes</h3>
             <p>Si le client pose problème, un encadré s'affiche à la place du formulaire :</p>
             <ul>
               <li class="encadre-aide rouge">🛑 <strong>ALERTE FRAUDE</strong> : ce client (même nom + même pièce) a déjà profité de l'offre.</li>
@@ -125,8 +126,8 @@
           </div>
 
           <div class="sous-ecran" data-aide="numero">
-            <button class="retour" data-action="allerAide" data-args='["accueil"]'>← Retour</button>
-            <h3 class="titre-ecran">🔎 Vérification du N°</h3>
+            <button class="retour" data-action="allerAide" data-args='["accueil"]'><svg class="ico"><use href="#i-chevron"/></svg>Retour</button>
+            <h3 class="titre-ecran"><svg class="ico"><use href="#i-loupe"/></svg> Vérification du N°</h3>
             <ul>
               <li>Dès que vous quittez le champ <strong>N° de pièce</strong>, l'application le vérifie.</li>
               <li><strong>Déjà enregistré sur l'offre en cours</strong> : une fenêtre vous le signale avec la ligne concernée. Recopiez quand même le nom lu sur la pièce : la décision se fait à la validation.</li>
@@ -135,21 +136,21 @@
           </div>
 
           <div class="sous-ecran" data-aide="imprimer">
-            <button class="retour" data-action="allerAide" data-args='["accueil"]'>← Retour</button>
-            <h3 class="titre-ecran">🖨️ Imprimer</h3>
+            <button class="retour" data-action="allerAide" data-args='["accueil"]'><svg class="ico"><use href="#i-chevron"/></svg>Retour</button>
+            <h3 class="titre-ecran"><svg class="ico"><use href="#i-imprimer"/></svg> Imprimer</h3>
             <ul>
-              <li>Touchez <strong>⚙️</strong> puis <strong>🖨️ IMPRIMER AUJOURD'HUI</strong>, ou <strong>📚 TOUTE L'OFFRE</strong> pour toute l'offre en cours.</li>
-              <li><strong>Un jour oublié</strong> : dans ⚙️, choisissez la date sous « Imprimer un jour précédent » puis <strong>IMPRIMER</strong>.</li>
+              <li>Touchez <strong><svg class="ico"><use href="#i-reglages"/></svg></strong> puis <strong><svg class="ico"><use href="#i-imprimer"/></svg> IMPRIMER AUJOURD'HUI</strong>, ou <strong><svg class="ico"><use href="#i-livre"/></svg> TOUTE L'OFFRE</strong> pour toute l'offre en cours.</li>
+              <li><strong>Un jour oublié</strong> : dans <svg class="ico"><use href="#i-reglages"/></svg>, choisissez la date sous « Imprimer un jour précédent » puis <strong>IMPRIMER</strong>.</li>
               <li>Aucun code n'est demandé pour imprimer.</li>
             </ul>
           </div>
 
           <div class="sous-ecran" data-aide="scan">
-            <button class="retour" data-action="allerAide" data-args='["accueil"]'>← Retour</button>
-            <h3 class="titre-ecran">📷 Scanner une pièce d'identité</h3>
+            <button class="retour" data-action="allerAide" data-args='["accueil"]'><svg class="ico"><use href="#i-chevron"/></svg>Retour</button>
+            <h3 class="titre-ecran"><svg class="ico"><use href="#i-appareil-photo"/></svg> Scanner une pièce d'identité</h3>
             <ul>
               <li><strong>Quelle face ?</strong> Le côté qui porte la <strong>bande de symboles &lt;&lt;&lt;</strong> (en bas du document). Sur les <strong>cartes</strong> (CNI, titre de séjour), c'est en général <strong>le dos</strong> ; sur le <strong>passeport</strong>, la <strong>page avec la photo</strong>.</li>
-              <li><strong>Comment faire :</strong> touchez <strong>📷</strong> (en haut), photographiez <strong>cette bande</strong> bien à plat → le <strong>Nom</strong>, le <strong>Prénom</strong> et le <strong>N° de pièce</strong> se remplissent tout seuls.</li>
+              <li><strong>Comment faire :</strong> touchez <strong><svg class="ico"><use href="#i-appareil-photo"/></svg></strong> (en haut), photographiez <strong>cette bande</strong> bien à plat → le <strong>Nom</strong>, le <strong>Prénom</strong> et le <strong>N° de pièce</strong> se remplissent tout seuls.</li>
               <li><strong>Pièces reconnues :</strong> Passeport, Nouvelle carte d'identité, Ancienne carte d'identité, Titre de séjour. <em>(Ne fonctionne pas avec la Carte Vitale ni le permis de conduire.)</em></li>
               <li><strong>Pour une bonne lecture :</strong> la bande doit <strong>remplir la largeur</strong>, être <strong>nette</strong>, <strong>bien éclairée</strong>, <strong>sans reflet</strong>, et dans le <strong>sens de lecture</strong>.</li>
               <li class="encadre-aide orange">⚠️ <strong>Vérifiez toujours :</strong> relisez le <strong>Nom</strong>, le <strong>Prénom</strong> et le <strong>N° de pièce</strong>, et corrigez si besoin <strong>avant de valider</strong>.</li>
@@ -159,44 +160,44 @@
           </div>
 
           <div class="sous-ecran" data-aide="modes">
-            <button class="retour" data-action="allerAide" data-args='["accueil"]'>← Retour</button>
-            <h3 class="titre-ecran">🚦 Modes de sécurité</h3>
+            <button class="retour" data-action="allerAide" data-args='["accueil"]'><svg class="ico"><use href="#i-chevron"/></svg>Retour</button>
+            <h3 class="titre-ecran"><svg class="ico"><use href="#i-bouclier"/></svg> Modes de sécurité</h3>
             <ul>
               <li>🟡 <strong>SIGNALER</strong> : l'application alerte mais laisse <strong>forcer</strong> l'ajout.</li>
               <li>🔴 <strong>BLOQUANT</strong> : les alertes rouges refusent la saisie, sans possibilité de forcer. L'homonyme (orange) reste forçable.</li>
               <li>Le mode est <strong>conservé</strong> d'une offre à l'autre.</li>
-              <li>Réglage : ⚙️ → Espace responsable → tuile <strong>🛡️ Sécurité</strong>.</li>
+              <li>Réglage : <svg class="ico"><use href="#i-reglages"/></svg> → Espace responsable → tuile <strong><svg class="ico"><use href="#i-bouclier"/></svg> Sécurité</strong>.</li>
             </ul>
           </div>
 
           <div class="sous-ecran" data-aide="code">
-            <button class="retour" data-action="allerAide" data-args='["accueil"]'>← Retour</button>
-            <h3 class="titre-ecran">🔑 Code &amp; tablettes</h3>
+            <button class="retour" data-action="allerAide" data-args='["accueil"]'><svg class="ico"><use href="#i-chevron"/></svg>Retour</button>
+            <h3 class="titre-ecran"><svg class="ico"><use href="#i-cle"/></svg> Code &amp; tablettes</h3>
             <ul>
               <li><strong>Code responsable</strong> : 6 chiffres. Il ouvre l'espace responsable (mode, dates, corrections, archives, réglages, clôture). Pour le créer, l'application demande le <strong>code d'activation</strong> affiché dans le Google Sheets (menu 🚀 APPLICATION → 🔑 Code d'activation).</li>
               <li>L'espace se reverrouille à la fermeture du panneau ou après 10 min sans action.</li>
               <li>Après un code faux, patientez 10 s ; 5 codes faux bloquent 15 min.</li>
-              <li><strong>Tablettes</strong> : chacune est autorisée une fois avec le code. Une tablette non autorisée ne voit rien, même avec le lien. Liste et retrait : tuile <strong>🔑 Code &amp; tablettes</strong>.</li>
-              <li><strong>Code oublié</strong> : il se réinitialise depuis le panneau ⚙️ du Google Sheets (personnes ayant accès au fichier), qui affiche un code d'activation pour en créer un nouveau.</li>
+              <li><strong>Tablettes</strong> : chacune est autorisée une fois avec le code. Une tablette non autorisée ne voit rien, même avec le lien. Liste et retrait : tuile <strong><svg class="ico"><use href="#i-cle"/></svg> Code &amp; tablettes</strong>.</li>
+              <li><strong>Code oublié</strong> : il se réinitialise depuis le panneau <svg class="ico"><use href="#i-reglages"/></svg> du Google Sheets (personnes ayant accès au fichier), qui affiche un code d'activation pour en créer un nouveau.</li>
             </ul>
           </div>
 
           <div class="sous-ecran" data-aide="dates">
-            <button class="retour" data-action="allerAide" data-args='["accueil"]'>← Retour</button>
-            <h3 class="titre-ecran">📅 Dates &amp; clôture</h3>
+            <button class="retour" data-action="allerAide" data-args='["accueil"]'><svg class="ico"><use href="#i-chevron"/></svg>Retour</button>
+            <h3 class="titre-ecran"><svg class="ico"><use href="#i-calendrier"/></svg> Dates &amp; clôture</h3>
             <ul>
-              <li><strong>Lancer ou prolonger</strong> : ⚙️ → Espace responsable → tuile <strong>📅 Opération</strong>, puis modifiez les dates.</li>
+              <li><strong>Lancer ou prolonger</strong> : <svg class="ico"><use href="#i-reglages"/></svg> → Espace responsable → tuile <strong><svg class="ico"><use href="#i-calendrier"/></svg> Opération</strong>, puis modifiez les dates.</li>
               <li><strong>Fin de l'offre</strong> : rien à faire. La nuit suivant le dernier jour, l'offre est clôturée et archivée automatiquement.</li>
-              <li>Clôture immédiate possible : bouton <strong>⚠️ CLÔTURER L'OFFRE</strong> de l'espace responsable.</li>
+              <li>Clôture immédiate possible : bouton <strong><svg class="ico"><use href="#i-alerte"/></svg> CLÔTURER L'OFFRE</strong> de l'espace responsable.</li>
             </ul>
           </div>
 
           <div class="sous-ecran" data-aide="corrections">
-            <button class="retour" data-action="allerAide" data-args='["accueil"]'>← Retour</button>
-            <h3 class="titre-ecran">📋 Corrections &amp; archives</h3>
+            <button class="retour" data-action="allerAide" data-args='["accueil"]'><svg class="ico"><use href="#i-chevron"/></svg>Retour</button>
+            <h3 class="titre-ecran"><svg class="ico"><use href="#i-liste"/></svg> Corrections &amp; archives</h3>
             <ul>
-              <li><strong>Corriger ou supprimer une saisie</strong> : tuile <strong>📋 Saisies</strong>, recherchez par nom ou N°. Une correction est <strong>re-vérifiée</strong> comme une nouvelle saisie.</li>
-              <li><strong>Anciennes offres</strong> : tuile <strong>🗄️ Archives</strong>, choisissez l'offre puis imprimez.</li>
+              <li><strong>Corriger ou supprimer une saisie</strong> : tuile <strong><svg class="ico"><use href="#i-liste"/></svg> Saisies</strong>, recherchez par nom ou N°. Une correction est <strong>re-vérifiée</strong> comme une nouvelle saisie.</li>
+              <li><strong>Anciennes offres</strong> : tuile <strong><svg class="ico"><use href="#i-archive"/></svg> Archives</strong>, choisissez l'offre puis imprimez.</li>
               <li>Les archives sont <strong>supprimées automatiquement 3 ans</strong> après la clôture de l'offre.</li>
             </ul>
           </div>
@@ -207,29 +208,29 @@
 
     <div id="modalParametres" class="modal-overlay">
       <div class="modal-content">
-        <button class="btn-close-modal" data-action="fermerPanneau">✖</button>
-        <h2 class="titre-haut">⚙️ Paramètres</h2>
+        <button class="btn-close-modal" data-action="fermerPanneau" aria-label="Fermer"><svg class="ico"><use href="#i-fermer"/></svg></button>
+        <h2 class="titre-haut"><svg class="ico"><use href="#i-reglages"/></svg> Paramètres</h2>
         <hr class="separateur">
 
         <!-- ===== ACCUEIL : impression (libre) + espace responsable ===== -->
         <div class="sous-ecran actif" data-ecran="accueil">
-        <button class="btn-action btn-print-jour" data-action="preparerImpression" data-args='["jour","aujourdhui","Impression du Jour"]'>🖨️ IMPRIMER AUJOURD'HUI</button>
+        <button class="btn-action btn-print-jour" data-action="preparerImpression" data-args='["jour","aujourdhui","Impression du Jour"]'><svg class="ico"><use href="#i-imprimer"/></svg> IMPRIMER AUJOURD'HUI</button>
 
         <div class="encadre-gris">
-          <label class="label-discret">📅 Imprimer un jour précédent :</label>
+          <label class="label-discret"><svg class="ico"><use href="#i-calendrier"/></svg> Imprimer un jour précédent :</label>
           <div class="print-row">
             <input type="date" id="dateImpression" class="input-date">
             <button class="btn-action btn-gris-ligne" data-action="preparerImpressionAncien">IMPRIMER</button>
           </div>
         </div>
 
-        <button class="btn-action btn-print-offre" data-action="preparerImpression" data-args='["offre","","Impression Offre Complète"]'>📚 TOUTE L'OFFRE</button>
+        <button class="btn-action btn-print-offre" data-action="preparerImpression" data-args='["offre","","Impression Offre Complète"]'><svg class="ico"><use href="#i-livre"/></svg> TOUTE L'OFFRE</button>
 
         <hr class="separateur-large">
 
         <!-- Espace responsable (code PIN vérifié côté serveur) -->
         <div id="zoneVerrou">
-          <h3 class="titre-haut-centre">🔒 Espace responsable</h3>
+          <h3 class="titre-haut-centre"><svg class="ico"><use href="#i-cadenas"/></svg> Espace responsable</h3>
           <p class="texte-verrou" id="txtVerrou"></p>
           <input style="display: none" class="marge-bas-10" type="text" id="activationVerrou" inputmode="numeric" autocomplete="off" maxlength="9" placeholder="Code d'activation (affiché dans le Google Sheets)">
           <input class="marge-bas-10" type="password" id="pinSaisi" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="Code (6 chiffres)">
@@ -239,27 +240,27 @@
         </div>
 
         <div id="zoneAdmin" style="display: none">
-          <h3 class="titre-haut-centre">🔓 Espace responsable</h3>
+          <h3 class="titre-haut-centre"><svg class="ico"><use href="#i-cadenas-ouvert"/></svg> Espace responsable</h3>
           <div style="display: none" class="alerte-admin" id="alerteAdmin"></div>
           <div class="tuiles">
-            <button class="tuile" data-action="ouvrirSaisies"><span class="ico">📋</span>Saisies<small>corriger / supprimer</small></button>
-            <button class="tuile" data-action="ouvrirArchives"><span class="ico">🗄️</span>Archives<small>offres clôturées</small></button>
-            <button class="tuile" data-action="allerEcran" data-args='["operation"]'><span class="ico">📅</span>Opération<small id="resumeOperation">—</small></button>
-            <button class="tuile" data-action="allerEcran" data-args='["securite"]'><span class="ico">🛡️</span>Sécurité<small id="resumeSecurite">—</small></button>
-            <button class="tuile" data-action="allerEcran" data-args='["reglages"]'><span class="ico">🏷️</span>Réglages<small>textes de la structure</small></button>
-            <button class="tuile" data-action="ouvrirCodeTablettes"><span class="ico">🔑</span>Code &amp; tablettes<small>code, tablettes autorisées</small></button>
+            <button class="tuile" data-action="ouvrirSaisies"><svg class="ico"><use href="#i-liste"/></svg>Saisies<small>corriger / supprimer</small></button>
+            <button class="tuile" data-action="ouvrirArchives"><svg class="ico"><use href="#i-archive"/></svg>Archives<small>offres clôturées</small></button>
+            <button class="tuile" data-action="allerEcran" data-args='["operation"]'><svg class="ico"><use href="#i-calendrier"/></svg>Opération<small id="resumeOperation">—</small></button>
+            <button class="tuile" data-action="allerEcran" data-args='["securite"]'><svg class="ico"><use href="#i-bouclier"/></svg>Sécurité<small id="resumeSecurite">—</small></button>
+            <button class="tuile" data-action="allerEcran" data-args='["reglages"]'><svg class="ico"><use href="#i-etiquette"/></svg>Réglages<small>textes de la structure</small></button>
+            <button class="tuile" data-action="ouvrirCodeTablettes"><svg class="ico"><use href="#i-cle"/></svg>Code &amp; tablettes<small>code, tablettes autorisées</small></button>
           </div>
           <div class="pied">
-            <button class="btn-action btn-archive" data-action="cloturerOffre">⚠️ CLÔTURER L'OFFRE</button>
-            <button class="btn-action btn-sombre" data-action="verrouillerAdmin">🔒 VERROUILLER</button>
+            <button class="btn-action btn-archive" data-action="cloturerOffre"><svg class="ico"><use href="#i-alerte"/></svg> CLÔTURER L'OFFRE</button>
+            <button class="btn-action btn-sombre" data-action="verrouillerAdmin"><svg class="ico"><use href="#i-cadenas"/></svg> VERROUILLER</button>
           </div>
         </div>
         </div>
 
         <!-- ===== SOUS-ÉCRANS DE L'ESPACE RESPONSABLE ===== -->
         <div class="sous-ecran" data-ecran="saisies">
-          <button class="retour" data-action="fermerSaisies">← Retour</button>
-          <h3 class="titre-ecran">📋 Saisies de l'offre en cours</h3>
+          <button class="retour" data-action="fermerSaisies"><svg class="ico"><use href="#i-chevron"/></svg>Retour</button>
+          <h3 class="titre-ecran"><svg class="ico"><use href="#i-liste"/></svg> Saisies de l'offre en cours</h3>
           <div id="vueListeSaisies">
             <input class="marge-bas-10" type="text" id="rechercheSaisie" placeholder="Rechercher (nom, prénom, pièce)…" autocomplete="off">
             <div class="message-liste" id="msgSaisies"></div>
@@ -285,15 +286,15 @@
         </div>
 
         <div class="sous-ecran" data-ecran="archives">
-          <button class="retour" data-action="allerEcran" data-args='["accueil"]'>← Retour</button>
-          <h3 class="titre-ecran">🗄️ Archives (offres clôturées)</h3>
+          <button class="retour" data-action="allerEcran" data-args='["accueil"]'><svg class="ico"><use href="#i-chevron"/></svg>Retour</button>
+          <h3 class="titre-ecran"><svg class="ico"><use href="#i-archive"/></svg> Archives (offres clôturées)</h3>
           <select class="liste-archives" id="selArchive"></select>
-          <button class="btn-action btn-bleu" data-action="imprimerArchive">🖨️ IMPRIMER CETTE ARCHIVE</button>
+          <button class="btn-action btn-bleu" data-action="imprimerArchive"><svg class="ico"><use href="#i-imprimer"/></svg> IMPRIMER CETTE ARCHIVE</button>
         </div>
 
         <div class="sous-ecran" data-ecran="operation">
-          <button class="retour" data-action="allerEcran" data-args='["accueil"]'>← Retour</button>
-          <h3 class="titre-ecran">📅 Opération en cours</h3>
+          <button class="retour" data-action="allerEcran" data-args='["accueil"]'><svg class="ico"><use href="#i-chevron"/></svg>Retour</button>
+          <h3 class="titre-ecran"><svg class="ico"><use href="#i-calendrier"/></svg> Opération en cours</h3>
           <div class="ligne-dates">
             <div class="colonne">
               <label class="label-date">Début :</label>
@@ -309,15 +310,15 @@
         </div>
 
         <div class="sous-ecran" data-ecran="securite">
-          <button class="retour" data-action="allerEcran" data-args='["accueil"]'>← Retour</button>
-          <h3 class="titre-ecran">🛡️ Sécurité</h3>
+          <button class="retour" data-action="allerEcran" data-args='["accueil"]'><svg class="ico"><use href="#i-chevron"/></svg>Retour</button>
+          <h3 class="titre-ecran"><svg class="ico"><use href="#i-bouclier"/></svg> Sécurité</h3>
           <button class="btn-action" id="btnMode" data-action="changerMode">⏳ Chargement Mode...</button>
           <button style="display: none" class="btn-action btn-gris" id="btnModeAnnuaire" data-action="changerModeAnnuaire"></button>
         </div>
 
         <div class="sous-ecran" data-ecran="reglages">
-          <button class="retour" data-action="allerEcran" data-args='["accueil"]'>← Retour</button>
-          <h3 class="titre-ecran">🏷️ Réglages de la structure</h3>
+          <button class="retour" data-action="allerEcran" data-args='["accueil"]'><svg class="ico"><use href="#i-chevron"/></svg>Retour</button>
+          <h3 class="titre-ecran"><svg class="ico"><use href="#i-etiquette"/></svg> Réglages de la structure</h3>
           <div id="champsReglages"></div>
           <label class="case-a-cocher">
             <input class="largeur-auto" type="checkbox" id="cfg_MONTANT_OBLIGATOIRE"> Montant obligatoire
@@ -327,25 +328,25 @@
         </div>
 
         <div class="sous-ecran" data-ecran="code">
-          <button class="retour" data-action="allerEcran" data-args='["accueil"]'>← Retour</button>
-          <h3 class="titre-ecran">🔑 Code responsable</h3>
+          <button class="retour" data-action="allerEcran" data-args='["accueil"]'><svg class="ico"><use href="#i-chevron"/></svg>Retour</button>
+          <h3 class="titre-ecran"><svg class="ico"><use href="#i-cle"/></svg> Code responsable</h3>
           <input class="marge-bas-10" type="password" id="pinNouveau" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="Nouveau code (6 chiffres)">
           <input class="marge-bas-10" type="password" id="pinNouveau2" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="Confirmer le nouveau code">
           <button class="btn-action btn-vert" data-action="changerPin">ENREGISTRER LE CODE</button>
           <div class="message" id="msgPin"></div>
           <hr class="separateur-large">
-          <h3 class="titre-ecran">📱 Tablettes autorisées</h3>
+          <h3 class="titre-ecran"><svg class="ico"><use href="#i-tablette"/></svg> Tablettes autorisées</h3>
           <div class="message-tablettes" id="msgTablettes"></div>
           <div id="listeTablettes"></div>
-          <button class="btn-action btn-archive marge-haut-10" data-action="retirerToutesLesTablettes">⚠️ RETIRER TOUTES LES TABLETTES</button>
+          <button class="btn-action btn-archive marge-haut-10" data-action="retirerToutesLesTablettes"><svg class="ico"><use href="#i-alerte"/></svg> RETIRER TOUTES LES TABLETTES</button>
         </div>
       </div>
     </div>
 
     <div id="modalMentions" class="modal-overlay">
       <div class="modal-content largeur-500">
-        <button class="btn-close-modal" data-action="fermerMentions">✖</button>
-        <h2 class="titre-modal">⚖️ Mentions légales</h2>
+        <button class="btn-close-modal" data-action="fermerMentions" aria-label="Fermer"><svg class="ico"><use href="#i-fermer"/></svg></button>
+        <h2 class="titre-modal"><svg class="ico"><use href="#i-balance"/></svg> Mentions légales</h2>
         <hr class="separateur">
 
         <div class="texte-mentions">
@@ -367,7 +368,7 @@
 
     <div id="modalDoublonPiece" class="modal-overlay">
       <div class="modal-content">
-        <h2 class="titre-modal-alerte">⚠️ N° de pièce déjà enregistré</h2>
+        <h2 class="titre-modal-alerte"><svg class="ico"><use href="#i-alerte"/></svg> N° de pièce déjà enregistré</h2>
         <p class="texte-alerte" id="msgDoublonPiece"></p>
         <div id="listeDoublonPiece"></div>
         <button class="btn-action fond-bleu-haut" data-action="fermerDoublonPiece">OK</button>
@@ -376,7 +377,7 @@
 
     <div id="ecranAppairage" class="modal-overlay ecran-appairage">
       <div class="modal-content largeur-420">
-        <h2 class="titre-haut-centre">🔒 Tablette non autorisée</h2>
+        <h2 class="titre-haut-centre"><svg class="ico"><use href="#i-cadenas"/></svg> Tablette non autorisée</h2>
         <p class="texte-appairage" id="txtAppairage"></p>
         <div class="input-group" id="blocActivationApp" style="display: none">
           <label>Code d'activation (affiché dans le Google Sheets)</label>
@@ -419,7 +420,7 @@
 
     <div id="modalAnnuaire" class="modal-overlay">
       <div class="modal-content">
-        <h2 class="titre-modal-info">👤 Client connu</h2>
+        <h2 class="titre-modal-info"><svg class="ico"><use href="#i-personne"/></svg> Client connu</h2>
         <p class="texte-14" id="msgAnnuaire"></p>
         <div class="flex-btn">
           <button class="btn-cancel" data-action="ignorerAnnuaire">IGNORER</button>

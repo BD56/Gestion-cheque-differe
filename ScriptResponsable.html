@@ -1,5 +1,5 @@
 <!-- Espace responsable : code, corrections, archives, réglages, tablettes. -->
-<script data-version="2026.10.13-2">
+<script data-version="2026.10.14-0149">
   // =================================================================
   // --- ESPACE RESPONSABLE (code PIN) ---
   // Le jeton n'est gardé qu'en mémoire : il disparaît à la fermeture du
@@ -190,7 +190,7 @@
   function msgSaisies(texte, couleur) {
     const m = document.getElementById("msgSaisies");
     m.textContent = texte || "";
-    m.style.color = couleur || "#3c4043";
+    m.style.color = couleur || "var(--encre)";
   }
   function chargerListeSaisies(message, couleur) {
     msgSaisies(message || "⏳ Chargement…", couleur);
@@ -215,7 +215,7 @@
       if (filtre && botte.indexOf(filtre) === -1 && botte.indexOf(filtrePiece) === -1) return;
       const carte = document.createElement("div");
       carte.className = "doublon-carte";
-      if (sa.alerte) carte.style.borderLeftColor = "#d93025";
+      if (sa.alerte) carte.style.borderLeftColor = "var(--danger)";
       const lignes = [
         "📅 " + sa.date + " (Ligne " + sa.ligne + ")",
         "👤 " + sa.nom + " " + sa.prenom + (sa.alerte ? "  ⚠️" : ""),
@@ -233,14 +233,14 @@
       actions.style.marginTop = "8px";
       const bSup = document.createElement("button");
       bSup.className = "btn-cancel";
-      bSup.style.background = "#d93025";
+      bSup.style.background = "var(--danger)";
       bSup.textContent = "🗑️ SUPPRIMER";
       bSup.addEventListener("click", function () {
         supprimerUneSaisie(sa);
       });
       const bCor = document.createElement("button");
       bCor.className = "btn-force";
-      bCor.style.background = "#1a73e8";
+      bCor.style.background = "var(--accent)";
       bCor.textContent = "✏️ CORRIGER";
       bCor.addEventListener("click", function () {
         corrigerUneSaisie(sa);
@@ -292,8 +292,8 @@
       document.getElementById("corAlerteMsg").textContent = "Saisissez un nombre (ex. 150 ou 150,50).";
       document.getElementById("corAlerteListe").textContent = "";
       document.getElementById("btnForcerCorrection").style.display = "none";
-      box0.style.backgroundColor = "#f8d7da";
-      box0.style.borderColor = "#f5c6cb";
+      box0.style.backgroundColor = "var(--danger-doux)";
+      box0.style.borderColor = "var(--danger-trait)";
       box0.style.display = "block";
       return;
     }
@@ -311,15 +311,15 @@
         if (r.status === "SUCCES") {
           saisieEnCours = null;
           afficherVueListe();
-          chargerListeSaisies(r.message, r.message.indexOf("✅") === 0 ? "green" : "#d35400");
+          chargerListeSaisies(r.message, r.message.indexOf("✅") === 0 ? "var(--ok)" : "var(--orange)");
           rechargerCacheVerif();
           return;
         }
         // Doublon : CONFIRMATION (forçable) ou BLOQUE
         const box = document.getElementById("corAlerte");
         const orange = r.couleur === "ORANGE";
-        box.style.backgroundColor = orange ? "#fff3cd" : "#f8d7da";
-        box.style.borderColor = orange ? "#ffeeba" : "#f5c6cb";
+        box.style.backgroundColor = orange ? "var(--orange-doux)" : "var(--danger-doux)";
+        box.style.borderColor = orange ? "var(--orange-trait)" : "var(--danger-trait)";
         document.getElementById("corAlerteTitre").textContent = r.titre;
         document.getElementById("corAlerteMsg").textContent = r.message;
         const liste = document.getElementById("corAlerteListe");
@@ -366,7 +366,7 @@
       "supprimerSaisie",
       [sa.ligne, attenduDe(sa)],
       function (message) {
-        chargerListeSaisies(message, "green");
+        chargerListeSaisies(message, "var(--ok)");
         rechargerCacheVerif();
       },
       function () {
@@ -452,7 +452,7 @@
     // des valeurs vides ou d'une session précédente écraseraient les vraies)
     if (!reglagesCharges || !document.getElementById("cfg_NOM_OFFRE")) {
       const m0 = document.getElementById("msgReglages");
-      m0.style.color = "#d93025";
+      m0.style.color = "var(--danger)";
       m0.textContent = "Réglages pas encore chargés : patientez puis réessayez.";
       return;
     }
@@ -462,7 +462,7 @@
     });
     valeurs.MONTANT_OBLIGATOIRE = document.getElementById("cfg_MONTANT_OBLIGATOIRE").checked ? "OUI" : "NON";
     const msg = document.getElementById("msgReglages");
-    msg.style.color = "orange";
+    msg.style.color = "var(--orange)";
     msg.textContent = "Enregistrement...";
     appelAdmin(
       "setConfig",
@@ -470,7 +470,7 @@
       function (cfg) {
         appliquerConfig(cfg);
         remplirFormulaireReglages(cfg);
-        msg.style.color = "green";
+        msg.style.color = "var(--ok)";
         msg.textContent = "✅ Réglages enregistrés (titre de l'onglet : au prochain chargement).";
       },
       function () {
@@ -515,7 +515,7 @@
         });
         const b = document.createElement("button");
         b.className = "btn-cancel";
-        b.style.background = "#d93025";
+        b.style.background = "var(--danger)";
         b.style.marginTop = "8px";
         b.textContent = "RETIRER";
         b.addEventListener("click", function () {
@@ -563,7 +563,7 @@
     const p1 = document.getElementById("pinNouveau").value.trim();
     const p2 = document.getElementById("pinNouveau2").value.trim();
     const msg = document.getElementById("msgPin");
-    msg.style.color = "#d93025";
+    msg.style.color = "var(--danger)";
     if (!/^\d{6}$/.test(p1)) {
       msg.textContent = "Le code doit contenir exactement 6 chiffres.";
       return;
@@ -577,7 +577,7 @@
       document.getElementById("pinNouveau2").value = "";
       if (r && r.ok) {
         jetonAdmin = r.jeton;
-        msg.style.color = "green";
+        msg.style.color = "var(--ok)";
         msg.textContent = "✅ Code modifié.";
       } else msg.textContent = (r && r.message) || "Refusé.";
     });

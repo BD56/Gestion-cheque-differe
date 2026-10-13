@@ -59,6 +59,18 @@ Panneau.html ; captures avant / après de chaque écran. Ne pas oublier : la car
 actuelle déborde sur écran étroit (~420 px : container 100 % + padding sans
 box-sizing) → corrigé par la refonte.
 
+**Avancement (branche `design`, « go » de Bryan le 13/10)** :
+- ✅ Étape 1 — palette et icônes (version 2026.10.14-0149) : variables CSS dans `:root`
+  (Style.html), police du système, `box-sizing: border-box` partout (débordement sur
+  écran étroit corrigé ; largeurs max. relevées pour garder la même taille visible),
+  `Icones.html` (sprite SVG inclus en tête de Index.html, dans FICHIERS_PAGE,
+  version en attribut sur `<svg>`), emojis de l'interface fixe d'Index.html remplacés.
+  Couleurs posées par les scripts → `var(--…)`. Captures : `outils/captures.js`.
+  RESTENT volontairement en emojis : messages du serveur et titres d'alerte (🛑 ⚠️ ✅,
+  étape 3), puces de modes 🟡🔴 et ⏳ (étapes 2 et 5), menu du Sheet 🚀🔑 (Google
+  n'affiche pas d'icônes dans un menu ; l'aide y renvoie), Panneau.html (étape 7).
+- ▶️ Prochaine : étape 2 (en-tête + saisie en 3 étapes).
+
 **Tranché par Bryan (13/10, après relecture du plan)** : journal = chèques de TOUTES
 les tablettes (copie locale, décalage ≤ 2 min pour les autres tablettes). Pas de modèle
 de tablette unique (plusieurs magasins, plusieurs modèles) → mise en page adaptée à

@@ -28,7 +28,7 @@ function fichiersGs(repo) {
 function morceauxPage(repo) {
   return fs
     .readdirSync(repo)
-    .filter((f) => /^(Script\w*|Style)\.html$/.test(f))
+    .filter((f) => /^(Script\w*|Style|Icones)\.html$/.test(f))
     .sort();
 }
 // { fichier: [noms] } pour un côté

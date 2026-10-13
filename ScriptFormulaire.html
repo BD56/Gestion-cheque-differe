@@ -1,5 +1,5 @@
 <!-- Formulaire : montant, touche Entrée, vérification du N°, copie locale, annuaire. -->
-<script data-version="2026.10.13-2">
+<script data-version="2026.10.14-0149">
   // --- FORMATAGE AUTOMATIQUE DU MONTANT ---
   // Montant lisible -> reformaté « 1234,50 € » ; illisible -> laissé tel quel, encadré en rouge
   ["montant", "corMontant"].forEach(function (idMontant) {
@@ -12,7 +12,7 @@
       }
       const n = lireMontant(valeur);
       if (n === null) {
-        this.style.borderColor = "#d93025";
+        this.style.borderColor = "var(--danger)";
         return;
       }
       this.style.borderColor = "";

@@ -1,5 +1,5 @@
 <!-- Envoi d'une saisie, encadré de doublon, contrôle A/B/C local, saisies en attente. -->
-<script data-version="2026.10.13-2">
+<script data-version="2026.10.14-0149">
   let memNom = "",
     memPrenom = "",
     memPiece = "",
@@ -36,7 +36,7 @@
 
     if (memMontant.trim() !== "" && lireMontant(memMontant) === null) {
       afficherMessage("Montant illisible : saisissez un nombre (ex. 150 ou 150,50).", "error");
-      document.getElementById("montant").style.borderColor = "#d93025";
+      document.getElementById("montant").style.borderColor = "var(--danger)";
       return;
     }
     if (memMontant.trim() !== "") memMontant = formaterMontant(lireMontant(memMontant));
@@ -132,15 +132,15 @@
     msgBox.textContent = messageTexte;
 
     if (couleurTheme === "ORANGE") {
-      box.style.backgroundColor = "#fff3cd";
-      box.style.borderColor = "#ffeeba";
-      titre.style.color = "#d35400";
-      msgBox.style.color = "#856404";
+      box.style.backgroundColor = "var(--orange-doux)";
+      box.style.borderColor = "var(--orange-trait)";
+      titre.style.color = "var(--orange)";
+      msgBox.style.color = "var(--orange)";
     } else {
-      box.style.backgroundColor = "#f8d7da";
-      box.style.borderColor = "#f5c6cb";
-      titre.style.color = "#d93025";
-      msgBox.style.color = "#721c24";
+      box.style.backgroundColor = "var(--danger-doux)";
+      box.style.borderColor = "var(--danger-trait)";
+      titre.style.color = "var(--danger)";
+      msgBox.style.color = "var(--danger)";
     }
 
     if (isBloquant) {

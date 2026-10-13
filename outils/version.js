@@ -52,7 +52,7 @@ function marquer(f, version) {
     const marque = 'data-version="' + version + '"';
     if (RE_HTML.test(src)) src = src.replace(RE_HTML, marque);
     else if (/<html[\s>]/.test(src)) src = src.replace(/<html([^>]*)>/, "<html$1 " + marque + ">");
-    else src = src.replace(/<(script|style)([^>]*)>/, "<$1$2 " + marque + ">");
+    else src = src.replace(/<(script|style|svg)([^>]*)>/, "<$1$2 " + marque + ">");
   }
   fs.writeFileSync(chemin, src);
 }

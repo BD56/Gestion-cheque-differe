@@ -4,8 +4,12 @@ Simulation de Google Apps Script / Google Sheets (`harness.js`, `mocks.js`,
 `fakesheet.js`) + navigateur Chromium piloté par Playwright (`navigateur.js`) avec un
 faux `google.script.run` branché sur le serveur simulé.
 
-- **Lancer** : `bash tests/lancer.sh` (depuis la racine). Prérequis : Node 18+ et
-  Playwright installé globalement (`npm i -g playwright`, navigateur Chromium).
+- **Lancer** : `npm test` (ou `bash tests/lancer.sh`), depuis la racine. Prérequis :
+  Node 20+, puis une fois `npm install` (installe Playwright et les outils) et
+  `npx playwright install chromium` (le navigateur). Un Playwright installé
+  globalement fonctionne aussi.
+- **Contrôle du code** : `npm run lint` (ESLint). Il signale notamment une fonction
+  déclarée dans deux fichiers `.gs` (Apps Script, lui, ne dit rien).
 - La fausse feuille **imite la conversion automatique de Google Sheets** (un texte
   « 0123 » devient le nombre 123, une apostrophe initiale force le texte).
 - Par défaut le contrôle « tablette autorisée » est neutralisé (`exigerTablette_`) et la

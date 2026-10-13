@@ -1,0 +1,26 @@
+{
+  "name": "gestion-cheque-differe",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Gestion Chèques Différés : application Google Apps Script anti-fraude (outils de développement uniquement, rien ici n'est envoyé à Apps Script).",
+  "scripts": {
+    "test": "bash tests/lancer.sh",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "push": "clasp push",
+    "status": "clasp status"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@google/clasp": "^3.4.1",
+    "eslint": "^10.12.0",
+    "eslint-plugin-html": "^8.2.1",
+    "globals": "^17.13.0",
+    "playwright": "1.56.1",
+    "prettier": "^3.9.10"
+  }
+}

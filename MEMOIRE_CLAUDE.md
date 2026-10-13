@@ -36,6 +36,10 @@ Feuille de route validée :
    copier-coller en secours avec la liste exacte des fichiers et « supprimer l'ancien
    Code.gs ») ; `AGENTS.md` (carte des fichiers) ; marche à suivre clasp sur le Mac
    (`clasp login`, scriptId dans `.clasp.json` — Bryan le fait, pas moi).
+**Avancement** : ✅ étape 1 (outillage : `npm test`, `npm run lint`, Prettier configuré
+mais Code.gs/tests/HTML exclus jusqu'à l'étape 5, `.claspignore` en **liste blanche**
+— l'ancien aurait envoyé `node_modules` —, `.clasp.json.exemple`, `npx clasp status`
+pour vérifier ; ESLint signale un nom déclaré dans deux `.gs`). Prochaine : étape 2.
 Plus tard : fusion `refonte` → `generalisation` (ou `main` après Vannes), seulement
 quand Bryan le demande.
 

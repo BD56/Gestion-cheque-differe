@@ -1,0 +1,12 @@
+# Mise en forme automatique (Prettier) : `npm run format`.
+node_modules/
+package-lock.json
+prototype-ocr/
+docs/
+*.md
+# Pages : les balises de modèle Apps Script (<?= … ?>) ne doivent pas être retouchées.
+*.html
+# Code existant : mis en forme à l'étape 5 de la refonte (modernisation), en un seul
+# commit dédié pour ne pas mélanger mise en forme et changements.
+Code.gs
+tests/

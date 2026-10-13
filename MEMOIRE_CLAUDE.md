@@ -113,6 +113,12 @@
 ## 4. Points ouverts / idées non faites
 - Pull request `generalisation` → `main` : à ouvrir **après** le test de Bryan (il n'a pas
   encore demandé).
+- **Nom de l'application** (en pause, à la demande de Bryan) : acronymes retenus CLÉO
+  (Contrôle des Limites d'Éligibilité aux Offres), VERA (Vérification des Éligibilités
+  et Repérage des Abus), ARGOS (Anti-Récidive et Gestion des Offres Sécurisées ; risque
+  avec l'enseigne Argos). Vérification INPI non concluante : data.inpi.fr et TMview
+  refusent les robots ; la recherche de Bryan donnait 0 avec filtre de classe (filtre
+  douteux). À refaire via « Recherche avancée », nom exact, compteurs par classe.
 - Option B de l'analyse #6 (n'envoyer que le nom correspondant au N° au lieu de tout
   l'annuaire) : non faite (#18 accepté).
 - Détection « usurpation inter-offres » (pièce d'une offre passée présentée sous un autre

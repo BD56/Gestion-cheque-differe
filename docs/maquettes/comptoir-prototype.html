@@ -1,0 +1,678 @@
+<title>Comptoir — prototype</title>
+<style>
+  /* Tablette posée au comptoir : saisie au centre, journal du jour repliable à droite. */
+  :root {
+    --fond: #f5f3f0; --surface: #ffffff; --encre: #1c1917; --doux: #6f6863; --trait: #e5dfd8; --champ: #fbfaf8;
+    --accent: #0f766e; --accent-fonce: #0b5d57; --accent-doux: #e3f1ef;
+    --ok: #15803d; --ok-doux: #e7f4eb; --danger: #c81e1e; --danger-doux: #fcebea; --orange: #b45309; --orange-doux: #fdf1e2;
+    --demo: #2b2724; --demo-texte: #f2efeb;
+    --texte: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --chiffres: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; }
+  body { background: var(--fond); color: var(--encre); font-family: var(--texte); font-size: 15px; display: flex; flex-direction: column; }
+  button, input { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
+
+  /* --- Bandeau de démonstration (hors application) --- */
+  .demo { background: var(--demo); color: var(--demo-texte); padding: 10px 16px; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; font-size: 13px; }
+  .demo b { font-weight: 700; }
+  .demo .essais { display: flex; flex-wrap: wrap; gap: 6px; }
+  .demo .essai { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.18); color: var(--demo-texte); border-radius: 8px; padding: 5px 9px; font-size: 12.5px; }
+  .demo .essai:hover { background: rgba(255,255,255,.18); }
+  .demo .droite { margin-left: auto; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .demo label { display: flex; gap: 6px; align-items: center; cursor: pointer; }
+  .demo .lien { background: none; border: 0; color: var(--demo-texte); text-decoration: underline; text-underline-offset: 3px; padding: 4px; }
+
+  /* --- Application --- */
+  .app { flex: 1; min-height: 0; display: flex; flex-direction: column; position: relative; }
+  .haut { display: flex; align-items: center; gap: 12px; padding: 10px 18px; background: var(--surface); border-bottom: 1px solid var(--trait); flex-wrap: wrap; }
+  .marque { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .logo { width: 36px; height: 36px; border-radius: 10px; background: var(--encre); color: #fff; display: grid; place-items: center; flex: 0 0 auto; }
+  .marque b { display: block; font-size: 15.5px; }
+  .marque small { color: var(--doux); font-size: 12px; }
+  .puce { display: inline-flex; align-items: center; gap: 7px; padding: 6px 11px; border-radius: 999px; font-size: 12.5px; font-weight: 650; white-space: nowrap; }
+  .puce.offre { background: var(--ok-doux); color: var(--ok); }
+  .puce.mode { background: var(--orange-doux); color: var(--orange); }
+  .puce.mode.bloquant { background: var(--danger-doux); color: var(--danger); }
+  .espace { flex: 1; }
+  .icone-btn { width: 42px; height: 42px; border-radius: 12px; border: 1px solid var(--trait); background: var(--surface); display: grid; place-items: center; }
+  .icone-btn:hover { background: var(--champ); }
+  .ico { width: 20px; height: 20px; flex: 0 0 auto; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .ico.p { width: 16px; height: 16px; }
+
+  .milieu { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr auto; }
+  .zone-form { overflow: auto; padding: 26px 22px 30px; display: flex; justify-content: center; }
+  form.saisie { width: 100%; max-width: 580px; display: flex; flex-direction: column; gap: 18px; }
+  .etape { display: grid; grid-template-columns: 32px 1fr; gap: 12px; }
+  .num { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 13px; background: var(--encre); color: #fff; margin-top: 24px; transition: background .2s; }
+  .num.fait { background: var(--ok); }
+  .etape h2 { margin: 0 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: .7px; color: var(--doux); font-weight: 750; }
+  .deux { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .champ { position: relative; }
+  .champ input { width: 100%; height: 52px; border: 1.5px solid var(--trait); border-radius: 12px; background: var(--surface); padding: 0 14px; font-size: 17px; font-weight: 600; text-transform: uppercase; }
+  .champ input::placeholder { text-transform: none; font-weight: 400; color: #a8a29e; }
+  .champ input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-doux); }
+  .champ input.grand { height: 62px; font-family: var(--chiffres); font-size: 24px; letter-spacing: 3px; }
+  .champ input.grand::placeholder { font-family: var(--texte); letter-spacing: 0; font-size: 17px; }
+  .champ input.erreur { border-color: var(--danger); box-shadow: 0 0 0 4px var(--danger-doux); }
+  .champ .suffixe { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--doux); font-weight: 600; pointer-events: none; }
+  .champ input.montant { padding-right: 34px; text-transform: none; font-variant-numeric: tabular-nums; }
+  .champ input.note { text-transform: none; font-weight: 500; font-size: 15.5px; }
+  .verdict { margin-top: 8px; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 650; padding: 6px 10px; border-radius: 8px; }
+  .verdict.ok { background: var(--ok-doux); color: var(--ok); }
+  .verdict.ko { background: var(--danger-doux); color: var(--danger); }
+  .valider { margin-left: 44px; height: 60px; border-radius: 14px; border: 0; background: var(--accent); color: #fff; font-size: 17px; font-weight: 750; display: flex; align-items: center; justify-content: center; gap: 10px; }
+  .valider:hover { background: var(--accent-fonce); }
+  .valider kbd { font: 600 11px var(--chiffres); background: rgba(255,255,255,.2); padding: 3px 7px; border-radius: 6px; }
+  .message { margin-left: 44px; min-height: 22px; font-size: 14px; font-weight: 650; color: var(--danger); }
+  .message.ok { color: var(--ok); }
+
+  /* Journal du jour : ouvert (colonne) ou fermé (languette) */
+  .journal { width: 360px; background: var(--surface); border-left: 1px solid var(--trait); display: flex; flex-direction: column; min-height: 0; }
+  .journal-tete { display: flex; align-items: center; gap: 10px; padding: 16px 16px 4px 20px; }
+  .journal-tete h2 { margin: 0; font-size: 16px; flex: 1; }
+  .basculer { width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--trait); background: var(--surface); display: grid; place-items: center; }
+  .totaux { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 10px 20px 12px; }
+  .total { background: var(--fond); border-radius: 12px; padding: 9px 10px; }
+  .total b { display: block; font-size: 17px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .total span { font-size: 11.5px; color: var(--doux); }
+  .liste { overflow: auto; padding: 0 20px; flex: 1; min-height: 0; }
+  .ligne { display: grid; grid-template-columns: 44px 1fr auto; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--trait); }
+  .ligne.neuve { animation: neuve 1.8s ease-out; }
+  @keyframes neuve { from { background: var(--accent-doux); } to { background: transparent; } }
+  .heure { color: var(--doux); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+  .ligne b { font-size: 14px; display: block; }
+  .ligne small { color: var(--doux); font-family: var(--chiffres); font-size: 12px; }
+  .ligne .mt { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .badge { font-size: 10.5px; font-weight: 750; padding: 2px 6px; border-radius: 6px; margin-left: 6px; background: var(--danger-doux); color: var(--danger); white-space: nowrap; }
+  .badge.c { background: var(--orange-doux); color: var(--orange); }
+  .vide { color: var(--doux); font-size: 13.5px; padding: 14px 0; }
+  .journal-pied { padding: 12px 20px 16px; font-size: 12px; color: var(--doux); border-top: 1px solid var(--trait); display: flex; flex-direction: column; gap: 10px; }
+  .imprimer-jour { align-self: flex-start; border: 0; background: none; padding: 4px 0; color: var(--accent); font-weight: 750; font-size: 15px; }
+  .imprimer-jour:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .languette { width: 48px; background: var(--surface); border: 0; border-left: 1px solid var(--trait); display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 18px 0; color: var(--encre); }
+  .languette:hover { background: var(--champ); }
+  .languette .vertical { writing-mode: vertical-rl; transform: rotate(180deg); font-weight: 700; font-size: 13.5px; letter-spacing: .3px; }
+  .compteur { min-width: 30px; height: 30px; border-radius: 999px; background: var(--accent); color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 13px; padding: 0 6px; font-variant-numeric: tabular-nums; }
+  .compteur.pulse { animation: pulse .9s ease-out; }
+  @keyframes pulse { 0% { transform: scale(1); } 30% { transform: scale(1.35); } 100% { transform: scale(1); } }
+
+  /* Fenêtre de comparaison (alerte) */
+  .voile { position: absolute; inset: 0; background: rgba(28,25,23,.45); display: grid; place-items: center; padding: 16px; z-index: 5; overflow: auto; }
+  .voile[hidden] { display: none; }
+  .comparer { width: 100%; max-width: 660px; background: var(--surface); border-radius: 20px; overflow: hidden; box-shadow: 0 30px 80px rgba(0,0,0,.3); max-height: 100%; overflow-y: auto; }
+  .comparer .tete { color: #fff; padding: 18px 22px; display: flex; gap: 14px; align-items: center; background: var(--danger); }
+  .comparer .tete.c { background: var(--orange); }
+  .comparer .tete .ico { width: 34px; height: 34px; }
+  .comparer .tete b { font-size: 21px; display: block; }
+  .comparer .tete span { font-size: 13.5px; opacity: .92; }
+  .comparer .consigne { padding: 14px 22px 0; font-size: 15px; font-weight: 600; line-height: 1.45; }
+  .tableau { padding: 10px 22px 4px; overflow-x: auto; }
+  .rang { display: grid; grid-template-columns: 100px minmax(110px,1fr) minmax(110px,1fr) 92px; gap: 10px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--trait); font-size: 15px; min-width: 470px; }
+  .rang.entete { color: var(--doux); font-size: 11.5px; text-transform: uppercase; letter-spacing: .5px; font-weight: 750; }
+  .rang:last-child { border-bottom: 0; }
+  .rang .lib { color: var(--doux); }
+  .rang .pareil { color: var(--danger); font-weight: 750; }
+  .tag { font-size: 11px; font-weight: 800; padding: 3px 7px; border-radius: 6px; text-align: center; letter-spacing: .3px; }
+  .tag.eg { color: var(--danger); background: var(--danger-doux); }
+  .tag.dif { color: var(--doux); background: var(--fond); }
+  .boutons { display: flex; gap: 14px; padding: 16px 22px 20px; align-items: center; flex-wrap: wrap; }
+  .stop { flex: 1 1 240px; height: 56px; border-radius: 14px; border: 0; background: var(--encre); color: #fff; font-weight: 750; font-size: 16px; }
+  .quand-meme { background: none; border: 0; color: var(--danger); font-weight: 700; font-size: 14.5px; text-decoration: underline; text-underline-offset: 3px; padding: 8px; }
+  .confirmer { margin: 0 22px 20px; border: 1.5px solid var(--danger); background: var(--danger-doux); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .confirmer p { margin: 0; font-size: 14px; color: var(--danger); font-weight: 650; }
+  .confirmer .act { display: flex; gap: 10px; flex-wrap: wrap; }
+  .confirmer button { height: 46px; border-radius: 12px; padding: 0 16px; font-weight: 700; border: 1.5px solid var(--trait); background: var(--surface); }
+  .confirmer .forcer { background: var(--danger); color: #fff; border-color: var(--danger); }
+  .refus { margin: 0 22px 18px; padding: 12px 14px; border-radius: 12px; background: var(--danger-doux); color: var(--danger); font-weight: 700; font-size: 14px; }
+
+  .toast { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); background: var(--encre); color: #fff; padding: 11px 16px; border-radius: 12px; font-weight: 650; font-size: 14px; display: flex; gap: 8px; align-items: center; z-index: 8; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+  .toast[hidden] { display: none; }
+
+  /* Espace responsable */
+  .admin { position: absolute; inset: 0; background: var(--fond); z-index: 6; display: flex; flex-direction: column; }
+  .admin[hidden] { display: none; }
+  .verrou { flex: 1; display: grid; place-items: center; padding: 20px; }
+  .verrou form { width: 100%; max-width: 380px; background: var(--surface); border: 1px solid var(--trait); border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 12px; text-align: center; }
+  .verrou h2 { margin: 6px 0 0; font-size: 20px; }
+  .verrou p { margin: 0; color: var(--doux); font-size: 13.5px; }
+  .verrou input { height: 58px; text-align: center; font: 700 26px var(--chiffres); letter-spacing: 10px; border: 1.5px solid var(--trait); border-radius: 14px; background: var(--champ); }
+  .verrou input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-doux); }
+  .plein { height: 52px; border-radius: 14px; border: 0; background: var(--accent); color: #fff; font-weight: 750; font-size: 15.5px; }
+  .tableau-admin { flex: 1; min-height: 0; display: grid; grid-template-columns: 230px 1fr; }
+  .rail { background: var(--surface); border-right: 1px solid var(--trait); padding: 14px 12px; display: flex; flex-direction: column; gap: 3px; overflow: auto; }
+  .rail button { display: flex; align-items: center; gap: 10px; padding: 11px 12px; border-radius: 10px; border: 0; background: none; font-weight: 600; font-size: 14.5px; text-align: left; }
+  .rail button:hover { background: var(--champ); }
+  .rail button[aria-current="true"] { background: var(--accent-doux); color: var(--accent); }
+  .rail .val { margin-left: auto; font-size: 12px; color: var(--doux); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .rail .bas { margin-top: auto; }
+  .contenu { overflow: auto; padding: 22px 26px 30px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+  .contenu h2 { margin: 0; font-size: 21px; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .kpi { background: var(--surface); border: 1px solid var(--trait); border-radius: 14px; padding: 14px; }
+  .kpi span { color: var(--doux); font-size: 12.5px; }
+  .kpi b { display: block; font-size: 25px; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .kpi.rouge b { color: var(--danger); }
+  .deux-blocs { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+  .boite { background: var(--surface); border: 1px solid var(--trait); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .boite h3 { margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: .6px; color: var(--doux); }
+  .boite .note-doux { color: var(--doux); font-size: 13px; margin: 0; }
+  .progression { height: 10px; border-radius: 999px; background: var(--fond); overflow: hidden; }
+  .progression i { display: block; height: 100%; width: 66%; background: var(--accent); border-radius: 999px; }
+  .segment { display: flex; background: var(--fond); border-radius: 12px; padding: 4px; gap: 4px; }
+  .segment button { flex: 1; padding: 11px; border-radius: 9px; border: 0; background: none; font-weight: 700; color: var(--doux); }
+  .segment button[aria-pressed="true"] { background: var(--surface); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+  .segment button.signaler[aria-pressed="true"] { color: var(--orange); }
+  .segment button.bloquant[aria-pressed="true"] { color: var(--danger); }
+  .rangee-btn { display: flex; gap: 8px; flex-wrap: wrap; }
+  .sec { height: 44px; padding: 0 14px; border-radius: 11px; border: 1.5px solid var(--trait); background: var(--surface); display: inline-flex; align-items: center; gap: 8px; font-weight: 650; font-size: 14px; }
+  .sec.accent { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .sec.danger { color: var(--danger); border-color: var(--danger); }
+  .recherche { height: 46px; border: 1.5px solid var(--trait); border-radius: 12px; padding: 0 14px; background: var(--surface); width: 100%; max-width: 420px; }
+  .table-saisies { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--trait); border-radius: 14px; overflow: hidden; font-size: 14px; }
+  .table-saisies th { text-align: left; font-size: 11.5px; text-transform: uppercase; letter-spacing: .5px; color: var(--doux); padding: 10px 12px; background: var(--champ); border-bottom: 1px solid var(--trait); }
+  .table-saisies td { padding: 10px 12px; border-bottom: 1px solid var(--trait); font-variant-numeric: tabular-nums; }
+  .table-saisies tr:last-child td { border-bottom: 0; }
+  .table-saisies .piece { font-family: var(--chiffres); font-size: 13px; }
+  .suppr { background: none; border: 0; color: var(--danger); font-weight: 650; padding: 4px; text-decoration: underline; text-underline-offset: 3px; }
+  .defile-table { overflow-x: auto; }
+  .info-proto { border: 1.5px dashed var(--trait); border-radius: 14px; padding: 16px; color: var(--doux); font-size: 14px; background: var(--surface); }
+  .aide { position: absolute; top: 0; right: 0; bottom: 0; width: min(380px, 100%); background: var(--surface); border-left: 1px solid var(--trait); z-index: 7; padding: 20px; display: flex; flex-direction: column; gap: 12px; box-shadow: -20px 0 40px rgba(0,0,0,.1); overflow: auto; }
+  .aide[hidden] { display: none; }
+  .aide h2 { margin: 0; font-size: 18px; }
+  .aide p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--doux); }
+  .aide b { color: var(--encre); }
+
+  /* --- Tablette tenue en hauteur : invitation à la tourner --- */
+  .tourner { position: absolute; inset: 0; z-index: 20; background: var(--fond); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px 20px; text-align: center; }
+  .tourner h2 { margin: 6px 0 0; font-size: 24px; text-wrap: balance; }
+  .tourner p { margin: 0; color: var(--doux); font-size: 15px; max-width: 340px; line-height: 1.5; }
+  .tourner .verrou-aide { background: var(--surface); border: 1px solid var(--trait); border-radius: 14px; padding: 12px 14px; font-size: 13.5px; color: var(--encre); max-width: 360px; text-align: left; line-height: 1.5; }
+  .tourner .continuer { margin-top: 8px; border: 0; background: none; color: var(--doux); font-weight: 650; font-size: 14px; text-decoration: underline; text-underline-offset: 3px; padding: 8px; }
+  .appareil { width: 92px; height: 92px; display: grid; place-items: center; }
+  .appareil svg { width: 70px; height: 92px; stroke: var(--accent); fill: var(--accent-doux); stroke-width: 2.5; animation: pivoter 2.6s ease-in-out infinite; }
+  @keyframes pivoter { 0%, 25% { transform: rotate(0); } 55%, 85% { transform: rotate(-90deg); } 100% { transform: rotate(0); } }
+
+  /* --- Écran étroit (tablette en portrait, téléphone) : le journal passe sous le formulaire --- */
+  @media (max-width: 860px) {
+    .milieu { grid-template-columns: 1fr; grid-template-rows: auto auto; overflow: auto; }
+    .zone-form { overflow: visible; padding: 18px 16px 18px; }
+    .journal { width: auto; border-left: 0; border-top: 1px solid var(--trait); }
+    .liste { max-height: 320px; }
+    .languette { width: auto; border-left: 0; border-top: 1px solid var(--trait); flex-direction: row; justify-content: center; padding: 12px; }
+    .languette .vertical { writing-mode: horizontal-tb; transform: none; }
+    .languette .ico.fleche { transform: rotate(-90deg); }
+    .basculer .ico { transform: rotate(90deg); }
+    .etape { grid-template-columns: 1fr; }
+    .num { display: none; }
+    .valider, .message { margin-left: 0; }
+    .tableau-admin { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+    .rail { flex-direction: row; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--trait); }
+    .rail button { white-space: nowrap; }
+    .rail .bas { margin-top: 0; }
+    .contenu { padding: 18px 16px 24px; }
+    .puce.offre .detail { display: none; }
+  }
+  @media (max-width: 860px) {
+    .voile { place-items: start center; }
+    .comparer { max-height: none; }
+    .rang { min-width: 0; grid-template-columns: 74px 1fr 1fr; font-size: 14px; }
+    .rang .tag { grid-column: 2 / 4; justify-self: start; }
+    .rang.entete span:last-child, .rang > span:empty { display: none; }
+    .demo .essais { flex-wrap: nowrap; overflow-x: auto; max-width: 100%; }
+    .demo .essai { white-space: nowrap; }
+  }
+  @media (max-width: 480px) { .deux { grid-template-columns: 1fr; } .marque small { display: none; } .demo .droite { margin-left: 0; } }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-aide" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></symbol>
+  <symbol id="i-reglages" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></symbol>
+  <symbol id="i-calendrier" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+  <symbol id="i-bouclier" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+  <symbol id="i-alerte" viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+  <symbol id="i-chevron-d" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-fermer" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-tableau" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></symbol>
+  <symbol id="i-liste" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></symbol>
+  <symbol id="i-imprimer" viewBox="0 0 24 24"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></symbol>
+  <symbol id="i-archive" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8M10 12h4"/></symbol>
+  <symbol id="i-etiquette" viewBox="0 0 24 24"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8z"/><path d="M7 7h.01"/></symbol>
+  <symbol id="i-tablette" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M12 18h.01"/></symbol>
+  <symbol id="i-cadenas" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+  <symbol id="i-livre" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V2H6.5A2.5 2.5 0 0 0 4 4.5v15z"/><path d="M20 17v5H6.5A2.5 2.5 0 0 1 4 19.5"/></symbol>
+</defs></svg>
+
+<div class="demo" role="note">
+  <span><b>Prototype</b> · données fictives, rien n'est enregistré nulle part.</span>
+  <span class="essais">À essayer :
+    <button class="essai" data-essai="A">Même client (fraude)</button>
+    <button class="essai" data-essai="B">Pièce d'un autre (usurpation)</button>
+    <button class="essai" data-essai="C">Même nom, autre pièce (homonyme)</button>
+    <button class="essai" data-essai="N">Nouveau client</button>
+  </span>
+  <span class="droite">
+    <label><input type="checkbox" id="simPortrait"> Simuler une tablette en hauteur</label>
+    <button class="lien" id="reinit">Réinitialiser la démo</button>
+  </span>
+</div>
+
+<div class="app" id="app">
+  <header class="haut">
+    <div class="marque"><div class="logo"><svg class="ico"><use href="#i-check"/></svg></div>
+      <div><b>Chèques différés</b><small>Gestion Chèques Reportés</small></div></div>
+    <span class="puce offre"><svg class="ico p"><use href="#i-calendrier"/></svg>Offre en cours<span class="detail">&nbsp;· 12/10 → 14/10 · jour 2 sur 3</span></span>
+    <div class="espace"></div>
+    <span class="puce mode" id="puceMode"><svg class="ico p"><use href="#i-bouclier"/></svg><span id="txtMode">Mode Signaler</span></span>
+    <button class="icone-btn" id="btnAide" title="Aide" aria-label="Aide"><svg class="ico"><use href="#i-aide"/></svg></button>
+    <button class="icone-btn" id="btnAdmin" title="Espace responsable" aria-label="Espace responsable"><svg class="ico"><use href="#i-reglages"/></svg></button>
+  </header>
+
+  <main class="milieu">
+    <div class="zone-form">
+      <form class="saisie" id="formSaisie" novalidate autocomplete="off">
+        <div class="etape"><div class="num" id="n1">1</div><div><h2>Pièce d'identité</h2>
+          <div class="champ"><input id="piece" class="grand" placeholder="N° de la pièce" inputmode="text" aria-label="Numéro de pièce d'identité"></div>
+          <div class="verdict" id="verdict" hidden></div></div></div>
+        <div class="etape"><div class="num" id="n2">2</div><div><h2>Client</h2>
+          <div class="deux"><div class="champ"><input id="nom" placeholder="Nom" aria-label="Nom"></div>
+          <div class="champ"><input id="prenom" placeholder="Prénom" aria-label="Prénom"></div></div></div></div>
+        <div class="etape"><div class="num" id="n3">3</div><div><h2>Chèque</h2>
+          <div class="deux"><div class="champ"><input id="montant" class="montant" placeholder="Montant" inputmode="decimal" aria-label="Montant"><span class="suffixe">€</span></div>
+          <div class="champ"><input id="note" class="note" placeholder="Note (caisse n°…)" aria-label="Note"></div></div></div></div>
+        <button class="valider" type="submit"><svg class="ico"><use href="#i-check"/></svg>Enregistrer le chèque <kbd>Entrée</kbd></button>
+        <div class="message" id="message" role="status"></div>
+      </form>
+    </div>
+
+    <aside class="journal" id="journal" aria-label="Journal du jour">
+      <div class="journal-tete"><h2>Aujourd'hui</h2>
+        <button class="basculer" id="fermerJournal" title="Replier le journal" aria-label="Replier le journal"><svg class="ico"><use href="#i-chevron-d"/></svg></button></div>
+      <div class="totaux">
+        <div class="total"><b id="tNb">0</b><span>chèques</span></div>
+        <div class="total" id="boiteMontant"><b id="tMt">0 €</b><span>montant</span></div>
+        <div class="total"><b id="tForce">0</b><span>forcés</span></div>
+      </div>
+      <div class="liste" id="liste"></div>
+      <div class="journal-pied"><button class="imprimer-jour" id="imprimerJour">Imprimer la journée →</button><span>Noms abrégés et N° masqués : l'écran peut être vu depuis la caisse.</span></div>
+    </aside>
+    <button class="languette" id="languette" hidden title="Ouvrir le journal du jour" aria-label="Ouvrir le journal du jour">
+      <svg class="ico fleche"><use href="#i-chevron"/></svg><span class="vertical">Aujourd'hui</span><span class="compteur" id="compteur">0</span>
+    </button>
+  </main>
+
+  <!-- Alerte : comparaison côte à côte -->
+  <div class="voile" id="voile" hidden>
+    <div class="comparer" role="alertdialog" aria-modal="true" aria-labelledby="alerteTitre">
+      <div class="tete" id="alerteTete"><svg class="ico"><use href="#i-alerte"/></svg><div><b id="alerteTitre"></b><span id="alerteSous"></span></div></div>
+      <p class="consigne" id="alerteConsigne"></p>
+      <div class="tableau"><div id="tableauCompare"></div></div>
+      <div class="refus" id="alerteRefus" hidden>Mode bloquant : cet enregistrement est refusé. Seul le responsable peut changer le mode.</div>
+      <div class="boutons"><button class="stop" id="btnStop">Ne pas enregistrer</button><button class="quand-meme" id="btnQuandMeme">Enregistrer quand même…</button></div>
+      <div class="confirmer" id="confirmer" hidden>
+        <p id="txtConfirmer">Le chèque sera enregistré avec la mention « Ajout forcé » et marqué en rouge dans le Sheet.</p>
+        <div class="act"><button class="forcer" id="btnForcer">Confirmer l'enregistrement forcé</button><button id="btnAnnulerForcer">Annuler</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" hidden><svg class="ico"><use href="#i-check"/></svg><span id="toastTxt"></span></div>
+
+  <aside class="aide" id="aide" hidden aria-label="Aide">
+    <div style="display:flex;align-items:center;gap:10px"><h2 style="flex:1">Aide</h2><button class="icone-btn" id="fermerAide" aria-label="Fermer l'aide"><svg class="ico"><use href="#i-fermer"/></svg></button></div>
+    <p><b>1. Pièce d'identité</b> : tapez le N°. Dessous, la tablette dit tout de suite s'il a déjà été vu sur l'offre.</p>
+    <p><b>2. Client</b> : nom et prénom tels qu'écrits sur la pièce.</p>
+    <p><b>3. Chèque</b> : le montant, et une note si besoin (numéro de caisse…).</p>
+    <p><b>Entrée</b> passe au champ suivant ; sur le dernier, elle enregistre.</p>
+    <p><b>Alerte</b> : la fenêtre compare la saisie avec ce qui est déjà enregistré. En cas de doute, « Ne pas enregistrer » et appeler le responsable.</p>
+    <p><b>Journal</b> : la flèche l'ouvre ou le replie ; la tablette s'en souvient.</p>
+  </aside>
+
+  <!-- Espace responsable -->
+  <section class="admin" id="admin" hidden aria-label="Espace responsable">
+    <header class="haut">
+      <div class="marque"><div class="logo"><svg class="ico"><use href="#i-cadenas"/></svg></div>
+        <div><b>Espace responsable</b><small id="adminSous">Code à 6 chiffres</small></div></div>
+      <div class="espace"></div>
+      <button class="icone-btn" id="fermerAdmin" title="Revenir à la saisie" aria-label="Revenir à la saisie"><svg class="ico"><use href="#i-fermer"/></svg></button>
+    </header>
+    <div class="verrou" id="verrou">
+      <form id="formCode" novalidate>
+        <svg class="ico" style="width:34px;height:34px;margin:0 auto;color:var(--accent)"><use href="#i-cadenas"/></svg>
+        <h2>Code responsable</h2>
+        <p>Démo : n'importe quels 6 chiffres.</p>
+        <input id="code" inputmode="numeric" maxlength="6" autocomplete="off" aria-label="Code responsable">
+        <button class="plein" type="submit">Déverrouiller</button>
+        <p id="msgCode" style="color:var(--danger);font-weight:650"></p>
+      </form>
+    </div>
+    <div class="tableau-admin" id="tableauAdmin" hidden>
+      <nav class="rail" aria-label="Menu responsable">
+        <button data-vue="ensemble" aria-current="true"><svg class="ico"><use href="#i-tableau"/></svg>Vue d'ensemble</button>
+        <button data-vue="saisies"><svg class="ico"><use href="#i-liste"/></svg>Saisies<span class="val" id="railNb"></span></button>
+        <button data-vue="impression"><svg class="ico"><use href="#i-imprimer"/></svg>Impression</button>
+        <button data-vue="archives"><svg class="ico"><use href="#i-archive"/></svg>Archives<span class="val">5</span></button>
+        <button data-vue="reglages"><svg class="ico"><use href="#i-etiquette"/></svg>Réglages</button>
+        <button data-vue="tablettes"><svg class="ico"><use href="#i-tablette"/></svg>Code &amp; tablettes<span class="val">3</span></button>
+        <button class="bas" id="verrouiller"><svg class="ico"><use href="#i-cadenas"/></svg>Verrouiller</button>
+      </nav>
+      <div class="contenu" id="contenu"></div>
+    </div>
+  </section>
+
+  <!-- Tablette en hauteur : on invite à la tourner, sans jamais bloquer -->
+  <div class="tourner" id="tourner" hidden role="dialog" aria-modal="true" aria-labelledby="tournerTitre">
+    <div class="appareil" aria-hidden="true"><svg viewBox="0 0 40 52"><rect x="3" y="3" width="34" height="46" rx="5"/><circle cx="20" cy="43" r="1.6" fill="currentColor"/></svg></div>
+    <h2 id="tournerTitre">Tournez la tablette</h2>
+    <p>L'application s'utilise en largeur. Rien n'est perdu : votre saisie reste en place.</p>
+    <div class="verrou-aide"><b>L'écran ne tourne pas ?</b> Le verrou de rotation est activé. iPad : balayez depuis le coin en haut à droite, puis touchez le cadenas. Android : ouvrez le panneau rapide et activez « Rotation auto ».</div>
+    <button class="continuer" id="continuerPortrait">Continuer en hauteur quand même</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  // ---------- Données fictives ----------
+  const AUJ = "13/10";
+  const DEPART = [
+    { jour: "12/10", heure: "10:42", nom: "DUPONT", prenom: "JEAN", piece: "AB123456", montant: 45, note: "", force: null },
+    { jour: "12/10", heure: "15:10", nom: "MOREAU", prenom: "CLAIRE", piece: "CD789012", montant: 80, note: "", force: null },
+    { jour: "12/10", heure: "16:31", nom: "BERNARD", prenom: "LINA", piece: "GH090918", montant: 60, note: "", force: null },
+    { jour: AUJ, heure: "10:58", nom: "PETIT", prenom: "MARC", piece: "EF441023", montant: 200, note: "Caisse 4", force: null },
+    { jour: AUJ, heure: "11:21", nom: "BERNARD", prenom: "LINA", piece: "GH090918", montant: 60, note: "", force: "A" },
+    { jour: AUJ, heure: "11:40", nom: "LEROY", prenom: "PAUL", piece: "IJ330255", montant: 85, note: "", force: null },
+    { jour: AUJ, heure: "11:52", nom: "DURAND", prenom: "SOPHIE", piece: "KL778132", montant: 120, note: "Caisse 2", force: null },
+  ];
+  const EXEMPLES = {
+    A: { piece: "AB123456", nom: "DUPONT", prenom: "JEAN", montant: "45" },
+    B: { piece: "CD789012", nom: "LAMBERT", prenom: "HUGO", montant: "70" },
+    C: { piece: "ZZ998877", nom: "DUPONT", prenom: "JEAN", montant: "45" },
+    N: { piece: "MN556677", nom: "MARTIN", prenom: "ÉLODIE", montant: "150,50" },
+  };
+  let saisies = DEPART.map((s) => Object.assign({}, s));
+  let mode = "SIGNALER";
+  let enAttente = null; // saisie montrée dans l'alerte
+
+  // ---------- Mémoire de la tablette (commodités seulement) ----------
+  function lire(k, defaut) { try { const v = localStorage.getItem(k); return v === null ? defaut : v; } catch (e) { return defaut; } }
+  function ecrire(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+
+  const $ = (id) => document.getElementById(id);
+  const normId = (v) => String(v || "").toUpperCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^A-Z0-9]/g, "");
+  const normPiece = (v) => { const n = normId(v); return /^\d+$/.test(n) ? n.replace(/^0+(?=\d)/, "") : n; };
+  const euros = (n) => n.toLocaleString("fr-FR", { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 }) + " €";
+  const lireMontant = (s) => { const t = String(s).replace(/\s|€/g, "").replace(",", "."); const n = Number(t); return t !== "" && isFinite(n) && n > 0 ? n : null; };
+  const masque = (p) => "••••" + String(p).slice(-4);
+  const abrege = (s) => s.nom + " " + (s.prenom ? s.prenom.charAt(0) + "." : "");
+  const echap = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  // ---------- Journal ----------
+  function journalOuvert() { return lire("comptoir-journal", "ferme") === "ouvert"; }
+  function appliquerJournal() {
+    const ouvert = journalOuvert();
+    $("journal").hidden = !ouvert;
+    $("languette").hidden = ouvert;
+  }
+  function dessinerJournal(neuve) {
+    const jour = saisies.filter((s) => s.jour === AUJ);
+    const montants = true; // décision : montants affichés dans le journal
+    $("tNb").textContent = jour.length;
+    $("tMt").textContent = euros(jour.reduce((a, s) => a + s.montant, 0));
+    $("boiteMontant").hidden = !montants;
+    $("tForce").textContent = jour.filter((s) => s.force).length;
+    $("compteur").textContent = jour.length;
+    $("liste").innerHTML = jour.length ? jour.slice().reverse().map((s, i) =>
+      '<div class="ligne' + (i === 0 && neuve ? " neuve" : "") + '"><span class="heure">' + s.heure + "</span><div><b>" + echap(abrege(s)) +
+      (s.force ? '<span class="badge' + (s.force === "C" ? " c" : "") + '">Forcé · ' + s.force + "</span>" : "") +
+      "</b><small>" + masque(s.piece) + "</small></div><span class=\"mt\">" + (montants ? euros(s.montant) : "") + "</span></div>").join("")
+      : '<p class="vide">Aucun chèque aujourd\'hui.</p>';
+    if (neuve) { const c = $("compteur"); c.classList.remove("pulse"); void c.offsetWidth; c.classList.add("pulse"); }
+  }
+  $("fermerJournal").addEventListener("click", () => { ecrire("comptoir-journal", "ferme"); appliquerJournal(); $("languette").focus(); });
+  $("languette").addEventListener("click", () => { ecrire("comptoir-journal", "ouvert"); appliquerJournal(); $("fermerJournal").focus(); });
+  $("imprimerJour").addEventListener("click", () => toast("Dans l'application, l'impression de la journée s'ouvrirait ici"));
+
+  // ---------- Saisie ----------
+  const champs = ["piece", "nom", "prenom", "montant", "note"];
+  function majEtapes() {
+    $("n1").classList.toggle("fait", normPiece($("piece").value).length >= 4);
+    $("n2").classList.toggle("fait", !!normId($("nom").value) && !!normId($("prenom").value));
+    $("n3").classList.toggle("fait", lireMontant($("montant").value) !== null);
+  }
+  function majVerdict() {
+    const p = normPiece($("piece").value), v = $("verdict");
+    if (p.length < 4) { v.hidden = true; return; }
+    const deja = saisies.filter((s) => normPiece(s.piece) === p);
+    v.hidden = false;
+    if (deja.length) {
+      const d = deja[deja.length - 1];
+      v.className = "verdict ko";
+      v.innerHTML = '<svg class="ico p"><use href="#i-alerte"/></svg>Déjà enregistré : ' + echap(abrege(d)) + " · " + (d.jour === AUJ ? "aujourd'hui" : "le " + d.jour) + " " + d.heure;
+    } else {
+      v.className = "verdict ok";
+      v.innerHTML = '<svg class="ico p"><use href="#i-check"/></svg>Numéro jamais vu sur cette offre';
+    }
+  }
+  champs.forEach((id, i) => {
+    $(id).addEventListener("input", () => { $(id).classList.remove("erreur"); $("message").textContent = ""; majEtapes(); if (id === "piece") majVerdict(); });
+    $(id).addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && i < champs.length - 1) { e.preventDefault(); $(champs[i + 1]).focus(); }
+    });
+  });
+  $("montant").addEventListener("blur", () => { const n = lireMontant($("montant").value); if (n !== null) $("montant").value = n.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); });
+
+  function lireFormulaire() {
+    return { piece: $("piece").value.trim().toUpperCase(), nom: $("nom").value.trim().toUpperCase(), prenom: $("prenom").value.trim().toUpperCase(),
+      montant: lireMontant($("montant").value), note: $("note").value.trim() };
+  }
+  function detecter(e) {
+    const nomN = normId(e.nom), preN = normId(e.prenom), pieN = normPiece(e.piece);
+    let cas = null, trouve = null;
+    for (const s of saisies) {
+      const memeId = normId(s.nom) === nomN && normId(s.prenom) === preN;
+      const memePiece = normPiece(s.piece) === pieN;
+      if (memeId && memePiece) return { cas: "A", trouve: s };
+      if (memePiece && cas !== "B") { cas = "B"; trouve = s; }
+      else if (memeId && !cas) { cas = "C"; trouve = s; }
+    }
+    return { cas, trouve };
+  }
+  $("formSaisie").addEventListener("submit", (ev) => {
+    ev.preventDefault();
+    const e = lireFormulaire();
+    const manque = [];
+    if (normPiece(e.piece).length < 4) manque.push("piece");
+    if (!normId(e.nom)) manque.push("nom");
+    if (!normId(e.prenom)) manque.push("prenom");
+    if (e.montant === null) manque.push("montant");
+    if (manque.length) {
+      manque.forEach((id) => $(id).classList.add("erreur"));
+      $("message").className = "message";
+      $("message").textContent = "Complétez les champs encadrés en rouge.";
+      $(manque[0]).focus();
+      return;
+    }
+    const d = detecter(e);
+    if (d.cas) return ouvrirAlerte(e, d);
+    enregistrer(e, null);
+  });
+
+  function enregistrer(e, force) {
+    const t = new Date();
+    saisies.push(Object.assign({ jour: AUJ, heure: String(t.getHours()).padStart(2, "0") + ":" + String(t.getMinutes()).padStart(2, "0"), force }, e));
+    champs.forEach((id) => { $(id).value = ""; $(id).classList.remove("erreur"); });
+    $("verdict").hidden = true; majEtapes(); dessinerJournal(true);
+    toast(force ? "Chèque enregistré (ajout forcé · cas " + force + ")" : "Chèque enregistré");
+    $("piece").focus();
+  }
+  let minuteur = null;
+  function toast(t) { $("toastTxt").textContent = t; $("toast").hidden = false; clearTimeout(minuteur); minuteur = setTimeout(() => ($("toast").hidden = true), 2600); }
+
+  // ---------- Alerte : comparaison ----------
+  const TEXTES = {
+    A: { titre: "Ce client est déjà venu", sous: "Fraude probable · même nom et même pièce", consigne: "Ce client a déjà bénéficié de l'offre. Ne l'enregistrez pas sans l'accord du responsable." },
+    B: { titre: "Cette pièce appartient à un autre client", sous: "Usurpation possible · même pièce, autre nom", consigne: "Le N° de pièce est déjà enregistré sous un autre nom. Vérifiez la pièce présentée." },
+    C: { titre: "Un client porte déjà ce nom", sous: "Homonyme · même nom, autre pièce", consigne: "Demandez une 2e pièce d'identité pour vérifier qu'il s'agit bien d'une autre personne avant d'enregistrer." },
+  };
+  function ouvrirAlerte(e, d) {
+    enAttente = { e, cas: d.cas };
+    const t = TEXTES[d.cas], s = d.trouve;
+    $("alerteTete").className = "tete" + (d.cas === "C" ? " c" : "");
+    $("alerteTitre").textContent = t.titre; $("alerteSous").textContent = t.sous; $("alerteConsigne").textContent = t.consigne;
+    const ligne = (lib, a, b, compare) => {
+      const eg = compare && normId(a) === normId(b);
+      return '<div class="rang"><span class="lib">' + lib + '</span><span class="' + (eg ? "pareil" : "") + '">' + echap(a) + '</span><span class="' + (eg ? "pareil" : "") + '">' + echap(b) +
+        "</span>" + (compare ? '<span class="tag ' + (eg ? "eg" : "dif") + '">' + (eg ? "IDENTIQUE" : "DIFFÉRENT") + "</span>" : "<span></span>") + "</div>";
+    };
+    $("tableauCompare").innerHTML =
+      '<div class="rang entete"><span></span><span>Maintenant</span><span>Déjà enregistré · ' + (s.jour === AUJ ? "aujourd'hui" : s.jour) + " " + s.heure + "</span><span></span></div>" +
+      ligne("Nom", e.nom, s.nom, true) + ligne("Prénom", e.prenom, s.prenom, true) + ligne("N° de pièce", e.piece, s.piece, true) +
+      ligne("Montant", euros(e.montant), euros(s.montant), false);
+    const refuse = mode === "BLOQUANT" && d.cas !== "C";
+    $("alerteRefus").hidden = !refuse;
+    $("btnQuandMeme").hidden = refuse;
+    $("btnStop").textContent = refuse ? "Compris" : "Ne pas enregistrer";
+    $("confirmer").hidden = true;
+    $("voile").hidden = false;
+    $("btnStop").focus();
+  }
+  function fermerAlerte(vider) {
+    $("voile").hidden = true;
+    if (vider) { champs.forEach((id) => ($(id).value = "")); $("verdict").hidden = true; majEtapes(); }
+    enAttente = null; $("piece").focus();
+  }
+  $("btnStop").addEventListener("click", () => { fermerAlerte(true); toast("Saisie abandonnée"); });
+  $("btnQuandMeme").addEventListener("click", () => {
+    $("txtConfirmer").textContent = enAttente.cas === "C"
+      ? "Seconde pièce vérifiée ? Le chèque sera enregistré avec la mention « Ajout forcé (homonyme) »."
+      : "Le chèque sera enregistré avec la mention « Ajout forcé » et marqué en rouge dans le Sheet.";
+    $("confirmer").hidden = false; $("btnForcer").focus();
+  });
+  $("btnAnnulerForcer").addEventListener("click", () => { $("confirmer").hidden = true; $("btnStop").focus(); });
+  $("btnForcer").addEventListener("click", () => { const p = enAttente; $("voile").hidden = true; enAttente = null; enregistrer(p.e, p.cas); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("voile").hidden) fermerAlerte(false); });
+
+  // ---------- Exemples (bandeau de démo) ----------
+  document.querySelectorAll("[data-essai]").forEach((b) => b.addEventListener("click", () => {
+    if (!$("admin").hidden) $("admin").hidden = true;
+    const x = EXEMPLES[b.dataset.essai];
+    $("piece").value = x.piece; $("nom").value = x.nom; $("prenom").value = x.prenom; $("montant").value = x.montant; $("note").value = "";
+    majEtapes(); majVerdict(); $("montant").focus();
+  }));
+
+  // ---------- Aide ----------
+  $("btnAide").addEventListener("click", () => { $("aide").hidden = false; $("fermerAide").focus(); });
+  $("fermerAide").addEventListener("click", () => { $("aide").hidden = true; $("btnAide").focus(); });
+
+  // ---------- Mode ----------
+  function majMode() {
+    $("txtMode").textContent = mode === "BLOQUANT" ? "Mode Bloquant" : "Mode Signaler";
+    $("puceMode").classList.toggle("bloquant", mode === "BLOQUANT");
+  }
+
+  // ---------- Espace responsable ----------
+  let deverrouille = false, vue = "ensemble";
+  function ouvrirAdmin() {
+    $("admin").hidden = false;
+    $("verrou").hidden = deverrouille; $("tableauAdmin").hidden = !deverrouille;
+    $("adminSous").textContent = deverrouille ? "Déverrouillé · se verrouille après 10 min sans action" : "Code à 6 chiffres";
+    if (deverrouille) dessinerVue(); else { $("code").value = ""; $("msgCode").textContent = ""; $("code").focus(); }
+  }
+  $("btnAdmin").addEventListener("click", ouvrirAdmin);
+  $("fermerAdmin").addEventListener("click", () => { $("admin").hidden = true; $("piece").focus(); });
+  $("formCode").addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (!/^\d{6}$/.test($("code").value)) { $("msgCode").textContent = "Le code fait exactement 6 chiffres."; return; }
+    deverrouille = true; ouvrirAdmin();
+  });
+  $("verrouiller").addEventListener("click", () => { deverrouille = false; $("admin").hidden = true; toast("Espace responsable verrouillé"); });
+  document.querySelectorAll(".rail [data-vue]").forEach((b) => b.addEventListener("click", () => { vue = b.dataset.vue; dessinerVue(); }));
+
+  function dessinerVue() {
+    document.querySelectorAll(".rail [data-vue]").forEach((b) => b.setAttribute("aria-current", b.dataset.vue === vue ? "true" : "false"));
+    $("railNb").textContent = saisies.length;
+    const c = $("contenu");
+    if (vue === "ensemble") {
+      const total = saisies.reduce((a, s) => a + s.montant, 0), forces = saisies.filter((s) => s.force).length;
+      c.innerHTML =
+        "<h2>Vue d'ensemble</h2>" +
+        '<div class="kpis"><div class="kpi"><span>Chèques sur l\'offre</span><b>' + saisies.length + "</b></div>" +
+        '<div class="kpi"><span>Montant total</span><b>' + euros(total) + "</b></div>" +
+        '<div class="kpi rouge"><span>Ajouts forcés</span><b>' + forces + "</b></div>" +
+        '<div class="kpi"><span>Tablettes autorisées</span><b>3</b></div></div>' +
+        '<div class="deux-blocs"><div class="boite"><h3>Offre en cours</h3><b style="font-size:16px">Du 12/10 au 14/10</b><div class="progression"><i></i></div>' +
+        '<p class="note-doux">Jour 2 sur 3 · clôture automatique dans la nuit du 14 au 15.</p><div class="rangee-btn"><button class="sec danger" id="btnClo"><svg class="ico p"><use href="#i-alerte"/></svg>Clôturer maintenant</button></div><div id="zoneClo"></div></div>' +
+        '<div class="boite"><h3>Mode de sécurité</h3><div class="segment"><button class="signaler" data-mode="SIGNALER" aria-pressed="' + (mode === "SIGNALER") + '">Signaler</button>' +
+        '<button class="bloquant" data-mode="BLOQUANT" aria-pressed="' + (mode === "BLOQUANT") + '">Bloquant</button></div>' +
+        '<p class="note-doux">Signaler : alerte, le caissier peut forcer. Bloquant : fraude et usurpation refusées (l\'homonyme reste possible après vérification).</p></div></div>' +
+        '<div class="boite"><h3>Imprimer</h3><div class="rangee-btn"><button class="sec accent" data-inactif><svg class="ico p"><use href="#i-imprimer"/></svg>Aujourd\'hui</button>' +
+        '<button class="sec" data-inactif><svg class="ico p"><use href="#i-calendrier"/></svg>Un autre jour…</button><button class="sec" data-inactif><svg class="ico p"><use href="#i-livre"/></svg>Toute l\'offre</button></div></div>';
+      c.querySelectorAll("[data-mode]").forEach((b) => b.addEventListener("click", () => { mode = b.dataset.mode; majMode(); dessinerVue(); toast(mode === "BLOQUANT" ? "Mode Bloquant activé" : "Mode Signaler activé"); }));
+      $("btnClo").addEventListener("click", () => {
+        $("zoneClo").innerHTML = '<div class="confirmer" style="margin:0"><p>Clôturer l\'offre ? Les saisies partent dans les archives et les tablettes affichent « aucune opération ».</p>' +
+          '<div class="act"><button class="forcer" id="cloOui">Clôturer l\'offre</button><button id="cloNon">Annuler</button></div></div>';
+        $("cloNon").addEventListener("click", () => ($("zoneClo").innerHTML = ""));
+        $("cloOui").addEventListener("click", () => { $("zoneClo").innerHTML = '<p class="note-doux">Dans l\'application, l\'offre serait archivée ici. (Prototype : rien n\'est clôturé.)</p>'; });
+      });
+    } else if (vue === "saisies") {
+      c.innerHTML = '<h2>Saisies de l\'offre</h2><input class="recherche" id="cherche" placeholder="Rechercher un nom ou un N°" aria-label="Rechercher">' +
+        '<div class="defile-table"><table class="table-saisies"><thead><tr><th>Jour</th><th>Client</th><th>N° de pièce</th><th>Montant</th><th>Note</th><th></th></tr></thead><tbody id="corpsSaisies"></tbody></table></div>';
+      const dessiner = () => {
+        const q = normId($("cherche").value);
+        $("corpsSaisies").innerHTML = saisies.map((s, i) => ({ s, i })).reverse()
+          .filter(({ s }) => !q || normId(s.nom + s.prenom + s.piece).includes(q))
+          .map(({ s, i }) => "<tr><td>" + (s.jour === AUJ ? "Auj." : s.jour) + " " + s.heure + "</td><td><b>" + echap(s.nom) + "</b> " + echap(s.prenom) +
+            (s.force ? '<span class="badge' + (s.force === "C" ? " c" : "") + '">Forcé · ' + s.force + "</span>" : "") +
+            '</td><td class="piece">' + echap(s.piece) + "</td><td>" + euros(s.montant) + "</td><td>" + echap(s.note) + '</td><td><button class="suppr" data-i="' + i + '">Supprimer</button></td></tr>').join("");
+        $("corpsSaisies").querySelectorAll("[data-i]").forEach((b) => b.addEventListener("click", () => {
+          if (b.dataset.ok) { saisies.splice(Number(b.dataset.i), 1); dessinerJournal(); dessiner(); $("railNb").textContent = saisies.length; toast("Saisie supprimée"); }
+          else { b.dataset.ok = "1"; b.textContent = "Confirmer ?"; }
+        }));
+      };
+      $("cherche").addEventListener("input", dessiner); dessiner();
+    } else {
+      const noms = { impression: "Impression", archives: "Archives", reglages: "Réglages", tablettes: "Code & tablettes" };
+      c.innerHTML = "<h2>" + noms[vue] + '</h2><div class="info-proto">Écran non maquetté dans ce prototype : il reprendrait les fonctions actuelles de l\'application avec ce même style.</div>';
+    }
+    c.querySelectorAll("[data-inactif]").forEach((b) => b.addEventListener("click", () => toast("Dans l'application, l'impression s'ouvrirait ici")));
+  }
+
+  // ---------- Tablette en hauteur ----------
+  // Seulement sur un écran tactile (une fenêtre d'ordinateur étroite n'est pas concernée).
+  const enHauteur = window.matchMedia("(orientation: portrait) and (pointer: coarse)");
+  function lireSession(k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } }
+  function ecrireSession(k, v) { try { sessionStorage.setItem(k, v); } catch (e) {} }
+  let accepteHauteur = lireSession("comptoir-hauteur") === "oui"; // jusqu'à la prochaine ouverture
+  function majOrientation() {
+    const simule = $("simPortrait").checked;
+    $("tourner").hidden = !((enHauteur.matches || simule) && !accepteHauteur);
+  }
+  if (enHauteur.addEventListener) enHauteur.addEventListener("change", majOrientation);
+  else if (enHauteur.addListener) enHauteur.addListener(majOrientation);
+  $("simPortrait").addEventListener("change", () => { if ($("simPortrait").checked) accepteHauteur = false; majOrientation(); });
+  $("continuerPortrait").addEventListener("click", () => {
+    accepteHauteur = true;
+    if (!$("simPortrait").checked) ecrireSession("comptoir-hauteur", "oui");
+    $("simPortrait").checked = false;
+    majOrientation(); $("piece").focus();
+  });
+
+  // ---------- Démarrage ----------
+  $("reinit").addEventListener("click", () => {
+    saisies = DEPART.map((s) => Object.assign({}, s)); mode = "SIGNALER"; deverrouille = false;
+    $("admin").hidden = true; $("voile").hidden = true; champs.forEach((id) => ($(id).value = ""));
+    majMode(); majEtapes(); majVerdict(); dessinerJournal(); toast("Démo réinitialisée"); $("piece").focus();
+  });
+  majMode(); appliquerJournal(); dessinerJournal(); majEtapes();
+  $("piece").focus();
+  majOrientation();
+})();
+</script>

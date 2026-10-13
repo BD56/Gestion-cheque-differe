@@ -1,132 +1,101 @@
-# Mémoire de travail — Claude (branches `generalisation` et `refonte`)
+# Mémoire de travail — Claude (branches `generalisation`, `refonte`, bientôt `design`)
 
 > Fichier de reprise après compactage du contexte. À lire **avec** `AGENTS.md` (référence
 > canonique) et `docs/retours-vibe/decisions/2026-10-11_generalisation.md` (décisions).
-> Dernière mise à jour : 2026-10-13.
+> Dernière mise à jour : 2026-10-13 (soir).
 
-## 0. ▶️ TÂCHE EN COURS (à reprendre après compactage)
-**Refonte du code sur la nouvelle branche `refonte`** (créée depuis `generalisation`,
-validée par Bryan : « go pour la branche refonte »). But : maintenabilité, **aucun
-changement de comportement**. Bryan utilisera **clasp** (copier-coller plus nécessaire).
-Règles : une étape = un commit ; les **séries de tests** (`npm test`, 30 depuis l'étape 6)
-vertes à chaque étape (les adapter quand les fichiers bougent : `tests/harness.js`
-charge tous les `.gs` par ordre alphabétique, `tests/navigateur.js` / `test_rendu.js` lisent `Index.html`) ; faire un
-**point à Bryan à la fin de chaque étape** ; ne pas toucher `generalisation` / `main`.
-Feuille de route validée :
-1. **Outillage** : `package.json` (Prettier, ESLint, `npm test` → lancer.sh), `.clasp.json`
-   d'exemple ; tout exclu de l'envoi (`.claspignore`).
-2. **Constantes** regroupées : nom de feuille « Saisies » (19 occurrences), cellule du
-   mode Z1 (7), numéros de colonnes (2 nom, 3 prénom, 4 N°, 5 montant, 6 notes, 7 G),
-   réglages fixes.
-3. **Découpage serveur** : `00_Constantes.gs` (lu en premier : les globales s'exécutent
-   dans l'ordre des fichiers), `Installation.gs`, `Securite.gs` (code, activation,
-   tablettes, jetons), `Saisie.gs`, `Detection.gs` (doublons, normalisation, marquages),
-   `Annuaire.gs`, `Archives.gs`, `Robots.gs` (nuit, dates), `Sheet.gs` (onEdit, panneau).
-   ⚠️ Deux fonctions de même nom dans deux fichiers = AUCUNE erreur, la dernière gagne.
-4. **Découpage page** : `Index.html` = squelette (garde les injections `<?!= … ?>` de
-   CONFIG et DATES_INITIALES) + `include()` vers `Style.html` et des scripts par thème
-   (`include` doit évaluer les morceaux comme modèles s'ils contiennent des `<? ?>`).
-5. **Modernisation** : `const`/`let` (322 `var` dans Code.gs, 199 dans Index.html),
-   65 `onclick=` → écouteurs, 84 `style="…"` → classes CSS, commentaires d'époque
-   (« NOUVEAU », « LE CORRECTIF ») nettoyés, espaces de fin de ligne.
-6. **Contrôle de version intégré** : chaque fichier porte la même version ; au démarrage,
-   l'app vérifie que tous les morceaux sont là et à jour, sinon « Installation
-   incomplète » (au lieu de tourner à moitié).
-7. **Docs** : `DEPLOIEMENT.md` réécrit pour clasp (`clasp push` + redéploiement même URL ;
-   copier-coller en secours avec la liste exacte des fichiers et « supprimer l'ancien
-   Code.gs ») ; `AGENTS.md` (carte des fichiers) ; marche à suivre clasp sur le Mac
-   (`clasp login`, scriptId dans `.clasp.json` — Bryan le fait, pas moi).
-**Avancement** : ✅ étape 1 (outillage : `npm test`, `npm run lint`, Prettier configuré
-mais Code.gs/tests/HTML exclus jusqu'à l'étape 5, `.claspignore` en **liste blanche**
-— l'ancien aurait envoyé `node_modules` —, `.clasp.json.exemple`, `npx clasp status`
-pour vérifier ; ESLint signale un nom déclaré dans deux `.gs`). ✅ étape 2 (en tête de
-Code.gs : `FEUILLE_SAISIES`, `CELLULE_MODE`, `ENTETES_SAISIES`, `COL` (1-based, getRange)
-et `IDX` (0-based, getValues), `NB_COLONNES` 6 / `NB_COLONNES_SAISIE` 5 /
-`NB_COLONNES_LIGNE` 7, `PREFIXE_ARCHIVES`, `FEUILLE_IMPRESSION`, `CELLULE_JOUR_IMPRESSION`,
-`FEUILLE_OFFRE_COMPLETE` ; test `test_constantes.js`). Les réglages fixes (ADMIN_*,
-ACTIVATION_*, TABLETTES_MAX, ANNUAIRE_*, ARCHIVES_RETENTION_ANS…) iront dans
-`00_Constantes.gs` à l'étape 3. Vu en passant, NON corrigé (règle « aucun changement de
-comportement ») : `verifierPiece` renvoie Z1 brut au lieu de `modeSecurite_` (cosmétique :
-« (sera refusé à la validation) » absent si Z1 = « Bloquant » tapé à la main). ✅ étape 3 (Code.gs supprimé → 11 fichiers : `00_Constantes`, `Application` (doGet,
-démarrage, cache, impression, outils fuseau_/texte_/montantSur_/libererVerrou_/
-modeSecurite_), `Reglages`, `Installation`, `Securite` (PIN, activation, jetons,
-tablettes), `Saisie` (saisie, forcer, verifierPiece, liste/correction/suppression,
-mode), `Detection` (normalisation, A/B/C, marquages), `Annuaire`, `Archives`, `Robots`
-(dates + nuit), `Sheet` (menu, panneau, onEdit). Code identique ligne à ligne (vérifié
-par script), seuls des commentaires ajoutés/déplacés. Nouveau `test_fichiers.js` :
-aucun nom en double, que des déclarations au premier niveau, mêmes constantes si les
-fichiers sont lus à l'envers. 28 séries vertes). ✅ étape 4 (Index.html = squelette : `<head>` + `include_('Style')`, tout le HTML,
-le petit `<script>` CONFIG / MONTANT_OBLIGATOIRE / DATES_INITIALES, puis
-`include_('ScriptTablette'|'ScriptSaisie'|'ScriptAlertes'|'ScriptImpression'|
-'ScriptOffre'|'ScriptFormulaire'|'ScriptResponsable'|'ScriptOcr')` dans l'ordre
-d'origine ; `include_` dans Application.gs ; morceaux désindentés de 4 espaces, aucune
-ligne perdue (vérifié par script) ; le seul appel exécuté au chargement qui dépend
-d'autres fonctions, `appliquerDates(DATES_INITIALES, true)`, reste dans ScriptOffre avec
-ses dépendances. Tests : `rendrePage()` dans harness, `tests/declarations.js` (espree)
-partagé avec ESLint, qui contrôle maintenant aussi les Script*.html. 28 séries vertes).
-✅ étape 5, en 5 commits : 5a Prettier (tout sauf Index.html ; virgules finales
-« es5 » pour les vieux navigateurs ; arbre syntaxique identique vérifié), 5b const/let
-(ESLint no-var + prefer-const imposés ; au premier niveau const si jamais réaffecté ;
-⚠️ const/let ne sont plus des propriétés de l'objet global : les tests lisent les
-constantes par `valeurGlobale()` ; même onglet rechargé = « déjà déclaré »), 5c
-boutons `data-action` (+ `data-args` JSON) et liste explicite `ACTIONS` dans le
-nouveau morceau `ScriptActions.html` (inclus après les autres) et dans Panneau.html ;
-test `test_ui_actions.js`, 5d `style="…"` → classes en fin de Style.html (seuls les
-`display: none` restent : état géré par les scripts ; style calculé identique pour
-les 430 éléments de la page et 37 du panneau ; les éléments créés par JS gardent
-leurs `.style.x = …`), 5e commentaires d'époque nettoyés, `\/` inutile retiré des
-2 regex de séparateurs (équivalence vérifiée sur les 65 536 caractères). 29 séries
-vertes, ESLint 0 erreur 0 avertissement. ✅ étape 6 (contrôle de version : `function version_<Nom>_()` dans chaque .gs,
-attribut `data-version="…"` dans chaque .html (sur `<html>` pour Index/Panneau, sur la
-1re balise `<script>`/`<style>` des morceaux). ⚠️ CONSTATÉ PAR BRYAN SUR UN VRAI SHEET
-(13/10) : Apps Script RETIRE les commentaires `<!-- -->` quand on relit un fichier
-(`getContent`) → la 1re version (marque en commentaire) bloquait tout à tort ; corrigé
-en 2026.10.13-2. Index.html sans marque lisible = contrôle hors service → app ouverte ; listes `FICHIERS_SERVEUR` / `FICHIERS_PAGE` dans 00_Constantes
-(test : = fichiers sur disque) ; `verifierInstallation_()` (Installation.gs, référence
-= version d'Installation.gs) appelée par doGet → page « Installation incomplète » ;
-panne du contrôle (ou Index.html illisible) = application ouverte quand même ;
-« Installer » affiche les problèmes et « Version X. » ; `npm run nouvelle-version`
-(numéro AAAA.MM.JJ-HHMM de Paris) / `verifier-version` ; `npm run push` vérifie avant
-`clasp push` ; test `test_version.js`. Version actuelle 2026.10.13-2. 30 séries
-vertes. Limite : un ancien Code.gs laissé à côté → doublons de `const` → Google refuse
-de charger le projet (erreur visible, pas de fonctionnement à moitié) : le dire dans
-DEPLOIEMENT.md). Étape 7 REPORTÉE (décision Bryan 13/10) : la doc sera rédigée quand
-l'app sera finie ; idées notées dans `docs/A_REDIGER.md` (+ notes clasp brutes en
-service) ; seuls tenus à jour : bandeau « ne pas suivre » de DEPLOIEMENT.md et carte
-des fichiers d'AGENTS.md. Prochaine piste discutée : refonte graphique (maquettes de
-2-3 directions sur saisie / alerte doublon / espace responsable, branche à part depuis
-`refonte`, alertes A/B/C jamais adoucies) — après validation du test sur vrai Sheet.
-Maquettes FAITES le 13/10 (espace temporaire de session, non conservées dans le dépôt) :
-A « Clair premium » (cartes blanches, bleu nuit #1e3a8a, ombres douces), B « Contraste
-caisse » (en-tête noir, champs 60 px, VALIDER vert, alerte plein écran rouge avec
-ABANDONNER en gros bouton et « Forcer » secondaire), C « Couleur de la structure »
-(comme A + en-tête à la couleur réglable, nouveau réglage à prévoir). Icônes SVG
-intégrées (plus d'emojis), police système. Puis, à sa demande, 2 maquettes « à partir
-de zéro » : 1 « Comptoir » (paysage : saisie en 3 étapes + journal du jour à droite ;
-alerte = tableau comparatif maintenant / déjà enregistré avec IDENTIQUE par champ, gros
-bouton « Ne pas enregistrer », lien « Enregistrer quand même » ; responsable = menu à
-gauche + vue d'ensemble chiffrée) et 2 « Nuit » (portrait sombre : N° de pièce en
-héros avec verdict en direct, bouton « Enregistrer · montant » ; alerte plein écran
-« DÉJÀ VENU », forcer = maintenir 2 s ; responsable façon Réglages de téléphone).
-Idées nouvelles marquées : journal du jour, vue d'ensemble chiffrée, maintien pour
-forcer, dernière saisie. Retour de Bryan : PAS de sombre (clair uniquement) ; il ADORE
-« Comptoir ». Journal du jour : FERMÉ par défaut, languette « Aujourd'hui · N » avec
-compteur, flèche ouvrir/fermer, état mémorisé par tablette (localStorage), noms abrégés
-(« DURAND S. ») et N° masqués (••••8132) pour la confidentialité (écran visible du
-client), journal sous le voile pendant une alerte, tiroir en bas en portrait. Montants
-dans le journal : GARDÉS (décision Bryan) ; bouton « Imprimer la journée » en pied du
-journal (lien texte « Imprimer la journée → », à sa demande). Portrait : tablettes tenues
-à la main → écran « Tournez la tablette » sur écran TACTILE en hauteur seulement
-(`(orientation: portrait) and (pointer: coarse)`), aide verrou de rotation iPad/Android,
-lien « Continuer en hauteur quand même » (mémorisé jusqu'à la prochaine ouverture,
-sessionStorage) : jamais bloquant ; présentation portrait gardée en secours.
-Prototype v4. Prototype interactif
-publié (artefact privé « Comptoir — prototype » : https://claude.ai/artifact/FUmo7ZsUu5iDgi9YCow3dT ;
-source dans l'espace temporaire de la session, non versionnée) : saisie 3 étapes,
-verdict N° en direct, alertes A/B/C comparatives, forçage confirmé dans la page,
-mode Bloquant effectif, espace responsable (code, vue d'ensemble, mode, saisies). Défaut vu :
-sur écran étroit (~420 px) la carte actuelle déborde à droite (container 100 % +
-padding sans box-sizing).
+## 0. ▶️ TÂCHE EN COURS : refonte graphique « Comptoir » (pas encore commencée)
+**Décidé avec Bryan (13/10)**, à partir du prototype interactif :
+- Prototype : **`docs/maquettes/comptoir-prototype.html`** (source versionnée, page
+  autonome, données fictives) ; publié en artefact privé « Comptoir — prototype »
+  https://claude.ai/artifact/FUmo7ZsUu5iDgi9YCow3dT (v4). C'est LA référence visuelle
+  et de comportement.
+- **Clair uniquement** (pas de sombre). Police système, icônes SVG intégrées (plus
+  d'emojis), pas de bibliothèque ni police externe (tablettes).
+- **Tablette en paysage** = format de référence. Écran de saisie : en-tête (marque,
+  puce « Offre en cours · dates · jour n sur N », puce du mode, aide, réglages) ;
+  saisie en **3 étapes numérotées** (1 Pièce d'identité — grand champ chiffres
+  espacés + verdict en direct sous le champ ; 2 Client — nom | prénom ; 3 Chèque —
+  montant € | note) ; bouton « Enregistrer le chèque » (Entrée).
+- **Journal du jour** (fonction nouvelle) à droite : FERMÉ par défaut, languette
+  « Aujourd'hui » + compteur (animé à chaque saisie), flèche ouvrir / replier, état
+  mémorisé PAR TABLETTE (localStorage, try/catch) ; totaux (chèques, montant, forcés) ;
+  lignes : heure, NOM + initiale du prénom, N° masqué ••••1234, **montant affiché**
+  (décision), badge « Forcé · A/B/C » ; en pied, lien texte **« Imprimer la journée → »**.
+  Sous le voile pendant une alerte.
+- **Alerte = comparaison côte à côte** « Maintenant » / « Déjà enregistré · date »,
+  chaque champ marqué IDENTIQUE / DIFFÉRENT ; titres : A « Ce client est déjà venu »
+  (fraude probable), B « Cette pièce appartient à un autre client » (usurpation), C
+  « Un client porte déjà ce nom » (homonyme, orange, demander une 2e pièce). Gros
+  bouton noir « Ne pas enregistrer » ; lien rouge « Enregistrer quand même… » qui ouvre
+  une **confirmation dans la fenêtre** ; en BLOQUANT (A/B) : pas de lien, message
+  « refusé ». Couleurs d'alerte jamais adoucies.
+- **Espace responsable** : code 6 chiffres, puis menu à gauche (Vue d'ensemble, Saisies,
+  Impression, Archives, Réglages, Code & tablettes, Verrouiller) ; **vue d'ensemble
+  chiffrée** (fonction nouvelle : chèques, montant total, ajouts forcés, tablettes ;
+  offre en cours avec progression + « Clôturer maintenant » confirmé dans la page ;
+  interrupteur Signaler / Bloquant ; boutons d'impression).
+- **Tablette en hauteur** (tenue à la main) : écran « Tournez la tablette » seulement
+  sur écran tactile (`(orientation: portrait) and (pointer: coarse)`), aide verrou de
+  rotation iPad / Android, lien « Continuer en hauteur quand même » (sessionStorage,
+  jusqu'à la prochaine ouverture) → JAMAIS bloquant ; présentation en hauteur gardée
+  en secours (journal sous le formulaire). Saisie et alerte en cours conservées.
+- Écrans non maquettés (Impression, Archives, Réglages, Tablettes) : mêmes fonctions
+  qu'aujourd'hui, avec le nouveau style.
+- Autres maquettes vues puis écartées : A « Clair premium », B « Contraste caisse »,
+  C « Couleur de la structure » (réglable), 2 « Nuit » (sombre, maintien 2 s pour
+  forcer). Idée gardée en réserve : couleur réglable par structure (C).
+
+**Plan proposé (À FAIRE VALIDER par Bryan avant de coder)** : nouvelle branche
+`design` depuis `refonte` ; une étape = un commit, tests verts, point à Bryan :
+(1) palette et icônes (variables CSS, sprite SVG) ; (2) en-tête + saisie en 3 étapes
+(garder les `id` existants : les tests UI s'en servent) ; (3) alerte comparative
+(les `details` renvoyés par le serveur contiennent déjà nom/prénom/pièce/montant/date)
++ confirmation du forçage dans la fenêtre ; (4) journal du jour (données de la copie
+locale `cacheVerif.offre` + saisies en attente ; rien de nouveau côté serveur a priori) ;
+(5) espace responsable (menu + vue d'ensemble : chiffres à calculer, côté serveur ou
+depuis la copie locale) ; (6) écran « Tournez la tablette » ; (7) autres écrans et
+Panneau.html ; captures avant / après de chaque écran. Ne pas oublier : la carte
+actuelle déborde sur écran étroit (~420 px : container 100 % + padding sans
+box-sizing) → corrigé par la refonte.
+
+**En attente côté Bryan** : (a) résultat de `git pull` + `npm run push` + « Installer »
+sur le Sheet « Gestion Chèques Différés — REFONTE (test) » (doit afficher « Version
+2026.10.13-2. » sans INCOMPLÈTE), puis déploiement et parcours complet sur tablette ;
+(b) modèle des tablettes de Vannes (iPad / Samsung…).
+
+## 0 bis. Refonte du code (branche `refonte`) — FAITE (étapes 1 à 6), étape 7 reportée
+But : maintenabilité sans changement de comportement. 30 séries de tests (`npm test`),
+`npm run lint` 0 erreur 0 avertissement. Résumé et pièges :
+1. **Outillage** : `package.json` (`npm test`, `lint`, `format`, `nouvelle-version`,
+   `verifier-version`, `push` = vérif + `clasp push`, `status`), ESLint (globales
+   par fichier → signale un nom déclaré dans deux fichiers), Prettier (tout sauf
+   Index.html, virgules « es5 »), `.claspignore` en **liste blanche** (l'ancien aurait
+   envoyé `node_modules`), `.clasp.json.exemple`, dossier `outils/`.
+2. **Constantes** : `COL` (getRange, A = 1) / `IDX` (getValues, A = 0), `FEUILLE_SAISIES`,
+   `CELLULE_MODE`… (test_constantes). Vu, NON corrigé : `verifierPiece` renvoie Z1 brut
+   au lieu de `modeSecurite_` (cosmétique).
+3. **Serveur en 11 .gs** (00_Constantes, Application, Reglages, Installation, Securite,
+   Saisie, Detection, Annuaire, Archives, Robots, Sheet) ; code identique vérifié ;
+   test_fichiers (pas de nom en double, que des déclarations, ordre indifférent).
+4. **Page** : Index.html squelette + `include_` (Application.gs) de Style.html et
+   Script*.html (Tablette, Saisie, Alertes, Impression, Offre, Formulaire, Responsable,
+   Actions, Ocr) ; tests : `rendrePage()`, `tests/declarations.js` (espree).
+5. **Modernisation** : Prettier ; `const`/`let` (⚠️ plus propriétés de l'objet global :
+   tests via `valeurGlobale()`, nouvel onglet pour un 2e rendu) ; boutons
+   `data-action` + liste `ACTIONS` (ScriptActions.html, Panneau.html) ; `style="…"` →
+   classes (seuls les `display: none` restent ; style calculé identique vérifié) ;
+   commentaires nettoyés.
+6. **Contrôle de version** : `function version_<Nom>_()` dans chaque .gs, attribut
+   `data-version` dans chaque .html ; `verifierInstallation_()` → page « Installation
+   incomplète » (panne du contrôle = app ouverte quand même) ; « Installer » affiche
+   les problèmes et la version. ⚠️ CONSTATÉ SUR UN VRAI SHEET : Apps Script RETIRE les
+   commentaires `<!-- -->` en relisant un fichier (1re version bloquait à tort, corrigé
+   en 2026.10.13-2). Un ancien Code.gs laissé à côté → Google refuse de charger le
+   projet (doublons de const).
+7. **Docs reportées** (décision Bryan) : rédaction quand l'app sera finie ; idées dans
+   `docs/A_REDIGER.md` (+ notes clasp brutes en service) ; seuls tenus à jour : bandeau
+   « ne pas suivre » de DEPLOIEMENT.md et carte des fichiers d'AGENTS.md.
 Plus tard : fusion `refonte` → `generalisation` (ou `main` après Vannes), seulement
 quand Bryan le demande.
 

@@ -55,7 +55,16 @@ mode), `Detection` (normalisation, A/B/C, marquages), `Annuaire`, `Archives`, `R
 (dates + nuit), `Sheet` (menu, panneau, onEdit). Code identique ligne à ligne (vérifié
 par script), seuls des commentaires ajoutés/déplacés. Nouveau `test_fichiers.js` :
 aucun nom en double, que des déclarations au premier niveau, mêmes constantes si les
-fichiers sont lus à l'envers. 28 séries vertes). Prochaine : étape 4 (Index.html).
+fichiers sont lus à l'envers. 28 séries vertes). ✅ étape 4 (Index.html = squelette : `<head>` + `include_('Style')`, tout le HTML,
+le petit `<script>` CONFIG / MONTANT_OBLIGATOIRE / DATES_INITIALES, puis
+`include_('ScriptTablette'|'ScriptSaisie'|'ScriptAlertes'|'ScriptImpression'|
+'ScriptOffre'|'ScriptFormulaire'|'ScriptResponsable'|'ScriptOcr')` dans l'ordre
+d'origine ; `include_` dans Application.gs ; morceaux désindentés de 4 espaces, aucune
+ligne perdue (vérifié par script) ; le seul appel exécuté au chargement qui dépend
+d'autres fonctions, `appliquerDates(DATES_INITIALES, true)`, reste dans ScriptOffre avec
+ses dépendances. Tests : `rendrePage()` dans harness, `tests/declarations.js` (espree)
+partagé avec ESLint, qui contrôle maintenant aussi les Script*.html. 28 séries vertes).
+Prochaine : étape 5 (modernisation).
 Plus tard : fusion `refonte` → `generalisation` (ou `main` après Vannes), seulement
 quand Bryan le demande.
 
@@ -165,6 +174,8 @@ quand Bryan le demande.
    `Archives_jj-mm-aaaa_hh-mm` est purgé ; la 1re nuit supprimera ceux de plus de 3 ans).
 6. Parcours complet : autorisation, saisie, doublons, passages, correction, impression,
    archives, clôture.
+8. (Refonte) `include_` : la page s'affiche complète (styles, scripts, scan OCR en
+   `<script type="module">`) — `createHtmlOutputFromFile(nom).getContent()`.
 7. Le robot de nuit passe la vérification `triggerUid` (sinon l'espace responsable
    affichera « robot n'a pas fonctionné depuis… » après 36 h) ; `Session.getActiveUser`
    renvoie bien l'e-mail dans le menu du Sheet (sinon « Installer » est refusé).

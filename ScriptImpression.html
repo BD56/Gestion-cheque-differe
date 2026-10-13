@@ -1,0 +1,74 @@
+<!-- Impression et lecture des montants. -->
+<script>
+  function preparerImpressionAncien() {
+    var d = document.getElementById('dateImpression').value;
+    if (!d) { alert("Sélectionnez une date."); return; }
+    preparerImpression('jour', d, "Impression du " + d.split('-').reverse().join('/'));
+  }
+
+  // Lit un montant saisi ou affiché : "150", "150,5", "150.50", "1 234,50 €", "1.234,50"…
+  // Renvoie un nombre, ou null s'il n'est pas lisible (ex. "abc", "12,3,4").
+  function lireMontant(s) {
+    if (s === null || s === undefined) return null;
+    if (typeof s === 'number') return isFinite(s) ? s : null;
+    var t = s.toString().replace(/[\s\u00a0\u202f€]/g, '');
+    if (t === "") return null;
+    if (t.indexOf(',') !== -1 && t.indexOf('.') !== -1) t = t.replace(/\./g, '').replace(',', '.'); // 1.234,50
+    else if (/^\d{1,3}(\.\d{3})+$/.test(t)) t = t.replace(/\./g, '');                          // 1.234
+    else t = t.replace(',', '.');
+    if (!/^\d+(\.\d{1,2})?$/.test(t)) return null;
+    return parseFloat(t);
+  }
+  // 1234.5 -> "1234,50 €"
+  function formaterMontant(n) { return n.toFixed(2).replace('.', ',') + " €"; }
+  function formaterMontantAffiche(s) { var n = lireMontant(s); return n === null ? s : formaterMontant(n); }
+  // Total à l'impression : un montant illisible compte pour 0
+  function parseMontant(s) { var n = lireMontant(s); return n === null ? 0 : n; }
+
+  var impressionEnCours = false; // le curseur « attente » est invisible sur tablette
+  function preparerImpression(type, dateStr, titreRapport) {
+    if (impressionEnCours) return;
+    impressionEnCours = true;
+    document.body.style.cursor = "wait";
+    google.script.run.withSuccessHandler(function(donnees) {
+        impressionEnCours = false;
+        document.body.style.cursor = "default";
+        imprimerTableau(donnees, titreRapport);
+      }).withFailureHandler(function(err) { 
+        impressionEnCours = false;
+        document.body.style.cursor = "default"; 
+        if (!siNonAutorisee(err)) alert("Erreur : " + err.message); 
+      })
+      .genererDonneesImpression(type, dateStr, CLE_TABLETTE);
+  }
+
+  // Met en page un tableau [en-tête, lignes...] + ligne TOTAL, puis imprime
+  function imprimerTableau(donnees, titreRapport) {
+    if (!donnees || donnees.length === 0) { alert("Aucune donnée trouvée."); return; }
+
+    var html = "<h2 class='titre-print'>" + echapper(titreRapport) + "</h2><table class='table-print'>";
+    var idxMontant = 4; // colonnes A=0 (Date) ... E=4 (Montant) ... F=5 (Notes)
+    var totalMontant = 0;
+    for (var i = 0; i < donnees.length; i++) {
+      html += "<tr>";
+      for (var j = 0; j < donnees[i].length; j++) {
+        html += (i===0) ? "<th>"+echapper(donnees[i][j])+"</th>" : "<td>"+echapper(donnees[i][j])+"</td>";
+      }
+      html += "</tr>";
+      if (i > 0) totalMontant += parseMontant(donnees[i][idxMontant]);
+    }
+    // Ligne TOTAL (somme de la colonne Montant)
+    var nbCol = (donnees[0] || []).length || 6;
+    var totalStr = totalMontant.toFixed(2).replace('.', ',') + " €";
+    html += "<tr>";
+    html += "<td colspan='" + idxMontant + "' style='text-align:right; font-weight:bold;'>TOTAL</td>";
+    html += "<td style='font-weight:bold;'>" + totalStr + "</td>";
+    for (var k = idxMontant + 1; k < nbCol; k++) html += "<td></td>";
+    html += "</tr>";
+    html += "</table>";
+
+    document.getElementById('zoneImpression').innerHTML = html;
+    fermerPanneau(); 
+    window.print();
+  }
+</script>

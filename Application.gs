@@ -34,6 +34,12 @@ function doGet(e) {
       .addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }
 
+// Morceaux de la page (Style.html, Script*.html), insérés tels quels dans Index.html
+// par <?!= include_('Nom') ?>. Ils ne contiennent aucune balise de modèle (<? ?>).
+function include_(nom) {
+  return HtmlService.createHtmlOutputFromFile(nom).getContent();
+}
+
 // Valeur texte à écrire dans le Sheet telle quelle : l'apostrophe initiale
 // (invisible) empêche Google Sheets de la convertir (nombre -> 0 perdu, date,
 // formule « = »). Les valeurs vides ou non textuelles sont écrites telles quelles.

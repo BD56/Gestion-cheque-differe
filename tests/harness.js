@@ -21,4 +21,10 @@ function makeProps(init){ const store = Object.assign({}, init||{}); return {
   getProperties: () => Object.assign({}, store), getProperty: k => (k in store ? store[k] : null),
   setProperty: (k,v) => { store[k] = String(v); }, setProperties: o => { for (const k in o) store[k] = String(o[k]); },
   deleteProperty: k => { delete store[k]; }, deleteAllProperties: () => { for (const k in store) delete store[k]; }, _store: store }; }
-module.exports = { renderTemplate, loadCode, fichiersGs, makeProps, esc };
+// Page de la tablette telle que doGet la produit : Index.html + morceaux insérés par
+// include_ (même règle que Application.gs::include_ : fichier .html inséré tel quel).
+function rendrePage(repo, vars){
+  return renderTemplate(fs.readFileSync(repo + '/Index.html', 'utf8'),
+    Object.assign({ include_: nom => fs.readFileSync(repo + '/' + nom + '.html', 'utf8') }, vars));
+}
+module.exports = { renderTemplate, rendrePage, loadCode, fichiersGs, makeProps, esc };

@@ -27,9 +27,9 @@ const c = e.ctx;
 assert.strictEqual(c._normPiece_('ab-12 3'), 'AB123');
 ["D'ARC", 'D’ARC', 'D‘ARC', 'DʼARC', 'D`ARC', 'd arc', 'D​ARC'].forEach(n => assert.strictEqual(c._normId_(n), 'DARC', 'nom ' + JSON.stringify(n)));
 assert.strictEqual(c._normId_('Søren'), 'SOREN'); assert.strictEqual(c._normId_('Łukasz'), 'LUKASZ'); assert.strictEqual(c._normId_('Hélène-Œuvre'), 'HELENEOEUVRE');
-// même normalisation dans Index.html (copie des fonctions de la page)
-const html = require('fs').readFileSync(repo + '/Index.html', 'utf8');
-const src = html.match(/var SEPARATEURS_NOM_JS[\s\S]*?function normPieceJS\(p\) \{[\s\S]*?\n      \}/)[0];
+// même normalisation sur la tablette (copie des fonctions de la page)
+const html = require('fs').readFileSync(repo + '/ScriptFormulaire.html', 'utf8');
+const src = html.match(/var SEPARATEURS_NOM_JS[\s\S]*?function normPieceJS\(p\) \{[\s\S]*?\n  \}/)[0];
 const page = new Function(src + '; return { normIdJS: normIdJS, normPieceJS: normPieceJS };')();
 ['123.456.789.012', 'ab-12 3', '0042', "D'ARC", 'D’ARC', 'Søren', 'Łukasz', 'Hélène-Œuvre', 'D​ARC', ' -- ', '.'].forEach(v => {
   assert.strictEqual(page.normPieceJS(v), c._normPiece_(v), 'normPieceJS = _normPiece_ pour ' + JSON.stringify(v));

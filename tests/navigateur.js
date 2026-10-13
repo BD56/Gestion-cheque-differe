@@ -1,7 +1,7 @@
 // Outils communs : charge Index.html rendu dans Chromium, google.script.run -> faux serveur Node
 const { chromium } = require('playwright');
 const fs = require('fs');
-const { renderTemplate } = require('./harness');
+const { rendrePage } = require('./harness');
 const { makeEnv } = require('./mocks');
 const { FakeSheet } = require('./fakesheet');
 const J = x => (x === undefined ? null : JSON.parse(JSON.stringify(x)));
@@ -42,7 +42,7 @@ async function ouvrir(repo, envOpts) {
     env.sheets.Saisies = new FakeSheet('Saisies', [['Date', 'Nom', 'Prénom', 'N° Pièce', 'Montant', 'Notes ou Infos', '']]);
     env.sheets.Saisies.getRange('Z1').setValue('SIGNALER');
   }
-  const html = renderTemplate(fs.readFileSync(repo + '/Index.html', 'utf8'), { cfg: env.ctx.getConfig(), dates: env.ctx.lireDates_() })
+  const html = rendrePage(repo, { cfg: env.ctx.getConfig(), dates: env.ctx.lireDates_() })
     .replace('<head>', '<head><script>window.__SANS_CLE=' + !!(envOpts && envOpts.sansCle) + ';' + PROXY + '</script>');
   const browser = await chromium.launch();
   const page = await browser.newPage();

@@ -1,8 +1,12 @@
 // Contrôle du code (ESLint) : `npm run lint`. Outil de développement, jamais envoyé à Apps Script.
 import fs from "node:fs";
+import { createRequire } from "node:module";
 import js from "@eslint/js";
 import globals from "globals";
 import html from "eslint-plugin-html";
+
+const require = createRequire(import.meta.url);
+const { nomsDeclares, declarationsServeur, declarationsPage } = require("./tests/declarations.js");
 
 // Services Google Apps Script disponibles côté serveur.
 const appsScript = Object.fromEntries(
@@ -22,31 +26,31 @@ const appsScript = Object.fromEntries(
   ].map((n) => [n, "readonly"]),
 );
 
-// Tous les fichiers .gs partagent la même portée globale : une fonction déclarée dans
-// un fichier est visible des autres. Pour chaque .gs, on fournit donc à ESLint les noms
-// déclarés au premier niveau des AUTRES .gs : `no-undef` signale toujours les fautes de
-// frappe, et `no-redeclare` signale un nom déclaré dans deux fichiers (sans ce contrôle,
-// Apps Script ne dit rien et c'est la dernière déclaration lue qui l'emporte).
-const fichiersGs = fs
-  .readdirSync(".")
-  .filter((f) => f.endsWith(".gs"))
-  .sort();
-const declares = Object.fromEntries(
-  fichiersGs.map((f) => [
-    f,
-    [...fs.readFileSync(f, "utf8").matchAll(/^(?:function\s+|(?:var|let|const)\s+)([A-Za-z_$][\w$]*)/gm)].map(
-      (m) => m[1],
-    ),
-  ]),
-);
-const globalesDesAutres = (f) =>
-  Object.fromEntries(
-    fichiersGs.filter((g) => g !== f).flatMap((g) => declares[g].map((n) => [n, "readonly"])),
+// Côté serveur, tous les .gs partagent la même portée globale ; côté page, tous les
+// <script> des morceaux Script*.html aussi. Pour chaque fichier, on fournit donc à
+// ESLint les noms déclarés au premier niveau des AUTRES fichiers du même côté :
+// `no-undef` signale toujours les fautes de frappe, et `no-redeclare` signale un nom
+// déclaré dans deux fichiers (sans ce contrôle, rien ne le dit et c'est la dernière
+// déclaration lue qui l'emporte).
+function globalesDesAutres(declarations, fichier) {
+  return Object.fromEntries(
+    Object.entries(declarations)
+      .filter(([f]) => f !== fichier)
+      .flatMap(([, noms]) => noms.map((n) => [n, "writable"])),
   );
+}
+const serveur = declarationsServeur(".");
+const page = declarationsPage(".");
+// Variables du <script> d'Index.html (CONFIG, DATES_INITIALES… injectées par le serveur)
+const scriptIndex = fs.readFileSync("Index.html", "utf8").match(/<script>([\s\S]*?)<\/script>/)[1];
+const globalesIndex = Object.fromEntries(
+  nomsDeclares(scriptIndex.replace(/<\?!?=[\s\S]*?\?>/g, "null")).map((n) => [n, "writable"]),
+);
 
 const regles = {
   ...js.configs.recommended.rules,
-  // Les fonctions du premier niveau sont des points d'entrée (menu, robots, google.script.run).
+  // Les fonctions du premier niveau sont des points d'entrée (menu, robots, google.script.run,
+  // boutons de la page).
   "no-unused-vars": ["warn", { vars: "local", args: "none", caughtErrors: "none" }],
   "no-empty": ["error", { allowEmptyCatch: true }],
   // Style voulu : `var x = {}; try { x = JSON.parse(…) } catch (e) { x = {} }` (valeur sûre d'abord).
@@ -56,18 +60,18 @@ const regles = {
 
 export default [
   { ignores: ["node_modules/**", "prototype-ocr/**", "tests/rendu_defaut.html"] },
-  ...fichiersGs.map((f) => ({
+  ...Object.keys(serveur).map((f) => ({
     files: [f],
     languageOptions: {
       ecmaVersion: 2020,
       sourceType: "script",
-      globals: { ...appsScript, ...globalesDesAutres(f) },
+      globals: { ...appsScript, ...globalesDesAutres(serveur, f) },
     },
     rules: regles,
   })),
   {
     // Pages : scripts du navigateur (google.script.run). Index.html contient des
-    // injections de modèle (<?!= … ?>) dans ses scripts : contrôlée après son découpage.
+    // injections de modèle (<?!= … ?>) dans son script : contrôlé par tests/test_rendu.js.
     files: ["**/*.html"],
     ignores: ["Index.html"],
     plugins: { html },
@@ -77,6 +81,17 @@ export default [
       globals: { ...globals.browser, google: "readonly" },
     },
     rules: regles,
+  },
+  ...Object.keys(page).map((f) => ({
+    files: [f],
+    languageOptions: {
+      globals: { ...globals.browser, google: "readonly", ...globalesIndex, ...globalesDesAutres(page, f) },
+    },
+  })),
+  {
+    // Le scan OCR est un module (import dynamique des bibliothèques au 1er scan)
+    files: ["ScriptOcr.html"],
+    languageOptions: { ecmaVersion: 2022, sourceType: "module" },
   },
   {
     files: ["tests/**/*.js"],

@@ -1,0 +1,325 @@
+<!-- Envoi d'une saisie, encadré de doublon, contrôle A/B/C local, saisies en attente. -->
+<script>
+  var memNom = "", memPrenom = "", memPiece = "", memMontant = "", memNotes = "";
+
+  var derniereValidation = 0;
+  function envoyerSaisie() {
+    memNom = document.getElementById('nom').value;
+    memPrenom = document.getElementById('prenom').value;
+    memPiece = document.getElementById('piece').value;
+    memMontant = document.getElementById('montant').value;
+    memNotes = document.getElementById('notes').value;
+
+    // Double appui sur VALIDER : le 2e arrive sur le formulaire tout juste vidé -> ignoré
+    var toutVide = (memNom + memPrenom + memPiece + memMontant + memNotes).trim() === "";
+    if (toutVide && Date.now() - derniereValidation < 2000) return;
+    // « vide » = rien de comparable (espaces, tirets seuls…), comme le serveur
+    if (normIdJS(memNom) === "" || normIdJS(memPrenom) === "" || normPieceJS(memPiece) === "" || (MONTANT_OBLIGATOIRE && memMontant.trim() === "")) {
+      afficherMessage(MONTANT_OBLIGATOIRE
+        ? "Veuillez remplir le Nom, Prénom, N° de Pièce et le " + CONFIG.LIBELLE_MONTANT + "."
+        : "Veuillez remplir le Nom, Prénom et N° de Pièce.", "error");
+      return;
+    }
+    document.getElementById('statusMessage').style.display = "none";
+
+    if (memMontant.trim() !== "" && lireMontant(memMontant) === null) {
+      afficherMessage("Montant illisible : saisissez un nombre (ex. 150 ou 150,50).", "error");
+      document.getElementById('montant').style.borderColor = "#d93025";
+      return;
+    }
+    if (memMontant.trim() !== "") memMontant = formaterMontant(lireMontant(memMontant));
+
+    // Hors période (tablette restée ouverte, passage de minuit…) : on revérifie et on bloque
+    if (!dansPeriode()) {
+      afficherMessage("🛑 Aucune opération en cours aujourd'hui : saisie impossible.", "error");
+      chargerDatesAffichage();
+      return;
+    }
+
+    // Cette saisie, figée : l'encadré de doublon et le forçage s'appliquent à ELLE,
+    // même si le formulaire est retapé entre-temps.
+    var saisie = { nom: memNom, prenom: memPrenom, piece: memPiece, montant: memMontant, notes: memNotes };
+
+    if (!copieFraiche()) {
+      // Copie locale absente ou trop ancienne (réseau en panne ?) -> on attend le serveur
+      var btn = document.getElementById('btnValider');
+      btn.innerHTML = "⏳ Recherche...";
+      btn.disabled = true;
+      google.script.run.withSuccessHandler(function (rep) { traitementTermine(rep, saisie); }).withFailureHandler(function (err) {
+        btn.innerHTML = "VÉRIFIER ET VALIDER";
+        btn.disabled = false;
+        if (!siNonAutorisee(err)) afficherMessage("⚠️ Connexion impossible : saisie NON enregistrée. Vérifiez le Wi-Fi puis validez à nouveau.", "error");
+      }).traiterSaisie(saisie.nom, saisie.prenom, saisie.piece, saisie.montant, saisie.notes, CLE_TABLETTE);
+      return;
+    }
+
+    // Contrôle A/B/C EN LOCAL (copie de moins de 2 min) -> feedback instantané
+    var reponse = analyserDoublonLocal(memNom, memPrenom, memPiece);
+    if (reponse.status === "SUCCES") {
+      afficherMessage(reponse.message, "success");
+      derniereValidation = Date.now();
+      reinitialiserFormulaire();
+      envoyerEnArrierePlan(saisie);
+    } else {
+      // Doublon détecté en local -> encadré (réutilise l'affichage existant)
+      traitementTermine(reponse, saisie);
+    }
+  }
+
+  // Écriture autoritaire en arrière-plan : le serveur reconfirme ET écrit.
+  function envoyerEnArrierePlan(saisie) {
+    saisie.forcee = false;
+    saisie.id = ajoutOptimisteCache(saisie);
+    google.script.run
+      .withSuccessHandler(function (rep) { confirmerEnregistrement(rep, saisie); })
+      .withFailureHandler(function (err) { echecEnregistrement(err, saisie); })
+      .traiterSaisie(saisie.nom, saisie.prenom, saisie.piece, saisie.montant, saisie.notes, CLE_TABLETTE);
+  }
+
+  var saisieEncadre = null; // la saisie affichée dans l'encadré de doublon
+  function traitementTermine(reponse, saisie) {
+    var btn = document.getElementById('btnValider'); 
+    btn.innerHTML = "VÉRIFIER ET VALIDER"; 
+    btn.disabled = false;
+
+    if (reponse.status === "SUCCES") {
+      afficherMessage(reponse.message, "success");
+      derniereValidation = Date.now();
+      reinitialiserFormulaire();
+      rechargerCacheVerif();
+    } else if (reponse.status === "CONFIRMATION") {
+      saisieEncadre = saisie;
+      afficherDetailsDoublon(reponse.details, false, reponse.titre, reponse.message, reponse.couleur);
+    } else if (reponse.status === "BLOQUE") {
+      saisieEncadre = saisie;
+      afficherDetailsDoublon(reponse.details || [], true, reponse.titre, reponse.message, "ROUGE");
+      if (reponse.horsPeriode) chargerDatesAffichage();
+    }
+  }
+
+  function afficherDetailsDoublon(details, isBloquant, titreTexte, messageTexte, couleurTheme) {
+    document.getElementById('formulaireSaisie').style.display = "none";
+    var box = document.getElementById('boxConfirmation');
+    var titre = document.getElementById('titreDoublon');
+    var msgBox = document.getElementById('messageAlerte');
+
+    titre.textContent = titreTexte;
+    msgBox.textContent = messageTexte;
+
+    if (couleurTheme === "ORANGE") {
+      box.style.backgroundColor = "#fff3cd"; 
+      box.style.borderColor = "#ffeeba";
+      titre.style.color = "#d35400"; 
+      msgBox.style.color = "#856404";
+    } else {
+      box.style.backgroundColor = "#f8d7da"; 
+      box.style.borderColor = "#f5c6cb";
+      titre.style.color = "#d93025"; 
+      msgBox.style.color = "#721c24";
+    }
+
+    if (isBloquant) {
+      document.getElementById('actionSignaler').style.display = "none";
+      document.getElementById('actionBloquant').style.display = "block";
+    } else {
+      document.getElementById('actionSignaler').style.display = "block";
+      document.getElementById('actionBloquant').style.display = "none";
+    }
+
+    var listeHTML = "";
+    (details || []).forEach(function(d) {
+      listeHTML += "<div class='doublon-carte'>";
+      listeHTML += "📅 <b>Passage du :</b> " + echapper(d.date) + " (Ligne " + echapper(d.ligne) + ")<br>";
+      listeHTML += "👤 <b>Identité :</b> " + echapper(d.nom) + " " + echapper(d.prenom) + "<br>";
+      listeHTML += "💳 <b>N° Pièce :</b> " + echapper(d.piece) + "<br>";
+      if (d.montant !== "") listeHTML += "💶 <b>" + echapper(CONFIG.LIBELLE_MONTANT) + " :</b> " + echapper(formaterMontantAffiche(d.montant)) + "<br>";
+      if (d.notes !== "") listeHTML += "💬 <b>Notes :</b> " + echapper(d.notes) + "<br>";
+      listeHTML += "</div>";
+    });
+    document.getElementById('listeDoublons').innerHTML = listeHTML; 
+
+    box.style.display = "block";
+  }
+
+  function forcerAjout() {
+    var sa = saisieEncadre;
+    saisieEncadre = null;
+    document.getElementById('boxConfirmation').style.display = "none";
+    document.getElementById('formulaireSaisie').style.display = dansPeriode() ? "block" : "none";
+    reinitialiserFormulaire();
+    if (sa) envoyerForcage({ nom: sa.nom, prenom: sa.prenom, piece: sa.piece, montant: sa.montant, notes: sa.notes });
+  }
+
+  // Écriture forcée en arrière-plan : le serveur refait la détection (autoritaire)
+  function envoyerForcage(saisie) {
+    saisie.forcee = true;
+    saisie.id = ajoutOptimisteCache(saisie);
+    afficherMessage("⚠️ Saisie forcée envoyée (marquée en rouge).", "error");
+    google.script.run
+      .withSuccessHandler(function (rep) { confirmerForcage(rep, saisie); })
+      .withFailureHandler(function (err) { echecEnregistrement(err, saisie); })
+      .forcerSaisie(saisie.nom, saisie.prenom, saisie.piece, saisie.montant, saisie.notes, "", false, false, CLE_TABLETTE);
+  }
+
+  // Réponse du serveur à un ajout forcé
+  function confirmerForcage(rep, saisie) {
+    if (rep && rep.status === "SUCCES") { saisieConfirmee(saisie); return; } // cas recalculé côté serveur
+    // Refus serveur (BLOQUANT + doublon/usurpation, ou hors période) -> rien n'a été écrit
+    retirerEnAttente(saisie);
+    alerterServeur(saisie, rep);
+  }
+
+  // --- Contrôle A/B/C EN LOCAL (miroir de traiterSaisie, pour feedback instantané) ---
+  // ⚠️ Garder synchro avec Code.gs::traiterSaisie. Le serveur reste autoritaire (il
+  //    reconfirme à l'écriture en arrière-plan) -> aucun faux négatif même si bug ici.
+  function passagesMaxJS() { var n = parseInt(CONFIG.PASSAGES_MAX, 10); return (n >= 1 && n <= 10) ? n : 1; }
+
+  function analyserDoublonLocal(nom, prenom, piece) {
+    var mode = (cacheVerif && cacheVerif.mode) || "SIGNALER";
+    var passagesClient = 0, passagesMax = passagesMaxJS();
+    var nomN = normIdJS(nom), prenomN = normIdJS(prenom), pieceN = normPieceJS(piece);
+    var rows = (cacheVerif && cacheVerif.offre) || [];
+    var pireCas = null, details = [];
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      var nomH = normIdJS(r.nom), prenomH = normIdJS(r.prenom);
+      var pieceH = r.pieceNorm || normPieceJS(r.piece || "");
+      if (!nomH && !pieceH) continue;
+      var memeId = (nomN !== "" && prenomN !== "" && nomH === nomN && prenomH === prenomN);
+      var memePiece = (pieceN !== "" && pieceH === pieceN);
+      if (!memeId && !memePiece) continue;
+      var t = (memeId && memePiece) ? 'A' : (memePiece ? 'B' : 'C');
+      if (t === 'A') passagesClient++; // même client : compté (limite de passages)
+      else if (t === 'B') pireCas = 'B';
+      else if (t === 'C' && pireCas !== 'B') pireCas = 'C';
+      details.push({ ligne: r.ligne, type: t, date: r.date, nom: r.nom, prenom: r.prenom, piece: r.piece || "", montant: r.montant || "", notes: r.notes || "" });
+    }
+    if (passagesClient >= passagesMax) pireCas = 'A';
+    var limiteTxt = (passagesMax > 1) ? " (déjà " + passagesClient + " passage(s) ; maximum " + passagesMax + " par client)" : "";
+    if (!pireCas) return { status: "SUCCES", passage: passagesClient + 1,
+      message: passagesClient > 0 ? "✅ Saisie enregistrée ! (passage " + (passagesClient + 1) + "/" + passagesMax + ")" : "✅ Saisie enregistrée !" };
+
+    var isBloque = false, titre = "", msg = "", couleur = "ROUGE";
+    if (mode === "BLOQUANT") {
+      if (pireCas === 'A') { isBloque = true; titre = "🛑 SAISIE REFUSÉE"; msg = "Ce client a déjà profité de l'offre." + limiteTxt; }
+      else if (pireCas === 'B') { isBloque = true; titre = "🛑 SAISIE REFUSÉE"; msg = "Ce numéro de pièce d'identité est déjà associé à un autre client."; }
+      else { couleur = "ORANGE"; titre = "⚠️ HOMONYME DÉTECTÉ"; msg = "Un client porte ce nom avec une autre pièce. Demandez une 2e pièce d'identité pour confirmer qu'il s'agit bien d'une personne différente avant de forcer l'ajout."; }
+    } else {
+      if (pireCas === 'A') { titre = "🛑 ALERTE FRAUDE"; msg = "Ce client a déjà été enregistré avec ce numéro de pièce d'identité." + limiteTxt; }
+      else if (pireCas === 'B') { titre = "🛑 ANOMALIE GRAVE"; msg = "Ce numéro de pièce d'identité est déjà utilisé dans la base sous un autre nom !"; }
+      else { couleur = "ORANGE"; titre = "⚠️ HOMONYME DÉTECTÉ"; msg = "Un client porte ce nom avec une autre pièce. Demandez une 2e pièce d'identité pour confirmer qu'il s'agit bien d'une personne différente avant de forcer l'ajout."; }
+    }
+    if (isBloque) return { status: "BLOQUE", titre: titre, message: msg, details: details };
+    return { status: "CONFIRMATION", titre: titre, message: msg, couleur: couleur, details: details,
+             noteForce: "⚠️ Ajout forcé (Cas " + pireCas + ")",
+             flags: { identite: (pireCas === 'A' || pireCas === 'C'), piece: (pireCas === 'A' || pireCas === 'B') } };
+  }
+
+  // --- Saisies envoyées mais pas encore visibles dans une copie rechargée ---
+  // Une resynchronisation (retour du curseur dans « N° », retour sur la page…) peut lire
+  // le Sheet AVANT que l'écriture soit faite : sans ce suivi, la tablette « oubliait » la
+  // saisie qu'elle venait de valider et ne voyait pas le doublon du client suivant.
+  // Une saisie reste suivie jusqu'à ce que le serveur l'ait écrite ET qu'une copie
+  // rechargée la contienne (ou 2 min après l'écriture, par sécurité) ; refus/échec -> retirée.
+  var saisiesEnAttente = [], compteurSaisies = 0;
+
+  function entreeCache(saisie) {
+    return {
+      pieceNorm: normPieceJS(saisie.piece), ligne: "en cours", date: "à l'instant",
+      nom: (saisie.nom || "").toUpperCase().trim(), prenom: (saisie.prenom || "").toUpperCase().trim(),
+      piece: (saisie.piece || "").toUpperCase().trim(), montant: (saisie.montant || "").toString(), notes: (saisie.notes || "").toString()
+    };
+  }
+  function ajouterAuCache(e) {
+    cacheVerif.offre.push(e);
+    if (cacheVerif.annuaireActif && e.pieceNorm) {
+      if (!('annuaireAvant' in e)) e.annuaireAvant = cacheVerif.annuaire[e.pieceNorm] || null;
+      e.annuaireAjoute = { nom: e.nom, prenom: e.prenom };
+      cacheVerif.annuaire[e.pieceNorm] = e.annuaireAjoute;
+    }
+  }
+  // Saisie refusée ou non envoyée : elle disparaît AUSSI de la copie locale (sinon,
+  // ressaisie, elle passait pour un doublon d'elle-même et n'était jamais enregistrée).
+  function retirerDuCache(e) {
+    if (!cacheVerif) return;
+    var i = cacheVerif.offre.indexOf(e);
+    if (i !== -1) cacheVerif.offre.splice(i, 1);
+    if (cacheVerif.annuaire && e.pieceNorm && cacheVerif.annuaire[e.pieceNorm] === e.annuaireAjoute) {
+      if (e.annuaireAvant) cacheVerif.annuaire[e.pieceNorm] = e.annuaireAvant;
+      else delete cacheVerif.annuaire[e.pieceNorm];
+    }
+  }
+  function memeClient(o, e) {
+    return o.pieceNorm === e.pieceNorm && normIdJS(o.nom) === normIdJS(e.nom) && normIdJS(o.prenom) === normIdJS(e.prenom);
+  }
+  // Ajoute la saisie au cache local TOUT DE SUITE (optimiste) -> la suivante est correcte.
+  // « rang » = nombre de lignes identiques (même client) déjà connues : avec plusieurs
+  // passages autorisés, des lignes identiques sont normales, on les compte.
+  function ajoutOptimisteCache(saisie) {
+    var e = entreeCache(saisie);
+    var deja = cacheVerif ? cacheVerif.offre.filter(function (o) { return memeClient(o, e); }).length
+                          : saisiesEnAttente.filter(function (s) { return memeClient(s.entree, e); }).length;
+    var suivi = { id: ++compteurSaisies, entree: e, rang: deja, ecriteA: 0 };
+    saisiesEnAttente.push(suivi);
+    if (cacheVerif) ajouterAuCache(e);
+    majIndicateurEnvoi();
+    return suivi.id;
+  }
+
+  // « ⏳ 1 saisie en cours d'envoi » tant que le serveur n'a pas confirmé (en général
+  // 1 à 2 s) ; avertissement si l'on ferme la page avant.
+  function nbEnvoisEnCours() { return saisiesEnAttente.filter(function (s) { return !s.ecriteA; }).length; }
+  function majIndicateurEnvoi() {
+    var n = nbEnvoisEnCours(), z = document.getElementById('envoiEnCours');
+    z.textContent = n ? "⏳ " + n + (n > 1 ? " saisies en cours d'envoi…" : " saisie en cours d'envoi…") : "";
+    z.style.display = n ? "block" : "none";
+  }
+  window.addEventListener('beforeunload', function (ev) {
+    if (nbEnvoisEnCours() > 0) { ev.preventDefault(); ev.returnValue = ""; return ""; }
+  });
+  function saisieConfirmee(saisie) {
+    saisiesEnAttente.forEach(function (s) { if (s.id === saisie.id) s.ecriteA = Date.now(); });
+    majIndicateurEnvoi();
+  }
+  function retirerEnAttente(saisie) {
+    saisiesEnAttente = saisiesEnAttente.filter(function (s) {
+      if (s.id !== saisie.id) return true;
+      retirerDuCache(s.entree);
+      return false;
+    });
+    majIndicateurEnvoi();
+    rechargerCacheVerif();
+  }
+  // Après chaque rechargement : on remet les saisies encore en attente.
+  // Une saisie de rang r est « dans le Sheet » si la copie rechargée contient plus de r
+  // lignes de ce client (comptage : plusieurs passages identiques sont possibles).
+  function fusionnerEnAttente() {
+    var maintenant = Date.now();
+    var duServeur = cacheVerif.offre.slice(); // lignes réellement renvoyées par le serveur
+    saisiesEnAttente = saisiesEnAttente.filter(function (s) {
+      var e = s.entree;
+      var nbServeur = duServeur.filter(function (o) { return memeClient(o, e); }).length;
+      var presente = nbServeur > s.rang;
+      if (s.ecriteA && (presente || maintenant - s.ecriteA > 120000)) return false; // le Sheet fait foi
+      if (!presente) ajouterAuCache(e);
+      return true;
+    });
+  }
+
+  // Réponse du serveur à l'écriture en arrière-plan
+  function confirmerEnregistrement(rep, saisie) {
+    if (rep && rep.status === "SUCCES") { saisieConfirmee(saisie); return; } // tout va bien (silencieux)
+    // Le serveur (source de vérité) a trouvé un doublon que la tablette n'avait pas vu,
+    // ou la saisie est hors période -> rien n'a été écrit : alerte bien visible.
+    retirerEnAttente(saisie);
+    alerterServeur(saisie, rep);
+  }
+  function echecEnregistrement(err, saisie) {
+    retirerEnAttente(saisie);
+    if (siNonAutorisee(err)) {
+      alerterServeur(saisie, { status: "BLOQUE", titre: "🔒 TABLETTE NON AUTORISÉE", message: "Faites autoriser la tablette, puis ressaisissez.", details: [] });
+      return;
+    }
+    alerterServeur(saisie, null);
+  }
+</script>

@@ -3,7 +3,7 @@
 const assert = require('assert');
 const fs = require('fs');
 const { chromium } = require('playwright');
-const { renderTemplate } = require('./harness');
+const { rendrePage } = require('./harness');
 const { ouvrir } = require('./navigateur');
 (async () => {
   // 1. Serveur muet : l'écran affiché ne dépend que des dates glissées dans la page
@@ -12,7 +12,7 @@ const { ouvrir } = require('./navigateur');
     const page = await browser0.newPage();
     const stub = '<script>window.localStorage.setItem("cdTabletteCle","CLE-TEST-0123456789abcdef0123456789abcdef");' +
       'window.google={script:{run:new Proxy({},{get:function(_,n){return (n==="withSuccessHandler"||n==="withFailureHandler")?function(){return google.script.run;}:function(){};}})}};</script>';
-    const rendre = dates => renderTemplate(fs.readFileSync(process.argv[2] + '/Index.html', 'utf8'),
+    const rendre = dates => rendrePage(process.argv[2],
       { cfg: { TITRE_APP: 't', NOM_OFFRE: 'o', NOM_STRUCTURE: 's', LIBELLE_MONTANT: 'Montant', MONTANT_OBLIGATOIRE: 'OUI', LIBELLE_NOTES: 'n', PRECISION_NOTES: '', PASSAGES_MAX: '1' }, dates })
       .replace('<head>', '<head>' + stub);
     await page.setContent(rendre({ debut: '', fin: '' }), { waitUntil: 'load' });

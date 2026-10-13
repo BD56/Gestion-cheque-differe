@@ -25,3 +25,7 @@ faux `google.script.run` branché sur le serveur simulé.
   `test_ui_lot2.js` (tablette).
 - Ce dossier est **exclu** de l'envoi vers Apps Script (`.claspignore`) : ne jamais le
   copier dans l'éditeur Apps Script.
+- **Fichiers découpés** : `harness.js` charge tous les `.gs` (ordre alphabétique, une
+  seule portée) ; `rendrePage()` produit la page comme `doGet` (Index.html + morceaux
+  `Style.html` / `Script*.html` insérés par `include_`). `test_fichiers.js` vérifie
+  qu'aucun nom n'est déclaré deux fois et que chaque morceau est inclus une fois.

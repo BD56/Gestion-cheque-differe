@@ -6,13 +6,13 @@
   // panneau, au rechargement de la page, ou après 10 min d'inactivité
   // (côté serveur). Chaque action protégée le renvoie au serveur.
   // =================================================================
-  var jetonAdmin = null;
-  var pinDefini = true;
+  let jetonAdmin = null;
+  let pinDefini = true;
 
   // Appel d'une fonction serveur protégée (le jeton est ajouté en dernier argument)
   function appelAdmin(nomFonction, args, onOk, onErr) {
-    var runner = google.script.run.withSuccessHandler(onOk).withFailureHandler(function (err) {
-      var m = err && err.message ? err.message : String(err);
+    const runner = google.script.run.withSuccessHandler(onOk).withFailureHandler(function (err) {
+      const m = err && err.message ? err.message : String(err);
       if (onErr) onErr(err);
       if (m.indexOf("ADMIN_REQUIS") !== -1) {
         verrouillerAdmin();
@@ -49,14 +49,14 @@
   }
 
   function deverrouillerAdmin() {
-    var pin = document.getElementById("pinSaisi").value.trim();
-    var msg = document.getElementById("msgVerrou");
+    const pin = document.getElementById("pinSaisi").value.trim();
+    const msg = document.getElementById("msgVerrou");
     msg.textContent = "";
     if (!/^\d{6}$/.test(pin)) {
       msg.textContent = "Le code doit contenir exactement 6 chiffres.";
       return;
     }
-    var surReponse = function (r) {
+    const surReponse = function (r) {
       document.getElementById("pinSaisi").value = "";
       document.getElementById("pinConfirme").value = "";
       if (r && r.ok) {
@@ -64,7 +64,7 @@
         afficherZoneAdmin();
       } else msg.textContent = (r && r.message) || "Refusé.";
     };
-    var surErreur = function (err) {
+    const surErreur = function (err) {
       if (!siNonAutorisee(err)) msg.textContent = "Erreur : " + (err && err.message ? err.message : err);
     };
     if (!pinDefini) {
@@ -72,7 +72,7 @@
         msg.textContent = "Les deux codes ne correspondent pas.";
         return;
       }
-      var activation = document.getElementById("activationVerrou").value.trim();
+      const activation = document.getElementById("activationVerrou").value.trim();
       if (activation.replace(/\D/g, "").length !== 8) {
         msg.textContent = "Saisissez le code d'activation (8 chiffres) affiché dans le Google Sheets.";
         return;
@@ -124,7 +124,7 @@
   // Points d'attention en tête de l'espace responsable : robot de nuit absent ou
   // arrêté, codes faux tapés depuis des appareils non autorisés.
   function afficherAlertesAdmin(infos) {
-    var lignes = [],
+    const lignes = [],
       r = infos.robots || {};
     if (!r.cloture || !r.purge) {
       lignes.push(
@@ -137,7 +137,7 @@
           ". Ouvrez le Google Sheets → menu 🚀 APPLICATION → 🧰 Installer (et acceptez les autorisations)."
       );
     }
-    var e = infos.essaisInconnus || {};
+    const e = infos.essaisInconnus || {};
     if (e.n)
       lignes.push(
         "🔐 " +
@@ -146,10 +146,10 @@
           e.dernier +
           "). Si ce n'était pas vous, changez le code (tuile 🔑)."
       );
-    var z = document.getElementById("alerteAdmin");
+    const z = document.getElementById("alerteAdmin");
     z.textContent = "";
     lignes.forEach(function (t) {
-      var d = document.createElement("div");
+      const d = document.createElement("div");
       d.textContent = t;
       d.style.margin = "2px 0";
       z.appendChild(d);
@@ -159,8 +159,8 @@
 
   // Navigation : accueil (tuiles) <-> sous-écrans de l'espace responsable
   function allerEcran(nom) {
-    var ecrans = document.querySelectorAll("#modalParametres .sous-ecran");
-    for (var i = 0; i < ecrans.length; i++)
+    const ecrans = document.querySelectorAll("#modalParametres .sous-ecran");
+    for (let i = 0; i < ecrans.length; i++)
       ecrans[i].classList.toggle("actif", ecrans[i].getAttribute("data-ecran") === nom);
     document.querySelector("#modalParametres .modal-content").scrollTop = 0;
   }
@@ -171,7 +171,7 @@
 
   // --- Correction / suppression d'une saisie ---
   // Le serveur recontrôle A/B/C sur « Saisies » (source de vérité) à chaque correction.
-  var listeSaisies = [],
+  let listeSaisies = [],
     saisieEnCours = null;
 
   function ouvrirSaisies() {
@@ -188,7 +188,7 @@
     document.getElementById("vueListeSaisies").style.display = "block";
   }
   function msgSaisies(texte, couleur) {
-    var m = document.getElementById("msgSaisies");
+    const m = document.getElementById("msgSaisies");
     m.textContent = texte || "";
     m.style.color = couleur || "#3c4043";
   }
@@ -205,18 +205,18 @@
     });
   }
   function dessinerListeSaisies() {
-    var saisi = document.getElementById("rechercheSaisie").value;
-    var filtre = normIdJS(saisi),
+    const saisi = document.getElementById("rechercheSaisie").value;
+    const filtre = normIdJS(saisi),
       filtrePiece = normPieceJS(saisi);
-    var zone = document.getElementById("listeSaisies");
+    const zone = document.getElementById("listeSaisies");
     zone.innerHTML = "";
     listeSaisies.forEach(function (sa) {
-      var botte = normIdJS(sa.nom + sa.prenom + " " + sa.prenom + sa.nom + " " + sa.piece);
+      const botte = normIdJS(sa.nom + sa.prenom + " " + sa.prenom + sa.nom + " " + sa.piece);
       if (filtre && botte.indexOf(filtre) === -1 && botte.indexOf(filtrePiece) === -1) return;
-      var carte = document.createElement("div");
+      const carte = document.createElement("div");
       carte.className = "doublon-carte";
       if (sa.alerte) carte.style.borderLeftColor = "#d93025";
-      var lignes = [
+      const lignes = [
         "📅 " + sa.date + " (Ligne " + sa.ligne + ")",
         "👤 " + sa.nom + " " + sa.prenom + (sa.alerte ? "  ⚠️" : ""),
         "💳 " + sa.piece,
@@ -224,21 +224,21 @@
       if (sa.montant) lignes.push("💶 " + sa.montant);
       if (sa.notes) lignes.push("💬 " + sa.notes);
       lignes.forEach(function (t) {
-        var d = document.createElement("div");
+        const d = document.createElement("div");
         d.textContent = t;
         carte.appendChild(d);
       });
-      var actions = document.createElement("div");
+      const actions = document.createElement("div");
       actions.className = "flex-btn";
       actions.style.marginTop = "8px";
-      var bSup = document.createElement("button");
+      const bSup = document.createElement("button");
       bSup.className = "btn-cancel";
       bSup.style.background = "#d93025";
       bSup.textContent = "🗑️ SUPPRIMER";
       bSup.onclick = function () {
         supprimerUneSaisie(sa);
       };
-      var bCor = document.createElement("button");
+      const bCor = document.createElement("button");
       bCor.className = "btn-force";
       bCor.style.background = "#1a73e8";
       bCor.textContent = "✏️ CORRIGER";
@@ -285,9 +285,9 @@
 
   function enregistrerCorrection(forcer) {
     if (!saisieEnCours) return;
-    var montantCor = document.getElementById("corMontant").value.trim();
+    const montantCor = document.getElementById("corMontant").value.trim();
     if (montantCor !== "" && lireMontant(montantCor) === null) {
-      var box0 = document.getElementById("corAlerte");
+      const box0 = document.getElementById("corAlerte");
       document.getElementById("corAlerteTitre").textContent = "Montant illisible";
       document.getElementById("corAlerteMsg").textContent = "Saisissez un nombre (ex. 150 ou 150,50).";
       document.getElementById("corAlerteListe").textContent = "";
@@ -297,7 +297,7 @@
       box0.style.display = "block";
       return;
     }
-    var nouveau = {
+    const nouveau = {
       piece: document.getElementById("corPiece").value,
       nom: document.getElementById("corNom").value,
       prenom: document.getElementById("corPrenom").value,
@@ -316,16 +316,16 @@
           return;
         }
         // Doublon : CONFIRMATION (forçable) ou BLOQUE
-        var box = document.getElementById("corAlerte");
-        var orange = r.couleur === "ORANGE";
+        const box = document.getElementById("corAlerte");
+        const orange = r.couleur === "ORANGE";
         box.style.backgroundColor = orange ? "#fff3cd" : "#f8d7da";
         box.style.borderColor = orange ? "#ffeeba" : "#f5c6cb";
         document.getElementById("corAlerteTitre").textContent = r.titre;
         document.getElementById("corAlerteMsg").textContent = r.message;
-        var liste = document.getElementById("corAlerteListe");
+        const liste = document.getElementById("corAlerteListe");
         liste.innerHTML = "";
         (r.details || []).forEach(function (d) {
-          var c = document.createElement("div");
+          const c = document.createElement("div");
           c.className = "doublon-carte";
           c.textContent =
             "📅 " + d.date + " (Ligne " + d.ligne + ") — " + d.nom + " " + d.prenom + " — 💳 " + d.piece;
@@ -337,7 +337,7 @@
       },
       function (err) {
         // Ligne qui a bougé, champ manquant… : on revient à la liste rechargée
-        var m = err && err.message ? err.message : "";
+        const m = err && err.message ? err.message : "";
         if (m.indexOf("ADMIN_REQUIS") === -1 && m.indexOf("rechargez") !== -1) {
           saisieEnCours = null;
           afficherVueListe();
@@ -378,7 +378,7 @@
   // --- Archives (offres clôturées) ---
   function ouvrirArchives() {
     allerEcran("archives");
-    var sel = document.getElementById("selArchive");
+    const sel = document.getElementById("selArchive");
     sel.innerHTML = "<option value=''>⏳ Chargement…</option>";
     appelAdmin("listerArchives", [], function (liste) {
       sel.innerHTML = "";
@@ -387,7 +387,7 @@
         return;
       }
       liste.forEach(function (a) {
-        var o = document.createElement("option");
+        const o = document.createElement("option");
         o.value = a.nom;
         o.textContent = a.libelle + " — " + a.lignes + " ligne(s)";
         sel.appendChild(o);
@@ -395,9 +395,9 @@
     });
   }
   function imprimerArchive() {
-    var sel = document.getElementById("selArchive");
+    const sel = document.getElementById("selArchive");
     if (!sel.value) return;
-    var libelle = sel.options[sel.selectedIndex].textContent.split(" — ")[0];
+    const libelle = sel.options[sel.selectedIndex].textContent.split(" — ")[0];
     document.body.style.cursor = "wait";
     appelAdmin(
       "donneesArchive",
@@ -413,7 +413,7 @@
   }
 
   // --- Réglages de la structure ---
-  var CHAMPS_CONFIG = [
+  const CHAMPS_CONFIG = [
     ["NOM_STRUCTURE", "Nom de la structure, avec l'article (ex. « l'Hypermarché … », « la société … »)"],
     ["NOM_OFFRE", "Nom de l'offre (sous le titre)"],
     ["TITRE_APP", "Titre de l'onglet du navigateur"],
@@ -422,16 +422,16 @@
     ["PRECISION_NOTES", "Précision du champ Notes, entre parenthèses (facultatif)"],
     ["PASSAGES_MAX", "Passages autorisés par client et par offre (1 à 10)"],
   ];
-  var reglagesCharges = false;
+  let reglagesCharges = false;
   function remplirFormulaireReglages(cfg) {
     reglagesCharges = true;
-    var zone = document.getElementById("champsReglages");
+    const zone = document.getElementById("champsReglages");
     zone.innerHTML = "";
     CHAMPS_CONFIG.forEach(function (c) {
-      var lab = document.createElement("label");
+      const lab = document.createElement("label");
       lab.style.fontSize = "13px";
       lab.textContent = c[1];
-      var inp = document.createElement("input");
+      const inp = document.createElement("input");
       inp.type = "text";
       inp.id = "cfg_" + c[0];
       inp.maxLength = 100;
@@ -451,17 +451,17 @@
     // Réglages pas (encore) chargés pour cette session : on n'enregistre rien (sinon
     // des valeurs vides ou d'une session précédente écraseraient les vraies)
     if (!reglagesCharges || !document.getElementById("cfg_NOM_OFFRE")) {
-      var m0 = document.getElementById("msgReglages");
+      const m0 = document.getElementById("msgReglages");
       m0.style.color = "#d93025";
       m0.textContent = "Réglages pas encore chargés : patientez puis réessayez.";
       return;
     }
-    var valeurs = {};
+    const valeurs = {};
     CHAMPS_CONFIG.forEach(function (c) {
       valeurs[c[0]] = document.getElementById("cfg_" + c[0]).value;
     });
     valeurs.MONTANT_OBLIGATOIRE = document.getElementById("cfg_MONTANT_OBLIGATOIRE").checked ? "OUI" : "NON";
-    var msg = document.getElementById("msgReglages");
+    const msg = document.getElementById("msgReglages");
     msg.style.color = "orange";
     msg.textContent = "Enregistrement...";
     appelAdmin(
@@ -496,24 +496,24 @@
     chargerTablettes();
   }
   function chargerTablettes() {
-    var msg = document.getElementById("msgTablettes");
+    const msg = document.getElementById("msgTablettes");
     msg.textContent = "⏳ Chargement…";
     appelAdmin("listerTablettes", [], function (liste) {
       msg.textContent = liste.length + " tablette(s) autorisée(s).";
-      var zone = document.getElementById("listeTablettes");
+      const zone = document.getElementById("listeTablettes");
       zone.textContent = "";
       liste.forEach(function (t) {
-        var carte = document.createElement("div");
+        const carte = document.createElement("div");
         carte.className = "doublon-carte";
         [
           "📱 " + t.nom + (t.id === ID_TABLETTE ? "  (cette tablette)" : ""),
           "Autorisée le " + t.creeLe + (t.vueLe ? " — utilisée le " + t.vueLe : ""),
         ].forEach(function (x) {
-          var d = document.createElement("div");
+          const d = document.createElement("div");
           d.textContent = x;
           carte.appendChild(d);
         });
-        var b = document.createElement("button");
+        const b = document.createElement("button");
         b.className = "btn-cancel";
         b.style.background = "#d93025";
         b.style.marginTop = "8px";
@@ -560,9 +560,9 @@
   }
 
   function changerPin() {
-    var p1 = document.getElementById("pinNouveau").value.trim();
-    var p2 = document.getElementById("pinNouveau2").value.trim();
-    var msg = document.getElementById("msgPin");
+    const p1 = document.getElementById("pinNouveau").value.trim();
+    const p2 = document.getElementById("pinNouveau2").value.trim();
+    const msg = document.getElementById("msgPin");
     msg.style.color = "#d93025";
     if (!/^\d{6}$/.test(p1)) {
       msg.textContent = "Le code doit contenir exactement 6 chiffres.";

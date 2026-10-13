@@ -5,7 +5,7 @@
 // =================================================================
 // "Archives_26-09-2026_23-05" -> clé de tri "202609262305" + libellé lisible
 function infosNomArchive_(nom) {
-  var m = /^Archives_(\d{2})-(\d{2})-(\d{4})_(\d{2})-(\d{2})/.exec(nom);
+  const m = /^Archives_(\d{2})-(\d{2})-(\d{4})_(\d{2})-(\d{2})/.exec(nom);
   if (!m) return { tri: "", libelle: nom };
   return {
     tri: m[3] + m[2] + m[1] + m[4] + m[5],
@@ -18,18 +18,18 @@ function infosNomArchive_(nom) {
 // onglet au nom non reconnu n'est jamais supprimé. Appelée chaque nuit par
 // verificationClotureNocturne. Renvoie les noms supprimés.
 function purgerArchives_() {
-  var lock = LockService.getScriptLock();
+  const lock = LockService.getScriptLock();
   lock.waitLock(30000);
   try {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var limite = new Date();
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const limite = new Date();
     limite.setFullYear(limite.getFullYear() - ARCHIVES_RETENTION_ANS);
-    var cleLimite = Utilities.formatDate(limite, fuseau_(), "yyyyMMddHHmm");
-    var supprimees = [];
+    const cleLimite = Utilities.formatDate(limite, fuseau_(), "yyyyMMddHHmm");
+    const supprimees = [];
     ss.getSheets().forEach(function (f) {
-      var nom = f.getName();
+      const nom = f.getName();
       if (nom.indexOf(PREFIXE_ARCHIVES) !== 0) return;
-      var tri = infosNomArchive_(nom).tri;
+      const tri = infosNomArchive_(nom).tri;
       if (tri && tri < cleLimite) {
         ss.deleteSheet(f);
         supprimees.push(nom);
@@ -44,13 +44,13 @@ function purgerArchives_() {
 // Liste des archives, la plus récente d'abord.
 function listerArchives(jeton) {
   exigerAdmin_(jeton);
-  var liste = [];
+  const liste = [];
   SpreadsheetApp.getActiveSpreadsheet()
     .getSheets()
     .forEach(function (f) {
-      var nom = f.getName();
+      const nom = f.getName();
       if (nom.indexOf(PREFIXE_ARCHIVES) !== 0) return;
-      var infos = infosNomArchive_(nom);
+      const infos = infosNomArchive_(nom);
       liste.push({
         nom: nom,
         libelle: infos.libelle,
@@ -71,8 +71,8 @@ function donneesArchive(nom, jeton) {
   exigerAdmin_(jeton);
   nom = (nom || "").toString();
   if (nom.indexOf(PREFIXE_ARCHIVES) !== 0) throw new Error("Archive inconnue.");
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var f = ss.getSheetByName(nom);
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const f = ss.getSheetByName(nom);
   if (!f) throw new Error("Archive introuvable : " + nom);
   return tableauImpression_(f, null, ss.getSpreadsheetTimeZone());
 }
@@ -85,7 +85,7 @@ function archiverOffreWebApp(jeton) {
 // Clôture réelle (sans contrôle d'accès : appelée aussi par le robot de nuit).
 // Sous verrou : aucune saisie ne peut s'intercaler entre la copie et le vidage.
 function archiverOffre_() {
-  var lock = LockService.getScriptLock();
+  const lock = LockService.getScriptLock();
   lock.waitLock(30000);
   try {
     return archiverOffreSousVerrou_();
@@ -95,22 +95,22 @@ function archiverOffre_() {
 }
 
 function archiverOffreSousVerrou_() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var feuilleSaisies = ss.getSheetByName(FEUILLE_SAISIES);
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const feuilleSaisies = ss.getSheetByName(FEUILLE_SAISIES);
   if (!feuilleSaisies) {
     enregistrerDates_("", "");
     return "✅ L'offre a été clôturée (feuille « " + FEUILLE_SAISIES + " » absente : rien à archiver).";
   }
-  var derniereLigne = feuilleSaisies.getLastRow();
-  var message;
+  const derniereLigne = feuilleSaisies.getLastRow();
+  let message;
 
   if (derniereLigne > 1) {
     // Nom unique : deux clôtures dans la même minute ne doivent pas échouer
-    var base = PREFIXE_ARCHIVES + Utilities.formatDate(new Date(), fuseau_(), "dd-MM-yyyy_HH-mm");
-    var nom = base,
+    const base = PREFIXE_ARCHIVES + Utilities.formatDate(new Date(), fuseau_(), "dd-MM-yyyy_HH-mm");
+    let nom = base,
       n = 2;
     while (ss.getSheetByName(nom)) nom = base + "_" + n++;
-    var archive = ss.insertSheet(nom, ss.getNumSheets());
+    const archive = ss.insertSheet(nom, ss.getNumSheets());
     feuilleSaisies.getDataRange().copyTo(archive.getRange(1, 1));
     archive.setFrozenRows(1);
     feuilleSaisies

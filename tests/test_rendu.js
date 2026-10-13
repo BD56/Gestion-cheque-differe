@@ -39,7 +39,7 @@ console.log(
 );
 console.log(
   "DATES client relues:",
-  new Function("return " + r2.match(/var DATES_INITIALES = (.*);/)[1])().debut === "</script>"
+  new Function("return " + r2.match(/(?:var|let|const) DATES_INITIALES = (.*);/)[1])().debut === "</script>"
 );
-const cfgClient = new Function(r2.match(/var CONFIG = (.*);/)[1].replace(/^/, "return "))();
+const cfgClient = new Function(r2.match(/(?:var|let|const) CONFIG = (.*);/)[1].replace(/^/, "return "))();
 console.log("CONFIG client relu:", cfgClient.LIBELLE_NOTES === "</script><b>x");

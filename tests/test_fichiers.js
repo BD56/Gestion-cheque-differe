@@ -48,9 +48,10 @@ try {
     const ctx = vm.createContext({});
     for (const f of ordre) vm.runInContext(fs.readFileSync(repo + "/" + f, "utf8"), ctx, { filename: f });
     const r = {};
-    for (const n of Object.keys(vus))
-      if (typeof ctx[n] !== "function")
-        r[n] = String(ctx[n] instanceof RegExp ? ctx[n] : JSON.stringify(ctx[n]));
+    for (const n of Object.keys(vus)) {
+      const v = vm.runInContext(n, ctx); // const / let : pas des propriétés de l'objet global
+      if (typeof v !== "function") r[n] = String(v instanceof RegExp ? v : JSON.stringify(v));
+    }
     return r;
   }
   assert.deepStrictEqual(

@@ -1,9 +1,9 @@
 <!-- Mode de sécurité, clôture, dates de l'offre (affichage et réglage). -->
 <script>
-  var modeEnCours = false;
+  let modeEnCours = false;
   function changerMode() {
     if (modeEnCours) return; // un double appui ne rebascule pas
-    var btn = document.getElementById("btnMode"),
+    const btn = document.getElementById("btnMode"),
       avant = btn.innerHTML;
     modeEnCours = true;
     btn.innerHTML = "⏳ MAJ...";
@@ -23,13 +23,13 @@
   }
 
   function majAffichageMode(mode) {
-    var btn = document.getElementById("btnMode");
+    const btn = document.getElementById("btnMode");
     btn.innerHTML = "🛡️ MODE : " + mode;
     document.getElementById("resumeSecurite").textContent = mode;
     btn.className = mode === "BLOQUANT" ? "btn-action btn-mode-bloquant" : "btn-action btn-mode-signaler";
   }
 
-  var clotureEnCours = false;
+  let clotureEnCours = false;
   function cloturerOffre() {
     if (clotureEnCours) return;
     if (confirm("🚨 CLÔTURE DE L'OFFRE\n\nÊtes-vous sûr de vouloir archiver et vider la liste ?")) {
@@ -58,20 +58,20 @@
   // --- GESTION DE L'AFFICHAGE ET DU VERROUILLAGE ---
   function formaterDateAffichage(dateString) {
     if (!dateString) return "";
-    var parts = dateString.split("-");
+    const parts = dateString.split("-");
     return parts.length === 3 ? parts[2] + "/" + parts[1] : dateString;
   }
 
   // Période de l'offre connue de la tablette (null tant que non chargée)
-  var periodeOperation = null;
+  let periodeOperation = null;
   function dansPeriode() {
     if (!periodeOperation) return true; // pas encore chargée : le serveur tranchera
     if (!periodeOperation.debut || !periodeOperation.fin) return false;
-    var j = new Date();
+    const j = new Date();
     j.setHours(0, 0, 0, 0);
-    var d = new Date(periodeOperation.debut);
+    const d = new Date(periodeOperation.debut);
     d.setHours(0, 0, 0, 0);
-    var f = new Date(periodeOperation.fin);
+    const f = new Date(periodeOperation.fin);
     f.setHours(0, 0, 0, 0);
     return j >= d && j <= f;
   }
@@ -86,18 +86,18 @@
   // Affiche l'état de l'offre et montre/masque le formulaire selon les dates.
   function appliquerDates(dates, sansCache) {
     periodeOperation = dates;
-    var affichage = document.getElementById("sousTitreOperation");
-    var formulaire = document.getElementById("formulaireSaisie");
-    var isVerrouille = true;
-    var dateJour = new Date();
+    const affichage = document.getElementById("sousTitreOperation");
+    const formulaire = document.getElementById("formulaireSaisie");
+    let isVerrouille = true;
+    const dateJour = new Date();
     dateJour.setHours(0, 0, 0, 0);
 
     if (dates.debut && dates.fin) {
-      var strDebut = formaterDateAffichage(dates.debut);
-      var strFin = formaterDateAffichage(dates.fin);
-      var debutObj = new Date(dates.debut);
+      const strDebut = formaterDateAffichage(dates.debut);
+      const strFin = formaterDateAffichage(dates.fin);
+      const debutObj = new Date(dates.debut);
       debutObj.setHours(0, 0, 0, 0);
-      var finObj = new Date(dates.fin);
+      const finObj = new Date(dates.fin);
       finObj.setHours(0, 0, 0, 0);
 
       if (dateJour >= debutObj && dateJour <= finObj) {
@@ -118,14 +118,14 @@
 
     // Verrouillage/Déverrouillage visuel du formulaire (pas par-dessus un encadré de
     // doublon en attente de décision : il réapparaît à ABANDONNER / FORCER)
-    var encadreOuvert = document.getElementById("boxConfirmation").style.display === "block";
+    const encadreOuvert = document.getElementById("boxConfirmation").style.display === "block";
     if (formulaire && !encadreOuvert) {
       formulaire.style.display = isVerrouille ? "none" : "block";
     }
 
     // Mise à jour des cases dans la modale (sauf si le responsable est en train de
     // les modifier : le rafraîchissement automatique n'écrase pas sa saisie)
-    var dD = document.getElementById("modalDateDebut"),
+    const dD = document.getElementById("modalDateDebut"),
       dF = document.getElementById("modalDateFin");
     if (dD && !dD.dataset.modifie && !dF.dataset.modifie) {
       dD.value = dates.debut;
@@ -138,11 +138,11 @@
   appliquerDates(DATES_INITIALES, true); // tout de suite, sans attendre le serveur
 
   function sauvegarderDatesTablette() {
-    var debut = document.getElementById("modalDateDebut").value;
-    var fin = document.getElementById("modalDateFin").value;
-    var msg = document.getElementById("msgRetourModal");
-    var dateFinObj = new Date(fin);
-    var dateJour = new Date();
+    const debut = document.getElementById("modalDateDebut").value;
+    const fin = document.getElementById("modalDateFin").value;
+    const msg = document.getElementById("msgRetourModal");
+    const dateFinObj = new Date(fin);
+    const dateJour = new Date();
     dateJour.setHours(0, 0, 0, 0);
 
     if ((debut === "") !== (fin === "")) {
@@ -173,7 +173,7 @@
       function (reponse) {
         delete document.getElementById("modalDateDebut").dataset.modifie;
         delete document.getElementById("modalDateFin").dataset.modifie;
-        var alerte = (reponse || "").indexOf("⚠️") !== -1;
+        const alerte = (reponse || "").indexOf("⚠️") !== -1;
         msg.style.color = alerte ? "#b06000" : "green";
         msg.style.whiteSpace = "pre-line";
         msg.textContent = alerte

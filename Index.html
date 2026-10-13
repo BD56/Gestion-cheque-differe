@@ -432,10 +432,10 @@
 
     <script>
       // Réglages de la structure, injectés par doGet (cf. Reglages.gs::getConfig)
-      var CONFIG = <?!= JSON.stringify(cfg).replace(/</g, '\\u003c') ?>;
-      var MONTANT_OBLIGATOIRE = (CONFIG.MONTANT_OBLIGATOIRE !== "NON");
+      let CONFIG = <?!= JSON.stringify(cfg).replace(/</g, '\\u003c') ?>;
+      let MONTANT_OBLIGATOIRE = (CONFIG.MONTANT_OBLIGATOIRE !== "NON");
       // Dates de l'offre au moment de l'ouverture (injectées par doGet) : bon écran d'emblée
-      var DATES_INITIALES = <?!= JSON.stringify(dates).replace(/</g, '\\u003c') ?>;
+      const DATES_INITIALES = <?!= JSON.stringify(dates).replace(/</g, '\\u003c') ?>;
     </script>
     <!-- Scripts de la page, insérés ici par le serveur (Application.gs::include_).
          Une seule portée globale : l'ordre compte pour ce qui s'exécute au chargement. -->

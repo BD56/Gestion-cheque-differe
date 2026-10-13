@@ -13,7 +13,7 @@ function fuseau_() {
 
 // Mode de sécurité de « Saisies »!Z1 (tolère « Bloquant », espaces…).
 function modeSecurite_(feuille) {
-  var v = feuille ? (feuille.getRange(CELLULE_MODE).getValue() || "").toString().trim().toUpperCase() : "";
+  const v = feuille ? (feuille.getRange(CELLULE_MODE).getValue() || "").toString().trim().toUpperCase() : "";
   return v === "BLOQUANT" ? "BLOQUANT" : "SIGNALER";
 }
 
@@ -29,8 +29,8 @@ function doGet(e) {
   nettoyerSiCopie_(); // copie du modèle (ou d'un autre classeur) : repart sans code/dates/réglages hérités
   // Nouvelle structure : crée « Saisies » si elle n'existe pas encore (rien n'est écrasé)
   if (!SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FEUILLE_SAISIES)) installerFeuilles_();
-  var cfg = getConfig();
-  var page = HtmlService.createTemplateFromFile("Index");
+  const cfg = getConfig();
+  const page = HtmlService.createTemplateFromFile("Index");
   page.cfg = cfg;
   // Dates de l'offre glissées dans la page : la tablette affiche tout de suite le bon
   // écran (saisie ou « aucune opération »), sans attendre un appel au serveur.
@@ -69,15 +69,15 @@ function chargerCacheVerif(cle) {
 }
 
 function cacheVerif_() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var feuille = ss.getSheetByName(FEUILLE_SAISIES);
-  var mode = modeSecurite_(feuille);
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const feuille = ss.getSheetByName(FEUILLE_SAISIES);
+  const mode = modeSecurite_(feuille);
 
-  var offre = [];
+  const offre = [];
   if (feuille) {
-    var donnees = feuille.getDataRange().getValues();
-    for (var i = 1; i < donnees.length; i++) {
-      var pn = _normPiece_(donnees[i][IDX.PIECE]);
+    const donnees = feuille.getDataRange().getValues();
+    for (let i = 1; i < donnees.length; i++) {
+      const pn = _normPiece_(donnees[i][IDX.PIECE]);
       // lignes sans N° gardées si elles ont un nom (un homonyme reste détectable)
       if (pn === "" && _normId_(donnees[i][IDX.NOM]) === "") continue;
       offre.push({
@@ -98,12 +98,12 @@ function cacheVerif_() {
     }
   }
 
-  var annuaire = {};
+  const annuaire = {};
   if (ANNUAIRE_ACTIF) {
-    var fa = _feuilleAnnuaire_();
-    var ad = fa.getDataRange().getValues();
-    for (var j = 1; j < ad.length; j++) {
-      var p = _normPiece_(ad[j][0]);
+    const fa = _feuilleAnnuaire_();
+    const ad = fa.getDataRange().getValues();
+    for (let j = 1; j < ad.length; j++) {
+      const p = _normPiece_(ad[j][0]);
       if (p !== "")
         annuaire[p] = {
           nom: ad[j][1] ? ad[j][1].toString() : "",
@@ -144,9 +144,9 @@ function getInfosPanneau(cle) {
 }
 
 function infosPanneau_() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var f = ss.getSheetByName(FEUILLE_SAISIES);
-  var mode = modeSecurite_(f);
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const f = ss.getSheetByName(FEUILLE_SAISIES);
+  const mode = modeSecurite_(f);
   return { success: true, mode: mode, annuaireActif: ANNUAIRE_ACTIF, modeAnnuaire: getModeAnnuaire() };
 }
 
@@ -159,11 +159,11 @@ function infosPanneau_() {
 // Renvoie [] s'il n'y a aucune ligne à imprimer.
 function genererDonneesImpression(type, dateChoisieStr, cle) {
   exigerTablette_(cle);
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var feuille = ss.getSheetByName(FEUILLE_SAISIES);
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const feuille = ss.getSheetByName(FEUILLE_SAISIES);
   if (!feuille) return [];
-  var tz = ss.getSpreadsheetTimeZone(); // même référence que INT()/TODAY() dans A_IMPRIMER
-  var jour = null;
+  const tz = ss.getSpreadsheetTimeZone(); // même référence que INT()/TODAY() dans A_IMPRIMER
+  let jour = null;
   if (type === "jour") {
     jour =
       dateChoisieStr === "aujourdhui" ? Utilities.formatDate(new Date(), tz, "yyyy-MM-dd") : dateChoisieStr;
@@ -175,20 +175,20 @@ function genererDonneesImpression(type, dateChoisieStr, cle) {
 // jour (yyyy-MM-dd) : ne garde que ce jour-là, date en jj/mm/aaaa ;
 // jour null : toutes les lignes non vides, telles qu'affichées.
 function tableauImpression_(feuille, jour, tz) {
-  var derniere = feuille.getLastRow();
+  const derniere = feuille.getLastRow();
   if (derniere < 2) return [];
-  var cfg = getConfig();
-  var entete = ENTETES_SAISIES.slice(0, IDX.MONTANT).concat([cfg.LIBELLE_MONTANT, cfg.LIBELLE_NOTES]);
-  var plage = feuille.getRange(2, 1, derniere - 1, NB_COLONNES);
-  var valeurs = plage.getValues();
-  var affichage = plage.getDisplayValues();
+  const cfg = getConfig();
+  const entete = ENTETES_SAISIES.slice(0, IDX.MONTANT).concat([cfg.LIBELLE_MONTANT, cfg.LIBELLE_NOTES]);
+  const plage = feuille.getRange(2, 1, derniere - 1, NB_COLONNES);
+  const valeurs = plage.getValues();
+  const affichage = plage.getDisplayValues();
 
-  var lignes = [];
-  for (var i = 0; i < valeurs.length; i++) {
+  const lignes = [];
+  for (let i = 0; i < valeurs.length; i++) {
     if (jour) {
-      var d = valeurs[i][IDX.DATE];
+      const d = valeurs[i][IDX.DATE];
       if (!(d instanceof Date) || Utilities.formatDate(d, tz, "yyyy-MM-dd") !== jour) continue;
-      var ligne = affichage[i].slice();
+      const ligne = affichage[i].slice();
       ligne[IDX.DATE] = Utilities.formatDate(d, tz, "dd/MM/yyyy");
       lignes.push(ligne);
     } else {

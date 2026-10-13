@@ -1,12 +1,12 @@
 <!-- Envoi d'une saisie, encadré de doublon, contrôle A/B/C local, saisies en attente. -->
 <script>
-  var memNom = "",
+  let memNom = "",
     memPrenom = "",
     memPiece = "",
     memMontant = "",
     memNotes = "";
 
-  var derniereValidation = 0;
+  let derniereValidation = 0;
   function envoyerSaisie() {
     memNom = document.getElementById("nom").value;
     memPrenom = document.getElementById("prenom").value;
@@ -15,7 +15,7 @@
     memNotes = document.getElementById("notes").value;
 
     // Double appui sur VALIDER : le 2e arrive sur le formulaire tout juste vidé -> ignoré
-    var toutVide = (memNom + memPrenom + memPiece + memMontant + memNotes).trim() === "";
+    const toutVide = (memNom + memPrenom + memPiece + memMontant + memNotes).trim() === "";
     if (toutVide && Date.now() - derniereValidation < 2000) return;
     // « vide » = rien de comparable (espaces, tirets seuls…), comme le serveur
     if (
@@ -50,11 +50,11 @@
 
     // Cette saisie, figée : l'encadré de doublon et le forçage s'appliquent à ELLE,
     // même si le formulaire est retapé entre-temps.
-    var saisie = { nom: memNom, prenom: memPrenom, piece: memPiece, montant: memMontant, notes: memNotes };
+    const saisie = { nom: memNom, prenom: memPrenom, piece: memPiece, montant: memMontant, notes: memNotes };
 
     if (!copieFraiche()) {
       // Copie locale absente ou trop ancienne (réseau en panne ?) -> on attend le serveur
-      var btn = document.getElementById("btnValider");
+      const btn = document.getElementById("btnValider");
       btn.innerHTML = "⏳ Recherche...";
       btn.disabled = true;
       google.script.run
@@ -75,7 +75,7 @@
     }
 
     // Contrôle A/B/C EN LOCAL (copie de moins de 2 min) -> feedback instantané
-    var reponse = analyserDoublonLocal(memNom, memPrenom, memPiece);
+    const reponse = analyserDoublonLocal(memNom, memPrenom, memPiece);
     if (reponse.status === "SUCCES") {
       afficherMessage(reponse.message, "success");
       derniereValidation = Date.now();
@@ -101,9 +101,9 @@
       .traiterSaisie(saisie.nom, saisie.prenom, saisie.piece, saisie.montant, saisie.notes, CLE_TABLETTE);
   }
 
-  var saisieEncadre = null; // la saisie affichée dans l'encadré de doublon
+  let saisieEncadre = null; // la saisie affichée dans l'encadré de doublon
   function traitementTermine(reponse, saisie) {
-    var btn = document.getElementById("btnValider");
+    const btn = document.getElementById("btnValider");
     btn.innerHTML = "VÉRIFIER ET VALIDER";
     btn.disabled = false;
 
@@ -124,9 +124,9 @@
 
   function afficherDetailsDoublon(details, isBloquant, titreTexte, messageTexte, couleurTheme) {
     document.getElementById("formulaireSaisie").style.display = "none";
-    var box = document.getElementById("boxConfirmation");
-    var titre = document.getElementById("titreDoublon");
-    var msgBox = document.getElementById("messageAlerte");
+    const box = document.getElementById("boxConfirmation");
+    const titre = document.getElementById("titreDoublon");
+    const msgBox = document.getElementById("messageAlerte");
 
     titre.textContent = titreTexte;
     msgBox.textContent = messageTexte;
@@ -151,7 +151,7 @@
       document.getElementById("actionBloquant").style.display = "none";
     }
 
-    var listeHTML = "";
+    let listeHTML = "";
     (details || []).forEach(function (d) {
       listeHTML += "<div class='doublon-carte'>";
       listeHTML += "📅 <b>Passage du :</b> " + echapper(d.date) + " (Ligne " + echapper(d.ligne) + ")<br>";
@@ -173,7 +173,7 @@
   }
 
   function forcerAjout() {
-    var sa = saisieEncadre;
+    const sa = saisieEncadre;
     saisieEncadre = null;
     document.getElementById("boxConfirmation").style.display = "none";
     document.getElementById("formulaireSaisie").style.display = dansPeriode() ? "block" : "none";
@@ -228,30 +228,30 @@
   // ⚠️ Garder synchro avec Code.gs::traiterSaisie. Le serveur reste autoritaire (il
   //    reconfirme à l'écriture en arrière-plan) -> aucun faux négatif même si bug ici.
   function passagesMaxJS() {
-    var n = parseInt(CONFIG.PASSAGES_MAX, 10);
+    const n = parseInt(CONFIG.PASSAGES_MAX, 10);
     return n >= 1 && n <= 10 ? n : 1;
   }
 
   function analyserDoublonLocal(nom, prenom, piece) {
-    var mode = (cacheVerif && cacheVerif.mode) || "SIGNALER";
-    var passagesClient = 0,
-      passagesMax = passagesMaxJS();
-    var nomN = normIdJS(nom),
+    const mode = (cacheVerif && cacheVerif.mode) || "SIGNALER";
+    let passagesClient = 0;
+    const passagesMax = passagesMaxJS();
+    const nomN = normIdJS(nom),
       prenomN = normIdJS(prenom),
       pieceN = normPieceJS(piece);
-    var rows = (cacheVerif && cacheVerif.offre) || [];
-    var pireCas = null,
-      details = [];
-    for (var i = 0; i < rows.length; i++) {
-      var r = rows[i];
-      var nomH = normIdJS(r.nom),
+    const rows = (cacheVerif && cacheVerif.offre) || [];
+    let pireCas = null;
+    const details = [];
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i];
+      const nomH = normIdJS(r.nom),
         prenomH = normIdJS(r.prenom);
-      var pieceH = r.pieceNorm || normPieceJS(r.piece || "");
+      const pieceH = r.pieceNorm || normPieceJS(r.piece || "");
       if (!nomH && !pieceH) continue;
-      var memeId = nomN !== "" && prenomN !== "" && nomH === nomN && prenomH === prenomN;
-      var memePiece = pieceN !== "" && pieceH === pieceN;
+      const memeId = nomN !== "" && prenomN !== "" && nomH === nomN && prenomH === prenomN;
+      const memePiece = pieceN !== "" && pieceH === pieceN;
       if (!memeId && !memePiece) continue;
-      var t = memeId && memePiece ? "A" : memePiece ? "B" : "C";
+      const t = memeId && memePiece ? "A" : memePiece ? "B" : "C";
       if (t === "A")
         passagesClient++; // même client : compté (limite de passages)
       else if (t === "B") pireCas = "B";
@@ -268,7 +268,7 @@
       });
     }
     if (passagesClient >= passagesMax) pireCas = "A";
-    var limiteTxt =
+    const limiteTxt =
       passagesMax > 1
         ? " (déjà " + passagesClient + " passage(s) ; maximum " + passagesMax + " par client)"
         : "";
@@ -282,7 +282,7 @@
             : "✅ Saisie enregistrée !",
       };
 
-    var isBloque = false,
+    let isBloque = false,
       titre = "",
       msg = "",
       couleur = "ROUGE";
@@ -333,7 +333,7 @@
   // saisie qu'elle venait de valider et ne voyait pas le doublon du client suivant.
   // Une saisie reste suivie jusqu'à ce que le serveur l'ait écrite ET qu'une copie
   // rechargée la contienne (ou 2 min après l'écriture, par sécurité) ; refus/échec -> retirée.
-  var saisiesEnAttente = [],
+  let saisiesEnAttente = [],
     compteurSaisies = 0;
 
   function entreeCache(saisie) {
@@ -360,7 +360,7 @@
   // ressaisie, elle passait pour un doublon d'elle-même et n'était jamais enregistrée).
   function retirerDuCache(e) {
     if (!cacheVerif) return;
-    var i = cacheVerif.offre.indexOf(e);
+    const i = cacheVerif.offre.indexOf(e);
     if (i !== -1) cacheVerif.offre.splice(i, 1);
     if (cacheVerif.annuaire && e.pieceNorm && cacheVerif.annuaire[e.pieceNorm] === e.annuaireAjoute) {
       if (e.annuaireAvant) cacheVerif.annuaire[e.pieceNorm] = e.annuaireAvant;
@@ -378,15 +378,15 @@
   // « rang » = nombre de lignes identiques (même client) déjà connues : avec plusieurs
   // passages autorisés, des lignes identiques sont normales, on les compte.
   function ajoutOptimisteCache(saisie) {
-    var e = entreeCache(saisie);
-    var deja = cacheVerif
+    const e = entreeCache(saisie);
+    const deja = cacheVerif
       ? cacheVerif.offre.filter(function (o) {
           return memeClient(o, e);
         }).length
       : saisiesEnAttente.filter(function (s) {
           return memeClient(s.entree, e);
         }).length;
-    var suivi = { id: ++compteurSaisies, entree: e, rang: deja, ecriteA: 0 };
+    const suivi = { id: ++compteurSaisies, entree: e, rang: deja, ecriteA: 0 };
     saisiesEnAttente.push(suivi);
     if (cacheVerif) ajouterAuCache(e);
     majIndicateurEnvoi();
@@ -401,7 +401,7 @@
     }).length;
   }
   function majIndicateurEnvoi() {
-    var n = nbEnvoisEnCours(),
+    const n = nbEnvoisEnCours(),
       z = document.getElementById("envoiEnCours");
     z.textContent = n ? "⏳ " + n + (n > 1 ? " saisies en cours d'envoi…" : " saisie en cours d'envoi…") : "";
     z.style.display = n ? "block" : "none";
@@ -432,14 +432,14 @@
   // Une saisie de rang r est « dans le Sheet » si la copie rechargée contient plus de r
   // lignes de ce client (comptage : plusieurs passages identiques sont possibles).
   function fusionnerEnAttente() {
-    var maintenant = Date.now();
-    var duServeur = cacheVerif.offre.slice(); // lignes réellement renvoyées par le serveur
+    const maintenant = Date.now();
+    const duServeur = cacheVerif.offre.slice(); // lignes réellement renvoyées par le serveur
     saisiesEnAttente = saisiesEnAttente.filter(function (s) {
-      var e = s.entree;
-      var nbServeur = duServeur.filter(function (o) {
+      const e = s.entree;
+      const nbServeur = duServeur.filter(function (o) {
         return memeClient(o, e);
       }).length;
-      var presente = nbServeur > s.rang;
+      const presente = nbServeur > s.rang;
       if (s.ecriteA && (presente || maintenant - s.ecriteA > 120000)) return false; // le Sheet fait foi
       if (!presente) ajouterAuCache(e);
       return true;

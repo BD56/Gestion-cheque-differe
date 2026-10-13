@@ -1,22 +1,22 @@
 <!-- Fenêtre d'alerte du serveur, abandon, réinitialisation, bandeau de message. -->
 <script>
   // --- Fenêtre d'alerte du serveur (ne touche pas au formulaire en cours de frappe) ---
-  var alertesEnFile = [],
-    alerteCourante = null;
+  const alertesEnFile = [];
+  let alerteCourante = null;
   function alerterServeur(saisie, rep) {
     alertesEnFile.push({ saisie: saisie, rep: rep });
     if (!alerteCourante) alerteSuivante();
   }
   function alerteSuivante() {
     alerteCourante = alertesEnFile.shift() || null;
-    var m = document.getElementById("modalAlerteServeur");
+    const m = document.getElementById("modalAlerteServeur");
     if (!alerteCourante) {
       m.style.display = "none";
       return;
     }
-    var sa = alerteCourante.saisie,
+    const sa = alerteCourante.saisie,
       rep = alerteCourante.rep;
-    var titre,
+    let titre,
       msg,
       forcable = false;
     if (!rep) {
@@ -33,7 +33,7 @@
     }
     document.getElementById("alerteServeurTitre").textContent = titre;
     document.getElementById("alerteServeurMsg").textContent = msg;
-    var carte = document.getElementById("alerteServeurSaisie");
+    const carte = document.getElementById("alerteServeurSaisie");
     carte.textContent = "";
     [
       "👤 " + (sa.nom || "").toUpperCase() + " " + (sa.prenom || "").toUpperCase(),
@@ -41,14 +41,14 @@
       sa.montant ? "💶 " + sa.montant : "",
     ].forEach(function (t) {
       if (!t) return;
-      var d = document.createElement("div");
+      const d = document.createElement("div");
       d.textContent = t;
       carte.appendChild(d);
     });
-    var liste = document.getElementById("alerteServeurListe");
+    const liste = document.getElementById("alerteServeurListe");
     liste.textContent = "";
     ((rep && rep.details) || []).forEach(function (d) {
-      var c = document.createElement("div");
+      const c = document.createElement("div");
       c.className = "doublon-carte";
       c.textContent =
         "Déjà enregistré : " +
@@ -63,7 +63,7 @@
         d.piece;
       liste.appendChild(c);
     });
-    var reessai = !rep; // échec de connexion : on propose de renvoyer la même saisie
+    const reessai = !rep; // échec de connexion : on propose de renvoyer la même saisie
     document.getElementById("alerteServeurChoix").style.display = forcable ? "flex" : "none";
     document.getElementById("alerteServeurReessai").style.display = reessai ? "flex" : "none";
     document.getElementById("btnAlerteOk").style.display = forcable || reessai ? "none" : "block";
@@ -72,7 +72,7 @@
   }
   // Une fenêtre qui vient de s'ouvrir ignore les appuis pendant 0,8 s : un double appui
   // sur la précédente ne doit pas décider pour la suivante sans qu'elle soit lue.
-  var alerteAfficheeA = 0;
+  let alerteAfficheeA = 0;
   function alerteTropRecente() {
     return Date.now() - alerteAfficheeA < 800;
   }
@@ -82,7 +82,7 @@
   }
   function forcerDepuisAlerte() {
     if (alerteTropRecente()) return;
-    var sa = alerteCourante && alerteCourante.saisie;
+    const sa = alerteCourante && alerteCourante.saisie;
     alerteSuivante();
     if (sa)
       envoyerForcage({
@@ -96,10 +96,10 @@
   // Renvoie exactement la même saisie (le serveur refait tout le contrôle)
   function reessayerDepuisAlerte() {
     if (alerteTropRecente()) return;
-    var sa = alerteCourante && alerteCourante.saisie;
+    const sa = alerteCourante && alerteCourante.saisie;
     alerteSuivante();
     if (!sa) return;
-    var copie = { nom: sa.nom, prenom: sa.prenom, piece: sa.piece, montant: sa.montant, notes: sa.notes };
+    const copie = { nom: sa.nom, prenom: sa.prenom, piece: sa.piece, montant: sa.montant, notes: sa.notes };
     if (sa.forcee) envoyerForcage(copie);
     else envoyerEnArrierePlan(copie);
   }
@@ -120,14 +120,14 @@
     document.getElementById("notes").value = "";
     delete document.getElementById("nom").dataset.prerempli;
     delete document.getElementById("prenom").dataset.prerempli;
-    var ind = document.getElementById("indiceAnnuaire");
+    const ind = document.getElementById("indiceAnnuaire");
     if (ind) ind.style.display = "none";
     document.getElementById("piece").focus();
   }
 
-  var minuteurMessage = null;
+  let minuteurMessage = null;
   function afficherMessage(texte, type) {
-    var div = document.getElementById("statusMessage");
+    const div = document.getElementById("statusMessage");
     div.textContent = texte;
     div.className = type;
     div.style.display = "block";

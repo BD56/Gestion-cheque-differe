@@ -2,7 +2,7 @@
 // « Saisies » (notes ⚠️ / ℹ️ et rouge).
 
 // Notes ajoutées automatiquement par l'application (retirées avant toute réécriture)
-var NOTES_SYSTEME_REGEX = /(?:\n|\|)?\s*(?:⚠️ Ajout forcé \(Cas [ABC]\)|ℹ️ Passage \d+\/\d+)/g;
+const NOTES_SYSTEME_REGEX = /(?:\n|\|)?\s*(?:⚠️ Ajout forcé \(Cas [ABC]\)|ℹ️ Passage \d+\/\d+)/g;
 function notePassage_(rang, max) {
   return "ℹ️ Passage " + rang + "/" + max;
 }
@@ -18,7 +18,7 @@ function ajouterNote_(notes, ajout) {
 // enregistrées ainsi doivent rester reconnues (sinon doublon manqué).
 function _normPiece_(p) {
   if (p === null || p === undefined || p === "") return "";
-  var n = p
+  const n = p
     .toString()
     .toUpperCase()
     .normalize("NFD")
@@ -28,14 +28,14 @@ function _normPiece_(p) {
 }
 
 // Notes « ⚠️ Ajout forcé » seules (sans « ℹ️ Passage ») : saisie signalée en alerte
-var ALERTE_FORCE_REGEX = /(?:\n|\|)?\s*⚠️ Ajout forcé \(Cas [ABC]\)/g;
+const ALERTE_FORCE_REGEX = /(?:\n|\|)?\s*⚠️ Ajout forcé \(Cas [ABC]\)/g;
 
 // Normalisation d'un NOM / PRÉNOM pour la comparaison : majuscules, sans accents
 // (HÉLÈNE = HELENE), lettres spéciales dépliées (Œ -> OE, Ø -> O, Ł -> L), sans
 // espaces, tirets, apostrophes (toutes formes), points, virgules, « / », « _ » ni
 // caractères invisibles (D'ARC = D’ARC = DARC). Sinon un homonyme (cas C) passait
 // inaperçu. ⚠️ Miroir : Index.html::normIdJS.
-var SEPARATEURS_NOM_REGEX = /[\s\-\u2010-\u2015\u2212'’‘ʼ`´′.,_\/\u200B-\u200D\uFEFF]/g;
+const SEPARATEURS_NOM_REGEX = /[\s\-\u2010-\u2015\u2212'’‘ʼ`´′.,_\/\u200B-\u200D\uFEFF]/g;
 function _normId_(v) {
   if (v === null || v === undefined || v === "") return "";
   return v
@@ -57,23 +57,23 @@ function _normId_(v) {
 // Même client (A) : doublon seulement si ses passages atteignent la limite autorisée.
 // Renvoie { pireCas: 'A'|'B'|'C'|null, details: [...], passages: nb de passages du client }.
 function detecterDoublons_(feuille, nom, prenom, piece, ligneExclue) {
-  var nomN = _normId_(nom),
+  const nomN = _normId_(nom),
     prenomN = _normId_(prenom),
     pieceN = _normPiece_(piece);
-  var donnees = feuille.getDataRange().getValues();
-  var pireCas = null,
-    details = [],
+  const donnees = feuille.getDataRange().getValues();
+  const details = [];
+  let pireCas = null,
     passages = 0;
-  for (var i = 1; i < donnees.length; i++) {
+  for (let i = 1; i < donnees.length; i++) {
     if (i === ligneExclue - 1) continue;
-    var memeId =
+    const memeId =
       nomN !== "" &&
       prenomN !== "" &&
       _normId_(donnees[i][IDX.NOM]) === nomN &&
       _normId_(donnees[i][IDX.PRENOM]) === prenomN;
-    var memePiece = pieceN !== "" && _normPiece_(donnees[i][IDX.PIECE]) === pieceN;
+    const memePiece = pieceN !== "" && _normPiece_(donnees[i][IDX.PIECE]) === pieceN;
     if (!memeId && !memePiece) continue;
-    var t = memeId && memePiece ? "A" : memePiece ? "B" : "C";
+    const t = memeId && memePiece ? "A" : memePiece ? "B" : "C";
     if (t === "A") passages++;
     else if (t === "B") pireCas = "B";
     else if (t === "C" && pireCas !== "B") pireCas = "C";
@@ -109,51 +109,51 @@ function aUneUsurpation_(det) {
 // PLUS ANCIENNE (au-dessus) ; la première occurrence reste propre. La note saisie par
 // l'hôtesse est conservée. Appelée après une correction ou une suppression.
 function recalculerMarquages_(feuille) {
-  var derniere = feuille.getLastRow();
+  const derniere = feuille.getLastRow();
   if (derniere < 2) return;
-  var plage = feuille.getRange(2, 1, derniere - 1, NB_COLONNES_LIGNE);
-  var v = plage.getValues();
+  const plage = feuille.getRange(2, 1, derniere - 1, NB_COLONNES_LIGNE);
+  const v = plage.getValues();
   // Notes lues TELLES QU'AFFICHÉES : une note que Sheets a prise pour une date (« 3/4 »)
   // reste « 03/04 » et n'est pas réécrite en « Fri Apr 03 2026 00:00:00 GMT… »
-  var notesAffichees = feuille.getRange(2, COL.NOTES, derniere - 1, 1).getDisplayValues();
-  var notesChangees = false;
-  var rouge = "#f4cccc";
-  var max = passagesMax_();
-  var notes = [],
+  const notesAffichees = feuille.getRange(2, COL.NOTES, derniere - 1, 1).getDisplayValues();
+  let notesChangees = false;
+  const rouge = "#f4cccc";
+  const max = passagesMax_();
+  const notes = [],
     fonds = [];
-  for (var i = 0; i < v.length; i++) {
-    var nomN = _normId_(v[i][IDX.NOM]),
+  for (let i = 0; i < v.length; i++) {
+    const nomN = _normId_(v[i][IDX.NOM]),
       prenomN = _normId_(v[i][IDX.PRENOM]),
       pieceN = _normPiece_(v[i][IDX.PIECE]);
-    var pireCas = null,
+    let pireCas = null,
       passages = 0;
     if (nomN || prenomN || pieceN) {
-      for (var j = 0; j < i; j++) {
-        var memeId =
+      for (let j = 0; j < i; j++) {
+        const memeId =
           nomN !== "" &&
           prenomN !== "" &&
           _normId_(v[j][IDX.NOM]) === nomN &&
           _normId_(v[j][IDX.PRENOM]) === prenomN;
-        var memePiece = pieceN !== "" && _normPiece_(v[j][IDX.PIECE]) === pieceN;
+        const memePiece = pieceN !== "" && _normPiece_(v[j][IDX.PIECE]) === pieceN;
         if (memeId && memePiece) passages++;
         else if (memePiece) pireCas = "B";
         else if (memeId && pireCas !== "B") pireCas = "C";
       }
       if (passages >= max) pireCas = "A";
     }
-    var noteActuelle =
+    const noteActuelle =
       v[i][IDX.NOTES] instanceof Date
         ? notesAffichees[i][0]
         : v[i][IDX.NOTES] === null || v[i][IDX.NOTES] === undefined
           ? ""
           : v[i][IDX.NOTES].toString();
-    var notePropre = noteActuelle.replace(NOTES_SYSTEME_REGEX, "").trim();
-    var noteSysteme = pireCas
+    const notePropre = noteActuelle.replace(NOTES_SYSTEME_REGEX, "").trim();
+    const noteSysteme = pireCas
       ? "⚠️ Ajout forcé (Cas " + pireCas + ")"
       : passages > 0
         ? notePassage_(passages + 1, max)
         : "";
-    var noteVoulue = noteSysteme ? ajouterNote_(notePropre, noteSysteme) : notePropre;
+    const noteVoulue = noteSysteme ? ajouterNote_(notePropre, noteSysteme) : notePropre;
     if (noteVoulue !== noteActuelle) notesChangees = true;
     notes.push([texte_(noteVoulue)]);
     fonds.push([
@@ -171,8 +171,8 @@ function recalculerMarquages_(feuille) {
 }
 
 function messagesDoublon_(mode, pireCas) {
-  var r = { bloque: false, couleur: "ROUGE", titre: "", message: "" };
-  var homonyme =
+  const r = { bloque: false, couleur: "ROUGE", titre: "", message: "" };
+  const homonyme =
     "Un client porte ce nom avec une autre pièce. Demandez une 2e pièce d'identité pour confirmer qu'il s'agit bien d'une personne différente.";
   if (pireCas === "C") {
     r.couleur = "ORANGE";

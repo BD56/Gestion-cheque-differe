@@ -99,7 +99,7 @@ const j = { j: j0.jeton, c: cle }; // jeton de cette tablette
 // Liste / retrait
 sansPause();
 const r2 = J(c.appairerTablette("333333", "Caisse 2"));
-let liste = J(c.listerTablettes(j));
+const liste = J(c.listerTablettes(j));
 assert.deepStrictEqual(
   liste.map((t) => t.nom),
   ["Caisse centrale 1", "Caisse 2"]

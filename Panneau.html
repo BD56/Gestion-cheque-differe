@@ -145,10 +145,10 @@
 
     <script>
       window.onload = function () {
-        var auj = new Date();
-        var annee = auj.getFullYear();
-        var mois = ("0" + (auj.getMonth() + 1)).slice(-2);
-        var jour = ("0" + auj.getDate()).slice(-2);
+        const auj = new Date();
+        const annee = auj.getFullYear();
+        const mois = ("0" + (auj.getMonth() + 1)).slice(-2);
+        const jour = ("0" + auj.getDate()).slice(-2);
         document.getElementById("dateImpression").value = annee + "-" + mois + "-" + jour;
 
         google.script.run.withSuccessHandler(majMode).withFailureHandler(erreurChargement).getInfosPanneau();
@@ -198,7 +198,7 @@
         google.script.run.allerVersImpression("aujourdhui");
       }
       function imprimerAncien() {
-        var d = document.getElementById("dateImpression").value;
+        const d = document.getElementById("dateImpression").value;
         if (d) google.script.run.allerVersImpression(d);
       }
       function voirOffre() {
@@ -211,8 +211,8 @@
       }
 
       function majMode(infosOuMode) {
-        var mode = typeof infosOuMode === "string" ? infosOuMode : infosOuMode.mode;
-        var btn = document.getElementById("btnMode");
+        const mode = typeof infosOuMode === "string" ? infosOuMode : infosOuMode.mode;
+        const btn = document.getElementById("btnMode");
         btn.innerHTML = "🛡️ MODE : " + mode;
         btn.className = mode === "BLOQUANT" ? "btn btn-mode-bloquant" : "btn btn-mode-signaler";
       }
@@ -250,14 +250,14 @@
         .getDatesOperation();
 
       function sauvegarderDatesPC() {
-        var debut = document.getElementById("dateDebut").value;
-        var fin = document.getElementById("dateFin").value;
-        var msg = document.getElementById("msgDates");
+        const debut = document.getElementById("dateDebut").value;
+        const fin = document.getElementById("dateFin").value;
+        const msg = document.getElementById("msgDates");
         msg.style.color = "orange";
         msg.innerHTML = "Enregistrement...";
         google.script.run
           .withSuccessHandler(function (rep) {
-            var alerte = rep.indexOf("⚠️") !== -1;
+            const alerte = rep.indexOf("⚠️") !== -1;
             msg.style.color = alerte ? "#b06000" : "green";
             msg.style.whiteSpace = "pre-line";
             msg.textContent = rep;

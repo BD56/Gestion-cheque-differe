@@ -2,9 +2,11 @@
 // cohérentes entre elles et identiques à la feuille réelle (Vannes).
 const assert = require("assert");
 const { makeEnv } = require("./mocks");
+const { valeurGlobale } = require("./harness");
 const J = (x) => JSON.parse(JSON.stringify(x));
 const env = makeEnv({ repo: process.argv[2] });
-const c = env.ctx;
+// const / let du premier niveau : lus par leur nom dans la portée du code chargé
+const c = new Proxy(env.ctx, { get: (t, n) => (n in t ? t[n] : valeurGlobale(t, n)) });
 assert.strictEqual(c.FEUILLE_SAISIES, "Saisies");
 assert.strictEqual(c.CELLULE_MODE, "Z1");
 assert.strictEqual(c.PREFIXE_ARCHIVES, "Archives_");

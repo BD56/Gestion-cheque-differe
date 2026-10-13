@@ -13,7 +13,7 @@
 // un visiteur de l'application ne peut pas le lancer.
 function installer() {
   exigerEditeur_();
-  var rapport = [];
+  let rapport = [];
   if (nettoyerSiCopie_())
     rapport.push("Nouvelle copie détectée : code responsable, dates et réglages hérités effacés.");
   rapport = rapport.concat(installerFeuilles_(), installerDeclencheurs_());
@@ -24,8 +24,8 @@ function installer() {
 
 // Crée les robots de nuit manquants. Renvoie la liste de ce qui a été fait.
 function installerDeclencheurs_() {
-  var faits = [];
-  var existants = ScriptApp.getProjectTriggers().map(function (t) {
+  const faits = [];
+  const existants = ScriptApp.getProjectTriggers().map(function (t) {
     return t.getHandlerFunction();
   });
   if (existants.indexOf("verificationClotureNocturne") === -1) {
@@ -43,10 +43,10 @@ function installerDeclencheurs_() {
 
 // État des robots de nuit (affiché dans l'espace responsable).
 function etatRobots_() {
-  var noms = ScriptApp.getProjectTriggers().map(function (t) {
+  const noms = ScriptApp.getProjectTriggers().map(function (t) {
     return t.getHandlerFunction();
   });
-  var props = PropertiesService.getDocumentProperties();
+  const props = PropertiesService.getDocumentProperties();
   return {
     cloture: noms.indexOf("verificationClotureNocturne") !== -1,
     purge: !ANNUAIRE_ACTIF || noms.indexOf("purgerAnnuaire") !== -1,
@@ -58,9 +58,9 @@ function etatRobots_() {
 // Depuis le menu du Sheet : installe puis affiche le compte rendu + la suite
 // (et le code d'activation si le code responsable n'existe pas encore).
 function installerDepuisMenu() {
-  var ui = SpreadsheetApp.getUi(); // échoue hors du Google Sheets : rien n'est fait
-  var rapport = installer();
-  var props = PropertiesService.getDocumentProperties();
+  const ui = SpreadsheetApp.getUi(); // échoue hors du Google Sheets : rien n'est fait
+  let rapport = installer();
+  const props = PropertiesService.getDocumentProperties();
   if (!props.getProperty("ADMIN_PIN_HASH")) rapport += "\n\n" + texteActivation_(genererCodeActivation_());
   ui.alert(
     "🧰 Installation",
@@ -74,7 +74,7 @@ function installerDepuisMenu() {
 // Menu du Sheet « 🔑 Code d'activation » : pour créer le code responsable depuis
 // l'application (1re installation, ou après « Réinitialiser le code »).
 function afficherCodeActivation() {
-  var ui = SpreadsheetApp.getUi();
+  const ui = SpreadsheetApp.getUi();
   exigerEditeur_();
   if (PropertiesService.getDocumentProperties().getProperty("ADMIN_PIN_HASH")) {
     ui.alert(
@@ -95,9 +95,9 @@ function afficherCodeActivation() {
 // généralisation) : on pose la marque sans rien effacer.
 // Renvoie true si un nettoyage a eu lieu.
 function nettoyerSiCopie_() {
-  var props = PropertiesService.getDocumentProperties();
-  var id = SpreadsheetApp.getActiveSpreadsheet().getId();
-  var marque = props.getProperty("ID_CLASSEUR");
+  const props = PropertiesService.getDocumentProperties();
+  const id = SpreadsheetApp.getActiveSpreadsheet().getId();
+  const marque = props.getProperty("ID_CLASSEUR");
   if (marque === id) return false;
   if (marque) props.deleteAllProperties();
   props.setProperty("ID_CLASSEUR", id);
@@ -107,7 +107,7 @@ function nettoyerSiCopie_() {
 // Copie pas encore installée ? (lecture seule, utilisable dans onOpen)
 function estCopieNonInstallee_() {
   try {
-    var marque = PropertiesService.getDocumentProperties().getProperty("ID_CLASSEUR");
+    const marque = PropertiesService.getDocumentProperties().getProperty("ID_CLASSEUR");
     return !!marque && marque !== SpreadsheetApp.getActiveSpreadsheet().getId();
   } catch (e) {
     return false;
@@ -116,10 +116,10 @@ function estCopieNonInstallee_() {
 
 // Crée les feuilles manquantes. Renvoie la liste de ce qui a été fait.
 function installerFeuilles_() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var faits = [];
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const faits = [];
   if (!ss.getSheetByName(FEUILLE_SAISIES)) {
-    var f = ss.insertSheet(FEUILLE_SAISIES, 0);
+    const f = ss.insertSheet(FEUILLE_SAISIES, 0);
     f.getRange(1, 1, 1, NB_COLONNES).setValues([ENTETES_SAISIES]).setFontWeight("bold");
     f.getRange("A2:A").setNumberFormat("dd/MM/yyyy HH:mm:ss");
     f.getRange(CELLULE_MODE).setValue("SIGNALER");

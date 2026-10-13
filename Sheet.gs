@@ -1,7 +1,7 @@
 // Google Sheets : menu, panneau ⚙️, contrôle des modifications à la main (onEdit).
 
 function onOpen() {
-  var ui = SpreadsheetApp.getUi();
+  const ui = SpreadsheetApp.getUi();
   ui.createMenu("🚀 APPLICATION")
     .addItem("⚙️ Ouvrir le panneau de contrôle", "afficherPanneau")
     .addItem("🧰 Installer / vérifier l'installation", "installerDepuisMenu")
@@ -21,14 +21,14 @@ function onOpen() {
 }
 
 function afficherPanneau() {
-  var html = HtmlService.createHtmlOutputFromFile("Panneau").setTitle("⚙️ Contrôle").setWidth(300);
+  const html = HtmlService.createHtmlOutputFromFile("Panneau").setTitle("⚙️ Contrôle").setWidth(300);
   SpreadsheetApp.getUi().showSidebar(html);
 }
 
 function allerVersImpression(dateChoisieStr) {
   exigerEditeur_();
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var f = ss.getSheetByName(FEUILLE_IMPRESSION);
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const f = ss.getSheetByName(FEUILLE_IMPRESSION);
   if (!f) return;
   if (dateChoisieStr === "aujourdhui") f.getRange(CELLULE_JOUR_IMPRESSION).clearContent();
   else f.getRange(CELLULE_JOUR_IMPRESSION).setValue("'" + dateChoisieStr);
@@ -38,8 +38,8 @@ function allerVersImpression(dateChoisieStr) {
 
 function allerVersOffre() {
   exigerEditeur_();
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var f = ss.getSheetByName(FEUILLE_OFFRE_COMPLETE);
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const f = ss.getSheetByName(FEUILLE_OFFRE_COMPLETE);
   if (f) ss.setActiveSheet(f);
 }
 
@@ -48,26 +48,26 @@ function allerVersOffre() {
 // =================================================================
 function onEdit(e) {
   if (!e || !e.range) return;
-  var feuille = e.range.getSheet();
+  const feuille = e.range.getSheet();
 
   // On ne déclenche la magie que sur la bonne feuille
   if (feuille.getName() !== FEUILLE_SAISIES) return;
 
-  var premiere = e.range.getRow();
-  var colEdit = e.range.getColumn();
-  var nbLignes = e.range.getNumRows();
-  var nbCols = e.range.getNumColumns();
-  var derniere = premiere + nbLignes - 1;
+  const premiere = e.range.getRow();
+  const colEdit = e.range.getColumn();
+  const nbLignes = e.range.getNumRows();
+  const nbCols = e.range.getNumColumns();
+  const derniere = premiere + nbLignes - 1;
 
   // On ignore la ligne 1 (en-têtes) et on s'arrête à la colonne F
   if (derniere < 2 || colEdit > COL.NOTES) return;
-  var uneCellule = nbLignes === 1 && nbCols === 1;
-  var debut = Math.max(2, premiere);
+  const uneCellule = nbLignes === 1 && nbCols === 1;
+  const debut = Math.max(2, premiere);
   // Nom, prénom ou N° touchés ? (sinon : montant / notes seulement, jamais annulé)
-  var toucheIdentite = colEdit <= COL.PIECE && colEdit + nbCols - 1 >= COL.NOM;
+  const toucheIdentite = colEdit <= COL.PIECE && colEdit + nbCols - 1 >= COL.NOM;
 
   // Même verrou que les tablettes : une saisie ne peut pas s'intercaler pendant le contrôle
-  var lock = null,
+  let lock = null,
     verrou = false;
   try {
     lock = LockService.getScriptLock();
@@ -75,24 +75,24 @@ function onEdit(e) {
   } catch (err) {
     verrou = false;
   }
+  const refus = []; // lignes refusées en mode BLOQUANT (alerte affichée après le verrou)
   try {
     // 1️⃣ + 2️⃣ Horodatage et formatage, ligne par ligne (un collage peut couvrir
     //    plusieurs lignes : chacune est traitée, pas seulement la première)
-    for (var l = debut; l <= derniere; l++) {
+    for (let l = debut; l <= derniere; l++) {
       preparerLigneEditee_(feuille, l, colEdit, nbCols, uneCellule ? e.value : undefined, uneCellule);
     }
     SpreadsheetApp.flush();
 
     // 3️⃣ Mode BLOQUANT : une ligne dont le nom / prénom / N° vient d'être modifié pour
     //    créer un doublon (A) ou une usurpation (B) est annulée (ancienne valeur remise).
-    var modeSecurite = modeSecurite_(feuille);
-    var refus = [];
+    const modeSecurite = modeSecurite_(feuille);
     if (modeSecurite === "BLOQUANT" && toucheIdentite) {
-      for (var ligne = debut; ligne <= derniere; ligne++) {
-        var plageAnnulee = uneCellule
+      for (let ligne = debut; ligne <= derniere; ligne++) {
+        const plageAnnulee = uneCellule
           ? e.range
           : feuille.getRange(ligne, colEdit, 1, Math.min(nbCols, COL.NOTES - colEdit + 1));
-        var cas = controlerLigneEditee_(
+        const cas = controlerLigneEditee_(
           feuille,
           ligne,
           plageAnnulee,
@@ -103,7 +103,7 @@ function onEdit(e) {
       }
     }
     // Ligne entièrement vidée : on efface aussi sa date
-    var bloc = feuille.getRange(debut, COL.NOM, derniere - debut + 1, NB_COLONNES_SAISIE).getValues();
+    const bloc = feuille.getRange(debut, COL.NOM, derniere - debut + 1, NB_COLONNES_SAISIE).getValues();
     bloc.forEach(function (r, k) {
       if (
         r.every(function (v) {
@@ -135,9 +135,9 @@ function onEdit(e) {
 // QU'AFFICHÉES : un N° pris pour une date ou un grand nombre reste lisible).
 function preparerLigneEditee_(feuille, ligne, colEdit, nbCols, valeur, uneCellule) {
   // 1️⃣ HORODATAGE AUTOMATIQUE
-  var celluleDate = feuille.getRange(ligne, COL.DATE);
+  const celluleDate = feuille.getRange(ligne, COL.DATE);
   if (celluleDate.isBlank() && colEdit + nbCols - 1 > COL.DATE) {
-    var rempli = uneCellule
+    const rempli = uneCellule
       ? !!valeur
       : feuille
           .getRange(ligne, COL.NOM, 1, NB_COLONNES_SAISIE)
@@ -148,8 +148,8 @@ function preparerLigneEditee_(feuille, ligne, colEdit, nbCols, valeur, uneCellul
     if (rempli && (colEdit > COL.DATE || !uneCellule)) celluleDate.setValue(new Date());
   }
   // 2️⃣ FORMATAGE AUTOMATIQUE (Majuscules, virgules)
-  for (var c = Math.max(colEdit, COL.NOM); c <= Math.min(colEdit + nbCols - 1, COL.MONTANT); c++) {
-    var v = uneCellule ? valeur : feuille.getRange(ligne, c).getValue();
+  for (let c = Math.max(colEdit, COL.NOM); c <= Math.min(colEdit + nbCols - 1, COL.MONTANT); c++) {
+    let v = uneCellule ? valeur : feuille.getRange(ligne, c).getValue();
     if (!uneCellule && c <= COL.PIECE && (v instanceof Date || typeof v === "number"))
       v = feuille.getRange(ligne, c).getDisplayValue();
     if (v === undefined || v === null || v === "" || v instanceof Date) continue;
@@ -168,9 +168,15 @@ function preparerLigneEditee_(feuille, ligne, colEdit, nbCols, valeur, uneCellul
 // renvoyé (pour l'alerte) ; sinon null. Le marquage est fait ensuite pour toute
 // l'offre par recalculerMarquages_.
 function controlerLigneEditee_(feuille, ligneEdit, plageAnnulee, ancienneValeur, colEdit) {
-  var rowData = feuille.getRange(ligneEdit, 1, 1, NB_COLONNES).getValues()[0];
+  const rowData = feuille.getRange(ligneEdit, 1, 1, NB_COLONNES).getValues()[0];
   if (!_normId_(rowData[IDX.NOM]) && !_normPiece_(rowData[IDX.PIECE])) return null;
-  var det = detecterDoublons_(feuille, rowData[IDX.NOM], rowData[IDX.PRENOM], rowData[IDX.PIECE], ligneEdit);
+  const det = detecterDoublons_(
+    feuille,
+    rowData[IDX.NOM],
+    rowData[IDX.PRENOM],
+    rowData[IDX.PIECE],
+    ligneEdit
+  );
   if (det.pireCas !== "A" && det.pireCas !== "B") return null;
   if (ancienneValeur !== undefined && ancienneValeur !== null) {
     plageAnnulee.setValue(
@@ -180,7 +186,7 @@ function controlerLigneEditee_(feuille, ligneEdit, plageAnnulee, ancienneValeur,
     plageAnnulee.clearContent();
   }
   // Ligne redevenue vide (ex. nouvelle ligne refusée) : pas de date orpheline
-  var reste = feuille.getRange(ligneEdit, COL.NOM, 1, NB_COLONNES_SAISIE).getValues()[0];
+  const reste = feuille.getRange(ligneEdit, COL.NOM, 1, NB_COLONNES_SAISIE).getValues()[0];
   if (
     reste.every(function (v) {
       return v === "" || v === null;

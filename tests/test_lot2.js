@@ -38,7 +38,7 @@ assert.strictEqual(c._normId_("Łukasz"), "LUKASZ");
 assert.strictEqual(c._normId_("Hélène-Œuvre"), "HELENEOEUVRE");
 // même normalisation sur la tablette (copie des fonctions de la page)
 const html = require("fs").readFileSync(repo + "/ScriptFormulaire.html", "utf8");
-const src = html.match(/var SEPARATEURS_NOM_JS[\s\S]*?function normPieceJS\(p\) \{[\s\S]*?\n  \}/)[0];
+const src = html.match(/(?:var|const) SEPARATEURS_NOM_JS[\s\S]*?function normPieceJS\(p\) \{[\s\S]*?\n  \}/)[0];
 const page = new Function(src + "; return { normIdJS: normIdJS, normPieceJS: normPieceJS };")();
 [
   "123.456.789.012",

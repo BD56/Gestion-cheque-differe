@@ -30,7 +30,7 @@ const t = new Date();
     "noms différents : rien"
   );
   // #8 annuaire non écrasé par une usurpation forcée
-  let e = env0([[t, "DUPONT", "JEAN", "AB1", "", ""]]);
+  const e = env0([[t, "DUPONT", "JEAN", "AB1", "", ""]]);
   e.ctx.traiterSaisie("DUPONT", "JEAN", "ZZ1", "1", ""); // crée l'annuaire (homonyme C -> pas écrit) : on passe par forcer
   e.ctx.forcerSaisie("VOLEUR", "X", "AB1", "1", "", "", false, false);
   const ann = e.sheets._Annuaire

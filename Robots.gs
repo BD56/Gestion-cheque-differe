@@ -7,7 +7,7 @@
 function verificationClotureNocturne(e) {
   exigerDeclencheurOuEditeur_(e);
   // Passage du robot noté : l'espace responsable signale un robot qui ne tourne plus
-  var props = PropertiesService.getDocumentProperties();
+  const props = PropertiesService.getDocumentProperties();
   props.setProperties({
     DERNIERE_NUIT: Utilities.formatDate(new Date(), fuseau_(), "dd/MM/yyyy HH:mm"),
     DERNIERE_NUIT_MS: String(Date.now()),
@@ -20,7 +20,7 @@ function verificationClotureNocturne(e) {
     Logger.log("Purge des archives : " + e);
   }
 
-  var dates = lireDates_();
+  const dates = lireDates_();
 
   // S'il n'y a pas de date de fin enregistrée, le robot se rendort
   if (!dates.fin || dates.fin === "") {
@@ -29,7 +29,7 @@ function verificationClotureNocturne(e) {
 
   // Jour d'aujourd'hui dans le fuseau du projet, comparé au texte « aaaa-mm-jj »
   // (pas de new Date("aaaa-mm-jj"), lu en UTC : décalage hors métropole)
-  var aujourdhui = Utilities.formatDate(new Date(), fuseau_(), "yyyy-MM-dd");
+  const aujourdhui = Utilities.formatDate(new Date(), fuseau_(), "yyyy-MM-dd");
 
   // Si la date d'aujourd'hui est STRICTEMENT supérieure à la date de fin
   // Ça veut dire que l'offre s'est terminée hier. On archive !
@@ -52,7 +52,7 @@ function getDatesOperation(cle) {
 }
 
 function lireDates_() {
-  var memoire = PropertiesService.getDocumentProperties();
+  const memoire = PropertiesService.getDocumentProperties();
   return {
     debut: memoire.getProperty("DATE_DEBUT") || "",
     fin: memoire.getProperty("DATE_FIN") || "",
@@ -63,7 +63,7 @@ function setDatesOperation(dateDebut, dateFin, jeton) {
   exigerAdmin_(jeton);
   dateDebut = (dateDebut || "").toString().trim();
   dateFin = (dateFin || "").toString().trim();
-  var iso = /^\d{4}-\d{2}-\d{2}$/;
+  const iso = /^\d{4}-\d{2}-\d{2}$/;
   if (dateDebut !== "" || dateFin !== "") {
     if (!iso.test(dateDebut) || !iso.test(dateFin))
       throw new Error(
@@ -71,11 +71,11 @@ function setDatesOperation(dateDebut, dateFin, jeton) {
       );
     if (dateDebut > dateFin) throw new Error("La date de début doit précéder la date de fin.");
   }
-  var message = enregistrerDates_(dateDebut, dateFin);
+  let message = enregistrerDates_(dateDebut, dateFin);
   // Offre qui commence plus tard alors que « Saisies » contient encore des lignes :
   // l'ancienne offre n'a pas été clôturée -> elles seraient mélangées avec la nouvelle.
-  var f = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FEUILLE_SAISIES);
-  var auj = Utilities.formatDate(new Date(), fuseau_(), "yyyy-MM-dd");
+  const f = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FEUILLE_SAISIES);
+  const auj = Utilities.formatDate(new Date(), fuseau_(), "yyyy-MM-dd");
   if (dateDebut > auj && f && f.getLastRow() > 1) {
     message +=
       "\n⚠️ Des saisies sont encore dans la liste : clôturez l'offre précédente avant le " +
@@ -86,7 +86,7 @@ function setDatesOperation(dateDebut, dateFin, jeton) {
 }
 
 function enregistrerDates_(dateDebut, dateFin) {
-  var memoire = PropertiesService.getDocumentProperties();
+  const memoire = PropertiesService.getDocumentProperties();
   memoire.setProperty("DATE_DEBUT", dateDebut);
   memoire.setProperty("DATE_FIN", dateFin);
 

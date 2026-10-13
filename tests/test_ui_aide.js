@@ -10,7 +10,7 @@ const { ouvrir } = require("./navigateur");
       page.$$eval("#modalAide .sous-ecran.actif .tuile", (ts) =>
         ts.filter((t) => t.offsetParent !== null).map((t) => t.textContent.trim())
       );
-    let t = await tuilesVisibles();
+    const t = await tuilesVisibles();
     assert.strictEqual(t.length, 8, "4 tuiles saisie + 4 responsable (scan masqué) : " + t.join(" | "));
     assert.ok(!t.some((x) => /Scanner/.test(x)), "tuile scan masquée tant que le scan est désactivé");
     assert.match(

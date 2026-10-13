@@ -7,12 +7,12 @@
 
 function traiterSaisie(nom, prenom, piece, montant, notes, cle) {
   exigerTablette_(cle);
-  var lock = LockService.getScriptLock();
+  const lock = LockService.getScriptLock();
   try {
     lock.waitLock(10000); // Verrou pour éviter les race conditions
 
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var feuille = ss.getSheetByName(FEUILLE_SAISIES);
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const feuille = ss.getSheetByName(FEUILLE_SAISIES);
     if (!feuille)
       return {
         status: "BLOQUE",
@@ -20,12 +20,12 @@ function traiterSaisie(nom, prenom, piece, montant, notes, cle) {
         message: "La feuille '" + FEUILLE_SAISIES + "' est introuvable.",
       };
 
-    var horsPeriode = controlerPeriode_();
+    const horsPeriode = controlerPeriode_();
     if (horsPeriode) return horsPeriode;
-    var incomplet = controlerChamps_(nom, prenom, piece, montant);
+    const incomplet = controlerChamps_(nom, prenom, piece, montant);
     if (incomplet) return incomplet;
 
-    var modeSecurite = modeSecurite_(feuille);
+    const modeSecurite = modeSecurite_(feuille);
 
     // Nettoyage standard pour l'affichage
     nom = nom.toString().toUpperCase().trim();
@@ -35,22 +35,22 @@ function traiterSaisie(nom, prenom, piece, montant, notes, cle) {
     if (montant && typeof montant === "string" && montant.includes(".")) montant = montant.replace(".", ",");
 
     // Détection A/B/C : même fonction que forcerSaisie / corrections / onEdit
-    var det = detecterDoublons_(feuille, nom, prenom, piece, 0);
-    var pireCas = det.pireCas;
-    var detailsDoublons = det.details;
-    var passagesClient = det.passages; // passages déjà enregistrés pour CE client (même nom + même pièce)
+    const det = detecterDoublons_(feuille, nom, prenom, piece, 0);
+    const pireCas = det.pireCas;
+    const detailsDoublons = det.details;
+    const passagesClient = det.passages; // passages déjà enregistrés pour CE client (même nom + même pièce)
 
-    var passagesMax = passagesMax_();
-    var limiteTxt =
+    const passagesMax = passagesMax_();
+    const limiteTxt =
       passagesMax > 1
         ? " (déjà " + passagesClient + " passage(s) ; maximum " + passagesMax + " par client)"
         : "";
 
     if (pireCas) {
-      var isBloque = false;
-      var msgTitre = "";
-      var msgAlerte = "";
-      var couleur = "ROUGE";
+      let isBloque = false;
+      let msgTitre = "";
+      let msgAlerte = "";
+      let couleur = "ROUGE";
 
       if (modeSecurite === "BLOQUANT") {
         if (pireCas === "A") {
@@ -83,7 +83,7 @@ function traiterSaisie(nom, prenom, piece, montant, notes, cle) {
         }
       }
 
-      var notePourSheet = "⚠️ Ajout forcé (Cas " + pireCas + ")";
+      const notePourSheet = "⚠️ Ajout forcé (Cas " + pireCas + ")";
 
       if (isBloque) {
         return { status: "BLOQUE", titre: msgTitre, message: msgAlerte, details: detailsDoublons };
@@ -132,14 +132,14 @@ function traiterSaisie(nom, prenom, piece, montant, notes, cle) {
 // Sinon (tablette restée ouverte après la clôture, appel direct…) -> refus, rien d'écrit.
 // Renvoie null si la saisie est permise, sinon la réponse de refus.
 function controlerPeriode_() {
-  var dates = lireDates_();
-  var refus = function (msg) {
+  const dates = lireDates_();
+  const refus = function (msg) {
     return { status: "BLOQUE", horsPeriode: true, titre: "🛑 HORS PÉRIODE", message: msg, details: [] };
   };
   if (!dates.debut || !dates.fin) return refus("Aucune opération en cours : saisie impossible.");
-  var auj = Utilities.formatDate(new Date(), fuseau_(), "yyyy-MM-dd");
-  var jjmm = function (iso) {
-    var p = iso.split("-");
+  const auj = Utilities.formatDate(new Date(), fuseau_(), "yyyy-MM-dd");
+  const jjmm = function (iso) {
+    const p = iso.split("-");
     return p.length === 3 ? p[2] + "/" + p[1] : iso;
   };
   if (auj < dates.debut)
@@ -153,10 +153,10 @@ function controlerPeriode_() {
 function controlerChamps_(nom, prenom, piece, montant) {
   // « vide » = rien de comparable (ex. un N° fait seulement de tirets, un nom « . ») :
   // une telle saisie ne pourrait jamais être reconnue comme doublon.
-  var vide = function (v) {
+  const vide = function (v) {
     return v === null || v === undefined || v.toString().trim() === "";
   };
-  var manque = [];
+  const manque = [];
   if (_normId_(nom) === "") manque.push("Nom");
   if (_normId_(prenom) === "") manque.push("Prénom");
   if (_normPiece_(piece) === "") manque.push("N° de pièce");
@@ -179,21 +179,21 @@ function controlerChamps_(nom, prenom, piece, montant) {
 // compatibilité d'appel avec Index.html).
 function forcerSaisie(nom, prenom, piece, montant, notes, messageErreur, flagIdentite, flagPiece, cle) {
   exigerTablette_(cle);
-  var lock = LockService.getScriptLock();
+  const lock = LockService.getScriptLock();
   try {
     lock.waitLock(10000); // Verrou pour éviter les doublons forcés
 
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var feuille = ss.getSheetByName(FEUILLE_SAISIES);
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const feuille = ss.getSheetByName(FEUILLE_SAISIES);
     if (!feuille)
       return {
         status: "BLOQUE",
         titre: "Erreur Serveur",
         message: "La feuille '" + FEUILLE_SAISIES + "' est introuvable.",
       };
-    var horsPeriode = controlerPeriode_();
+    const horsPeriode = controlerPeriode_();
     if (horsPeriode) return horsPeriode;
-    var incomplet = controlerChamps_(nom, prenom, piece, montant);
+    const incomplet = controlerChamps_(nom, prenom, piece, montant);
     if (incomplet) return incomplet;
 
     nom = nom.toString().toUpperCase().trim();
@@ -202,9 +202,9 @@ function forcerSaisie(nom, prenom, piece, montant, notes, messageErreur, flagIde
     notes = notes ? notes.toString().replace(NOTES_SYSTEME_REGEX, "").trim() : "";
     if (montant && typeof montant === "string" && montant.includes(".")) montant = montant.replace(".", ",");
 
-    var modeSecurite = modeSecurite_(feuille);
-    var det = detecterDoublons_(feuille, nom, prenom, piece, 0);
-    var pireCas = det.pireCas;
+    const modeSecurite = modeSecurite_(feuille);
+    const det = detecterDoublons_(feuille, nom, prenom, piece, 0);
+    const pireCas = det.pireCas;
 
     // 🛑 Mode BLOQUANT : un vrai doublon (A) ou une usurpation (B) ne se force jamais
     if (modeSecurite === "BLOQUANT" && (pireCas === "A" || pireCas === "B")) {
@@ -220,7 +220,7 @@ function forcerSaisie(nom, prenom, piece, montant, notes, messageErreur, flagIde
       };
     }
 
-    var noteFinale = notes;
+    let noteFinale = notes;
     if (pireCas) noteFinale = ajouterNote_(notes, "⚠️ Ajout forcé (Cas " + pireCas + ")");
     else if (det.passages > 0)
       noteFinale = ajouterNote_(notes, notePassage_(det.passages + 1, passagesMax_()));
@@ -234,7 +234,7 @@ function forcerSaisie(nom, prenom, piece, montant, notes, messageErreur, flagIde
       texte_(noteFinale),
       "",
     ]);
-    var indexLigne = feuille.getLastRow();
+    const indexLigne = feuille.getLastRow();
 
     // 🧹 LE CORRECTIF : On efface l'héritage automatique de Google Sheets sur les 7 colonnes
     feuille.getRange(indexLigne, 1, 1, NB_COLONNES_LIGNE).setBackground(null);
@@ -269,18 +269,18 @@ function forcerSaisie(nom, prenom, piece, montant, notes, messageErreur, flagIde
 // =================================================================
 function verifierPiece(piece, cle) {
   exigerTablette_(cle);
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var feuille = ss.getSheetByName(FEUILLE_SAISIES);
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const feuille = ss.getSheetByName(FEUILLE_SAISIES);
   if (!feuille) return { trouve: false };
 
-  var mode = feuille.getRange(CELLULE_MODE).getValue() || "SIGNALER";
-  var pieceNorm = _normPiece_(piece);
+  const mode = feuille.getRange(CELLULE_MODE).getValue() || "SIGNALER";
+  const pieceNorm = _normPiece_(piece);
   if (pieceNorm === "") return { trouve: false, mode: mode };
 
-  var donnees = feuille.getDataRange().getValues();
-  var matches = [];
-  for (var i = 1; i < donnees.length; i++) {
-    var pieceHisto = _normPiece_(donnees[i][IDX.PIECE]);
+  const donnees = feuille.getDataRange().getValues();
+  const matches = [];
+  for (let i = 1; i < donnees.length; i++) {
+    const pieceHisto = _normPiece_(donnees[i][IDX.PIECE]);
     if (pieceHisto !== "" && pieceHisto === pieceNorm) {
       matches.push({
         ligne: i + 1,
@@ -296,10 +296,10 @@ function verifierPiece(piece, cle) {
       });
     }
   }
-  var result = { trouve: matches.length > 0, mode: mode, matches: matches };
+  const result = { trouve: matches.length > 0, mode: mode, matches: matches };
   // Niveau 3 : si la pièce n'est PAS sur l'offre en cours, on regarde l'annuaire.
   if (ANNUAIRE_ACTIF && matches.length === 0) {
-    var connu = chercherAnnuaire_(pieceNorm);
+    const connu = chercherAnnuaire_(pieceNorm);
     if (connu) {
       result.annuaire = connu;
       result.modeAnnuaire = getModeAnnuaire();
@@ -320,17 +320,17 @@ function verifierPiece(piece, cle) {
 // Saisies de l'offre en cours, la plus récente d'abord.
 function listerSaisies(jeton) {
   exigerAdmin_(jeton);
-  var feuille = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FEUILLE_SAISIES);
+  const feuille = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FEUILLE_SAISIES);
   if (!feuille) return [];
-  var derniere = feuille.getLastRow();
+  const derniere = feuille.getLastRow();
   if (derniere < 2) return [];
-  var plage = feuille.getRange(2, 1, derniere - 1, NB_COLONNES);
-  var valeurs = plage.getValues();
-  var affichage = plage.getDisplayValues();
-  var liste = [];
-  for (var i = 0; i < valeurs.length; i++) {
+  const plage = feuille.getRange(2, 1, derniere - 1, NB_COLONNES);
+  const valeurs = plage.getValues();
+  const affichage = plage.getDisplayValues();
+  const liste = [];
+  for (let i = 0; i < valeurs.length; i++) {
     if (affichage[i].join("") === "") continue;
-    var notes = valeurs[i][IDX.NOTES] ? valeurs[i][IDX.NOTES].toString() : "";
+    const notes = valeurs[i][IDX.NOTES] ? valeurs[i][IDX.NOTES].toString() : "";
     liste.push({
       ligne: i + 2,
       date: affichage[i][IDX.DATE],
@@ -351,8 +351,8 @@ function verifierLigneAttendue_(feuille, ligne, attendu) {
   if (!(ligne >= 2 && ligne <= feuille.getLastRow() && Math.floor(ligne) === ligne)) {
     throw new Error("Ligne introuvable : rechargez la liste.");
   }
-  var v = feuille.getRange(ligne, COL.NOM, 1, 3).getValues()[0]; // nom, prénom, N°
-  var a = attendu || {};
+  const v = feuille.getRange(ligne, COL.NOM, 1, 3).getValues()[0]; // nom, prénom, N°
+  const a = attendu || {};
   if (
     (v[0] || "").toString() !== (a.nom || "") ||
     (v[1] || "").toString() !== (a.prenom || "") ||
@@ -366,32 +366,32 @@ function verifierLigneAttendue_(feuille, ligne, attendu) {
 // nouveau = { nom, prenom, piece, montant, notes } ; forcer = confirmer malgré un doublon.
 function modifierSaisie(ligne, attendu, nouveau, forcer, jeton) {
   exigerAdmin_(jeton);
-  var lock = LockService.getScriptLock();
+  const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
-    var feuille = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FEUILLE_SAISIES);
+    const feuille = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FEUILLE_SAISIES);
     if (!feuille) throw new Error("La feuille '" + FEUILLE_SAISIES + "' est introuvable.");
     ligne = verifierLigneAttendue_(feuille, ligne, attendu);
 
-    var n = nouveau || {};
-    var nom = (n.nom || "").toString().toUpperCase().trim();
-    var prenom = (n.prenom || "").toString().toUpperCase().trim();
-    var piece = (n.piece || "").toString().toUpperCase().trim();
-    var montant = (n.montant || "").toString().trim();
+    const n = nouveau || {};
+    const nom = (n.nom || "").toString().toUpperCase().trim();
+    const prenom = (n.prenom || "").toString().toUpperCase().trim();
+    const piece = (n.piece || "").toString().toUpperCase().trim();
+    let montant = (n.montant || "").toString().trim();
     if (montant.indexOf(".") !== -1) montant = montant.replace(".", ",");
-    var notesPropres = (n.notes || "").toString().replace(NOTES_SYSTEME_REGEX, "").trim();
+    const notesPropres = (n.notes || "").toString().replace(NOTES_SYSTEME_REGEX, "").trim();
     if (!_normId_(nom) || !_normId_(prenom) || !_normPiece_(piece))
       throw new Error("Le Nom, le Prénom et le N° de pièce sont obligatoires.");
     if (getConfig().MONTANT_OBLIGATOIRE !== "NON" && !montant) throw new Error("Le montant est obligatoire.");
 
     // Recontrôle A/B/C contre toutes les AUTRES lignes (comme onEdit)
-    var det = detecterDoublons_(feuille, nom, prenom, piece, ligne);
-    var pireCas = det.pireCas,
+    const det = detecterDoublons_(feuille, nom, prenom, piece, ligne);
+    const pireCas = det.pireCas,
       details = det.details;
 
-    var mode = modeSecurite_(feuille);
+    const mode = modeSecurite_(feuille);
     if (pireCas) {
-      var m = messagesDoublon_(mode, pireCas);
+      const m = messagesDoublon_(mode, pireCas);
       if (m.bloque) return { status: "BLOQUE", titre: m.titre, message: m.message, details: details };
       if (!forcer)
         return {
@@ -423,10 +423,10 @@ function modifierSaisie(ligne, attendu, nouveau, forcer, jeton) {
 
 function supprimerSaisie(ligne, attendu, jeton) {
   exigerAdmin_(jeton);
-  var lock = LockService.getScriptLock();
+  const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
-    var feuille = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FEUILLE_SAISIES);
+    const feuille = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FEUILLE_SAISIES);
     if (!feuille) throw new Error("La feuille '" + FEUILLE_SAISIES + "' est introuvable.");
     ligne = verifierLigneAttendue_(feuille, ligne, attendu);
     feuille.deleteRow(ligne);
@@ -439,10 +439,10 @@ function supprimerSaisie(ligne, attendu, jeton) {
 
 function basculerModeWebApp(jeton) {
   exigerAdmin_(jeton);
-  var feuille = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FEUILLE_SAISIES);
+  const feuille = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FEUILLE_SAISIES);
   if (!feuille) throw new Error("La feuille '" + FEUILLE_SAISIES + "' est introuvable.");
-  var modeActuel = modeSecurite_(feuille);
-  var nouveauMode = modeActuel === "SIGNALER" ? "BLOQUANT" : "SIGNALER";
+  const modeActuel = modeSecurite_(feuille);
+  const nouveauMode = modeActuel === "SIGNALER" ? "BLOQUANT" : "SIGNALER";
   feuille.getRange(CELLULE_MODE).setValue(nouveauMode);
   return nouveauMode;
 }

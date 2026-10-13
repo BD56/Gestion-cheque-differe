@@ -30,9 +30,11 @@ const { ouvrir } = require("./navigateur");
     await page.setContent(rendre({ debut: "", fin: "" }), { waitUntil: "load" });
     assert.ok(!(await page.isVisible("#formulaireSaisie")), "pas de formulaire affiché puis retiré");
     assert.match(await page.textContent("#sousTitreOperation"), /Aucune opération en cours/);
-    await page.setContent(rendre({ debut: "2000-01-01", fin: "2099-12-31" }), { waitUntil: "load" });
-    assert.ok(await page.isVisible("#formulaireSaisie"), "offre en cours : saisie tout de suite");
-    assert.match(await page.textContent("#sousTitreOperation"), /Opération du 01\/01 au 31\/12/);
+    // nouvel onglet : les const / let du 1er chargement resteraient déclarés dans le même onglet
+    const page2 = await browser0.newPage();
+    await page2.setContent(rendre({ debut: "2000-01-01", fin: "2099-12-31" }), { waitUntil: "load" });
+    assert.ok(await page2.isVisible("#formulaireSaisie"), "offre en cours : saisie tout de suite");
+    assert.match(await page2.textContent("#sousTitreOperation"), /Opération du 01\/01 au 31\/12/);
   } finally {
     await browser0.close();
   }

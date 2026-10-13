@@ -60,4 +60,9 @@ function rendrePage(repo, vars) {
     Object.assign({ include_: (nom) => fs.readFileSync(repo + "/" + nom + ".html", "utf8") }, vars)
   );
 }
-module.exports = { renderTemplate, rendrePage, loadCode, fichiersGs, makeProps, esc };
+// Valeur d'une constante du premier niveau (const / let ne sont pas des propriétés
+// de l'objet global : on la lit par son nom dans la portée du code chargé).
+function valeurGlobale(ctx, nom) {
+  return vm.runInContext(nom, ctx);
+}
+module.exports = { valeurGlobale, renderTemplate, rendrePage, loadCode, fichiersGs, makeProps, esc };

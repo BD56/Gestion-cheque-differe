@@ -10,8 +10,8 @@ async function saisirClavier(page, piece, nom, prenom) {
 }
 (async () => {
   // #2 : même client juste après -> la tablette le voit elle-même (N2 + écran doublon)
-  let o = await ouvrir(process.argv[2]);
-  let { env, page, browser, erreursPage } = o;
+  const o = await ouvrir(process.argv[2]);
+  const { env, page, browser, erreursPage } = o;
   try {
     await page.focus("#piece");
     await page.waitForTimeout(150);

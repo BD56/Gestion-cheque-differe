@@ -1,7 +1,7 @@
 <!-- Impression et lecture des montants. -->
 <script>
   function preparerImpressionAncien() {
-    var d = document.getElementById("dateImpression").value;
+    const d = document.getElementById("dateImpression").value;
     if (!d) {
       alert("Sélectionnez une date.");
       return;
@@ -14,7 +14,7 @@
   function lireMontant(s) {
     if (s === null || s === undefined) return null;
     if (typeof s === "number") return isFinite(s) ? s : null;
-    var t = s.toString().replace(/[\s\u00a0\u202f€]/g, "");
+    let t = s.toString().replace(/[\s\u00a0\u202f€]/g, "");
     if (t === "") return null;
     if (t.indexOf(",") !== -1 && t.indexOf(".") !== -1)
       t = t.replace(/\./g, "").replace(",", "."); // 1.234,50
@@ -29,16 +29,16 @@
     return n.toFixed(2).replace(".", ",") + " €";
   }
   function formaterMontantAffiche(s) {
-    var n = lireMontant(s);
+    const n = lireMontant(s);
     return n === null ? s : formaterMontant(n);
   }
   // Total à l'impression : un montant illisible compte pour 0
   function parseMontant(s) {
-    var n = lireMontant(s);
+    const n = lireMontant(s);
     return n === null ? 0 : n;
   }
 
-  var impressionEnCours = false; // le curseur « attente » est invisible sur tablette
+  let impressionEnCours = false; // le curseur « attente » est invisible sur tablette
   function preparerImpression(type, dateStr, titreRapport) {
     if (impressionEnCours) return;
     impressionEnCours = true;
@@ -64,12 +64,12 @@
       return;
     }
 
-    var html = "<h2 class='titre-print'>" + echapper(titreRapport) + "</h2><table class='table-print'>";
-    var idxMontant = 4; // colonnes A=0 (Date) ... E=4 (Montant) ... F=5 (Notes)
-    var totalMontant = 0;
-    for (var i = 0; i < donnees.length; i++) {
+    let html = "<h2 class='titre-print'>" + echapper(titreRapport) + "</h2><table class='table-print'>";
+    const idxMontant = 4; // colonnes A=0 (Date) ... E=4 (Montant) ... F=5 (Notes)
+    let totalMontant = 0;
+    for (let i = 0; i < donnees.length; i++) {
       html += "<tr>";
-      for (var j = 0; j < donnees[i].length; j++) {
+      for (let j = 0; j < donnees[i].length; j++) {
         html +=
           i === 0 ? "<th>" + echapper(donnees[i][j]) + "</th>" : "<td>" + echapper(donnees[i][j]) + "</td>";
       }
@@ -77,12 +77,12 @@
       if (i > 0) totalMontant += parseMontant(donnees[i][idxMontant]);
     }
     // Ligne TOTAL (somme de la colonne Montant)
-    var nbCol = (donnees[0] || []).length || 6;
-    var totalStr = totalMontant.toFixed(2).replace(".", ",") + " €";
+    const nbCol = (donnees[0] || []).length || 6;
+    const totalStr = totalMontant.toFixed(2).replace(".", ",") + " €";
     html += "<tr>";
     html += "<td colspan='" + idxMontant + "' style='text-align:right; font-weight:bold;'>TOTAL</td>";
     html += "<td style='font-weight:bold;'>" + totalStr + "</td>";
-    for (var k = idxMontant + 1; k < nbCol; k++) html += "<td></td>";
+    for (let k = idxMontant + 1; k < nbCol; k++) html += "<td></td>";
     html += "</tr>";
     html += "</table>";
 

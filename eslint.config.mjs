@@ -56,6 +56,9 @@ const regles = {
   // Style voulu : `var x = {}; try { x = JSON.parse(…) } catch (e) { x = {} }` (valeur sûre d'abord).
   "no-useless-assignment": "off",
   "no-useless-escape": "warn",
+  // const / let uniquement (refonte, étape 5)
+  "no-var": "error",
+  "prefer-const": "error",
 };
 
 export default [

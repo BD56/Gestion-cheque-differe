@@ -7,7 +7,7 @@
 //     sans réglage, l'affichage et le comportement restent identiques.
 //     Ne touche PAS à la détection A/B/C (« Saisies » reste la source de vérité).
 // =================================================================
-var CONFIG_DEFAUTS = {
+const CONFIG_DEFAUTS = {
   NOM_STRUCTURE: "l'Hypermarché Carrefour Vannes", // avec l'article : lu « L'auteur concède à … »
   NOM_OFFRE: "Gestion Chèques Reportés",
   TITRE_APP: "Caisse - Saisie Chèques",
@@ -20,15 +20,15 @@ var CONFIG_DEFAUTS = {
 
 // Nombre de passages autorisés par client (même nom + même pièce) sur une offre.
 function passagesMax_() {
-  var n = parseInt(getConfig().PASSAGES_MAX, 10);
+  const n = parseInt(getConfig().PASSAGES_MAX, 10);
   return n >= 1 && n <= 10 ? n : 1;
 }
 
 function getConfig() {
-  var props = PropertiesService.getDocumentProperties().getProperties();
-  var cfg = {};
-  for (var k in CONFIG_DEFAUTS) {
-    var v = props["CFG_" + k];
+  const props = PropertiesService.getDocumentProperties().getProperties();
+  const cfg = {};
+  for (const k in CONFIG_DEFAUTS) {
+    const v = props["CFG_" + k];
     cfg[k] = v === undefined || v === null ? CONFIG_DEFAUTS[k] : v;
   }
   return cfg;
@@ -38,11 +38,11 @@ function getConfig() {
 // acceptées ; les libellés principaux ne peuvent pas être vides.
 function setConfig(valeurs, jeton) {
   exigerAdmin_(jeton);
-  var obligatoires = ["NOM_STRUCTURE", "NOM_OFFRE", "TITRE_APP", "LIBELLE_MONTANT", "LIBELLE_NOTES"];
-  var aEcrire = {};
-  for (var k in CONFIG_DEFAUTS) {
+  const obligatoires = ["NOM_STRUCTURE", "NOM_OFFRE", "TITRE_APP", "LIBELLE_MONTANT", "LIBELLE_NOTES"];
+  const aEcrire = {};
+  for (const k in CONFIG_DEFAUTS) {
     if (!valeurs || !(k in valeurs)) continue;
-    var v = valeurs[k] === null || valeurs[k] === undefined ? "" : valeurs[k].toString().trim();
+    let v = valeurs[k] === null || valeurs[k] === undefined ? "" : valeurs[k].toString().trim();
     if (k === "MONTANT_OBLIGATOIRE") v = v === "NON" ? "NON" : "OUI";
     if (k === "PASSAGES_MAX" && !/^([1-9]|10)$/.test(v))
       throw new Error("Passages autorisés par client : un nombre de 1 à 10.");
@@ -50,14 +50,14 @@ function setConfig(valeurs, jeton) {
     if (obligatoires.indexOf(k) !== -1 && v === "") throw new Error("« " + k + " » ne peut pas être vide.");
     aEcrire["CFG_" + k] = v;
   }
-  var lock = LockService.getScriptLock();
+  const lock = LockService.getScriptLock();
   lock.waitLock(10000); // réglage + marquages changés ensemble (pas de saisie entre les deux)
   try {
-    var ancienMax = passagesMax_();
+    const ancienMax = passagesMax_();
     PropertiesService.getDocumentProperties().setProperties(aEcrire);
     // Limite de passages changée : marquages de l'offre recalculés avec la nouvelle règle
     if (passagesMax_() !== ancienMax) {
-      var f = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FEUILLE_SAISIES);
+      const f = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FEUILLE_SAISIES);
       if (f) recalculerMarquages_(f);
     }
   } finally {

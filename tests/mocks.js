@@ -4,7 +4,7 @@ const { loadCode, makeProps } = require("./harness");
 function makeEnv(opts = {}) {
   const props = makeProps(opts.props);
   const cacheStore = {};
-  let now = Date.now();
+  const now = Date.now();
   const env = {
     props,
     cacheStore,

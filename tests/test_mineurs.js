@@ -61,7 +61,7 @@ assert.match(e.ctx.reconstruireAnnuaire(), /1 pièces/);
 assert.strictEqual(e.sheets._Annuaire.getRange(2, 1).getValue(), "123", "clé normalisée, stockée en texte");
 // #20 champs manquants
 e = env0([]);
-let r = J(e.ctx.traiterSaisie("DUPONT", "JEAN", "", "", ""));
+const r = J(e.ctx.traiterSaisie("DUPONT", "JEAN", "", "", ""));
 assert.strictEqual(r.status, "BLOQUE");
 assert.match(r.message, /N° de pièce, Montant/);
 assert.strictEqual(J(e.ctx.forcerSaisie("", "JEAN", "P1", "1", "", "", false, false)).status, "BLOQUE");

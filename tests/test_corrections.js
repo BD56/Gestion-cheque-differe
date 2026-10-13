@@ -18,14 +18,14 @@ function nouvelEnv() {
 const att = (n, p, pi) => ({ nom: n, prenom: p, piece: pi });
 
 // Accès
-let env = nouvelEnv();
-let c = env.ctx;
+const env = nouvelEnv();
+const c = env.ctx;
 const S = () => env.sheets.Saisies;
 assert.throws(() => c.listerSaisies(null), /ADMIN_REQUIS/);
 assert.throws(() => c.modifierSaisie(2, att("DUPONT", "JEAN", "AB123"), {}, false, null), /ADMIN_REQUIS/);
 assert.throws(() => c.supprimerSaisie(2, att("DUPONT", "JEAN", "AB123"), "x"), /ADMIN_REQUIS/);
 // Liste : plus récente d'abord, note d'alerte retirée + indicateur
-let l = J(c.listerSaisies(env.jeton));
+const l = J(c.listerSaisies(env.jeton));
 assert.deepStrictEqual(
   l.map((x) => x.ligne),
   [4, 3, 2]

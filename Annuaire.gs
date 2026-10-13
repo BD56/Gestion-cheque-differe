@@ -7,8 +7,8 @@
 //     Store NON autoritaire : la décision A/B/C reste sur « Saisies ».
 // =================================================================
 function _feuilleAnnuaire_() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var f = ss.getSheetByName(ANNUAIRE_FEUILLE);
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let f = ss.getSheetByName(ANNUAIRE_FEUILLE);
   if (!f) {
     f = ss.insertSheet(ANNUAIRE_FEUILLE);
     f.appendRow(["Piece", "Nom", "Prenom", "DerniereVue"]);
@@ -20,11 +20,11 @@ function _feuilleAnnuaire_() {
 // Upsert (appelé après une saisie réussie) : met à jour Nom/Prénom + date de vue.
 function majAnnuaire_(nom, prenom, piece) {
   if (!ANNUAIRE_ACTIF) return;
-  var pieceNorm = _normPiece_(piece);
+  const pieceNorm = _normPiece_(piece);
   if (pieceNorm === "") return;
-  var f = _feuilleAnnuaire_();
-  var data = f.getDataRange().getValues();
-  for (var i = 1; i < data.length; i++) {
+  const f = _feuilleAnnuaire_();
+  const data = f.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
     if (_normPiece_(data[i][0]) === pieceNorm) {
       f.getRange(i + 1, 1, 1, 4).setValues([[texte_(pieceNorm), texte_(nom), texte_(prenom), new Date()]]);
       return;
@@ -36,9 +36,9 @@ function majAnnuaire_(nom, prenom, piece) {
 // Recherche -> { nom, prenom } ou null
 function chercherAnnuaire_(pieceNorm) {
   if (!ANNUAIRE_ACTIF || !pieceNorm) return null;
-  var f = _feuilleAnnuaire_();
-  var data = f.getDataRange().getValues();
-  for (var i = 1; i < data.length; i++) {
+  const f = _feuilleAnnuaire_();
+  const data = f.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
     if (_normPiece_(data[i][0]) === pieceNorm) {
       return {
         nom: data[i][1] ? data[i][1].toString() : "",
@@ -55,7 +55,7 @@ function getModeAnnuaire() {
 }
 function basculerModeAnnuaire(jeton) {
   exigerAdmin_(jeton);
-  var m = getModeAnnuaire() === "C" ? "B" : "C";
+  const m = getModeAnnuaire() === "C" ? "B" : "C";
   PropertiesService.getDocumentProperties().setProperty("MODE_ANNUAIRE", m);
   return m;
 }
@@ -66,7 +66,7 @@ function reconstruireAnnuaire() {
   // Lancée depuis l'éditeur (ou le panneau) : jamais depuis la tablette
   if (!estEditeurDuClasseur_())
     throw new Error("Réservé aux personnes ayant accès au classeur (éditeur Apps Script).");
-  var lock = LockService.getScriptLock();
+  const lock = LockService.getScriptLock();
   lock.waitLock(30000);
   try {
     return reconstruireAnnuaireSousVerrou_();
@@ -79,21 +79,21 @@ function reconstruireAnnuaire() {
 // usurpateur passé ensuite ne le remplace pas) ; lignes marquées « Cas B » ignorées ;
 // date de dernière vue = la plus récente. Lignes sans vraie date ignorées.
 function reconstruireAnnuaireSousVerrou_() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var f = _feuilleAnnuaire_();
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const f = _feuilleAnnuaire_();
   f.clearContents();
   f.appendRow(["Piece", "Nom", "Prenom", "DerniereVue"]);
-  var index = {};
-  var feuilles = ss.getSheets();
-  for (var s = 0; s < feuilles.length; s++) {
-    var nomF = feuilles[s].getName();
+  const index = {};
+  const feuilles = ss.getSheets();
+  for (let s = 0; s < feuilles.length; s++) {
+    const nomF = feuilles[s].getName();
     if (nomF !== FEUILLE_SAISIES && nomF.indexOf(PREFIXE_ARCHIVES) !== 0) continue;
-    var data = feuilles[s].getDataRange().getValues();
-    for (var i = 1; i < data.length; i++) {
-      var pieceNorm = _normPiece_(data[i][IDX.PIECE]);
+    const data = feuilles[s].getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
+      const pieceNorm = _normPiece_(data[i][IDX.PIECE]);
       if (pieceNorm === "" || !(data[i][IDX.DATE] instanceof Date)) continue;
       if (/Cas B\)/.test(data[i][IDX.NOTES] ? data[i][IDX.NOTES].toString() : "")) continue;
-      var d = data[i][IDX.DATE],
+      const d = data[i][IDX.DATE],
         x = index[pieceNorm];
       if (!x) index[pieceNorm] = { nom: data[i][IDX.NOM], prenom: data[i][IDX.PRENOM], date: d, premiere: d };
       else {
@@ -106,8 +106,8 @@ function reconstruireAnnuaireSousVerrou_() {
       }
     }
   }
-  var rows = [];
-  for (var p in index)
+  const rows = [];
+  for (const p in index)
     rows.push([
       texte_(p),
       texte_(String(index[p].nom || "")),
@@ -122,16 +122,16 @@ function reconstruireAnnuaireSousVerrou_() {
 function purgerAnnuaire(e) {
   exigerDeclencheurOuEditeur_(e);
   if (!ANNUAIRE_ACTIF) return;
-  var lock = LockService.getScriptLock();
+  const lock = LockService.getScriptLock();
   lock.waitLock(30000); // pas de saisie (qui met l'annuaire à jour) pendant la réécriture
   try {
-    var f = _feuilleAnnuaire_();
-    var data = f.getDataRange().getValues();
-    var limite = new Date();
+    const f = _feuilleAnnuaire_();
+    const data = f.getDataRange().getValues();
+    const limite = new Date();
     limite.setFullYear(limite.getFullYear() - ANNUAIRE_RETENTION_ANS);
-    var garder = [];
-    for (var i = 1; i < data.length; i++) {
-      var d = data[i][3] instanceof Date ? data[i][3] : null;
+    const garder = [];
+    for (let i = 1; i < data.length; i++) {
+      const d = data[i][3] instanceof Date ? data[i][3] : null;
       if (d && d >= limite)
         garder.push([
           texte_(String(data[i][0])),

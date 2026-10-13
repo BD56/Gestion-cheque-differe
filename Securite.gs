@@ -13,7 +13,7 @@
 //       éditeurs du classeur. Il permet aussi de réinitialiser le code.
 // =================================================================
 function empreintePin_(sel, pin) {
-  var octets = Utilities.computeDigest(
+  const octets = Utilities.computeDigest(
     Utilities.DigestAlgorithm.SHA_256,
     sel + ":" + pin,
     Utilities.Charset.UTF_8
@@ -29,24 +29,24 @@ function etatAdmin() {
 // autre appareil. La tablette l'envoie avec sa clé : { j: jeton, c: clé }.
 // (« E » = jeton sans tablette : panneau du Sheet ou code d'activation.)
 function creerJetonAdmin_(tablette) {
-  var jeton = Utilities.getUuid();
+  const jeton = Utilities.getUuid();
   CacheService.getScriptCache().put("ADM_" + jeton, tablette ? "T:" + tablette.id : "E", ADMIN_SESSION_SEC);
   return jeton;
 }
 
 function jetonValide_(jeton) {
-  var j = jeton,
+  let j = jeton,
     cle = null;
   if (jeton && typeof jeton === "object") {
     j = jeton.j;
     cle = jeton.c;
   }
   if (!j || typeof j !== "string") return false;
-  var cache = CacheService.getScriptCache();
-  var lien = cache.get("ADM_" + j);
+  const cache = CacheService.getScriptCache();
+  const lien = cache.get("ADM_" + j);
   if (!lien) return false;
   if (lien !== "E") {
-    var t = tabletteDeCle_(cle);
+    const t = tabletteDeCle_(cle);
     if (!t || lien !== "T:" + t.id) return false;
   }
   cache.put("ADM_" + j, lien, ADMIN_SESSION_SEC); // prolonge (10 min d'inactivité)
@@ -57,10 +57,10 @@ function jetonValide_(jeton) {
 // Dans la web app, l'e-mail du visiteur n'est en général pas disponible -> false.
 function estEditeurDuClasseur_() {
   try {
-    var email = Session.getActiveUser().getEmail();
+    const email = Session.getActiveUser().getEmail();
     if (!email) return false;
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var proprio = ss.getOwner();
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const proprio = ss.getOwner();
     if (proprio && proprio.getEmail() === email) return true;
     return ss.getEditors().some(function (u) {
       return u.getEmail() === email;
@@ -102,16 +102,16 @@ function exigerDeclencheurOuEditeur_(e) {
 //  - après 5 codes faux : blocage 15 min (jamais plus long).
 // À appeler sous verrou. Renvoie { ok:true } ou { ok:false, message }.
 function verifierPin_(props, pin, groupe) {
-  var hash = props.getProperty("ADMIN_PIN_HASH");
+  const hash = props.getProperty("ADMIN_PIN_HASH");
   if (!hash) return { ok: false, message: "Aucun code défini : créez-le d'abord." };
-  var cleEtat = "PIN_ESSAIS_" + (groupe || "EDITEUR");
-  var etat = {};
+  const cleEtat = "PIN_ESSAIS_" + (groupe || "EDITEUR");
+  let etat = {};
   try {
     etat = JSON.parse(props.getProperty(cleEtat) || "{}");
   } catch (e) {
     etat = {};
   }
-  var maintenant = Date.now();
+  const maintenant = Date.now();
   if ((etat.bloque || 0) > maintenant) {
     return {
       ok: false,
@@ -133,7 +133,7 @@ function verifierPin_(props, pin, groupe) {
   }
   if (groupe === "INCONNU") {
     // trace visible dans l'espace responsable
-    var inc = {};
+    let inc = {};
     try {
       inc = JSON.parse(props.getProperty("PIN_INCONNUS") || "{}");
     } catch (e) {
@@ -147,7 +147,7 @@ function verifierPin_(props, pin, groupe) {
       })
     );
   }
-  var echecs = (etat.echecs || 0) + 1;
+  const echecs = (etat.echecs || 0) + 1;
   if (echecs >= ADMIN_ESSAIS_MAX) {
     props.setProperty(
       cleEtat,
@@ -164,8 +164,8 @@ function verifierPin_(props, pin, groupe) {
 
 // Efface les compteurs d'essais (tous, ou ceux d'une tablette).
 function effacerEssais_(props, groupe) {
-  var tout = props.getProperties();
-  for (var k in tout) {
+  const tout = props.getProperties();
+  for (const k in tout) {
     if (groupe ? k === "PIN_ESSAIS_" + groupe : k.indexOf("PIN_ESSAIS_") === 0) props.deleteProperty(k);
   }
 }
@@ -173,11 +173,11 @@ function effacerEssais_(props, groupe) {
 // Code juste -> { ok:true, jeton } ; sinon { ok:false, message }. Tablette autorisée requise.
 function ouvrirSessionAdmin(pin, cle) {
   exigerTablette_(cle);
-  var t = tabletteDeCle_(cle);
-  var lock = LockService.getScriptLock();
+  const t = tabletteDeCle_(cle);
+  const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
-    var v = verifierPin_(PropertiesService.getDocumentProperties(), pin, t ? "T_" + t.id : "EDITEUR");
+    const v = verifierPin_(PropertiesService.getDocumentProperties(), pin, t ? "T_" + t.id : "EDITEUR");
     return v.ok ? { ok: true, jeton: creerJetonAdmin_(t) } : v;
   } finally {
     lock.releaseLock();
@@ -193,19 +193,19 @@ function ouvrirSessionAdmin(pin, cle) {
 // Usage unique, valable 24 h, 10 essais au plus. Seule son empreinte est gardée.
 // =================================================================
 function genererCodeActivation_() {
-  var chiffres = "";
+  let chiffres = "";
   while (chiffres.length < 8) {
-    var octets = Utilities.computeDigest(
+    const octets = Utilities.computeDigest(
       Utilities.DigestAlgorithm.SHA_256,
       Utilities.getUuid() + Utilities.getUuid(),
       Utilities.Charset.UTF_8
     );
-    for (var i = 0; i < octets.length && chiffres.length < 8; i++) {
-      var b = octets[i] & 255;
+    for (let i = 0; i < octets.length && chiffres.length < 8; i++) {
+      const b = octets[i] & 255;
       if (b < 250) chiffres += String(b % 10); // 250 = 25 × 10 : pas de biais
     }
   }
-  var sel = Utilities.getUuid();
+  const sel = Utilities.getUuid();
   PropertiesService.getDocumentProperties().setProperties({
     ACTIVATION_SEL: sel,
     ACTIVATION_HASH: empreintePin_(sel, chiffres),
@@ -235,19 +235,19 @@ function effacerActivation_(props) {
 
 // À appeler sous verrou. Renvoie { ok:true } ou { ok:false, message }.
 function verifierActivation_(props, code) {
-  var obtenir = " Obtenez-en un dans le Google Sheets : menu 🚀 APPLICATION → 🔑 Code d'activation.";
-  var hash = props.getProperty("ACTIVATION_HASH");
+  const obtenir = " Obtenez-en un dans le Google Sheets : menu 🚀 APPLICATION → 🔑 Code d'activation.";
+  const hash = props.getProperty("ACTIVATION_HASH");
   if (!hash) return { ok: false, message: "Code d'activation requis." + obtenir };
   if (Date.now() > Number(props.getProperty("ACTIVATION_EXPIRE") || 0)) {
     effacerActivation_(props);
     return { ok: false, message: "Code d'activation expiré." + obtenir };
   }
-  var essais = Number(props.getProperty("ACTIVATION_ESSAIS") || 0);
+  const essais = Number(props.getProperty("ACTIVATION_ESSAIS") || 0);
   if (essais >= ACTIVATION_ESSAIS_MAX) {
     effacerActivation_(props);
     return { ok: false, message: "Trop d'essais : ce code d'activation n'est plus valable." + obtenir };
   }
-  var chiffres = (code || "").toString().replace(/\D/g, "");
+  const chiffres = (code || "").toString().replace(/\D/g, "");
   if (chiffres.length === 8 && empreintePin_(props.getProperty("ACTIVATION_SEL"), chiffres) === hash)
     return { ok: true };
   props.setProperty("ACTIVATION_ESSAIS", String(essais + 1));
@@ -257,25 +257,25 @@ function verifierActivation_(props, code) {
 // Création (si aucun code : code d'activation exigé, sauf panneau du Sheet) ou
 // changement (session responsable requise).
 function definirPin(nouveauPin, jeton, cle, activation) {
-  var lock = LockService.getScriptLock();
+  const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
-    var props = PropertiesService.getDocumentProperties();
-    var creation = !props.getProperty("ADMIN_PIN_HASH");
+    const props = PropertiesService.getDocumentProperties();
+    const creation = !props.getProperty("ADMIN_PIN_HASH");
     if (!creation) exigerAdmin_(jeton);
     nouveauPin = (nouveauPin || "").toString();
     if (!ADMIN_PIN_REGEX.test(nouveauPin))
       return { ok: false, message: "Le code doit contenir exactement 6 chiffres." };
     if (creation && !estEditeurDuClasseur_()) {
-      var a = verifierActivation_(props, activation);
+      const a = verifierActivation_(props, activation);
       if (!a.ok) return a;
     }
-    var sel = Utilities.getUuid();
+    const sel = Utilities.getUuid();
     props.setProperties({ ADMIN_PIN_SEL: sel, ADMIN_PIN_HASH: empreintePin_(sel, nouveauPin) });
     effacerEssais_(props);
     effacerActivation_(props);
     props.deleteProperty("PIN_INCONNUS"); // nouveau code : l'avertissement est soldé
-    var garde = !creation && jetonValide_(jeton);
+    const garde = !creation && jetonValide_(jeton);
     return {
       ok: true,
       jeton: garde ? (typeof jeton === "object" ? jeton.j : jeton) : creerJetonAdmin_(tabletteDeCle_(cle)),
@@ -286,7 +286,7 @@ function definirPin(nouveauPin, jeton, cle, activation) {
 }
 
 function fermerSessionAdmin(jeton) {
-  var j = jeton && typeof jeton === "object" ? jeton.j : jeton;
+  const j = jeton && typeof jeton === "object" ? jeton.j : jeton;
   if (j && typeof j === "string") CacheService.getScriptCache().remove("ADM_" + j);
 }
 
@@ -294,7 +294,7 @@ function fermerSessionAdmin(jeton) {
 // code d'activation pour en créer un nouveau depuis n'importe quelle tablette.
 function reinitialiserPinPanneau() {
   exigerEditeur_();
-  var props = PropertiesService.getDocumentProperties();
+  const props = PropertiesService.getDocumentProperties();
   ["ADMIN_PIN_HASH", "ADMIN_PIN_SEL", "ADMIN_ECHECS", "ADMIN_BLOQUE_JUSQUA", "ADMIN_DERNIER_ECHEC"].forEach(
     function (k) {
       props.deleteProperty(k);
@@ -331,9 +331,9 @@ function empreinteCle_(cle) {
 }
 function tabletteDeCle_(cle) {
   if (!cle || typeof cle !== "string" || cle.length < 32) return null;
-  var h = empreinteCle_(cle);
-  var liste = lireTablettes_();
-  for (var i = 0; i < liste.length; i++) if (liste[i].hash === h) return liste[i];
+  const h = empreinteCle_(cle);
+  const liste = lireTablettes_();
+  for (let i = 0; i < liste.length; i++) if (liste[i].hash === h) return liste[i];
   return null;
 }
 
@@ -341,10 +341,10 @@ function tabletteDeCle_(cle) {
 // panneau du Sheet). Note la date de dernière utilisation (une fois par jour,
 // propriété séparée : pas de réécriture de la liste, donc pas de conflit).
 function exigerTablette_(cle) {
-  var t = tabletteDeCle_(cle);
+  const t = tabletteDeCle_(cle);
   if (t) {
-    var props = PropertiesService.getDocumentProperties();
-    var auj = Utilities.formatDate(new Date(), fuseau_(), "dd/MM/yyyy");
+    const props = PropertiesService.getDocumentProperties();
+    const auj = Utilities.formatDate(new Date(), fuseau_(), "dd/MM/yyyy");
     if (props.getProperty("TABLETTE_VUE_" + t.id) !== auj) props.setProperty("TABLETTE_VUE_" + t.id, auj);
     return;
   }
@@ -354,13 +354,13 @@ function exigerTablette_(cle) {
 
 // Autorise la tablette qui appelle (code responsable requis). Renvoie la clé à garder.
 function appairerTablette(pin, nom) {
-  var lock = LockService.getScriptLock();
+  const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
-    var props = PropertiesService.getDocumentProperties();
-    var v = verifierPin_(props, pin, "INCONNU");
+    const props = PropertiesService.getDocumentProperties();
+    const v = verifierPin_(props, pin, "INCONNU");
     if (!v.ok) return v;
-    var liste = lireTablettes_();
+    const liste = lireTablettes_();
     if (liste.length >= TABLETTES_MAX)
       return {
         ok: false,
@@ -368,8 +368,8 @@ function appairerTablette(pin, nom) {
           TABLETTES_MAX +
           " tablettes maximum : retirez-en une depuis l'espace responsable (tuile 🔑), ou toutes depuis le panneau du Google Sheets.",
       };
-    var cle = Utilities.getUuid().replace(/-/g, "") + Utilities.getUuid().replace(/-/g, "");
-    var id = Utilities.getUuid().replace(/-/g, "").slice(0, 10);
+    const cle = Utilities.getUuid().replace(/-/g, "") + Utilities.getUuid().replace(/-/g, "");
+    const id = Utilities.getUuid().replace(/-/g, "").slice(0, 10);
     nom = (nom || "").toString().trim().slice(0, 40) || "Tablette " + (liste.length + 1);
     liste.push({
       id: id,
@@ -386,7 +386,7 @@ function appairerTablette(pin, nom) {
 
 function listerTablettes(jeton) {
   exigerAdmin_(jeton);
-  var props = PropertiesService.getDocumentProperties();
+  const props = PropertiesService.getDocumentProperties();
   return lireTablettes_().map(function (t) {
     return { id: t.id, nom: t.nom, creeLe: t.creeLe, vueLe: props.getProperty("TABLETTE_VUE_" + t.id) || "" };
   });
@@ -394,7 +394,7 @@ function listerTablettes(jeton) {
 
 function retirerTablette(id, jeton) {
   exigerAdmin_(jeton);
-  var lock = LockService.getScriptLock();
+  const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
     ecrireTablettes_(
@@ -412,10 +412,10 @@ function retirerTablette(id, jeton) {
 
 function retirerToutesTablettes(jeton) {
   exigerAdmin_(jeton);
-  var lock = LockService.getScriptLock();
+  const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
-    var props = PropertiesService.getDocumentProperties();
+    const props = PropertiesService.getDocumentProperties();
     lireTablettes_().forEach(function (t) {
       props.deleteProperty("TABLETTE_VUE_" + t.id);
       props.deleteProperty("PIN_ESSAIS_T_" + t.id);
@@ -431,10 +431,10 @@ function retirerToutesTablettes(jeton) {
 // perdues…). Chacune devra être autorisée à nouveau avec le code responsable.
 function retirerToutesTablettesPanneau() {
   exigerEditeur_();
-  var lock = LockService.getScriptLock();
+  const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
-    var props = PropertiesService.getDocumentProperties();
+    const props = PropertiesService.getDocumentProperties();
     lireTablettes_().forEach(function (t) {
       props.deleteProperty("TABLETTE_VUE_" + t.id);
       props.deleteProperty("PIN_ESSAIS_T_" + t.id);
@@ -449,15 +449,15 @@ function retirerToutesTablettesPanneau() {
 // Tout ce qu'affiche l'espace responsable, en un appel.
 function getInfosAdmin(jeton) {
   exigerAdmin_(jeton);
-  var f = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FEUILLE_SAISIES);
+  const f = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FEUILLE_SAISIES);
   // Robots de nuit absents (application ouverte avant « Installer »…) : on les recrée.
-  var robotsCrees = [];
+  let robotsCrees = [];
   try {
     robotsCrees = installerDeclencheurs_();
   } catch (e) {
     Logger.log("Robots de nuit : " + e);
   }
-  var inconnus = {};
+  let inconnus = {};
   try {
     inconnus = JSON.parse(PropertiesService.getDocumentProperties().getProperty("PIN_INCONNUS") || "{}");
   } catch (e) {

@@ -86,7 +86,7 @@ const saisir = (e, n, p, pi, notes) => J(e.ctx.traiterSaisie(n, p, pi, "10", not
   assert.throws(() => e.ctx.setConfig({ PASSAGES_MAX: "11" }, j), /1 à 10/);
   // Correction : la limite s'applique ; suppression -> notes de passage renumérotées
   e.ctx.setConfig({ PASSAGES_MAX: "2" }, j);
-  let rc = J(
+  const rc = J(
     e.ctx.modifierSaisie(
       4,
       { nom: "DUPONT", prenom: "JEAN", piece: "AB1" },

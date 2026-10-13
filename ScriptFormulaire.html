@@ -4,14 +4,14 @@
   // --- FORMATAGE AUTOMATIQUE DU MONTANT ---
   // Montant lisible -> reformaté « 1234,50 € » ; illisible -> laissé tel quel, encadré en rouge
   ["montant", "corMontant"].forEach(function (idMontant) {
-    var champ = document.getElementById(idMontant);
+    const champ = document.getElementById(idMontant);
     champ.addEventListener("blur", function () {
-      var valeur = this.value.trim();
+      const valeur = this.value.trim();
       if (valeur === "") {
         this.style.borderColor = "";
         return;
       }
-      var n = lireMontant(valeur);
+      const n = lireMontant(valeur);
       if (n === null) {
         this.style.borderColor = "#d93025";
         return;
@@ -26,15 +26,15 @@
 
   // --- ENTRÉE → CHAMP SUIVANT (Nom, Prénom, N° Pièce, Montant ; Notes exclu) ---
   (function () {
-    var ordre = ["piece", "nom", "prenom", "montant"];
+    const ordre = ["piece", "nom", "prenom", "montant"];
     ordre.forEach(function (id, i) {
-      var champ = document.getElementById(id);
+      const champ = document.getElementById(id);
       if (!champ) return;
       champ.addEventListener("keydown", function (e) {
         if (e.key !== "Enter") return;
         e.preventDefault(); // évite toute soumission implicite du formulaire
         // Champ suivant ; après le dernier (Montant), on cible le bouton Valider
-        var suivant =
+        const suivant =
           i + 1 < ordre.length
             ? document.getElementById(ordre[i + 1])
             : document.getElementById("btnValider");
@@ -46,19 +46,19 @@
   // --- NIVEAU 2 : VÉRIFICATION IMMÉDIATE DU N° DE PIÈCE (au blur) ---
   // Pré-avertissement non bloquant : ce N° est-il déjà sur l'offre en cours ?
   // Cache pré-chargé (offre en cours + annuaire) pour une vérif LOCALE instantanée.
-  var cacheVerif = null;
-  var seqCache = 0,
+  let cacheVerif = null;
+  let seqCache = 0,
     seqCacheApplique = 0;
   // Âge maximum de la copie locale pour décider SANS attendre le serveur. Au-delà
   // (réseau en panne : les rechargements échouent), la tablette attend la réponse
   // du serveur avant d'afficher le résultat.
-  var cacheRecuA = 0,
-    AGE_MAX_COPIE_MS = 2 * 60 * 1000;
+  let cacheRecuA = 0;
+  const AGE_MAX_COPIE_MS = 2 * 60 * 1000;
   function copieFraiche() {
     return !!cacheVerif && Date.now() - cacheRecuA <= AGE_MAX_COPIE_MS;
   }
   function rechargerCacheVerif() {
-    var seq = ++seqCache;
+    const seq = ++seqCache;
     dernierRechargementDemande = Date.now();
     google.script.run
       .withSuccessHandler(function (c) {
@@ -91,16 +91,16 @@
   });
   // Le curseur peut attendre longtemps dans « N° » entre deux clients : on rafraîchit
   // aussi dès la 1re frappe si la copie a plus de 20 s (fraîche à la validation).
-  var dernierRechargementDemande = 0;
+  let dernierRechargementDemande = 0;
   document.getElementById("piece").addEventListener("input", function () {
     if (!CLE_TABLETTE || !dansPeriode()) return;
-    var t = Date.now();
+    const t = Date.now();
     if (t - cacheRecuA > 20000 && t - dernierRechargementDemande > 5000) rechargerCacheVerif();
   });
 
   // Comparaison des noms (miroir de Code.gs::_normId_) : majuscules, sans accents,
   // ligatures dépliées, sans espaces, tirets, apostrophes ni points.
-  var SEPARATEURS_NOM_JS = /[\s\-\u2010-\u2015\u2212'’‘ʼ`´′.,_\/\u200B-\u200D\uFEFF]/g;
+  const SEPARATEURS_NOM_JS = /[\s\-\u2010-\u2015\u2212'’‘ʼ`´′.,_\/\u200B-\u200D\uFEFF]/g;
   function normIdJS(p) {
     if (p === null || p === undefined) return "";
     return p
@@ -120,7 +120,7 @@
   // stocker "0123" en 123).
   function normPieceJS(p) {
     if (p === null || p === undefined) return "";
-    var n = p
+    const n = p
       .toString()
       .toUpperCase()
       .normalize("NFD")
@@ -140,7 +140,7 @@
   }
 
   document.getElementById("piece").addEventListener("blur", function () {
-    var val = this.value.trim();
+    const val = this.value.trim();
     if (val === "") return; // champ vide -> rien
     if (!copieFraiche()) {
       // copie absente ou trop ancienne -> repli serveur (rare)
@@ -151,9 +151,9 @@
       return;
     }
     // Vérif 100% locale (instantanée)
-    var pn = normPieceJS(val);
+    const pn = normPieceJS(val);
     if (pn === "") return;
-    var matches = cacheVerif.offre.filter(function (d) {
+    const matches = cacheVerif.offre.filter(function (d) {
       return d.pieceNorm === pn;
     });
     if (matches.length) {
@@ -171,9 +171,9 @@
     if (!res) return;
     if (res.trouve) {
       // Niveau 2 : doublon sur l'offre en cours -> modale d'avertissement (prioritaire)
-      var max = passagesMaxJS(),
+      const max = passagesMaxJS(),
         nb = (res.matches || []).length;
-      var msg;
+      let msg;
       if (max === 1) {
         msg = "Ce numéro est déjà enregistré sur cette offre.";
         if (res.mode === "BLOQUANT") msg += " (sera refusé à la validation)";
@@ -194,7 +194,7 @@
           (res.mode === "BLOQUANT" ? " (sera refusé à la validation)." : ".");
       }
       document.getElementById("msgDoublonPiece").innerHTML = msg;
-      var html = "";
+      let html = "";
       (res.matches || []).forEach(function (d) {
         html += "<div class='doublon-carte'>";
         html += "📅 " + echapper(d.date) + " (Ligne " + echapper(d.ligne) + ")<br>";
@@ -224,7 +224,7 @@
   // --- NIVEAU 3 : auto-complétion depuis l'annuaire inter-offres ---
   // Option C : pré-remplissage doux (remplit si vide + indice discret).
   function remplirAnnuaire(a) {
-    var n = document.getElementById("nom"),
+    const n = document.getElementById("nom"),
       p = document.getElementById("prenom");
     [
       [n, a.nom],
@@ -235,13 +235,13 @@
       x[0].dataset.prerempli = "1"; // taper dans le champ REMPLACE le texte proposé
       if (document.activeElement === x[0]) x[0].select();
     });
-    var ind = document.getElementById("indiceAnnuaire");
+    const ind = document.getElementById("indiceAnnuaire");
     if (ind) ind.style.display = "block";
   }
   // Champ pré-rempli : sélectionné à l'arrivée, la frappe remplace (et ne s'ajoute pas :
   // sinon « DUPONT » + « DUPONT » tapé = « DUPONTDUPONT »).
   ["nom", "prenom"].forEach(function (id) {
-    var champ = document.getElementById(id);
+    const champ = document.getElementById(id);
     champ.addEventListener("focus", function () {
       if (!champ.dataset.prerempli) return;
       champ.select(); // tout de suite (frappe rapide) et après le toucher (sinon désélectionné)
@@ -255,7 +255,7 @@
   });
   // Option B : modale qui demande la confirmation.
   function proposerAnnuaire(a) {
-    var m = document.getElementById("modalAnnuaire");
+    const m = document.getElementById("modalAnnuaire");
     m.dataset.nom = a.nom || "";
     m.dataset.prenom = a.prenom || "";
     document.getElementById("msgAnnuaire").innerHTML =
@@ -267,7 +267,7 @@
     m.style.display = "flex";
   }
   function utiliserAnnuaire() {
-    var m = document.getElementById("modalAnnuaire");
+    const m = document.getElementById("modalAnnuaire");
     remplirAnnuaire({ nom: m.dataset.nom, prenom: m.dataset.prenom });
     m.style.display = "none";
   }
@@ -277,14 +277,14 @@
 
   // Réglage B/C dans le Panneau (visible seulement si l'annuaire est actif)
   function majAffichageModeAnnuaire(mode) {
-    var btn = document.getElementById("btnModeAnnuaire");
+    const btn = document.getElementById("btnModeAnnuaire");
     btn.style.display = "block";
     btn.innerHTML = "🪪 Auto-complétion : " + (mode === "B" ? "Demander (modale)" : "Auto (doux)");
   }
-  var modeAnnuaireEnCours = false;
+  let modeAnnuaireEnCours = false;
   function changerModeAnnuaire() {
     if (modeAnnuaireEnCours) return;
-    var btn = document.getElementById("btnModeAnnuaire"),
+    const btn = document.getElementById("btnModeAnnuaire"),
       avant = btn.innerHTML;
     modeAnnuaireEnCours = true;
     btn.innerHTML = "⏳ MAJ...";

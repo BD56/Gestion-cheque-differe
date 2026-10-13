@@ -1,0 +1,148 @@
+// Google Sheets : menu, panneau ⚙️, contrôle des modifications à la main (onEdit).
+
+function onOpen() {
+  var ui = SpreadsheetApp.getUi();
+  ui.createMenu('🚀 APPLICATION')
+    .addItem('⚙️ Ouvrir le panneau de contrôle', 'afficherPanneau')
+    .addItem('🧰 Installer / vérifier l\'installation', 'installerDepuisMenu')
+    .addItem('🔑 Code d\'activation (créer le code responsable)', 'afficherCodeActivation')
+    .addToUi();
+  if (estCopieNonInstallee_()) {
+    try { SpreadsheetApp.getActiveSpreadsheet().toast("Nouvelle copie : menu 🚀 APPLICATION → 🧰 Installer.", "Installation", 20); } catch (e) {}
+    return;
+  }
+  afficherPanneau(); 
+}
+
+function afficherPanneau() {
+  var html = HtmlService.createHtmlOutputFromFile('Panneau').setTitle('⚙️ Contrôle').setWidth(300);
+  SpreadsheetApp.getUi().showSidebar(html);
+}
+
+function allerVersImpression(dateChoisieStr) {
+  exigerEditeur_();
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var f = ss.getSheetByName(FEUILLE_IMPRESSION);
+  if (!f) return;
+  if (dateChoisieStr === "aujourdhui") f.getRange(CELLULE_JOUR_IMPRESSION).clearContent();
+  else f.getRange(CELLULE_JOUR_IMPRESSION).setValue("'" + dateChoisieStr);
+  SpreadsheetApp.flush(); ss.setActiveSheet(f);
+}
+
+function allerVersOffre() {
+  exigerEditeur_();
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var f = ss.getSheetByName(FEUILLE_OFFRE_COMPLETE);
+  if (f) ss.setActiveSheet(f);
+}
+
+// =================================================================
+// --- CERVEAU INTERNE DU GOOGLE SHEETS (SUR MODIFICATION MANUELLE) ---
+// =================================================================
+function onEdit(e) {
+  if (!e || !e.range) return;
+  var feuille = e.range.getSheet();
+  
+  // On ne déclenche la magie que sur la bonne feuille
+  if (feuille.getName() !== FEUILLE_SAISIES) return;
+  
+  var premiere = e.range.getRow();
+  var colEdit = e.range.getColumn();
+  var nbLignes = e.range.getNumRows();
+  var nbCols = e.range.getNumColumns();
+  var derniere = premiere + nbLignes - 1;
+  
+  // On ignore la ligne 1 (en-têtes) et on s'arrête à la colonne F
+  if (derniere < 2 || colEdit > COL.NOTES) return;
+  var uneCellule = (nbLignes === 1 && nbCols === 1);
+  var debut = Math.max(2, premiere);
+  // Nom, prénom ou N° touchés ? (sinon : montant / notes seulement, jamais annulé)
+  var toucheIdentite = colEdit <= COL.PIECE && colEdit + nbCols - 1 >= COL.NOM;
+
+  // Même verrou que les tablettes : une saisie ne peut pas s'intercaler pendant le contrôle
+  var lock = null, verrou = false;
+  try { lock = LockService.getScriptLock(); verrou = lock.tryLock(10000); } catch (err) { verrou = false; }
+  try {
+    // 1️⃣ + 2️⃣ Horodatage et formatage, ligne par ligne (un collage peut couvrir
+    //    plusieurs lignes : chacune est traitée, pas seulement la première)
+    for (var l = debut; l <= derniere; l++) {
+      preparerLigneEditee_(feuille, l, colEdit, nbCols, uneCellule ? e.value : undefined, uneCellule);
+    }
+    SpreadsheetApp.flush();
+
+    // 3️⃣ Mode BLOQUANT : une ligne dont le nom / prénom / N° vient d'être modifié pour
+    //    créer un doublon (A) ou une usurpation (B) est annulée (ancienne valeur remise).
+    var modeSecurite = modeSecurite_(feuille);
+    var refus = [];
+    if (modeSecurite === "BLOQUANT" && toucheIdentite) {
+      for (var ligne = debut; ligne <= derniere; ligne++) {
+        var plageAnnulee = uneCellule ? e.range : feuille.getRange(ligne, colEdit, 1, Math.min(nbCols, COL.NOTES - colEdit + 1));
+        var cas = controlerLigneEditee_(feuille, ligne, plageAnnulee, uneCellule ? e.oldValue : undefined, colEdit);
+        if (cas) refus.push("ligne " + ligne + " (Cas " + cas + ")");
+      }
+    }
+    // Ligne entièrement vidée : on efface aussi sa date
+    var bloc = feuille.getRange(debut, COL.NOM, derniere - debut + 1, NB_COLONNES_SAISIE).getValues();
+    bloc.forEach(function (r, k) {
+      if (r.every(function (v) { return v === "" || v === null; })) feuille.getRange(debut + k, COL.DATE).clearContent();
+    });
+    // 4️⃣ Notes « ⚠️ Ajout forcé » / « ℹ️ Passage » et rouge recalculés pour toute l'offre,
+    //    avec les mêmes règles que l'application (la 1re occurrence reste propre).
+    recalculerMarquages_(feuille);
+  } finally {
+    if (verrou) libererVerrou_(lock);
+  }
+  if (refus.length) {
+    SpreadsheetApp.getUi().alert(
+      "🛑 SAISIE REFUSÉE",
+      "Mode BLOQUANT actif :\nCe doublon ou cette usurpation est strictement interdit(e).\n\nModification annulée : " + refus.join(", ") + ".",
+      SpreadsheetApp.getUi().ButtonSet.OK
+    );
+  }
+}
+
+// Horodatage + mise en forme (majuscules, texte, virgule) d'une ligne modifiée à la main.
+// valeur : ce qui a été tapé (cellule seule) — permet de rétablir un N° « 0123 » que
+// Sheets a déjà converti en 123 ; undefined pour un collage (valeurs relues TELLES
+// QU'AFFICHÉES : un N° pris pour une date ou un grand nombre reste lisible).
+function preparerLigneEditee_(feuille, ligne, colEdit, nbCols, valeur, uneCellule) {
+  // 1️⃣ HORODATAGE AUTOMATIQUE
+  var celluleDate = feuille.getRange(ligne, COL.DATE);
+  if (celluleDate.isBlank() && colEdit + nbCols - 1 > COL.DATE) {
+    var rempli = uneCellule ? !!valeur : feuille.getRange(ligne, COL.NOM, 1, NB_COLONNES_SAISIE).getValues()[0].some(function (v) { return v !== "" && v !== null; });
+    if (rempli && (colEdit > COL.DATE || !uneCellule)) celluleDate.setValue(new Date());
+  }
+  // 2️⃣ FORMATAGE AUTOMATIQUE (Majuscules, virgules)
+  for (var c = Math.max(colEdit, COL.NOM); c <= Math.min(colEdit + nbCols - 1, COL.MONTANT); c++) {
+    var v = uneCellule ? valeur : feuille.getRange(ligne, c).getValue();
+    if (!uneCellule && c <= COL.PIECE && (v instanceof Date || typeof v === 'number')) v = feuille.getRange(ligne, c).getDisplayValue();
+    if (v === undefined || v === null || v === "" || v instanceof Date) continue;
+    if (c <= COL.PIECE) {
+      // en texte : Sheets a déjà converti la frappe (ex. N° "0123" -> 123), on rétablit la valeur
+      feuille.getRange(ligne, c).setValue(texte_(v.toString().toUpperCase().trim()));
+    } else if (v.toString().indexOf('.') !== -1 && typeof v === 'string') {
+      feuille.getRange(ligne, c).setValue(v.toString().replace('.', ','));
+    }
+  }
+}
+
+// Mode BLOQUANT : la ligne modifiée à la main double-t-elle une AUTRE ligne (A) ou
+// usurpe-t-elle une pièce (B) ? Si oui, la modification est annulée — ancienne valeur
+// remise pour une cellule seule, cellules vidées pour un collage — et le cas est
+// renvoyé (pour l'alerte) ; sinon null. Le marquage est fait ensuite pour toute
+// l'offre par recalculerMarquages_.
+function controlerLigneEditee_(feuille, ligneEdit, plageAnnulee, ancienneValeur, colEdit) {
+  var rowData = feuille.getRange(ligneEdit, 1, 1, NB_COLONNES).getValues()[0];
+  if (!_normId_(rowData[IDX.NOM]) && !_normPiece_(rowData[IDX.PIECE])) return null;
+  var det = detecterDoublons_(feuille, rowData[IDX.NOM], rowData[IDX.PRENOM], rowData[IDX.PIECE], ligneEdit);
+  if (det.pireCas !== 'A' && det.pireCas !== 'B') return null;
+  if (ancienneValeur !== undefined && ancienneValeur !== null) {
+    plageAnnulee.setValue(colEdit >= COL.NOM && colEdit <= COL.PIECE ? texte_(ancienneValeur.toString()) : ancienneValeur);
+  } else {
+    plageAnnulee.clearContent();
+  }
+  // Ligne redevenue vide (ex. nouvelle ligne refusée) : pas de date orpheline
+  var reste = feuille.getRange(ligneEdit, COL.NOM, 1, NB_COLONNES_SAISIE).getValues()[0];
+  if (reste.every(function (v) { return v === "" || v === null; })) feuille.getRange(ligneEdit, COL.DATE).clearContent();
+  return det.pireCas;
+}

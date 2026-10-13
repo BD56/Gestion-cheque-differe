@@ -1,0 +1,340 @@
+// Saisie d'un client (tablette), forçage, vérification du N°, correction et
+// suppression d'une saisie, changement de mode.
+
+// =================================================================
+// --- FONCTIONS PRINCIPALES AVEC LOCKSERVICE POUR ATOMICITÉ ---
+// =================================================================
+
+function traiterSaisie(nom, prenom, piece, montant, notes, cle) {
+  exigerTablette_(cle);
+  var lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(10000); // Verrou pour éviter les race conditions
+
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var feuille = ss.getSheetByName(FEUILLE_SAISIES);
+    if (!feuille) return { status: "BLOQUE", titre: "Erreur Serveur", message: "La feuille '" + FEUILLE_SAISIES + "' est introuvable." };
+
+    var horsPeriode = controlerPeriode_();
+    if (horsPeriode) return horsPeriode;
+    var incomplet = controlerChamps_(nom, prenom, piece, montant);
+    if (incomplet) return incomplet;
+
+    var modeSecurite = modeSecurite_(feuille);
+    
+    // Nettoyage standard pour l'affichage
+    nom = nom.toString().toUpperCase().trim();
+    prenom = prenom.toString().toUpperCase().trim();
+    piece = piece.toString().toUpperCase().trim();
+    notes = notes ? notes.toString().replace(NOTES_SYSTEME_REGEX, '').trim() : "";
+    if (montant && typeof montant === 'string' && montant.includes('.')) montant = montant.replace('.', ',');
+    
+    // Détection A/B/C : même fonction que forcerSaisie / corrections / onEdit
+    var det = detecterDoublons_(feuille, nom, prenom, piece, 0);
+    var pireCas = det.pireCas;
+    var detailsDoublons = det.details;
+    var passagesClient = det.passages; // passages déjà enregistrés pour CE client (même nom + même pièce)
+
+    var passagesMax = passagesMax_();
+    var limiteTxt = (passagesMax > 1) ? " (déjà " + passagesClient + " passage(s) ; maximum " + passagesMax + " par client)" : "";
+
+    if (pireCas) {
+      var isBloque = false;
+      var msgTitre = "";
+      var msgAlerte = "";
+      var couleur = "ROUGE";
+      
+      if (modeSecurite === "BLOQUANT") {
+        if (pireCas === 'A') {
+          isBloque = true; msgTitre = "🛑 SAISIE REFUSÉE"; msgAlerte = "Ce client a déjà profité de l'offre." + limiteTxt;
+        } else if (pireCas === 'B') {
+          isBloque = true; msgTitre = "🛑 SAISIE REFUSÉE"; msgAlerte = "Ce numéro de pièce d'identité est déjà associé à un autre client.";
+        } else if (pireCas === 'C') {
+          isBloque = false; couleur = "ORANGE"; msgTitre = "⚠️ HOMONYME DÉTECTÉ"; 
+          msgAlerte = "Un client porte ce nom avec une autre pièce. Demandez une 2e pièce d'identité pour confirmer qu'il s'agit bien d'une personne différente avant de forcer l'ajout.";
+        }
+      } else {
+        if (pireCas === 'A') {
+          msgTitre = "🛑 ALERTE FRAUDE"; msgAlerte = "Ce client a déjà été enregistré avec ce numéro de pièce d'identité." + limiteTxt;
+        } else if (pireCas === 'B') {
+          msgTitre = "🛑 ANOMALIE GRAVE"; msgAlerte = "Ce numéro de pièce d'identité est déjà utilisé dans la base sous un autre nom !";
+        } else if (pireCas === 'C') {
+          couleur = "ORANGE"; msgTitre = "⚠️ HOMONYME DÉTECTÉ"; 
+          msgAlerte = "Un client porte ce nom avec une autre pièce. Demandez une 2e pièce d'identité pour confirmer qu'il s'agit bien d'une personne différente avant de forcer l'ajout.";
+        }
+      }
+
+      var notePourSheet = "⚠️ Ajout forcé (Cas " + pireCas + ")";
+
+      if (isBloque) {
+        return { status: "BLOQUE", titre: msgTitre, message: msgAlerte, details: detailsDoublons };
+      } else {
+        return { status: "CONFIRMATION", titre: msgTitre, message: msgAlerte, couleur: couleur, details: detailsDoublons, noteForce: notePourSheet, flags: { identite: (pireCas==='A'||pireCas==='C'), piece: (pireCas==='A'||pireCas==='B') } };
+      }
+    } else {
+      // Passage supplémentaire autorisé : trace dans les notes (« ℹ️ Passage 2/3 »), sans rouge
+      if (passagesClient > 0) notes = ajouterNote_(notes, notePassage_(passagesClient + 1, passagesMax));
+      feuille.appendRow([new Date(), texte_(nom), texte_(prenom), texte_(piece), montantSur_(montant), texte_(notes), ""]);
+      // pas de rouge hérité de la ligne du dessus (mise en forme automatique de Sheets)
+      feuille.getRange(feuille.getLastRow(), 1, 1, NB_COLONNES_LIGNE).setBackground(null);
+      majAnnuaire_(nom, prenom, piece);
+      return { status: "SUCCES", passage: passagesClient + 1, passagesMax: passagesMax,
+               message: passagesClient > 0 ? "✅ Saisie enregistrée ! (passage " + (passagesClient + 1) + "/" + passagesMax + ")" : "✅ Saisie enregistrée !" };
+    }
+  } finally {
+    libererVerrou_(lock); // écritures envoyées, puis verrou libéré (dans tous les cas)
+  }
+}
+
+// Une saisie n'est acceptée que PENDANT l'offre (dates de l'opération, heure de Paris).
+// Sinon (tablette restée ouverte après la clôture, appel direct…) -> refus, rien d'écrit.
+// Renvoie null si la saisie est permise, sinon la réponse de refus.
+function controlerPeriode_() {
+  var dates = lireDates_();
+  var refus = function (msg) { return { status: "BLOQUE", horsPeriode: true, titre: "🛑 HORS PÉRIODE", message: msg, details: [] }; };
+  if (!dates.debut || !dates.fin) return refus("Aucune opération en cours : saisie impossible.");
+  var auj = Utilities.formatDate(new Date(), fuseau_(), "yyyy-MM-dd");
+  var jjmm = function (iso) { var p = iso.split('-'); return p.length === 3 ? p[2] + "/" + p[1] : iso; };
+  if (auj < dates.debut) return refus("L'opération n'a pas encore commencé (début le " + jjmm(dates.debut) + ").");
+  if (auj > dates.fin) return refus("L'opération est terminée (fin le " + jjmm(dates.fin) + ").");
+  return null;
+}
+
+// Champs obligatoires (la tablette les vérifie déjà ; ceci couvre un appel direct).
+// Renvoie null si complet, sinon la réponse de refus.
+function controlerChamps_(nom, prenom, piece, montant) {
+  // « vide » = rien de comparable (ex. un N° fait seulement de tirets, un nom « . ») :
+  // une telle saisie ne pourrait jamais être reconnue comme doublon.
+  var vide = function (v) { return v === null || v === undefined || v.toString().trim() === ""; };
+  var manque = [];
+  if (_normId_(nom) === "") manque.push("Nom");
+  if (_normId_(prenom) === "") manque.push("Prénom");
+  if (_normPiece_(piece) === "") manque.push("N° de pièce");
+  if (vide(montant) && getConfig().MONTANT_OBLIGATOIRE !== "NON") manque.push(getConfig().LIBELLE_MONTANT);
+  if (!manque.length) return null;
+  return { status: "BLOQUE", titre: "🛑 SAISIE INCOMPLÈTE", message: "Champ(s) manquant(s) : " + manque.join(", ") + ".", details: [] };
+}
+
+// Ajout forcé (après confirmation d'un doublon à l'écran). Le serveur REFAIT la
+// détection A/B/C sous verrou, sans se fier à la tablette :
+//  - mode BLOQUANT + cas A/B -> refus (rien n'est écrit) ;
+//  - sinon écriture, avec note d'alerte et couleurs CALCULÉES ICI (le cas réel,
+//    pas celui vu par la tablette) ; plus de doublon -> ligne normale.
+// messageErreur / flagIdentite / flagPiece : ignorés (gardés pour la
+// compatibilité d'appel avec Index.html).
+function forcerSaisie(nom, prenom, piece, montant, notes, messageErreur, flagIdentite, flagPiece, cle) {
+  exigerTablette_(cle);
+  var lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(10000); // Verrou pour éviter les doublons forcés
+
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var feuille = ss.getSheetByName(FEUILLE_SAISIES);
+    if (!feuille) return { status: "BLOQUE", titre: "Erreur Serveur", message: "La feuille '" + FEUILLE_SAISIES + "' est introuvable." };
+    var horsPeriode = controlerPeriode_();
+    if (horsPeriode) return horsPeriode;
+    var incomplet = controlerChamps_(nom, prenom, piece, montant);
+    if (incomplet) return incomplet;
+    
+    nom = nom.toString().toUpperCase().trim(); 
+    prenom = prenom.toString().toUpperCase().trim();
+    piece = piece.toString().toUpperCase().trim(); 
+    notes = notes ? notes.toString().replace(NOTES_SYSTEME_REGEX, '').trim() : "";
+    if (montant && typeof montant === 'string' && montant.includes('.')) montant = montant.replace('.', ',');
+
+    var modeSecurite = modeSecurite_(feuille);
+    var det = detecterDoublons_(feuille, nom, prenom, piece, 0);
+    var pireCas = det.pireCas;
+
+    // 🛑 Mode BLOQUANT : un vrai doublon (A) ou une usurpation (B) ne se force jamais
+    if (modeSecurite === "BLOQUANT" && (pireCas === 'A' || pireCas === 'B')) {
+      return {
+        status: "BLOQUE", cas: pireCas, titre: "🛑 SAISIE REFUSÉE",
+        message: (pireCas === 'A') ? "Ce client a déjà profité de l'offre." : "Ce numéro de pièce d'identité est déjà associé à un autre client.",
+        details: det.details
+      };
+    }
+
+    var noteFinale = notes;
+    if (pireCas) noteFinale = ajouterNote_(notes, "⚠️ Ajout forcé (Cas " + pireCas + ")");
+    else if (det.passages > 0) noteFinale = ajouterNote_(notes, notePassage_(det.passages + 1, passagesMax_()));
+    
+    feuille.appendRow([new Date(), texte_(nom), texte_(prenom), texte_(piece), montantSur_(montant), texte_(noteFinale), ""]);
+    var indexLigne = feuille.getLastRow();
+    
+    // 🧹 LE CORRECTIF : On efface l'héritage automatique de Google Sheets sur les 7 colonnes
+    feuille.getRange(indexLigne, 1, 1, NB_COLONNES_LIGNE).setBackground(null);
+    
+    // 🎨 Couleurs selon le cas RÉEL (mêmes règles que onEdit)
+    if (pireCas) {
+      feuille.getRange(indexLigne, COL.NOTES).setBackground("#f4cccc");
+      if (pireCas === 'A' || pireCas === 'C') feuille.getRange(indexLigne, COL.NOM, 1, 2).setBackground("#f4cccc"); // nom + prénom
+      if (pireCas === 'A' || pireCas === 'B') feuille.getRange(indexLigne, COL.PIECE).setBackground("#f4cccc");
+    }
+
+    // Usurpation : la pièce figure déjà sous un AUTRE nom (même si le pire cas est A,
+    // ex. l'usurpateur qui revient) -> on ne remplace pas le nom du titulaire
+    if (!aUneUsurpation_(det)) majAnnuaire_(nom, prenom, piece);
+    return { status: "SUCCES", cas: pireCas,
+             message: pireCas ? "⚠️ Saisie forcée et enregistrée en rouge." : "✅ Saisie enregistrée !" };
+  } finally {
+    libererVerrou_(lock); // écritures envoyées, puis verrou libéré (dans tous les cas)
+  }
+}
+
+// =================================================================
+// --- VÉRIFICATION IMMÉDIATE DU N° DE PIÈCE (Niveau 2, lecture seule) ---
+//     Pré-avertissement au blur du champ N° : ce numéro est-il déjà sur
+//     l'offre en cours ? Ne bloque rien, ne réécrit rien, ne décide rien
+//     (la décision A/B/C reste à traiterSaisie, à la validation).
+// =================================================================
+function verifierPiece(piece, cle) {
+  exigerTablette_(cle);
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var feuille = ss.getSheetByName(FEUILLE_SAISIES);
+  if (!feuille) return { trouve: false };
+
+  var mode = feuille.getRange(CELLULE_MODE).getValue() || "SIGNALER";
+  var pieceNorm = _normPiece_(piece);
+  if (pieceNorm === "") return { trouve: false, mode: mode };
+
+  var donnees = feuille.getDataRange().getValues();
+  var matches = [];
+  for (var i = 1; i < donnees.length; i++) {
+    var pieceHisto = _normPiece_(donnees[i][IDX.PIECE]);
+    if (pieceHisto !== "" && pieceHisto === pieceNorm) {
+      matches.push({
+        ligne: i + 1,
+        date: (donnees[i][IDX.DATE] instanceof Date) ? Utilities.formatDate(donnees[i][IDX.DATE], fuseau_(), "dd/MM/yyyy HH:mm") : (donnees[i][IDX.DATE] ? donnees[i][IDX.DATE].toString() : ""),
+        nom: donnees[i][IDX.NOM] ? donnees[i][IDX.NOM].toString() : "",
+        prenom: donnees[i][IDX.PRENOM] ? donnees[i][IDX.PRENOM].toString() : "",
+        montant: donnees[i][IDX.MONTANT] ? donnees[i][IDX.MONTANT].toString() : ""
+      });
+    }
+  }
+  var result = { trouve: matches.length > 0, mode: mode, matches: matches };
+  // Niveau 3 : si la pièce n'est PAS sur l'offre en cours, on regarde l'annuaire.
+  if (ANNUAIRE_ACTIF && matches.length === 0) {
+    var connu = chercherAnnuaire_(pieceNorm);
+    if (connu) { result.annuaire = connu; result.modeAnnuaire = getModeAnnuaire(); }
+  }
+  return result;
+}
+
+// =================================================================
+// --- CORRECTION / SUPPRESSION D'UNE SAISIE (espace responsable) ---
+//     Remplace l'édition manuelle du Sheet. Mêmes règles que onEdit : la
+//     ligne corrigée est RECONTRÔLÉE (A/B/C) contre toutes les autres lignes
+//     de « Saisies », sous verrou. Mode BLOQUANT : A et B refusés. Sinon,
+//     doublon -> confirmation explicite, puis marquage rouge + note d'alerte.
+//     Garde-fou : la ligne doit encore contenir ce que l'écran affichait
+//     (sinon refus : la feuille a bougé entre-temps).
+// =================================================================
+// Saisies de l'offre en cours, la plus récente d'abord.
+function listerSaisies(jeton) {
+  exigerAdmin_(jeton);
+  var feuille = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FEUILLE_SAISIES);
+  if (!feuille) return [];
+  var derniere = feuille.getLastRow();
+  if (derniere < 2) return [];
+  var plage = feuille.getRange(2, 1, derniere - 1, NB_COLONNES);
+  var valeurs = plage.getValues();
+  var affichage = plage.getDisplayValues();
+  var liste = [];
+  for (var i = 0; i < valeurs.length; i++) {
+    if (affichage[i].join("") === "") continue;
+    var notes = valeurs[i][IDX.NOTES] ? valeurs[i][IDX.NOTES].toString() : "";
+    liste.push({
+      ligne: i + 2,
+      date: affichage[i][IDX.DATE],
+      nom: valeurs[i][IDX.NOM] ? valeurs[i][IDX.NOM].toString() : "",
+      prenom: valeurs[i][IDX.PRENOM] ? valeurs[i][IDX.PRENOM].toString() : "",
+      piece: valeurs[i][IDX.PIECE] ? valeurs[i][IDX.PIECE].toString() : "",
+      montant: affichage[i][IDX.MONTANT],
+      notes: notes.replace(NOTES_SYSTEME_REGEX, '').trim(),
+      alerte: notes !== notes.replace(ALERTE_FORCE_REGEX, '')
+    });
+  }
+  return liste.reverse();
+}
+
+// La ligne contient-elle toujours ce que l'écran affichait ?
+function verifierLigneAttendue_(feuille, ligne, attendu) {
+  ligne = Number(ligne);
+  if (!(ligne >= 2 && ligne <= feuille.getLastRow() && Math.floor(ligne) === ligne)) {
+    throw new Error("Ligne introuvable : rechargez la liste.");
+  }
+  var v = feuille.getRange(ligne, COL.NOM, 1, 3).getValues()[0]; // nom, prénom, N°
+  var a = attendu || {};
+  if ((v[0] || "").toString() !== (a.nom || "") || (v[1] || "").toString() !== (a.prenom || "") || (v[2] || "").toString() !== (a.piece || "")) {
+    throw new Error("Cette ligne a changé entre-temps : rechargez la liste.");
+  }
+  return ligne;
+}
+
+// nouveau = { nom, prenom, piece, montant, notes } ; forcer = confirmer malgré un doublon.
+function modifierSaisie(ligne, attendu, nouveau, forcer, jeton) {
+  exigerAdmin_(jeton);
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    var feuille = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FEUILLE_SAISIES);
+    if (!feuille) throw new Error("La feuille '" + FEUILLE_SAISIES + "' est introuvable.");
+    ligne = verifierLigneAttendue_(feuille, ligne, attendu);
+
+    var n = nouveau || {};
+    var nom = (n.nom || "").toString().toUpperCase().trim();
+    var prenom = (n.prenom || "").toString().toUpperCase().trim();
+    var piece = (n.piece || "").toString().toUpperCase().trim();
+    var montant = (n.montant || "").toString().trim();
+    if (montant.indexOf('.') !== -1) montant = montant.replace('.', ',');
+    var notesPropres = (n.notes || "").toString().replace(NOTES_SYSTEME_REGEX, '').trim();
+    if (!_normId_(nom) || !_normId_(prenom) || !_normPiece_(piece)) throw new Error("Le Nom, le Prénom et le N° de pièce sont obligatoires.");
+    if (getConfig().MONTANT_OBLIGATOIRE !== "NON" && !montant) throw new Error("Le montant est obligatoire.");
+
+    // Recontrôle A/B/C contre toutes les AUTRES lignes (comme onEdit)
+    var det = detecterDoublons_(feuille, nom, prenom, piece, ligne);
+    var pireCas = det.pireCas, details = det.details;
+
+    var mode = modeSecurite_(feuille);
+    if (pireCas) {
+      var m = messagesDoublon_(mode, pireCas);
+      if (m.bloque) return { status: "BLOQUE", titre: m.titre, message: m.message, details: details };
+      if (!forcer) return { status: "CONFIRMATION", titre: m.titre, message: m.message, couleur: m.couleur, details: details };
+    }
+
+    feuille.getRange(ligne, COL.NOM, 1, NB_COLONNES_SAISIE).setValues([[texte_(nom), texte_(prenom), texte_(piece), montantSur_(montant), texte_(notesPropres)]]);
+    // Note d'alerte + rouge recalculés pour TOUTES les lignes (la correction peut créer
+    // ou faire disparaître un doublon ailleurs dans l'offre)
+    recalculerMarquages_(feuille);
+    if (!aUneUsurpation_(det)) majAnnuaire_(nom, prenom, piece);
+    return { status: "SUCCES", message: pireCas ? "⚠️ Correction forcée (Cas " + pireCas + ") : le doublon est marqué en rouge." : "✅ Saisie corrigée." };
+  } finally {
+    libererVerrou_(lock);
+  }
+}
+
+function supprimerSaisie(ligne, attendu, jeton) {
+  exigerAdmin_(jeton);
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    var feuille = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FEUILLE_SAISIES);
+    if (!feuille) throw new Error("La feuille '" + FEUILLE_SAISIES + "' est introuvable.");
+    ligne = verifierLigneAttendue_(feuille, ligne, attendu);
+    feuille.deleteRow(ligne);
+    recalculerMarquages_(feuille); // un doublon de la ligne supprimée n'en est peut-être plus un
+    return "🗑️ Saisie supprimée.";
+  } finally {
+    libererVerrou_(lock);
+  }
+}
+
+function basculerModeWebApp(jeton) {
+  exigerAdmin_(jeton);
+  var feuille = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FEUILLE_SAISIES);
+  if (!feuille) throw new Error("La feuille '" + FEUILLE_SAISIES + "' est introuvable.");
+  var modeActuel = modeSecurite_(feuille);
+  var nouveauMode = (modeActuel === "SIGNALER") ? "BLOQUANT" : "SIGNALER";
+  feuille.getRange(CELLULE_MODE).setValue(nouveauMode); return nouveauMode;
+}

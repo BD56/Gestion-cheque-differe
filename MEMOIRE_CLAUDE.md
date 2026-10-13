@@ -8,9 +8,9 @@
 **Refonte du code sur la nouvelle branche `refonte`** (créée depuis `generalisation`,
 validée par Bryan : « go pour la branche refonte »). But : maintenabilité, **aucun
 changement de comportement**. Bryan utilisera **clasp** (copier-coller plus nécessaire).
-Règles : une étape = un commit ; les **séries de tests** (`npm test`, 27 depuis l'étape 2)
+Règles : une étape = un commit ; les **séries de tests** (`npm test`, 28 depuis l'étape 3)
 vertes à chaque étape (les adapter quand les fichiers bougent : `tests/harness.js`
-lit `Code.gs`, `tests/navigateur.js` / `test_rendu.js` lisent `Index.html`) ; faire un
+charge tous les `.gs` par ordre alphabétique, `tests/navigateur.js` / `test_rendu.js` lisent `Index.html`) ; faire un
 **point à Bryan à la fin de chaque étape** ; ne pas toucher `generalisation` / `main`.
 Feuille de route validée :
 1. **Outillage** : `package.json` (Prettier, ESLint, `npm test` → lancer.sh), `.clasp.json`
@@ -47,7 +47,15 @@ et `IDX` (0-based, getValues), `NB_COLONNES` 6 / `NB_COLONNES_SAISIE` 5 /
 ACTIVATION_*, TABLETTES_MAX, ANNUAIRE_*, ARCHIVES_RETENTION_ANS…) iront dans
 `00_Constantes.gs` à l'étape 3. Vu en passant, NON corrigé (règle « aucun changement de
 comportement ») : `verifierPiece` renvoie Z1 brut au lieu de `modeSecurite_` (cosmétique :
-« (sera refusé à la validation) » absent si Z1 = « Bloquant » tapé à la main). Prochaine : étape 3.
+« (sera refusé à la validation) » absent si Z1 = « Bloquant » tapé à la main). ✅ étape 3 (Code.gs supprimé → 11 fichiers : `00_Constantes`, `Application` (doGet,
+démarrage, cache, impression, outils fuseau_/texte_/montantSur_/libererVerrou_/
+modeSecurite_), `Reglages`, `Installation`, `Securite` (PIN, activation, jetons,
+tablettes), `Saisie` (saisie, forcer, verifierPiece, liste/correction/suppression,
+mode), `Detection` (normalisation, A/B/C, marquages), `Annuaire`, `Archives`, `Robots`
+(dates + nuit), `Sheet` (menu, panneau, onEdit). Code identique ligne à ligne (vérifié
+par script), seuls des commentaires ajoutés/déplacés. Nouveau `test_fichiers.js` :
+aucun nom en double, que des déclarations au premier niveau, mêmes constantes si les
+fichiers sont lus à l'envers. 28 séries vertes). Prochaine : étape 4 (Index.html).
 Plus tard : fusion `refonte` → `generalisation` (ou `main` après Vannes), seulement
 quand Bryan le demande.
 

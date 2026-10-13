@@ -1,0 +1,170 @@
+// Point d'entrée de l'application (doGet), démarrage de la tablette, copie
+// locale (cache), impression, et petits outils communs à tous les fichiers.
+
+// Fuseau horaire de référence (réglage du projet Apps Script : Europe/Paris par défaut).
+// Un seul fuseau pour les dates d'offre, les noms d'archives, l'impression, le robot.
+function fuseau_() {
+  try { return Session.getScriptTimeZone() || "Europe/Paris"; } catch (e) { return "Europe/Paris"; }
+}
+
+// Mode de sécurité de « Saisies »!Z1 (tolère « Bloquant », espaces…).
+function modeSecurite_(feuille) {
+  var v = feuille ? (feuille.getRange(CELLULE_MODE).getValue() || "").toString().trim().toUpperCase() : "";
+  return v === "BLOQUANT" ? "BLOQUANT" : "SIGNALER";
+}
+
+// Avant de rendre le verrou : écritures envoyées au tableur (la saisie suivante les lit).
+function libererVerrou_(lock) {
+  try { SpreadsheetApp.flush(); } catch (e) {}
+  lock.releaseLock();
+}
+
+function doGet(e) {
+  nettoyerSiCopie_(); // copie du modèle (ou d'un autre classeur) : repart sans code/dates/réglages hérités
+  // Nouvelle structure : crée « Saisies » si elle n'existe pas encore (rien n'est écrasé)
+  if (!SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FEUILLE_SAISIES)) installerFeuilles_();
+  var cfg = getConfig();
+  var page = HtmlService.createTemplateFromFile('Index');
+  page.cfg = cfg;
+  // Dates de l'offre glissées dans la page : la tablette affiche tout de suite le bon
+  // écran (saisie ou « aucune opération »), sans attendre un appel au serveur.
+  page.dates = lireDates_();
+  return page.evaluate()
+      .setTitle(cfg.TITRE_APP)
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+}
+
+// Valeur texte à écrire dans le Sheet telle quelle : l'apostrophe initiale
+// (invisible) empêche Google Sheets de la convertir (nombre -> 0 perdu, date,
+// formule « = »). Les valeurs vides ou non textuelles sont écrites telles quelles.
+function texte_(v) {
+  return (typeof v === 'string' && v !== "") ? "'" + v : v;
+}
+
+// Montant : laissé tel quel (Sheets le lit comme un nombre), sauf s'il pourrait être
+// pris pour une formule (= + - @) -> écrit en texte.
+function montantSur_(m) {
+  return (typeof m === 'string' && /^\s*[=+\-@]/.test(m)) ? "'" + m : m;
+}
+
+// Données pré-chargées au démarrage pour la vérif IMMÉDIATE (locale) au blur :
+// pièces de l'offre en cours (N2) + annuaire (N3). Rafraîchi au retour sur la page
+// et après chaque saisie. NE remplace PAS la validation finale (toujours serveur).
+function chargerCacheVerif(cle) {
+  exigerTablette_(cle);
+  return cacheVerif_();
+}
+
+function cacheVerif_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var feuille = ss.getSheetByName(FEUILLE_SAISIES);
+  var mode = modeSecurite_(feuille);
+
+  var offre = [];
+  if (feuille) {
+    var donnees = feuille.getDataRange().getValues();
+    for (var i = 1; i < donnees.length; i++) {
+      var pn = _normPiece_(donnees[i][IDX.PIECE]);
+      // lignes sans N° gardées si elles ont un nom (un homonyme reste détectable)
+      if (pn === "" && _normId_(donnees[i][IDX.NOM]) === "") continue;
+      offre.push({
+        pieceNorm: pn,
+        ligne: i + 1,
+        date: (donnees[i][IDX.DATE] instanceof Date) ? Utilities.formatDate(donnees[i][IDX.DATE], fuseau_(), "dd/MM/yyyy HH:mm") : (donnees[i][IDX.DATE] ? donnees[i][IDX.DATE].toString() : ""),
+        nom: donnees[i][IDX.NOM] ? donnees[i][IDX.NOM].toString() : "",
+        prenom: donnees[i][IDX.PRENOM] ? donnees[i][IDX.PRENOM].toString() : "",
+        piece: donnees[i][IDX.PIECE] ? donnees[i][IDX.PIECE].toString() : "",
+        montant: donnees[i][IDX.MONTANT] ? donnees[i][IDX.MONTANT].toString() : "",
+        notes: donnees[i][IDX.NOTES] ? donnees[i][IDX.NOTES].toString() : ""
+      });
+    }
+  }
+
+  var annuaire = {};
+  if (ANNUAIRE_ACTIF) {
+    var fa = _feuilleAnnuaire_();
+    var ad = fa.getDataRange().getValues();
+    for (var j = 1; j < ad.length; j++) {
+      var p = _normPiece_(ad[j][0]);
+      if (p !== "") annuaire[p] = { nom: ad[j][1] ? ad[j][1].toString() : "", prenom: ad[j][2] ? ad[j][2].toString() : "" };
+    }
+  }
+
+  // Réglages joints : un réglage changé sur une autre tablette (passages autorisés,
+  // montant obligatoire…) est appliqué ici dès le rechargement suivant.
+  return { mode: mode, offre: offre, annuaire: annuaire, annuaireActif: ANNUAIRE_ACTIF, modeAnnuaire: getModeAnnuaire(), config: getConfig() };
+}
+
+// Démarrage de la tablette : UN seul appel (au lieu de trois) pour le mode, les
+// dates et le cache de vérification. Le cache (toute l'offre + l'annuaire) n'est
+// envoyé que si l'offre est en cours : hors période, la saisie est impossible.
+function demarrage(cle) {
+  exigerTablette_(cle);
+  return {
+    infos: infosPanneau_(),
+    dates: lireDates_(),
+    config: getConfig(),
+    cache: controlerPeriode_() ? null : cacheVerif_()
+  };
+}
+
+// --- FONCTIONS SECONDAIRES ---
+function getInfosPanneau(cle) {
+  exigerTablette_(cle);
+  return infosPanneau_();
+}
+
+function infosPanneau_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var f = ss.getSheetByName(FEUILLE_SAISIES);
+  var mode = modeSecurite_(f);
+  return { success: true, mode: mode, annuaireActif: ANNUAIRE_ACTIF, modeAnnuaire: getModeAnnuaire() };
+}
+
+// Impression calculée directement depuis « Saisies » (colonnes A-F). Ne dépend
+// plus des onglets A_IMPRIMER / OFFRE_COMPLETE (conservés tels quels pour le
+// panneau du Sheet, en secours) et ne les modifie plus.
+//  - 'jour'  : lignes dont la date tombe le jour choisi ("aujourdhui" ou
+//              "yyyy-MM-dd"), date en jj/mm/aaaa — comme A_IMPRIMER.
+//  - 'offre' : toutes les lignes non vides, date + heure — comme OFFRE_COMPLETE.
+// Renvoie [] s'il n'y a aucune ligne à imprimer.
+function genererDonneesImpression(type, dateChoisieStr, cle) {
+  exigerTablette_(cle);
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var feuille = ss.getSheetByName(FEUILLE_SAISIES);
+  if (!feuille) return [];
+  var tz = ss.getSpreadsheetTimeZone(); // même référence que INT()/TODAY() dans A_IMPRIMER
+  var jour = null;
+  if (type === 'jour') {
+    jour = (dateChoisieStr === "aujourdhui") ? Utilities.formatDate(new Date(), tz, "yyyy-MM-dd") : dateChoisieStr;
+  }
+  return tableauImpression_(feuille, jour, tz);
+}
+
+// En-tête + lignes A-F affichées d'une feuille au format « Saisies ».
+// jour (yyyy-MM-dd) : ne garde que ce jour-là, date en jj/mm/aaaa ;
+// jour null : toutes les lignes non vides, telles qu'affichées.
+function tableauImpression_(feuille, jour, tz) {
+  var derniere = feuille.getLastRow();
+  if (derniere < 2) return [];
+  var cfg = getConfig();
+  var entete = ENTETES_SAISIES.slice(0, IDX.MONTANT).concat([cfg.LIBELLE_MONTANT, cfg.LIBELLE_NOTES]);
+  var plage = feuille.getRange(2, 1, derniere - 1, NB_COLONNES);
+  var valeurs = plage.getValues();
+  var affichage = plage.getDisplayValues();
+
+  var lignes = [];
+  for (var i = 0; i < valeurs.length; i++) {
+    if (jour) {
+      var d = valeurs[i][IDX.DATE];
+      if (!(d instanceof Date) || Utilities.formatDate(d, tz, "yyyy-MM-dd") !== jour) continue;
+      var ligne = affichage[i].slice();
+      ligne[IDX.DATE] = Utilities.formatDate(d, tz, "dd/MM/yyyy");
+      lignes.push(ligne);
+    } else {
+      if (affichage[i].join("") === "") continue;
+      lignes.push(affichage[i]);
+    }
+  }
+  return lignes.length ? [entete].concat(lignes) : [];
+}

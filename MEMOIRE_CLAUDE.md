@@ -1,20 +1,59 @@
-# Mémoire de travail — Claude (branche `generalisation`)
+# Mémoire de travail — Claude (branches `generalisation` et `refonte`)
 
 > Fichier de reprise après compactage du contexte. À lire **avec** `AGENTS.md` (référence
 > canonique) et `docs/retours-vibe/decisions/2026-10-11_generalisation.md` (décisions).
-> Dernière mise à jour : 2026-10-12.
+> Dernière mise à jour : 2026-10-13.
+
+## 0. ▶️ TÂCHE EN COURS (à reprendre après compactage)
+**Refonte du code sur la nouvelle branche `refonte`** (créée depuis `generalisation`,
+validée par Bryan : « go pour la branche refonte »). But : maintenabilité, **aucun
+changement de comportement**. Bryan utilisera **clasp** (copier-coller plus nécessaire).
+Règles : une étape = un commit ; les **26 séries de tests** (`bash tests/lancer.sh`)
+vertes à chaque étape (les adapter quand les fichiers bougent : `tests/harness.js`
+lit `Code.gs`, `tests/navigateur.js` / `test_rendu.js` lisent `Index.html`) ; faire un
+**point à Bryan à la fin de chaque étape** ; ne pas toucher `generalisation` / `main`.
+Feuille de route validée :
+1. **Outillage** : `package.json` (Prettier, ESLint, `npm test` → lancer.sh), `.clasp.json`
+   d'exemple ; tout exclu de l'envoi (`.claspignore`).
+2. **Constantes** regroupées : nom de feuille « Saisies » (19 occurrences), cellule du
+   mode Z1 (7), numéros de colonnes (2 nom, 3 prénom, 4 N°, 5 montant, 6 notes, 7 G),
+   réglages fixes.
+3. **Découpage serveur** : `00_Constantes.gs` (lu en premier : les globales s'exécutent
+   dans l'ordre des fichiers), `Installation.gs`, `Securite.gs` (code, activation,
+   tablettes, jetons), `Saisie.gs`, `Detection.gs` (doublons, normalisation, marquages),
+   `Annuaire.gs`, `Archives.gs`, `Robots.gs` (nuit, dates), `Sheet.gs` (onEdit, panneau).
+   ⚠️ Deux fonctions de même nom dans deux fichiers = AUCUNE erreur, la dernière gagne.
+4. **Découpage page** : `Index.html` = squelette (garde les injections `<?!= … ?>` de
+   CONFIG et DATES_INITIALES) + `include()` vers `Style.html` et des scripts par thème
+   (`include` doit évaluer les morceaux comme modèles s'ils contiennent des `<? ?>`).
+5. **Modernisation** : `const`/`let` (322 `var` dans Code.gs, 199 dans Index.html),
+   65 `onclick=` → écouteurs, 84 `style="…"` → classes CSS, commentaires d'époque
+   (« NOUVEAU », « LE CORRECTIF ») nettoyés, espaces de fin de ligne.
+6. **Contrôle de version intégré** : chaque fichier porte la même version ; au démarrage,
+   l'app vérifie que tous les morceaux sont là et à jour, sinon « Installation
+   incomplète » (au lieu de tourner à moitié).
+7. **Docs** : `DEPLOIEMENT.md` réécrit pour clasp (`clasp push` + redéploiement même URL ;
+   copier-coller en secours avec la liste exacte des fichiers et « supprimer l'ancien
+   Code.gs ») ; `AGENTS.md` (carte des fichiers) ; marche à suivre clasp sur le Mac
+   (`clasp login`, scriptId dans `.clasp.json` — Bryan le fait, pas moi).
+Plus tard : fusion `refonte` → `generalisation` (ou `main` après Vannes), seulement
+quand Bryan le demande.
 
 ## 1. Où on en est
-- Travail sur la branche **`generalisation`** (créée depuis `main`, poussée sur GitHub).
-  `main` et la prod de Vannes **non touchées**. Aucune pull request ouverte.
-- Bryan a choisi de **tout perfectionner sur `generalisation`** (Vannes n'a pas d'offre en
-  cours) plutôt qu'un correctif séparé sur `main`.
+- **`generalisation`** (créée depuis `main`, poussée) : version complète et testée en
+  simulation, **base du déploiement à Vannes**. `main` et la prod de Vannes **non
+  touchées**. Aucune pull request ouverte.
+- **Audit complet d'octobre** (4 analyses) puis **lots 1, 2 et 3** faits et poussés
+  (voir §2 points 10-11 et AGENTS.md).
 - **Rien n'a encore été testé sur un vrai Google Sheet** : uniquement en simulation
-  (`tests/`, 26 séries, toutes vertes). Prochaine étape : test sur une copie, puis
-  déploiement à Vannes (`DEPLOIEMENT.md`).
-- Bryan n'a temporairement **pas accès à GitHub** : il a demandé `INSTALLATION.md` en
-  fichier ; je lui ai proposé de lui fournir les 4 fichiers à coller (`Code.gs`,
-  `Index.html`, `Panneau.html`, `appsscript.json`) — il a préféré ce fichier mémoire.
+  (`tests/`, 26 séries, toutes vertes). Prochaines étapes côté Bryan : test sur une
+  copie, puis migration de Vannes avec la **liste à cocher de `DEPLOIEMENT.md`**.
+- Discussions closes récemment : licence (« non exclusive, non cessible, révocable…
+  dans les conditions convenues par écrit » ; nom de la structure conservé ; mentions
+  sans gras) ; propriété du logiciel (Bryan employé polyvalent, idée personnelle →
+  conseillé : vérifier son contrat, garder les preuves GitHub, accord écrit avec la
+  société exploitante) ; conventions de code (évaluées : bonnes sur sécurité/Apps Script,
+  datées sur la forme → d'où la refonte).
 
 ## 2. Ce qui a été fait (dans l'ordre, voir `git log main..generalisation`)
 1. **Généralisation** : réglages de la structure (`getConfig`/`setConfig`, défauts = Vannes),

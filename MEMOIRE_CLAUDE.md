@@ -115,7 +115,12 @@ compteur, flèche ouvrir/fermer, état mémorisé par tablette (localStorage), n
 (« DURAND S. ») et N° masqués (••••8132) pour la confidentialité (écran visible du
 client), journal sous le voile pendant une alerte, tiroir en bas en portrait. Montants
 dans le journal : GARDÉS (décision Bryan) ; bouton « Imprimer la journée » en pied du
-journal (remis à sa demande). Question en cours : autoriser le mode portrait ? Prototype interactif
+journal (lien texte « Imprimer la journée → », à sa demande). Portrait : tablettes tenues
+à la main → écran « Tournez la tablette » sur écran TACTILE en hauteur seulement
+(`(orientation: portrait) and (pointer: coarse)`), aide verrou de rotation iPad/Android,
+lien « Continuer en hauteur quand même » (mémorisé jusqu'à la prochaine ouverture,
+sessionStorage) : jamais bloquant ; présentation portrait gardée en secours.
+Prototype v4. Prototype interactif
 publié (artefact privé « Comptoir — prototype » : https://claude.ai/artifact/FUmo7ZsUu5iDgi9YCow3dT ;
 source dans l'espace temporaire de la session, non versionnée) : saisie 3 étapes,
 verdict N° en direct, alertes A/B/C comparatives, forçage confirmé dans la page,

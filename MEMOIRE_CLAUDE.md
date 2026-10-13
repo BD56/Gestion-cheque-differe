@@ -96,6 +96,14 @@ service) ; seuls tenus à jour : bandeau « ne pas suivre » de DEPLOIEMENT.md e
 des fichiers d'AGENTS.md. Prochaine piste discutée : refonte graphique (maquettes de
 2-3 directions sur saisie / alerte doublon / espace responsable, branche à part depuis
 `refonte`, alertes A/B/C jamais adoucies) — après validation du test sur vrai Sheet.
+Maquettes FAITES le 13/10 (espace temporaire de session, non conservées dans le dépôt) :
+A « Clair premium » (cartes blanches, bleu nuit #1e3a8a, ombres douces), B « Contraste
+caisse » (en-tête noir, champs 60 px, VALIDER vert, alerte plein écran rouge avec
+ABANDONNER en gros bouton et « Forcer » secondaire), C « Couleur de la structure »
+(comme A + en-tête à la couleur réglable, nouveau réglage à prévoir). Icônes SVG
+intégrées (plus d'emojis), police système. EN ATTENTE du choix de Bryan. Défaut vu :
+sur écran étroit (~420 px) la carte actuelle déborde à droite (container 100 % +
+padding sans box-sizing).
 Plus tard : fusion `refonte` → `generalisation` (ou `main` après Vannes), seulement
 quand Bryan le demande.
 

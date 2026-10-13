@@ -1,5 +1,10 @@
 // Installation : feuilles, robots de nuit, copie du modèle, menu « Installer ».
 
+// Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
+function version_Installation_() {
+  return "2026.10.13-1";
+}
+
 // =================================================================
 // --- INSTALLATION (nouvelle structure) ---
 //     Menu du Sheet « 🚀 APPLICATION → 🧰 Installer / vérifier » (ou fonction
@@ -17,7 +22,17 @@ function installer() {
   if (nettoyerSiCopie_())
     rapport.push("Nouvelle copie détectée : code responsable, dates et réglages hérités effacés.");
   rapport = rapport.concat(installerFeuilles_(), installerDeclencheurs_());
+  let problemes = [];
+  try {
+    problemes = verifierInstallation_();
+  } catch (e) {
+    rapport.push("Contrôle des fichiers impossible : " + e.message);
+  }
+  if (problemes.length) {
+    rapport.unshift("⚠️ INSTALLATION INCOMPLÈTE (l'application est bloquée) :\n- " + problemes.join("\n- "));
+  }
   if (rapport.length === 0) rapport.push("Rien à faire : tout est déjà en place.");
+  rapport.push("Version " + version_Installation_() + ".");
   Logger.log(rapport.join("\n"));
   return rapport.join("\n");
 }
@@ -131,4 +146,69 @@ function installerFeuilles_() {
     faits.push("Feuille « " + ANNUAIRE_FEUILLE + " » créée (masquée).");
   }
   return faits;
+}
+
+// =================================================================
+// --- CONTRÔLE DE L'INSTALLATION ---
+//     Après une mise à jour par copier-coller, un fichier oublié ou resté à
+//     l'ancienne version ferait tourner l'application à moitié (ex. ancienne
+//     détection des doublons). Chaque fichier porte le même numéro de version
+//     (outils/version.js) : on vérifie qu'ils sont tous là et identiques.
+//     Référence : le numéro de ce fichier-ci (Installation.gs).
+// =================================================================
+// Renvoie la liste des problèmes (vide = installation complète).
+function verifierInstallation_() {
+  const attendue = version_Installation_();
+  const problemes = [];
+  FICHIERS_SERVEUR.forEach(function (nom) {
+    const f = globalThis["version_" + nom + "_"];
+    if (typeof f !== "function") problemes.push(nom + ".gs : absent (ou sans numéro de version)");
+    else if (f() !== attendue) problemes.push(nom + ".gs : version " + f() + " au lieu de " + attendue);
+  });
+  FICHIERS_PAGE.forEach(function (nom) {
+    let contenu;
+    try {
+      contenu = HtmlService.createHtmlOutputFromFile(nom).getContent();
+    } catch (e) {
+      // Index.html sert de témoin : s'il est illisible, c'est le contrôle qui est en panne
+      // (pas 12 fichiers absents) -> erreur, et l'application s'ouvre quand même.
+      if (nom === "Index") throw e;
+      problemes.push(nom + ".html : absent");
+      return;
+    }
+    const m = /<!-- version : (\S+) -->/.exec(contenu);
+    if (!m) problemes.push(nom + ".html : sans numéro de version (ancienne version)");
+    else if (m[1] !== attendue) problemes.push(nom + ".html : version " + m[1] + " au lieu de " + attendue);
+  });
+  return problemes;
+}
+
+// Pour le démarrage : une panne du contrôle lui-même ne bloque pas la caisse.
+function problemesInstallation_() {
+  try {
+    return verifierInstallation_();
+  } catch (e) {
+    Logger.log("Contrôle de l'installation impossible : " + e);
+    return [];
+  }
+}
+
+// Page affichée sur la tablette à la place de l'application.
+function pageInstallationIncomplete_(problemes) {
+  const esc = function (t) {
+    return String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  };
+  const html =
+    '<div style="font-family: sans-serif; max-width: 520px; margin: 40px auto; padding: 0 16px;">' +
+    "<h2>⚠️ Installation incomplète</h2>" +
+    "<p>L'application n'a pas été entièrement mise à jour : elle ne peut pas être utilisée " +
+    "dans cet état (les contrôles de doublons pourraient être faux).</p>" +
+    "<ul><li>" +
+    problemes.map(esc).join("</li><li>") +
+    "</li></ul>" +
+    "<p>Prévenez le responsable : il doit recopier les fichiers indiqués (ou refaire " +
+    "« clasp push »), puis lancer « 🚀 APPLICATION → 🧰 Installer / vérifier ».</p></div>";
+  return HtmlService.createHtmlOutput(html)
+    .setTitle("Installation incomplète")
+    .addMetaTag("viewport", "width=device-width, initial-scale=1");
 }

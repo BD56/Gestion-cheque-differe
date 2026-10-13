@@ -1,5 +1,10 @@
 // Annuaire inter-offres (feuille masquée « _Annuaire »).
 
+// Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
+function version_Annuaire_() {
+  return "2026.10.13-1";
+}
+
 // =================================================================
 // --- ANNUAIRE INTER-OFFRES (Niveau 3) — ACTIF (kill-switch: ANNUAIRE_ACTIF) ---
 //     Index pièce -> Nom/Prénom des offres passées, pour pré-remplir la saisie.

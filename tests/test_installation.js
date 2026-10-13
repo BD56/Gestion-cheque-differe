@@ -47,13 +47,18 @@ env = makeEnv({
   triggers: ["verificationClotureNocturne"],
 });
 rap = env.ctx.installer();
-assert.strictEqual(rap, "Déclencheur créé : purge de l'annuaire (chaque nuit vers 3h).");
+// (le rapport finit par le numéro de version installé)
+assert.strictEqual(
+  rap.replace(/\nVersion .*$/, ""),
+  "Déclencheur créé : purge de l'annuaire (chaque nuit vers 3h)."
+);
 assert.strictEqual(saisies.getRange(1, 6).getValue(), "CODE ");
 assert.strictEqual(saisies.getRange("Z1").getValue(), "BLOQUANT");
 assert.strictEqual(saisies.getLastRow(), 2);
 // 4) doGet sur classeur vierge : crée Saisies (pas les déclencheurs)
 env = makeEnv({ repo: process.argv[2] });
 env.ctx.HtmlService = {
+  ...env.ctx.HtmlService, // garde les vrais fichiers (contrôle de l'installation)
   createTemplateFromFile: () => ({
     evaluate: () => ({
       setTitle() {

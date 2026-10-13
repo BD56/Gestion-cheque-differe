@@ -8,7 +8,7 @@
 **Refonte du code sur la nouvelle branche `refonte`** (créée depuis `generalisation`,
 validée par Bryan : « go pour la branche refonte »). But : maintenabilité, **aucun
 changement de comportement**. Bryan utilisera **clasp** (copier-coller plus nécessaire).
-Règles : une étape = un commit ; les **séries de tests** (`npm test`, 29 depuis l'étape 5)
+Règles : une étape = un commit ; les **séries de tests** (`npm test`, 30 depuis l'étape 6)
 vertes à chaque étape (les adapter quand les fichiers bougent : `tests/harness.js`
 charge tous les `.gs` par ordre alphabétique, `tests/navigateur.js` / `test_rendu.js` lisent `Index.html`) ; faire un
 **point à Bryan à la fin de chaque étape** ; ne pas toucher `generalisation` / `main`.
@@ -76,7 +76,18 @@ test `test_ui_actions.js`, 5d `style="…"` → classes en fin de Style.html (se
 les 430 éléments de la page et 37 du panneau ; les éléments créés par JS gardent
 leurs `.style.x = …`), 5e commentaires d'époque nettoyés, `\/` inutile retiré des
 2 regex de séparateurs (équivalence vérifiée sur les 65 536 caractères). 29 séries
-vertes, ESLint 0 erreur 0 avertissement. Prochaine : étape 6 (contrôle de version).
+vertes, ESLint 0 erreur 0 avertissement. ✅ étape 6 (contrôle de version : `function version_<Nom>_()` dans chaque .gs,
+`<!-- version : … -->` dans chaque .html (après `<head>` pour Index/Panneau, jamais
+avant le doctype) ; listes `FICHIERS_SERVEUR` / `FICHIERS_PAGE` dans 00_Constantes
+(test : = fichiers sur disque) ; `verifierInstallation_()` (Installation.gs, référence
+= version d'Installation.gs) appelée par doGet → page « Installation incomplète » ;
+panne du contrôle (ou Index.html illisible) = application ouverte quand même ;
+« Installer » affiche les problèmes et « Version X. » ; `npm run nouvelle-version`
+(numéro AAAA.MM.JJ-HHMM de Paris) / `verifier-version` ; `npm run push` vérifie avant
+`clasp push` ; test `test_version.js`. Version actuelle 2026.10.13-1. 30 séries
+vertes. Limite : un ancien Code.gs laissé à côté → doublons de `const` → Google refuse
+de charger le projet (erreur visible, pas de fonctionnement à moitié) : le dire dans
+DEPLOIEMENT.md). Prochaine : étape 7 (docs).
 Plus tard : fusion `refonte` → `generalisation` (ou `main` après Vannes), seulement
 quand Bryan le demande.
 
@@ -191,6 +202,10 @@ quand Bryan le demande.
    renvoie bien l'e-mail dans le menu du Sheet (sinon « Installer » est refusé).
 8. (Refonte) `include_` : la page s'affiche complète (styles, scripts, scan OCR en
    `<script type="module">`) — `createHtmlOutputFromFile(nom).getContent()`.
+9. (Refonte) Contrôle de version : `globalThis["version_X_"]` voit bien les fonctions
+   de tous les .gs, et `createHtmlOutputFromFile('Index').getContent()` renvoie le
+   texte brut (avec la marque de version). Sinon le contrôle se met en panne → app
+   ouverte quand même (rien de bloqué à tort), mais le contrôle ne sert à rien.
 
 ## 4. Points ouverts / idées non faites
 - Pull request `generalisation` → `main` : à ouvrir **après** le test de Bryan (il n'a pas

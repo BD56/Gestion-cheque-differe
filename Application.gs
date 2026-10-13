@@ -1,6 +1,11 @@
 // Point d'entrée de l'application (doGet), démarrage de la tablette, copie
 // locale (cache), impression, et petits outils communs à tous les fichiers.
 
+// Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
+function version_Application_() {
+  return "2026.10.13-1";
+}
+
 // Fuseau horaire de référence (réglage du projet Apps Script : Europe/Paris par défaut).
 // Un seul fuseau pour les dates d'offre, les noms d'archives, l'impression, le robot.
 function fuseau_() {
@@ -26,6 +31,9 @@ function libererVerrou_(lock) {
 }
 
 function doGet(e) {
+  // Fichier manquant ou resté à l'ancienne version : on n'ouvre pas une application à moitié
+  const problemes = problemesInstallation_();
+  if (problemes.length) return pageInstallationIncomplete_(problemes);
   nettoyerSiCopie_(); // copie du modèle (ou d'un autre classeur) : repart sans code/dates/réglages hérités
   // Nouvelle structure : crée « Saisies » si elle n'existe pas encore (rien n'est écrasé)
   if (!SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FEUILLE_SAISIES)) installerFeuilles_();

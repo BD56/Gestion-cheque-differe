@@ -1,6 +1,11 @@
 // Détection des doublons A/B/C, normalisation des noms et N°, marquage de
 // « Saisies » (notes ⚠️ / ℹ️ et rouge).
 
+// Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
+function version_Detection_() {
+  return "2026.10.13-1";
+}
+
 // Notes ajoutées automatiquement par l'application (retirées avant toute réécriture)
 const NOTES_SYSTEME_REGEX = /(?:\n|\|)?\s*(?:⚠️ Ajout forcé \(Cas [ABC]\)|ℹ️ Passage \d+\/\d+)/g;
 function notePassage_(rang, max) {

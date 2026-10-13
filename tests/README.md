@@ -29,3 +29,6 @@ faux `google.script.run` branché sur le serveur simulé.
   seule portée) ; `rendrePage()` produit la page comme `doGet` (Index.html + morceaux
   `Style.html` / `Script*.html` insérés par `include_`). `test_fichiers.js` vérifie
   qu'aucun nom n'est déclaré deux fois et que chaque morceau est inclus une fois.
+- **Version** : tous les fichiers envoyés à Apps Script portent le même numéro
+  (`npm run nouvelle-version` avant une mise à jour). `test_version.js` simule un
+  fichier oublié ou ancien : la tablette doit afficher « Installation incomplète ».

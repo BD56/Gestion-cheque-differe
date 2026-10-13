@@ -97,6 +97,12 @@ export default [
     languageOptions: { ecmaVersion: 2022, sourceType: "module" },
   },
   {
+    // Outils de développement (Node)
+    files: ["outils/**/*.js"],
+    languageOptions: { ecmaVersion: 2022, sourceType: "commonjs", globals: globals.node },
+    rules: regles,
+  },
+  {
     files: ["tests/**/*.js"],
     languageOptions: {
       ecmaVersion: 2022,

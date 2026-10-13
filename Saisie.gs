@@ -1,6 +1,11 @@
 // Saisie d'un client (tablette), forçage, vérification du N°, correction et
 // suppression d'une saisie, changement de mode.
 
+// Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
+function version_Saisie_() {
+  return "2026.10.13-1";
+}
+
 // =================================================================
 // --- SAISIE ET FORÇAGE (sous verrou : une saisie à la fois) ---
 // =================================================================

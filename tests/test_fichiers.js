@@ -36,7 +36,7 @@ try {
     fs.readFileSync(repo + "/" + f, "utf8")
       .split("\n")
       .forEach((l, i) => {
-        if (/^[^\s/}]/.test(l))
+        if (/^[^\s/}\])]/.test(l))
           assert.match(
             l,
             /^(function|var|let|const) /,

@@ -1,5 +1,10 @@
 // Constantes : structure de la feuille « Saisies » et réglages fixes.
-// Lu en premier (nom en « 00_ ») ; ne contient que des valeurs, aucun appel.
+// Lu en premier (nom en « 00_ ») ; ne contient que des valeurs (et son numéro de version).
+
+// Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
+function version_00_Constantes_() {
+  return "2026.10.13-1";
+}
 
 // =================================================================
 // --- STRUCTURE DE LA FEUILLE « Saisies » (source de vérité) ---
@@ -44,3 +49,33 @@ const ANNUAIRE_FEUILLE = "_Annuaire";
 
 // Archives supprimées ARCHIVES_RETENTION_ANS ans après leur clôture (RGPD)
 const ARCHIVES_RETENTION_ANS = 3;
+
+// Fichiers de l'application : tous doivent être présents et porter le même numéro de
+// version (contrôle au démarrage et dans « Installer », cf. Installation.gs).
+const FICHIERS_SERVEUR = [
+  "00_Constantes",
+  "Annuaire",
+  "Application",
+  "Archives",
+  "Detection",
+  "Installation",
+  "Reglages",
+  "Robots",
+  "Saisie",
+  "Securite",
+  "Sheet",
+];
+const FICHIERS_PAGE = [
+  "Index",
+  "Style",
+  "ScriptActions",
+  "ScriptAlertes",
+  "ScriptFormulaire",
+  "ScriptImpression",
+  "ScriptOcr",
+  "ScriptOffre",
+  "ScriptResponsable",
+  "ScriptSaisie",
+  "ScriptTablette",
+  "Panneau",
+];

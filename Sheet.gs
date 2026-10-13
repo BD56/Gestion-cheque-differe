@@ -1,5 +1,10 @@
 // Google Sheets : menu, panneau ⚙️, contrôle des modifications à la main (onEdit).
 
+// Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
+function version_Sheet_() {
+  return "2026.10.13-1";
+}
+
 function onOpen() {
   const ui = SpreadsheetApp.getUi();
   ui.createMenu("🚀 APPLICATION")

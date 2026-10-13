@@ -1,5 +1,10 @@
 // Archives : clôture d'une offre, liste et consultation, purge après 3 ans.
 
+// Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
+function version_Archives_() {
+  return "2026.10.13-1";
+}
+
 // =================================================================
 // --- ARCHIVES (espace responsable) : offres clôturées « Archives_* » ---
 // =================================================================

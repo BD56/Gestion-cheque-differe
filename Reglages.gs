@@ -1,5 +1,10 @@
 // Réglages de la structure (textes, montant, passages autorisés).
 
+// Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
+function version_Reglages_() {
+  return "2026.10.13-1";
+}
+
 // =================================================================
 // --- RÉGLAGES DE LA STRUCTURE (généralisation) ---
 //     Stockés dans PropertiesService (clés CFG_*). Une clé absente = valeur

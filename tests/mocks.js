@@ -85,12 +85,31 @@ function makeEnv(opts = {}) {
         },
       }),
     },
+    // Fichiers .html du dépôt, comme dans le projet Apps Script (fichier absent -> erreur)
     HtmlService: {
-      createHtmlOutputFromFile: () => ({
-        setTitle() {
+      createHtmlOutputFromFile: (nom) => {
+        const chemin = require("path").join(opts.repo, nom + ".html");
+        if (!require("fs").existsSync(chemin))
+          throw new Error("Aucun fichier HTML nommé " + nom + " n'a été trouvé.");
+        const contenu = require("fs").readFileSync(chemin, "utf8");
+        return {
+          getContent: () => contenu,
+          setTitle() {
+            return this;
+          },
+          setWidth() {
+            return this;
+          },
+        };
+      },
+      createHtmlOutput: (html) => ({
+        contenu: html,
+        titre: "",
+        setTitle(t) {
+          this.titre = t;
           return this;
         },
-        setWidth() {
+        addMetaTag() {
           return this;
         },
       }),

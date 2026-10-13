@@ -24,7 +24,10 @@ let env = makeEnv({
 env.ctx.onOpen();
 assert.strictEqual(env.sidebars, 1, "Vannes : panneau ouvert comme avant");
 assert.deepStrictEqual(env.menus, ["afficherPanneau", "installerDepuisMenu", "afficherCodeActivation"]);
-assert.strictEqual(env.ctx.installer(), "Rien à faire : tout est déjà en place.");
+assert.strictEqual(
+  env.ctx.installer().replace(/\nVersion .*$/, ""),
+  "Rien à faire : tout est déjà en place."
+);
 assert.strictEqual(env.props._store.ID_CLASSEUR, "VANNES");
 assert.strictEqual(env.props._store.DATE_FIN, "2026-10-20");
 assert.strictEqual(env.props._store.ADMIN_PIN_HASH, "h");
@@ -90,6 +93,7 @@ env = makeEnv({
   activeEmail: "proprio@example.com",
 });
 env.ctx.HtmlService = {
+  ...env.ctx.HtmlService, // garde les vrais fichiers (contrôle de l'installation)
   createTemplateFromFile: () => ({
     evaluate: () => ({
       setTitle() {

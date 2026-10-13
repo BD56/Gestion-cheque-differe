@@ -1,6 +1,11 @@
 // Sécurité : code responsable (PIN), code d'activation, sessions (jetons),
 // tablettes autorisées.
 
+// Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
+function version_Securite_() {
+  return "2026.10.13-1";
+}
+
 // =================================================================
 // --- ESPACE RESPONSABLE : CODE PIN (vérifié côté serveur) ---
 //     Protège réglages, mode, dates, clôture, archives, corrections.

@@ -26,9 +26,28 @@ Principe : **tout passe par l'application** ; le Google Sheets n'est qu'un stock
 (+ panneau de secours). Voir la section « Généralisation » plus bas.
 
 ## Fichiers
-- **Code.gs** — backend Apps Script (logique serveur).
-- **Index.html** — la web app servie par `doGet` (tablette caisse).
+> Branche `refonte` : l'ancien `Code.gs` (et le gros `Index.html`) sont découpés. Les
+> sections plus bas qui citent `Code.gs` / `Index.html` désignent désormais ces
+> fichiers (doc complète réécrite quand l'app sera finie : `docs/A_REDIGER.md`).
+
+Serveur (une seule portée globale : **un nom déclaré dans deux .gs = erreur**) :
+- **00_Constantes.gs** — structure de « Saisies » (`COL`, `IDX`…), réglages fixes, liste des fichiers.
+- **Application.gs** — `doGet`, `include_`, démarrage tablette, copie locale, impression, outils.
+- **Reglages.gs** — réglages de la structure (`getConfig` / `setConfig`).
+- **Installation.gs** — « Installer », feuilles, robots de nuit, copie du modèle, contrôle de version.
+- **Securite.gs** — code responsable, code d'activation, jetons, tablettes autorisées.
+- **Saisie.gs** — `traiterSaisie`, `forcerSaisie`, `verifierPiece`, correction / suppression, mode.
+- **Detection.gs** — normalisation, doublons A/B/C, marquages (⚠️ miroir dans `ScriptSaisie.html` / `ScriptFormulaire.html`).
+- **Annuaire.gs**, **Archives.gs**, **Robots.gs** (dates + nuit), **Sheet.gs** (menu, panneau, `onEdit`).
+
+Page de la tablette :
+- **Index.html** — squelette (HTML + `CONFIG` / `DATES_INITIALES` injectés) qui inclut :
+- **Style.html** et **Script*.html** — Tablette, Saisie, Alertes, Impression, Offre,
+  Formulaire, Responsable, Actions (boutons `data-action`), Ocr (dormant).
 - **Panneau.html** — sidebar admin dans le Sheets (menu `🚀 APPLICATION`).
+
+Chaque fichier porte le même numéro de version (`npm run nouvelle-version`) ;
+outils : `npm test`, `npm run lint`, `npm run push` (clasp), dossier `outils/`.
 - **appsscript.json** — manifeste (V8, `Europe/Paris`, webapp `access: ANYONE_ANONYMOUS`).
 - **INSTALLATION.md** — créer le **modèle** (une fois) et installer l'appli pour une
   nouvelle structure (copie du modèle → menu Installer → déploiement).
@@ -106,7 +125,7 @@ Apps Script en ligne, (3) éventuellement le dossier local sur le Mac (clasp).
 ## État actuel (juin 2026)
 - **OCR (scan MRZ) = DORMANT.** Intégré dans `Index.html` mais **désactivé par décision
   de la direction**, via un drapeau unique `const OCR_ACTIF = false;` (dans le
-  `<script type="module">` en bas d'`Index.html`). Quand `false` : bouton 📷 masqué,
+  `<script type="module">` de `ScriptOcr.html`). Quand `false` : bouton 📷 masqué,
   aucun écouteur, **librairies non chargées**, section d'aide « Scanner » et paragraphe
   légal OCR masqués. Passer à `true` réactive tout. **Ne pas réactiver sans accord.**
 - Le banc d'essai OCR reste dans `prototype-ocr/` (exclu du déploiement).
@@ -129,7 +148,7 @@ de l'algorithme. **Inutile d'« optimiser la recherche » côté données/algo.*
   `blur` si la pièce est connue d'une **offre passée** : option **C** (pré-remplissage
   doux, défaut) ou **B** (modale-question), réglable dans le Panneau (`MODE_ANNUAIRE` en
   `PropertiesService`). **Store NON autoritaire** (la décision A/B/C reste sur
-  « Saisies »). Kill-switch : `ANNUAIRE_ACTIF` (Code.gs). Mention légale ajoutée.
+  « Saisies »). Kill-switch : `ANNUAIRE_ACTIF` (00_Constantes.gs). Mention légale ajoutée.
   → **Après activation : lancer `reconstruireAnnuaire()` une fois.**
 
 ## Généralisation (oct. 2026) — IMPLÉMENTÉE sur la branche `generalisation`

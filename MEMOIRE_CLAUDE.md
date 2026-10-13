@@ -90,7 +90,12 @@ panne du contrôle (ou Index.html illisible) = application ouverte quand même ;
 `clasp push` ; test `test_version.js`. Version actuelle 2026.10.13-2. 30 séries
 vertes. Limite : un ancien Code.gs laissé à côté → doublons de `const` → Google refuse
 de charger le projet (erreur visible, pas de fonctionnement à moitié) : le dire dans
-DEPLOIEMENT.md). Prochaine : étape 7 (docs).
+DEPLOIEMENT.md). Étape 7 REPORTÉE (décision Bryan 13/10) : la doc sera rédigée quand
+l'app sera finie ; idées notées dans `docs/A_REDIGER.md` (+ notes clasp brutes en
+service) ; seuls tenus à jour : bandeau « ne pas suivre » de DEPLOIEMENT.md et carte
+des fichiers d'AGENTS.md. Prochaine piste discutée : refonte graphique (maquettes de
+2-3 directions sur saisie / alerte doublon / espace responsable, branche à part depuis
+`refonte`, alertes A/B/C jamais adoucies) — après validation du test sur vrai Sheet.
 Plus tard : fusion `refonte` → `generalisation` (ou `main` après Vannes), seulement
 quand Bryan le demande.
 

@@ -1,5 +1,11 @@
 # Déploiement (sans Mac / sans clasp) — copier-coller + même URL
 
+> 🛑 **Branche `refonte` : NE PAS SUIVRE ce document.** Il décrit l'ancienne version en
+> un seul `Code.gs`. Ici le code est réparti en plusieurs fichiers : coller `Code.gs`
+> à côté d'eux empêcherait Google de lancer le projet. Mise à jour : `npm run push`
+> (voir [`docs/A_REDIGER.md`](docs/A_REDIGER.md), « Mise à jour avec clasp »).
+> Ce document sera réécrit quand l'application sera finie.
+
 Quand les modifications sont sur **GitHub** (faites par Vibe ou autrement) et qu'il
 faut les mettre **en production** sans le Mac, voici la procédure **manuelle** qui
 conserve **la même URL** que les tablettes utilisent déjà.

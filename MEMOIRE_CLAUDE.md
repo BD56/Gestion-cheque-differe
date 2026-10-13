@@ -174,11 +174,11 @@ quand Bryan le demande.
    `Archives_jj-mm-aaaa_hh-mm` est purgé ; la 1re nuit supprimera ceux de plus de 3 ans).
 6. Parcours complet : autorisation, saisie, doublons, passages, correction, impression,
    archives, clôture.
-8. (Refonte) `include_` : la page s'affiche complète (styles, scripts, scan OCR en
-   `<script type="module">`) — `createHtmlOutputFromFile(nom).getContent()`.
 7. Le robot de nuit passe la vérification `triggerUid` (sinon l'espace responsable
    affichera « robot n'a pas fonctionné depuis… » après 36 h) ; `Session.getActiveUser`
    renvoie bien l'e-mail dans le menu du Sheet (sinon « Installer » est refusé).
+8. (Refonte) `include_` : la page s'affiche complète (styles, scripts, scan OCR en
+   `<script type="module">`) — `createHtmlOutputFromFile(nom).getContent()`.
 
 ## 4. Points ouverts / idées non faites
 - Pull request `generalisation` → `main` : à ouvrir **après** le test de Bryan (il n'a pas

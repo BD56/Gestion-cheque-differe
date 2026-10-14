@@ -1,5 +1,5 @@
 <!-- Styles de la page (Index.html). -->
-<style data-version="2026.10.14-1035">
+<style data-version="2026.10.14-1053">
   /* Palette « Comptoir » (clair uniquement). Les couleurs d'alerte (danger rouge,
      orange) ne sont jamais adoucies. Police du système : rien à télécharger. */
   :root {
@@ -1098,6 +1098,10 @@
     overflow: auto;
     padding: 22px 26px 30px;
   }
+  .admin .message-liste,
+  .admin .message-tablettes {
+    text-align: left;
+  }
   .contenu .sous-ecran.actif {
     display: flex;
     flex-direction: column;
@@ -1122,6 +1126,7 @@
   .carte-verrou {
     width: 100%;
     max-width: 400px;
+    margin: 0 auto; /* centrée même hors grille (Safari ne centre pas un bloc avec place-items) */
     background: var(--surface);
     border: 1px solid var(--trait);
     border-radius: 20px;

@@ -1,5 +1,5 @@
 <!-- Espace responsable : code, corrections, archives, réglages, tablettes. -->
-<script data-version="2026.10.14-1035">
+<script data-version="2026.10.14-1053">
   // =================================================================
   // --- ESPACE RESPONSABLE (code PIN) ---
   // Le jeton n'est gardé qu'en mémoire : il disparaît à la fermeture du
@@ -28,7 +28,7 @@
   function afficherZoneVerrou(message) {
     document.getElementById("zoneAdmin").style.display = "none";
     document.getElementById("railAdmin").style.display = "none";
-    document.getElementById("zoneVerrou").style.display = "block";
+    document.getElementById("zoneVerrou").style.display = ""; // grille de .verrou (centre la carte)
     document.getElementById("adminSous").textContent = "Impression libre · le reste demande le code";
     document.getElementById("contenuAdmin").classList.add("verrouille");
     allerEcran("impression"); // l'impression reste possible sans code
@@ -108,7 +108,7 @@
     annulerCloture();
     document.getElementById("zoneAdmin").style.display = "none";
     document.getElementById("railAdmin").style.display = "none";
-    document.getElementById("zoneVerrou").style.display = "block";
+    document.getElementById("zoneVerrou").style.display = ""; // grille de .verrou (centre la carte)
     allerEcran("impression");
     document.getElementById("contenuAdmin").classList.add("verrouille");
     if (document.getElementById("modalParametres").style.display === "flex") afficherZoneVerrou();

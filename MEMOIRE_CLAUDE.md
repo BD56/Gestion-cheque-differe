@@ -197,6 +197,14 @@ box-sizing) → corrigé par la refonte.
   NON vérifiable ici : vrai Safari (seul Chromium installé), vraie page Apps Script
   (iframe, bandeau Google). En attente : captures + appareil/navigateur de Bryan.
 
+- Captures de Bryan (Mac, navigateur Safari probable, bandeau Google visible) : carte
+  « Code responsable » collée à gauche → CAUSE : le script mettait `display: block`
+  sur `#zoneVerrou` (grille `.verrou`) ; Chromium récent centre quand même (alignement
+  en bloc), Safari non. Corrigé (version 2026.10.14-1053) : display "" + `margin: 0 auto`.
+  L'audit vérifie maintenant tout display écrit par script qui écrase une grille /
+  un flex (le contrôle détecte bien l'ancien bug) ; taille « grand-ecran » 2000 px.
+  Messages de liste alignés à gauche. Capture « Saisies : ⏳ Chargement… » prise sur
+  une version ANTÉRIEURE (⏳ retiré depuis) : à revérifier par Bryan après mise à jour.
 **REFONTE GRAPHIQUE TERMINÉE (7 étapes + 5 bis) sur `design`.** En attente de Bryan :
 essai sur le Sheet de test (git checkout design, npm run push, Installer, déploiement)
 puis sur tablette réelle : rotation, clavier, journal, alertes, espace responsable,

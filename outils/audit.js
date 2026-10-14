@@ -27,6 +27,7 @@ const TAILLES = {
   telephone: { width: 390, height: 844, tactile: true },
   "petit-telephone": { width: 360, height: 640, tactile: true },
   ordinateur: { width: 1440, height: 900, tactile: false },
+  "grand-ecran": { width: 2000, height: 1200, tactile: false },
 };
 const filtre = process.argv[3] || "";
 
@@ -125,6 +126,17 @@ function controler() {
       )
         pb.push("déborde de son cadre : " + nom(e) + " dans " + nom(p).slice(0, 60));
     }
+  }
+  // display écrit par le script qui écrase une grille / un flex de la feuille de style :
+  // Chromium centre encore parfois (alignement en bloc), Safari non (bug vu sur Mac)
+  for (const e of elements) {
+    const enLigne = e.style.display;
+    if (!enLigne || enLigne === "none") continue;
+    e.style.display = "";
+    const feuille = getComputedStyle(e).display;
+    e.style.display = enLigne;
+    if (/grid|flex/.test(feuille) && !/grid|flex/.test(enLigne))
+      pb.push("display « " + enLigne + " » écrase « " + feuille + " » : " + nom(e).slice(0, 60));
   }
   // chevauchements entre éléments interactifs
   for (let i = 0; i < interactifs.length; i++)

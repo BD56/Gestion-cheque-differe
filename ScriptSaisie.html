@@ -1,5 +1,5 @@
 <!-- Envoi d'une saisie, encadré de doublon, contrôle A/B/C local, saisies en attente. -->
-<script data-version="2026.10.14-0213">
+<script data-version="2026.10.14-0225">
   let memNom = "",
     memPrenom = "",
     memPiece = "",
@@ -323,6 +323,9 @@
       piece: (saisie.piece || "").toUpperCase().trim(),
       montant: (saisie.montant || "").toString(),
       notes: (saisie.notes || "").toString(),
+      enAttente: true, // journal du jour : heure de la tablette, « envoi… » tant que non confirmée
+      heure: heureMaintenant(),
+      forcee: !!saisie.forcee,
     };
   }
   function ajouterAuCache(e) {
@@ -367,6 +370,7 @@
     saisiesEnAttente.push(suivi);
     if (cacheVerif) ajouterAuCache(e);
     majIndicateurEnvoi();
+    dessinerJournal(true);
     return suivi.id;
   }
 
@@ -392,9 +396,12 @@
   });
   function saisieConfirmee(saisie) {
     saisiesEnAttente.forEach(function (s) {
-      if (s.id === saisie.id) s.ecriteA = Date.now();
+      if (s.id !== saisie.id) return;
+      s.ecriteA = Date.now();
+      s.entree.ecrite = true;
     });
     majIndicateurEnvoi();
+    dessinerJournal(false);
   }
   function retirerEnAttente(saisie) {
     saisiesEnAttente = saisiesEnAttente.filter(function (s) {
@@ -403,6 +410,7 @@
       return false;
     });
     majIndicateurEnvoi();
+    dessinerJournal(false);
     rechargerCacheVerif();
   }
   // Après chaque rechargement : on remet les saisies encore en attente.
@@ -421,6 +429,7 @@
       if (!presente) ajouterAuCache(e);
       return true;
     });
+    dessinerJournal(false);
   }
 
   // Réponse du serveur à l'écriture en arrière-plan

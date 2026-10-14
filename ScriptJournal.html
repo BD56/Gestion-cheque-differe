@@ -1,0 +1,118 @@
+<!-- Journal du jour : saisies d'aujourd'hui (toutes tablettes), colonne repliable. -->
+<script data-version="2026.10.14-0225">
+  // Lu dans la copie locale de l'offre (cacheVerif.offre, rechargée à chaque nouveau
+  // client) + les saisies de cette tablette pas encore confirmées. Rien de plus n'est
+  // demandé au serveur : les saisies d'une autre tablette apparaissent au prochain
+  // rechargement (nouveau client, ouverture du journal, retour sur la page).
+  // Noms abrégés et N° masqués : l'écran peut être vu depuis la caisse.
+
+  // Ouvert / replié : réglage de CETTE tablette (fermé par défaut)
+  function journalOuvert() {
+    return lireStockage("cdJournal") === "ouvert";
+  }
+  function appliquerJournal() {
+    const visible = dansPeriode() && periodeOperation !== null;
+    const ouvert = journalOuvert();
+    document.getElementById("journal").style.display = visible && ouvert ? "block" : "none";
+    document.getElementById("languette").style.display = visible && !ouvert ? "flex" : "none";
+  }
+  function ouvrirJournal() {
+    ecrireStockage("cdJournal", "ouvert");
+    appliquerJournal();
+    dessinerJournal(false);
+    if (CLE_TABLETTE) rechargerCacheVerif(); // à jour des autres tablettes
+    document.querySelector("#journal .basculer").focus();
+  }
+  function fermerJournal() {
+    ecrireStockage("cdJournal", "ferme");
+    appliquerJournal();
+    document.getElementById("languette").focus();
+  }
+
+  // « 14/10/2026 », comme les dates de la copie locale (serveur, fuseau du projet)
+  function dateDuJour() {
+    const j = new Date();
+    return ("0" + j.getDate()).slice(-2) + "/" + ("0" + (j.getMonth() + 1)).slice(-2) + "/" + j.getFullYear();
+  }
+  function heureMaintenant() {
+    const j = new Date();
+    return ("0" + j.getHours()).slice(-2) + ":" + ("0" + j.getMinutes()).slice(-2);
+  }
+  function nomAbrege(o) {
+    const p = (o.prenom || "").trim();
+    return (o.nom || "").trim() + (p ? " " + p.charAt(0) + "." : "");
+  }
+  function pieceMasquee(p) {
+    const t = (p || "").toString().trim();
+    return t.length > 4 ? "••••" + t.slice(-4) : t;
+  }
+  // Ajout forcé : cas lu dans les notes du Sheet (« Ajout forcé (Cas B) ») ; « ? » tant
+  // que la saisie forcée n'est pas encore revenue du serveur
+  function casForce(o) {
+    const m = /Ajout forcé \(Cas ([ABC])\)/.exec(o.notes || "");
+    if (m) return m[1];
+    return o.forcee ? "?" : "";
+  }
+  function lignesDuJour() {
+    if (!cacheVerif) return [];
+    const auj = dateDuJour();
+    return cacheVerif.offre.filter(function (o) {
+      return o.enAttente || (o.date || "").indexOf(auj) === 0;
+    });
+  }
+
+  let nbJourAffiche = -1;
+  function dessinerJournal(signalerNouvelle) {
+    const lignes = lignesDuJour();
+    let total = 0,
+      forcees = 0,
+      html = "";
+    lignes.forEach(function (o) {
+      const n = lireMontant(o.montant);
+      if (n !== null) total += n;
+      if (casForce(o)) forcees++;
+    });
+    lignes
+      .slice()
+      .reverse()
+      .forEach(function (o, i) {
+        const cas = casForce(o);
+        const heure = o.enAttente ? o.heure : (o.date || "").slice(11, 16);
+        html +=
+          '<div class="ligne-jour' +
+          (i === 0 && signalerNouvelle ? " neuve" : "") +
+          '"><span class="heure">' +
+          echapper(heure) +
+          "</span><div><b>" +
+          echapper(nomAbrege(o)) +
+          (cas
+            ? '<span class="badge' +
+              (cas === "C" ? " c" : "") +
+              '">Forcé' +
+              (cas === "?" ? "" : " · " + cas) +
+              "</span>"
+            : "") +
+          "</b><small>" +
+          echapper(pieceMasquee(o.piece)) +
+          (o.enAttente && !o.ecrite ? " · envoi…" : "") +
+          '</small></div><span class="mt">' +
+          (o.montant !== "" ? echapper(formaterMontantAffiche(o.montant)) : "") +
+          "</span></div>";
+      });
+    document.getElementById("listeJour").innerHTML =
+      html || '<p class="vide">' + (cacheVerif ? "Aucune saisie aujourd'hui." : "Chargement…") + "</p>";
+    document.getElementById("totalNb").textContent = lignes.length;
+    document.getElementById("totalMontant").textContent = formaterMontant(total).replace(",00 €", " €");
+    document.getElementById("totalForces").textContent = forcees;
+    const c = document.getElementById("compteurJour");
+    c.textContent = lignes.length;
+    if (signalerNouvelle && lignes.length > nbJourAffiche && nbJourAffiche !== -1) {
+      c.classList.remove("pulse");
+      void c.offsetWidth; // relance l'animation
+      c.classList.add("pulse");
+    }
+    nbJourAffiche = lignes.length;
+  }
+  appliquerJournal();
+  dessinerJournal(false);
+</script>

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr" data-version="2026.10.14-0213">
+<html lang="fr" data-version="2026.10.14-0225">
   <head>
     <base target="_top">
     <?!= include_('Style') ?>
@@ -21,6 +21,7 @@
         <button class="icone-btn" data-action="ouvrirPanneau" title="Panneau de contrôle" aria-label="Panneau de contrôle"><svg class="ico"><use href="#i-reglages"/></svg></button>
       </header>
 
+      <div class="milieu">
       <main class="zone-form">
         <div class="colonne-saisie">
           <div class="hors-periode" id="horsPeriode" style="display: none">
@@ -84,6 +85,30 @@
           </div>
         </div>
       </main>
+
+      <!-- Journal du jour : colonne repliable (état mémorisé par tablette) -->
+      <aside class="journal" id="journal" aria-label="Journal du jour" style="display: none">
+        <div class="journal-dedans">
+          <div class="journal-tete">
+            <h2>Aujourd'hui</h2>
+            <button class="basculer" data-action="fermerJournal" title="Replier le journal" aria-label="Replier le journal"><svg class="ico"><use href="#i-chevron-d"/></svg></button>
+          </div>
+          <div class="totaux">
+            <div class="total"><b id="totalNb">0</b><span>saisies</span></div>
+            <div class="total"><b id="totalMontant">0 €</b><span>total</span></div>
+            <div class="total"><b id="totalForces">0</b><span>forcées</span></div>
+          </div>
+          <div class="liste-jour" id="listeJour"></div>
+          <div class="journal-pied">
+            <button class="imprimer-jour" data-action="preparerImpression" data-args='["jour","aujourdhui","Impression du Jour"]'>Imprimer la journée →</button>
+            <span>Noms abrégés et N° masqués : l'écran peut être vu depuis la caisse.</span>
+          </div>
+        </div>
+      </aside>
+      <button class="languette" id="languette" data-action="ouvrirJournal" title="Ouvrir le journal du jour" aria-label="Ouvrir le journal du jour" style="display: none">
+        <svg class="ico fleche"><use href="#i-chevron"/></svg><span class="vertical">Aujourd'hui</span><span class="compteur" id="compteurJour">0</span>
+      </button>
+      </div>
     </div>
 
     <div id="modalAide" class="modal-overlay">
@@ -499,6 +524,7 @@
     <?!= include_('ScriptOffre') ?>
     <?!= include_('ScriptFormulaire') ?>
     <?!= include_('ScriptResponsable') ?>
+    <?!= include_('ScriptJournal') ?>
     <?!= include_('ScriptActions') ?>
 
     <?!= include_('ScriptOcr') ?>

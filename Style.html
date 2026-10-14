@@ -1,5 +1,5 @@
 <!-- Styles de la page (Index.html). -->
-<style data-version="2026.10.14-0213">
+<style data-version="2026.10.14-0225">
   /* Palette « Comptoir » (clair uniquement). Les couleurs d'alerte (danger rouge,
      orange) ne sont jamais adoucies. Police du système : rien à télécharger. */
   :root {
@@ -72,8 +72,10 @@
   }
 
   /* --- Écran de saisie : en-tête + colonne de saisie --- */
+  /* Paysage : l'écran ne défile pas, la saisie et le journal défilent chacun chez eux */
   .app {
-    min-height: 100%;
+    height: 100vh;
+    height: 100dvh;
     display: flex;
     flex-direction: column;
   }
@@ -157,8 +159,16 @@
   .icone-btn:hover {
     background: var(--champ);
   }
+  .milieu {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    align-items: stretch;
+  }
   .zone-form {
     flex: 1;
+    min-width: 0;
+    overflow-y: auto;
     display: flex;
     justify-content: center;
     padding: 26px 22px 20px;
@@ -182,6 +192,207 @@
     font-size: 18px;
     font-weight: 650;
     margin: 12px 0 0;
+  }
+
+  /* Journal du jour : colonne à droite (ouverte) ou languette (repliée) */
+  .journal {
+    width: 360px;
+    flex: 0 0 auto;
+    background: var(--surface);
+    border-left: 1px solid var(--trait);
+  }
+  .journal-dedans {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  .journal-tete {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 16px 4px 20px;
+  }
+  .journal-tete h2 {
+    margin: 0;
+    font-size: 16px;
+    flex: 1;
+  }
+  .basculer {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    border: 1px solid var(--trait);
+    background: var(--surface);
+    color: var(--encre);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    padding: 0;
+  }
+  .totaux {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    padding: 10px 20px 12px;
+  }
+  .total {
+    background: var(--fond);
+    border-radius: 12px;
+    padding: 9px 10px;
+  }
+  .total b {
+    display: block;
+    font-size: 17px;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  .total span {
+    font-size: 11.5px;
+    color: var(--doux);
+  }
+  .liste-jour {
+    overflow-y: auto;
+    padding: 0 20px;
+    flex: 1;
+    min-height: 0;
+  }
+  .ligne-jour {
+    display: grid;
+    grid-template-columns: 44px 1fr auto;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--trait);
+  }
+  .ligne-jour.neuve {
+    animation: neuve 1.8s ease-out;
+  }
+  @keyframes neuve {
+    from {
+      background: var(--accent-doux);
+    }
+    to {
+      background: transparent;
+    }
+  }
+  .ligne-jour .heure {
+    color: var(--doux);
+    font-size: 12.5px;
+    font-variant-numeric: tabular-nums;
+  }
+  .ligne-jour b {
+    display: block;
+    font-size: 14px;
+    overflow-wrap: anywhere;
+  }
+  .ligne-jour small {
+    color: var(--doux);
+    font-family: var(--chiffres);
+    font-size: 12px;
+  }
+  .ligne-jour .mt {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .badge {
+    font-size: 10.5px;
+    font-weight: 750;
+    padding: 2px 6px;
+    border-radius: 6px;
+    margin-left: 6px;
+    background: var(--danger-doux);
+    color: var(--danger);
+    white-space: nowrap;
+  }
+  .badge.c {
+    background: var(--orange-doux);
+    color: var(--orange);
+  }
+  .liste-jour .vide {
+    color: var(--doux);
+    font-size: 13.5px;
+    padding: 14px 0;
+    margin: 0;
+  }
+  .journal-pied {
+    padding: 12px 20px 16px;
+    font-size: 12px;
+    color: var(--doux);
+    border-top: 1px solid var(--trait);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .imprimer-jour {
+    align-self: flex-start;
+    border: 0;
+    background: none;
+    padding: 4px 0;
+    color: var(--accent);
+    font-weight: 750;
+    font-size: 15px;
+    cursor: pointer;
+  }
+  .imprimer-jour:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .languette {
+    width: 52px;
+    flex: 0 0 auto;
+    background: var(--surface);
+    border: 0;
+    border-left: 1px solid var(--trait);
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 0;
+    color: var(--encre);
+    cursor: pointer;
+  }
+  .languette:hover {
+    background: var(--champ);
+  }
+  .languette .vertical {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    font-weight: 700;
+    font-size: 13.5px;
+    letter-spacing: 0.3px;
+  }
+  .compteur {
+    min-width: 30px;
+    height: 30px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+    font-size: 13px;
+    padding: 0 6px;
+    font-variant-numeric: tabular-nums;
+  }
+  .compteur.pulse {
+    animation: pulse 0.9s ease-out;
+  }
+  @keyframes pulse {
+    0% {
+      transform: scale(1);
+    }
+    30% {
+      transform: scale(1.35);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ligne-jour.neuve,
+    .compteur.pulse {
+      animation: none;
+    }
   }
 
   /* Saisie en 3 étapes numérotées */
@@ -646,8 +857,45 @@
     .haut .puce {
       order: 10;
     }
+    .app {
+      height: auto;
+      min-height: 100%;
+    }
+    .milieu {
+      flex-direction: column;
+    }
     .zone-form {
       padding: 18px 16px 16px;
+      overflow-y: visible;
+    }
+    .journal {
+      width: auto;
+      border-left: 0;
+      border-top: 1px solid var(--trait);
+    }
+    .journal-dedans {
+      height: auto;
+    }
+    .liste-jour {
+      max-height: 320px;
+    }
+    .basculer .ico {
+      transform: rotate(-90deg); /* journal sous la saisie : flèche vers le haut pour replier */
+    }
+    .languette {
+      width: auto;
+      border-left: 0;
+      border-top: 1px solid var(--trait);
+      flex-direction: row;
+      justify-content: center;
+      padding: 12px;
+    }
+    .languette .vertical {
+      writing-mode: horizontal-tb;
+      transform: none;
+    }
+    .languette .fleche {
+      transform: rotate(-90deg);
     }
     .etape {
       grid-template-columns: 1fr;

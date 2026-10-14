@@ -68,6 +68,8 @@ async function ecrans(format) {
     await page.fill("#montant", "20");
     await page.click("#btnValider");
     await prendre("7-enregistre");
+    await page.click("#languette");
+    await prendre("8-journal");
     if (erreursPage.length) console.log(format + " : erreurs de la page : " + erreursPage.join(" | "));
   } finally {
     await browser.close();

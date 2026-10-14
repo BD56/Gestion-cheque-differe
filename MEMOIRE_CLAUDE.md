@@ -99,7 +99,23 @@ box-sizing) → corrigé par la refonte.
   comparaison, « Réessayer » / « Abandonner ». Aide « Les alertes » réécrite.
   Nouveau test `test_ui_alerte` (32 séries). Les alertes de CORRECTION (espace
   responsable, `#corAlerte`) gardent l'ancien style → étape 5.
-- ▶️ Prochaine : étape 4 (journal du jour).
+- ✅ Étape 4 — journal du jour (version 2026.10.14-0225) : nouveau fichier
+  `ScriptJournal.html` (dans FICHIERS_PAGE, inclus avant ScriptActions). Données =
+  copie locale `cacheVerif.offre` filtrée sur la date du jour (« jj/mm/aaaa » en tête
+  de `date`) + saisies en attente (`entreeCache` porte maintenant `enAttente`,
+  `heure`, `forcee`, `ecrite`). Redessiné à chaque ajout / confirmation / retrait /
+  rechargement (`dessinerJournal`). Toutes tablettes, sans requête en plus : les
+  saisies des autres tablettes arrivent au prochain rechargement de la copie (nouveau
+  client, ouverture du journal, retour sur la page) — PAS d'interrogation périodique
+  (quotas / poids de la copie avec l'annuaire). Replié par défaut, état dans
+  localStorage `cdJournal` (« ouvert » / « ferme ») ; masqué hors période. Totaux
+  saisies / total / forcées ; lignes heure, NOM + initiale, N° ••••1234, montant,
+  badge « Forcé · A/B/C » (lu dans les notes ; « Forcé » seul en attente) ;
+  « Imprimer la journée → » = preparerImpression jour. Mise en page paysage :
+  `.app` à hauteur d'écran (100dvh), saisie et journal défilent chacun ; ≤ 860 px :
+  défilement normal, journal sous la saisie. Nouveau test `test_ui_journal` (33).
+- ▶️ Prochaine : étape 5 (espace responsable : menu + vue d'ensemble chiffrée,
+  chiffres calculés par le serveur ; alertes de correction au nouveau style).
 
 **Tranché par Bryan (13/10, après relecture du plan)** : journal = chèques de TOUTES
 les tablettes (copie locale, décalage ≤ 2 min pour les autres tablettes). Pas de modèle

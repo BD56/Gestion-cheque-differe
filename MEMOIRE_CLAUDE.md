@@ -36,8 +36,14 @@
   1er relevé (Mac, Sheet REFONTE test, version 2026.10.14-1459, 14/10) : « Clé absente
   de ce navigateur » ; adresse technique
   `n-ijetbkxwto6cqlhbmed6rj7j4kexnxcgupggffa-0lu-script.googleusercontent.com`
-  (attendu normal : la clé était déjà perdue avant cette version). À comparer avec
-  l'adresse après la PROCHAINE « Nouvelle version ».
+  (attendu normal : la clé était déjà perdue avant cette version). Ensuite (14/10),
+  Bryan : « ça a l'air bon maintenant » après réautorisation + nouvelle version ⇒
+  hypothèse « l'adresse change à chaque version » NON confirmée. CORRECTION d'un
+  raisonnement de Claude : « nom déjà pris » ne prouvait PAS que le navigateur avait
+  perdu la clé — le défaut corrigé (incident passager ⇒ refus ⇒ clé effacée par la
+  page) laisse AUSSI l'appareil dans la liste du serveur. Cause la plus probable :
+  ce défaut (corrigé en 2026.10.14-1459). À surveiller : si l'écran d'autorisation
+  revient, relever le diagnostic (raison + adresse). Diagnostic gardé pour l'instant.
 - **Ensuite (sur demande)** : fusions, documentation (`docs/A_REDIGER.md`, captures via
   `outils/captures.js`), migration de Vannes (`DEPLOIEMENT.md`).
 - **Leçons de cette période** : (1) ne pas réorganiser des écrans sans validation (la

@@ -53,7 +53,7 @@ async function ouvrir(repo, envOpts) {
     "<head><script>window.__SANS_CLE=" + !!(envOpts && envOpts.sansCle) + ";" + PROXY + "</script>"
   );
   const browser = await chromium.launch();
-  const page = await browser.newPage();
+  const page = await browser.newPage((envOpts && envOpts.page) || {}); // ex. { isMobile, hasTouch, viewport }
   const erreursPage = [];
   page.on("pageerror", (e) => erreursPage.push(e.message));
   await page.exposeFunction("__serveur", (nom, argsJson) => {

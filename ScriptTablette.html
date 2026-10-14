@@ -1,5 +1,5 @@
 <!-- Tablette autorisée (appairage), démarrage, aide, panneau, mentions légales. -->
-<script data-version="2026.10.14-0955">
+<script data-version="2026.10.14-1001">
   // =================================================================
   // --- TABLETTE AUTORISÉE (appairage) ---
   // La clé reçue lors de l'autorisation est gardée dans le navigateur et envoyée à
@@ -183,6 +183,37 @@
     if (CLE_TABLETTE) demarrerApplication();
     else afficherEcranAppairage();
   };
+
+  // --- Tablette tenue en hauteur : invitation à la tourner (jamais bloquante) ---
+  // Seulement sur écran tactile : une fenêtre d'ordinateur étroite n'est pas concernée.
+  // « Continuer en hauteur » vaut jusqu'à la prochaine ouverture de l'application.
+  const EN_HAUTEUR = window.matchMedia
+    ? window.matchMedia("(orientation: portrait) and (pointer: coarse)")
+    : null;
+  let accepteEnHauteur = false;
+  try {
+    accepteEnHauteur = window.sessionStorage.getItem("cdEnHauteur") === "oui";
+  } catch (e) {
+    accepteEnHauteur = false;
+  }
+  function majOrientation() {
+    const afficher = !!EN_HAUTEUR && EN_HAUTEUR.matches && !accepteEnHauteur;
+    document.getElementById("ecranTourner").style.display = afficher ? "flex" : "none";
+  }
+  function continuerEnHauteur() {
+    accepteEnHauteur = true;
+    try {
+      window.sessionStorage.setItem("cdEnHauteur", "oui");
+    } catch (e) {
+      // navigateur sans mémoire de session : accepté jusqu'au rechargement
+    }
+    majOrientation();
+  }
+  if (EN_HAUTEUR) {
+    if (EN_HAUTEUR.addEventListener) EN_HAUTEUR.addEventListener("change", majOrientation);
+    else if (EN_HAUTEUR.addListener) EN_HAUTEUR.addListener(majOrientation); // anciens Safari
+  }
+  majOrientation();
 
   // Aide : ouvrir / fermer
   function ouvrirAide() {

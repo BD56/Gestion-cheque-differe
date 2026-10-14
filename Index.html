@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr" data-version="2026.10.14-0955">
+<html lang="fr" data-version="2026.10.14-1001">
   <head>
     <base target="_top">
     <?!= include_('Style') ?>
@@ -597,6 +597,16 @@
           <button class="btn-force fond-vert" data-action="utiliserAnnuaire">UTILISER</button>
         </div>
       </div>
+    </div>
+
+    <!-- Tablette tenue en hauteur (écran tactile seulement) : invitation à la tourner,
+         jamais bloquante ; la saisie ou l'alerte en cours restent en place dessous -->
+    <div class="tourner" id="ecranTourner" role="dialog" aria-modal="true" aria-labelledby="tournerTitre" style="display: none">
+      <div class="appareil" aria-hidden="true"><svg viewBox="0 0 40 52"><rect x="3" y="3" width="34" height="46" rx="5"/><circle cx="20" cy="43" r="1.6"/></svg></div>
+      <h2 id="tournerTitre">Tournez la tablette</h2>
+      <p>L'application s'utilise en largeur. Rien n'est perdu : votre saisie reste en place.</p>
+      <div class="verrou-aide"><b>L'écran ne tourne pas ?</b> Le verrou de rotation est activé. iPad : balayez depuis le coin en haut à droite, puis touchez le cadenas. Android : ouvrez le panneau rapide et activez « Rotation auto ».</div>
+      <button class="continuer" data-action="continuerEnHauteur">Continuer en hauteur quand même</button>
     </div>
 
     <div id="zoneImpression"></div>

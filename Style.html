@@ -1,5 +1,5 @@
 <!-- Styles de la page (Index.html). -->
-<style data-version="2026.10.14-0955">
+<style data-version="2026.10.14-1001">
   /* Palette « Comptoir » (clair uniquement). Les couleurs d'alerte (danger rouge,
      orange) ne sont jamais adoucies. Police du système : rien à télécharger. */
   :root {
@@ -843,6 +843,7 @@
     #modalAlerteServeur,
     #ecranAppairage,
     #boxConfirmation,
+    #ecranTourner,
     #modalAnnuaire {
       display: none !important;
     }
@@ -1435,6 +1436,89 @@
     border: 1px solid var(--trait);
     box-shadow: none;
     max-width: none;
+  }
+
+  /* --- Tablette tenue en hauteur : invitation à la tourner --- */
+  .tourner {
+    position: fixed;
+    inset: 0;
+    z-index: 2500;
+    background: var(--fond);
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 24px 20px;
+    text-align: center;
+    overflow-y: auto;
+  }
+  .tourner h2 {
+    margin: 6px 0 0;
+    font-size: 24px;
+  }
+  .tourner p {
+    margin: 0;
+    color: var(--doux);
+    font-size: 15px;
+    max-width: 340px;
+    line-height: 1.5;
+  }
+  .tourner .verrou-aide {
+    background: var(--surface);
+    border: 1px solid var(--trait);
+    border-radius: 14px;
+    padding: 12px 14px;
+    font-size: 13.5px;
+    max-width: 360px;
+    text-align: left;
+    line-height: 1.5;
+  }
+  .tourner .continuer {
+    margin-top: 8px;
+    border: 0;
+    background: none;
+    color: var(--doux);
+    font-weight: 650;
+    font-size: 14px;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    padding: 10px;
+    cursor: pointer;
+  }
+  .appareil {
+    width: 92px;
+    height: 92px;
+    display: grid;
+    place-items: center;
+  }
+  .appareil svg {
+    width: 70px;
+    height: 92px;
+    stroke: var(--accent);
+    fill: var(--accent-doux);
+    stroke-width: 2.5;
+    animation: pivoter 2.6s ease-in-out infinite;
+  }
+  .appareil circle {
+    fill: var(--accent);
+  }
+  @keyframes pivoter {
+    0%,
+    25% {
+      transform: rotate(0);
+    }
+    55%,
+    85% {
+      transform: rotate(-90deg);
+    }
+    100% {
+      transform: rotate(0);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .appareil svg {
+      animation: none;
+    }
   }
 
   /* --- Alerte : comparaison côte à côte (avant enregistrement, ou réponse du serveur) --- */

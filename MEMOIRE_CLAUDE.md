@@ -160,7 +160,14 @@ box-sizing) → corrigé par la refonte.
   Résumé de l'offre en classes `.resume-offre` / `.note-offre` / `.barre-offre`
   (présent dans les deux écrans). Leçon : ne pas fusionner/réorganiser des écrans
   sans le faire valider (ce n'est pas que du style).
-- ▶️ Prochaine : étape 6 (écran « Tournez la tablette »), puis 7 (autres écrans :
+- ✅ Étape 6 — « Tournez la tablette » (version 2026.10.14-1001) : `#ecranTourner` (z-index 2500,
+  par-dessus saisie / alertes / espace responsable, qui restent en place dessous),
+  affiché seulement si `(orientation: portrait) and (pointer: coarse)` (jamais sur
+  ordinateur) ; aide verrou de rotation iPad / Android ; « Continuer en hauteur quand
+  même » (`continuerEnHauteur`, sessionStorage `cdEnHauteur`, en mémoire si refusé).
+  La présentation en hauteur reste utilisable. `tests/navigateur.js` : option
+  `page` (isMobile, hasTouch, viewport). Test `test_ui_tourner` (36 séries).
+- ▶️ Prochaine : étape 7 (autres écrans :
   aide, mentions, appairage, fenêtre annuaire, Panneau.html du Sheet).
 
 **Tranché par Bryan (13/10, après relecture du plan)** : journal = chèques de TOUTES

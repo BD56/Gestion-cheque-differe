@@ -1,5 +1,5 @@
 <!-- Styles de la page (Index.html). -->
-<style data-version="2026.10.14-0200">
+<style data-version="2026.10.14-0213">
   /* Palette « Comptoir » (clair uniquement). Les couleurs d'alerte (danger rouge,
      orange) ne sont jamais adoucies. Police du système : rien à télécharger. */
   :root {
@@ -342,13 +342,6 @@
     outline: none;
   }
 
-  #boxConfirmation {
-    display: none;
-    margin-top: 4px;
-    padding: 15px;
-    border-radius: 8px;
-    border: 2px solid;
-  }
   .doublon-titre {
     font-weight: bold;
     font-size: 18px;
@@ -390,17 +383,6 @@
     border-radius: 8px;
     font-weight: bold;
     cursor: pointer;
-  }
-  .btn-retour-bloquant {
-    background-color: var(--danger);
-    color: white;
-    padding: 12px;
-    width: 100%;
-    border: none;
-    border-radius: 8px;
-    font-weight: bold;
-    cursor: pointer;
-    margin-top: 15px;
   }
   .flex-btn {
     display: flex;
@@ -679,6 +661,26 @@
       margin-left: 0;
     }
   }
+  @media (max-width: 640px) {
+    .voile {
+      padding: 10px 8px;
+    }
+    .rang {
+      grid-template-columns: 78px 1fr 1fr;
+      font-size: 14px;
+      gap: 4px 8px;
+    }
+    .rang .tag {
+      grid-column: 2 / 4;
+      justify-self: start;
+    }
+    .rang > span:empty {
+      display: none;
+    }
+    .comparer .tete b {
+      font-size: 18px;
+    }
+  }
   @media (max-width: 480px) {
     .deux {
       grid-template-columns: 1fr;
@@ -718,6 +720,7 @@
     #modalAide,
     #modalAlerteServeur,
     #ecranAppairage,
+    #boxConfirmation,
     #modalAnnuaire {
       display: none !important;
     }
@@ -975,11 +978,199 @@
   .alerte-serveur {
     z-index: 2000;
   }
-  .cadre-alerte {
-    border: 3px solid var(--danger);
+  /* --- Alerte : comparaison côte à côte (avant enregistrement, ou réponse du serveur) --- */
+  .voile {
+    position: fixed;
+    inset: 0;
+    z-index: 1500;
+    background: rgba(28, 25, 23, 0.5);
+    overflow-y: auto;
+    padding: 24px 16px;
   }
-  .carte-alerte {
-    border-left-color: var(--danger);
+  .voile.alerte-serveur {
+    z-index: 2000;
+  }
+  .comparer {
+    width: 100%;
+    max-width: 680px;
+    margin: 0 auto;
+    background: var(--surface);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.3);
+  }
+  .comparer .tete {
+    color: #fff;
+    padding: 18px 22px;
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    background: var(--danger);
+  }
+  .comparer .tete.c {
+    background: var(--orange);
+  }
+  .comparer .tete .ico {
+    width: 34px;
+    height: 34px;
+  }
+  .comparer .tete b {
+    display: block;
+    font-size: 21px;
+  }
+  .comparer .tete span {
+    font-size: 13.5px;
+    font-weight: 650;
+    opacity: 0.92;
+  }
+  .comparer .consigne {
+    margin: 0;
+    padding: 14px 22px 0;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.45;
+  }
+  .comparer .tableau {
+    padding: 4px 22px;
+    overflow-x: auto;
+  }
+  .comparaison {
+    margin-top: 10px;
+  }
+  .comparaison + .comparaison {
+    border-top: 2px solid var(--trait);
+    padding-top: 6px;
+  }
+  .rang {
+    display: grid;
+    grid-template-columns: 110px minmax(110px, 1fr) minmax(110px, 1fr) 92px;
+    gap: 10px;
+    align-items: center;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--trait);
+    font-size: 15px;
+    overflow-wrap: anywhere;
+  }
+  .rang.entete {
+    color: var(--doux);
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 750;
+  }
+  .rang:last-child {
+    border-bottom: 0;
+  }
+  .rang .lib {
+    color: var(--doux);
+  }
+  .rang .pareil {
+    color: var(--danger);
+    font-weight: 750;
+  }
+  .tag {
+    font-size: 11px;
+    font-weight: 800;
+    padding: 3px 7px;
+    border-radius: 6px;
+    text-align: center;
+    letter-spacing: 0.3px;
+  }
+  .tag.eg {
+    color: var(--danger);
+    background: var(--danger-doux);
+  }
+  .tag.dif {
+    color: var(--doux);
+    background: var(--fond);
+  }
+  .resume-saisie {
+    margin: 12px 22px 0;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: var(--fond);
+    font-size: 15px;
+    line-height: 1.7;
+  }
+  .resume-saisie span {
+    display: inline-block;
+    min-width: 110px;
+    color: var(--doux);
+  }
+  .comparer .boutons {
+    display: flex;
+    gap: 14px;
+    padding: 16px 22px 20px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .comparer .stop {
+    flex: 1 1 240px;
+    height: 56px;
+    border-radius: 14px;
+    border: 0;
+    background: var(--encre);
+    color: #fff;
+    font-weight: 750;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  .quand-meme {
+    background: none;
+    border: 0;
+    color: var(--danger);
+    font-weight: 700;
+    font-size: 15px;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    padding: 10px 8px;
+    cursor: pointer;
+  }
+  .quand-meme.neutre {
+    color: var(--doux);
+  }
+  .comparer .confirmer {
+    margin: 0 22px 20px;
+    border: 1.5px solid var(--danger);
+    background: var(--danger-doux);
+    border-radius: 14px;
+    padding: 14px;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .confirmer p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--danger);
+    font-weight: 650;
+  }
+  .confirmer .act {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .confirmer button {
+    height: 48px;
+    border-radius: 12px;
+    padding: 0 16px;
+    font-weight: 700;
+    border: 1.5px solid var(--trait-fort);
+    background: var(--surface);
+    cursor: pointer;
+  }
+  .confirmer .forcer {
+    background: var(--danger);
+    color: #fff;
+    border-color: var(--danger);
+  }
+  .refus {
+    margin: 14px 22px 0;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: var(--danger-doux);
+    color: var(--danger);
+    font-weight: 700;
+    font-size: 14px;
   }
   .texte-14 {
     font-size: 14px;

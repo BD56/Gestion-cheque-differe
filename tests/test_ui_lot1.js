@@ -27,7 +27,7 @@ async function remplir(page, piece, nom, prenom, montant) {
     await remplir(page, "XY999", "DURAND", "LUC");
     await page.click("#btnValider");
     await page.waitForTimeout(300);
-    assert.match(await page.textContent("#alerteServeurTitre"), /NON ENREGISTRÉE/);
+    assert.match(await page.textContent("#teteAlerteServeur"), /SAISIE NON ENREGISTRÉE/);
     assert.ok((await page.isVisible("#alerteServeurReessai")) && !(await page.isVisible("#btnAlerteOk")));
     assert.deepStrictEqual(
       await page.evaluate(() => cacheVerif.offre.filter((x) => x.pieceNorm === "XY999").length),
@@ -79,13 +79,14 @@ async function remplir(page, piece, nom, prenom, montant) {
     assert.ok(await page.isVisible("#boxConfirmation"));
     await page.evaluate(() => chargerDatesAffichage());
     await page.waitForTimeout(150);
-    assert.ok(!(await page.isVisible("#formulaireSaisie")), "formulaire pas réaffiché sur l'encadré");
+    assert.ok(await page.isVisible("#boxConfirmation"), "fenêtre d'alerte toujours ouverte après les dates");
     // même si le formulaire est modifié en douce, le forçage porte sur DUPONT
     await page.evaluate(() => {
       memNom = "MARTIN";
       memPiece = "ZZ777";
     });
-    await page.click("#boxConfirmation >> text=FORCER L'AJOUT");
+    await page.click("#boxConfirmation >> text=Enregistrer quand même…");
+    await page.click("#boxConfirmation >> text=Confirmer l'enregistrement forcé");
     await page.waitForTimeout(300);
     const lignes = env.sheets.Saisies.getDataRange()
       .getValues()

@@ -1,5 +1,99 @@
 <!-- Fenêtre d'alerte du serveur, abandon, réinitialisation, bandeau de message. -->
-<script data-version="2026.10.14-0200">
+<script data-version="2026.10.14-0213">
+  // --- Présentation commune des alertes : en-tête du cas, comparaison côte à côte ---
+  const TEXTES_CAS = {
+    A: { titre: "Ce client est déjà venu", sous: "même nom et même pièce" },
+    B: { titre: "Cette pièce appartient à un autre client", sous: "même pièce, autre nom" },
+    C: { titre: "Un client porte déjà ce nom", sous: "même nom, autre pièce" },
+  };
+  // Titre du serveur sans son pictogramme (« 🛑 ALERTE FRAUDE » -> « ALERTE FRAUDE »)
+  function sansPicto(t) {
+    return (t || "").replace(/^[^A-Za-zÀ-ÿ0-9]+/, "");
+  }
+  // Cas annoncé par le serveur ; à défaut, le plus grave des lignes trouvées
+  function casReponse(rep) {
+    if (rep && TEXTES_CAS[rep.cas]) return rep.cas;
+    const types = ((rep && rep.details) || []).map(function (d) {
+      return d.type;
+    });
+    return ["B", "A", "C"].filter(function (c) {
+      return types.indexOf(c) !== -1;
+    })[0];
+  }
+  // En-tête : rouge (fraude, usurpation, refus) ou orange (homonyme)
+  function remplirTeteAlerte(idTete, idTitre, idSous, rep, titreSansCas) {
+    const cas = casReponse(rep),
+      t = TEXTES_CAS[cas];
+    const titreServeur = sansPicto(rep && rep.titre);
+    document.getElementById(idTete).className = "tete" + (cas === "C" ? " c" : "");
+    document.getElementById(idTitre).textContent = t ? t.titre : titreSansCas || titreServeur;
+    document.getElementById(idSous).textContent = t ? titreServeur + " · " + t.sous : "";
+  }
+  function texteConfirmationForcage(rep) {
+    const cas = casReponse(rep) || "?";
+    return (
+      (cas === "C" ? "Seconde pièce vérifiée ? " : "") +
+      "La saisie sera enregistrée avec la mention « Ajout forcé (Cas " +
+      cas +
+      ") » et marquée en rouge dans le Google Sheets."
+    );
+  }
+  // Une comparaison par ligne déjà enregistrée : Maintenant | Déjà enregistré | IDENTIQUE / DIFFÉRENT
+  const LIBELLES_TYPE = { A: "Même client", B: "Même pièce, autre nom", C: "Même nom, autre pièce" };
+  function tableauxComparaison(sa, details) {
+    sa = sa || {};
+    let html = "";
+    (details || []).forEach(function (d) {
+      const rang = function (lib, maintenant, avant, norm) {
+        const egal = norm && norm(maintenant) !== "" && norm(maintenant) === norm(avant);
+        const cl = egal ? ' class="pareil"' : "";
+        maintenant = maintenant || "—";
+        avant = avant || "—";
+        return (
+          '<div class="rang"><span class="lib">' +
+          echapper(lib) +
+          "</span><span" +
+          cl +
+          ">" +
+          echapper(maintenant) +
+          "</span><span" +
+          cl +
+          ">" +
+          echapper(avant) +
+          "</span>" +
+          (norm
+            ? '<span class="tag ' +
+              (egal ? "eg" : "dif") +
+              '">' +
+              (egal ? "IDENTIQUE" : "DIFFÉRENT") +
+              "</span>"
+            : "<span></span>") +
+          "</div>"
+        );
+      };
+      html +=
+        '<div class="comparaison">' +
+        '<div class="rang entete"><span>' +
+        echapper(LIBELLES_TYPE[d.type] || "") +
+        "</span><span>Maintenant</span><span>Déjà enregistré · " +
+        echapper(d.date) +
+        (d.ligne && d.ligne !== "en cours" ? " · ligne " + echapper(d.ligne) : "") +
+        "</span><span></span></div>" +
+        rang("Nom", (sa.nom || "").toUpperCase().trim(), d.nom, normIdJS) +
+        rang("Prénom", (sa.prenom || "").toUpperCase().trim(), d.prenom, normIdJS) +
+        rang("N° de pièce", (sa.piece || "").toUpperCase().trim(), d.piece, normPieceJS) +
+        rang(
+          CONFIG.LIBELLE_MONTANT,
+          sa.montant ? formaterMontantAffiche(sa.montant) : "",
+          d.montant !== "" ? formaterMontantAffiche(d.montant) : "",
+          null
+        ) +
+        (d.notes ? rang("Notes", sa.notes || "", d.notes, null) : "") +
+        "</div>";
+    });
+    return html;
+  }
+
   // --- Fenêtre d'alerte du serveur (ne touche pas au formulaire en cours de frappe) ---
   const alertesEnFile = [];
   let alerteCourante = null;
@@ -23,51 +117,51 @@
       titre = "⚠️ SAISIE NON ENREGISTRÉE";
       msg =
         (sa.forcee ? "Le forçage n'a pas pu être envoyé" : "La connexion avec le serveur a échoué") +
-        " : cette saisie n'a PAS été enregistrée. Vérifiez le Wi-Fi puis touchez RÉESSAYER." +
-        " (Si un doublon de cette même personne enregistré « à l'instant » apparaît ensuite, c'est que le premier envoi avait abouti : choisissez alors NE PAS ENREGISTRER.)";
+        " : cette saisie n'a PAS été enregistrée. Vérifiez le Wi-Fi puis touchez « Réessayer »." +
+        " (Si un doublon de cette même personne enregistré « à l'instant » apparaît ensuite, c'est que le premier envoi avait abouti : choisissez alors « Ne pas enregistrer ».)";
     } else {
       titre = rep.titre || "🛑 SAISIE REFUSÉE";
       msg = "Cette saisie n'a PAS été enregistrée. " + (rep.message || "");
       forcable = rep.status === "CONFIRMATION";
       if (rep.horsPeriode) chargerDatesAffichage();
     }
-    document.getElementById("alerteServeurTitre").textContent = titre;
+    remplirTeteAlerte(
+      "teteAlerteServeur",
+      "alerteServeurCas",
+      "alerteServeurTitre",
+      { titre: titre, cas: rep && rep.cas, details: rep && rep.details },
+      sansPicto(titre)
+    );
     document.getElementById("alerteServeurMsg").textContent = msg;
-    const carte = document.getElementById("alerteServeurSaisie");
-    carte.textContent = "";
-    [
-      "👤 " + (sa.nom || "").toUpperCase() + " " + (sa.prenom || "").toUpperCase(),
-      "💳 " + (sa.piece || "").toUpperCase(),
-      sa.montant ? "💶 " + sa.montant : "",
-    ].forEach(function (t) {
-      if (!t) return;
-      const d = document.createElement("div");
-      d.textContent = t;
-      carte.appendChild(d);
-    });
-    const liste = document.getElementById("alerteServeurListe");
-    liste.textContent = "";
-    ((rep && rep.details) || []).forEach(function (d) {
-      const c = document.createElement("div");
-      c.className = "doublon-carte";
-      c.textContent =
-        "Déjà enregistré : " +
-        d.date +
-        " (Ligne " +
-        d.ligne +
-        ") — " +
-        d.nom +
-        " " +
-        d.prenom +
-        " — 💳 " +
-        d.piece;
-      liste.appendChild(c);
-    });
+    const details = (rep && rep.details) || [];
+    // Sans ligne à comparer (réseau, hors période…) : rappel de la saisie concernée
+    const resume = document.getElementById("alerteServeurSaisie");
+    resume.textContent = "";
+    if (!details.length) {
+      [
+        ["Client", ((sa.nom || "") + " " + (sa.prenom || "")).toUpperCase().trim()],
+        ["N° de pièce", (sa.piece || "").toUpperCase()],
+        [CONFIG.LIBELLE_MONTANT, sa.montant ? formaterMontantAffiche(sa.montant) : ""],
+      ].forEach(function (x) {
+        if (!x[1]) return;
+        const ligne = document.createElement("div"),
+          lib = document.createElement("span");
+        lib.textContent = x[0];
+        ligne.appendChild(lib);
+        ligne.appendChild(document.createTextNode(x[1]));
+        resume.appendChild(ligne);
+      });
+    }
+    resume.style.display = details.length ? "none" : "block";
+    document.getElementById("alerteServeurListe").innerHTML = tableauxComparaison(sa, details);
+    document.getElementById("confirmerForcageServeur").style.display = "none";
+    document.getElementById("txtConfirmerForcageServeur").textContent = texteConfirmationForcage(rep);
     const reessai = !rep; // échec de connexion : on propose de renvoyer la même saisie
-    document.getElementById("alerteServeurChoix").style.display = forcable ? "flex" : "none";
+    document.getElementById("alerteServeurChoix").style.display = forcable ? "block" : "none";
     document.getElementById("alerteServeurReessai").style.display = reessai ? "flex" : "none";
-    document.getElementById("btnAlerteOk").style.display = forcable || reessai ? "none" : "block";
-    m.style.display = "flex";
+    document.getElementById("blocAlerteOk").style.display = forcable || reessai ? "none" : "flex";
+    m.style.display = "block";
+    m.querySelector(".comparer").scrollTop = 0;
     alerteAfficheeA = Date.now();
   }
   // Une fenêtre qui vient de s'ouvrir ignore les appuis pendant 0,8 s : un double appui
@@ -79,6 +173,13 @@
   function fermerAlerteServeur() {
     if (alerteTropRecente()) return;
     alerteSuivante();
+  }
+  function demanderForcageServeur() {
+    if (alerteTropRecente()) return;
+    document.getElementById("confirmerForcageServeur").style.display = "flex";
+  }
+  function annulerForcageServeur() {
+    document.getElementById("confirmerForcageServeur").style.display = "none";
   }
   function forcerDepuisAlerte() {
     if (alerteTropRecente()) return;

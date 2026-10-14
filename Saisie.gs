@@ -3,7 +3,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Saisie_() {
-  return "2026.10.14-0200";
+  return "2026.10.14-0213";
 }
 
 // =================================================================
@@ -91,10 +91,17 @@ function traiterSaisie(nom, prenom, piece, montant, notes, cle) {
       const notePourSheet = "⚠️ Ajout forcé (Cas " + pireCas + ")";
 
       if (isBloque) {
-        return { status: "BLOQUE", titre: msgTitre, message: msgAlerte, details: detailsDoublons };
+        return {
+          status: "BLOQUE",
+          cas: pireCas,
+          titre: msgTitre,
+          message: msgAlerte,
+          details: detailsDoublons,
+        };
       } else {
         return {
           status: "CONFIRMATION",
+          cas: pireCas,
           titre: msgTitre,
           message: msgAlerte,
           couleur: couleur,

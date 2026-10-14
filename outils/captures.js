@@ -61,7 +61,7 @@ async function ecrans(format) {
     await page.fill("#montant", "40");
     await page.click("#btnValider");
     await prendre("6-alerte-A");
-    await page.click("text=ABANDONNER");
+    await page.click("#actionSignaler >> text=Ne pas enregistrer");
     await page.fill("#piece", "555");
     await page.fill("#nom", "LEROY");
     await page.fill("#prenom", "ANNE");

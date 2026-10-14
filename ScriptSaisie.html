@@ -1,5 +1,5 @@
 <!-- Envoi d'une saisie, encadré de doublon, contrôle A/B/C local, saisies en attente. -->
-<script data-version="2026.10.14-0200">
+<script data-version="2026.10.14-0213">
   let memNom = "",
     memPrenom = "",
     memPiece = "",
@@ -116,62 +116,36 @@
       rechargerCacheVerif();
     } else if (reponse.status === "CONFIRMATION") {
       saisieEncadre = saisie;
-      afficherDetailsDoublon(reponse.details, false, reponse.titre, reponse.message, reponse.couleur);
+      afficherDetailsDoublon(reponse, false);
     } else if (reponse.status === "BLOQUE") {
       saisieEncadre = saisie;
-      afficherDetailsDoublon(reponse.details || [], true, reponse.titre, reponse.message, "ROUGE");
+      afficherDetailsDoublon(reponse, true);
       if (reponse.horsPeriode) chargerDatesAffichage();
     }
   }
 
-  function afficherDetailsDoublon(details, isBloquant, titreTexte, messageTexte, couleurTheme) {
-    document.getElementById("formulaireSaisie").style.display = "none";
-    const box = document.getElementById("boxConfirmation");
-    const titre = document.getElementById("titreDoublon");
-    const msgBox = document.getElementById("messageAlerte");
-
-    titre.textContent = titreTexte;
-    msgBox.textContent = messageTexte;
-
-    if (couleurTheme === "ORANGE") {
-      box.style.backgroundColor = "var(--orange-doux)";
-      box.style.borderColor = "var(--orange-trait)";
-      titre.style.color = "var(--orange)";
-      msgBox.style.color = "var(--orange)";
-    } else {
-      box.style.backgroundColor = "var(--danger-doux)";
-      box.style.borderColor = "var(--danger-trait)";
-      titre.style.color = "var(--danger)";
-      msgBox.style.color = "var(--danger)";
-    }
-
-    if (isBloquant) {
-      document.getElementById("actionSignaler").style.display = "none";
-      document.getElementById("actionBloquant").style.display = "block";
-    } else {
-      document.getElementById("actionSignaler").style.display = "block";
-      document.getElementById("actionBloquant").style.display = "none";
-    }
-
-    let listeHTML = "";
-    (details || []).forEach(function (d) {
-      listeHTML += "<div class='doublon-carte'>";
-      listeHTML += "📅 <b>Passage du :</b> " + echapper(d.date) + " (Ligne " + echapper(d.ligne) + ")<br>";
-      listeHTML += "👤 <b>Identité :</b> " + echapper(d.nom) + " " + echapper(d.prenom) + "<br>";
-      listeHTML += "💳 <b>N° Pièce :</b> " + echapper(d.piece) + "<br>";
-      if (d.montant !== "")
-        listeHTML +=
-          "💶 <b>" +
-          echapper(CONFIG.LIBELLE_MONTANT) +
-          " :</b> " +
-          echapper(formaterMontantAffiche(d.montant)) +
-          "<br>";
-      if (d.notes !== "") listeHTML += "💬 <b>Notes :</b> " + echapper(d.notes) + "<br>";
-      listeHTML += "</div>";
-    });
-    document.getElementById("listeDoublons").innerHTML = listeHTML;
-
-    box.style.display = "block";
+  // Alerte avant enregistrement : la saisie en cours comparée, champ par champ, à
+  // chaque ligne déjà enregistrée (fenêtre au-dessus du formulaire).
+  function afficherDetailsDoublon(reponse, isBloquant) {
+    remplirTeteAlerte("teteDoublon", "titreCas", "titreDoublon", reponse);
+    document.getElementById("messageAlerte").textContent = reponse.message || "";
+    document.getElementById("listeDoublons").innerHTML = tableauxComparaison(saisieEncadre, reponse.details);
+    document.getElementById("actionSignaler").style.display = isBloquant ? "none" : "block";
+    document.getElementById("actionBloquant").style.display = isBloquant ? "block" : "none";
+    document.getElementById("confirmerForcage").style.display = "none";
+    document.getElementById("txtConfirmerForcage").textContent = texteConfirmationForcage(reponse);
+    document.getElementById("boxConfirmation").style.display = "block";
+    document.querySelector("#boxConfirmation .comparer").scrollTop = 0;
+    document.querySelector(isBloquant ? "#actionBloquant .stop" : "#actionSignaler .stop").focus();
+  }
+  // « Enregistrer quand même… » : confirmation dans la fenêtre, avant tout envoi
+  function demanderForcage() {
+    document.getElementById("confirmerForcage").style.display = "flex";
+    document.querySelector("#confirmerForcage .forcer").focus();
+  }
+  function annulerForcage() {
+    document.getElementById("confirmerForcage").style.display = "none";
+    document.querySelector("#actionSignaler .stop").focus();
   }
 
   function forcerAjout() {
@@ -317,9 +291,10 @@
           "Un client porte ce nom avec une autre pièce. Demandez une 2e pièce d'identité pour confirmer qu'il s'agit bien d'une personne différente avant de forcer l'ajout.";
       }
     }
-    if (isBloque) return { status: "BLOQUE", titre: titre, message: msg, details: details };
+    if (isBloque) return { status: "BLOQUE", cas: pireCas, titre: titre, message: msg, details: details };
     return {
       status: "CONFIRMATION",
+      cas: pireCas,
       titre: titre,
       message: msg,
       couleur: couleur,

@@ -83,7 +83,23 @@ box-sizing) → corrigé par la refonte.
   car l'offre est réglable (pas forcément des chèques) — à confirmer par Bryan.
   Écran étroit : en-tête sur 2 lignes, numéros masqués, champs empilés (≤ 480 px).
   Nouveau test : `test_ui_saisie` (31 séries).
-- ▶️ Prochaine : étape 3 (alerte comparative + forçage confirmé dans la fenêtre).
+  Bryan a dit « go » pour l'étape 3 sans revenir sur ces 3 points (verdict au lieu de
+  la fenêtre, textes neutres, pas de raccourci Entrée) → considérés comme acceptés.
+- ✅ Étape 3 — alerte comparative (version 2026.10.14-0213) : `#boxConfirmation`
+  (avant enregistrement) et `#modalAlerteServeur` (après coup) deviennent la même
+  fenêtre `.voile > .comparer` par-dessus le formulaire (qui reste affiché derrière) :
+  en-tête rouge (A, B, refus) ou orange (C) avec titre du cas (`TEXTES_CAS`) et, en
+  sous-titre, le titre du serveur sans pictogramme (« ALERTE FRAUDE · même nom et même
+  pièce ») ; consigne = message du serveur ; une comparaison par ligne trouvée
+  (Nom / Prénom / N° : IDENTIQUE ou DIFFÉRENT ; montant, notes) ; « Ne pas
+  enregistrer » + lien « Enregistrer quand même… » → confirmation DANS la fenêtre
+  (`demanderForcage` / `forcerAjout`) ; BLOQUANT : bandeau « refusé » + « Retour à
+  la saisie ». Serveur : `traiterSaisie` renvoie aussi `cas` (comme `forcerSaisie`) ;
+  miroir local idem. Réseau / hors période : résumé de la saisie à la place de la
+  comparaison, « Réessayer » / « Abandonner ». Aide « Les alertes » réécrite.
+  Nouveau test `test_ui_alerte` (32 séries). Les alertes de CORRECTION (espace
+  responsable, `#corAlerte`) gardent l'ancien style → étape 5.
+- ▶️ Prochaine : étape 4 (journal du jour).
 
 **Tranché par Bryan (13/10, après relecture du plan)** : journal = chèques de TOUTES
 les tablettes (copie locale, décalage ≤ 2 min pour les autres tablettes). Pas de modèle

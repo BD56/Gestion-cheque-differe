@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr" data-version="2026.10.14-0200">
+<html lang="fr" data-version="2026.10.14-0213">
   <head>
     <base target="_top">
     <?!= include_('Style') ?>
@@ -76,22 +76,6 @@
             <button class="valider" id="btnValider" data-action="envoyerSaisie"><svg class="ico"><use href="#i-check"/></svg><span>Enregistrer</span></button>
           </div>
 
-          <div id="boxConfirmation">
-            <div class="doublon-titre" id="titreDoublon"></div>
-            <div class="message-alerte" id="messageAlerte"></div>
-            <div id="listeDoublons"></div>
-
-            <div id="actionSignaler">
-              <div class="flex-btn">
-                <button class="btn-cancel" data-action="annulerSaisie">ABANDONNER</button>
-                <button class="btn-force" data-action="forcerAjout">FORCER L'AJOUT</button>
-              </div>
-            </div>
-            <div id="actionBloquant" style="display: none">
-              <button class="btn-retour-bloquant" data-action="annulerSaisie">RETOUR À LA SAISIE</button>
-            </div>
-          </div>
-
           <div id="statusMessage" role="status"></div>
           <div style="display: none" class="envoi-en-cours" id="envoiEnCours"></div>
 
@@ -143,16 +127,16 @@
           <div class="sous-ecran" data-aide="alertes">
             <button class="retour" data-action="allerAide" data-args='["accueil"]'><svg class="ico"><use href="#i-chevron"/></svg>Retour</button>
             <h3 class="titre-ecran"><svg class="ico"><use href="#i-alerte"/></svg> Les alertes</h3>
-            <p>Si le client pose problème, un encadré s'affiche à la place du formulaire :</p>
+            <p>Si le client pose problème, une fenêtre compare la saisie (« Maintenant ») à ce qui est déjà enregistré, ligne par ligne : <strong>IDENTIQUE</strong> ou <strong>DIFFÉRENT</strong>.</p>
             <ul>
-              <li class="encadre-aide rouge">🛑 <strong>ALERTE FRAUDE</strong> : ce client (même nom + même pièce) a déjà profité de l'offre.</li>
-              <li class="encadre-aide rouge">🛑 <strong>ANOMALIE GRAVE</strong> : ce N° de pièce est déjà enregistré <strong>sous un autre nom</strong> (usurpation possible).</li>
-              <li class="encadre-aide orange">⚠️ <strong>HOMONYME DÉTECTÉ</strong> : même nom avec une autre pièce. Demandez une 2ᵉ pièce d'identité avant de forcer.</li>
-              <li>Vous choisissez : <strong>ABANDONNER</strong> ou <strong>FORCER L'AJOUT</strong> (la ligne est alors marquée).</li>
+              <li class="encadre-aide rouge"><strong>Ce client est déjà venu</strong> (ALERTE FRAUDE) : même nom et même pièce, il a déjà profité de l'offre.</li>
+              <li class="encadre-aide rouge"><strong>Cette pièce appartient à un autre client</strong> (ANOMALIE GRAVE) : ce N° de pièce est déjà enregistré <strong>sous un autre nom</strong> (usurpation possible).</li>
+              <li class="encadre-aide orange"><strong>Un client porte déjà ce nom</strong> (HOMONYME DÉTECTÉ) : même nom avec une autre pièce. Demandez une 2ᵉ pièce d'identité avant d'enregistrer.</li>
+              <li>Vous choisissez : <strong>Ne pas enregistrer</strong>, ou <strong>Enregistrer quand même…</strong> puis <strong>Confirmer l'enregistrement forcé</strong> (la ligne est alors marquée en rouge).</li>
               <li>En mode <strong>BLOQUANT</strong>, les alertes rouges deviennent <strong>SAISIE REFUSÉE</strong> : impossible de forcer.</li>
               <li><strong>Plusieurs passages autorisés</strong> (selon le réglage) : un même client peut revenir jusqu'à ce nombre, noté « ℹ️ Passage 2/3 ». Au-delà : ALERTE FRAUDE.</li>
-              <li>Rarement, une fenêtre <strong>rouge</strong> apparaît juste après une saisie acceptée : le serveur a trouvé un doublon (par exemple saisi au même moment sur une autre tablette). Choisissez <strong>NE PAS ENREGISTRER</strong> ou <strong>FORCER L'AJOUT</strong>.</li>
-              <li>Sous le bandeau vert, « ⏳ 1 saisie en cours d'envoi » s'affiche une ou deux secondes, le temps que le serveur confirme. En cas de coupure, une fenêtre <strong>SAISIE NON ENREGISTRÉE</strong> propose <strong>RÉESSAYER</strong>.</li>
+              <li>Rarement, la même fenêtre apparaît juste après une saisie acceptée : le serveur a trouvé un doublon (par exemple saisi au même moment sur une autre tablette). La saisie n'est pas enregistrée tant que vous ne la forcez pas.</li>
+              <li>Sous le bandeau vert, « ⏳ 1 saisie en cours d'envoi » s'affiche une ou deux secondes, le temps que le serveur confirme. En cas de coupure, une fenêtre <strong>Saisie non enregistrée</strong> propose <strong>Réessayer</strong>.</li>
             </ul>
           </div>
 
@@ -422,21 +406,67 @@
       </div>
     </div>
 
-    <div id="modalAlerteServeur" class="modal-overlay alerte-serveur">
-      <div class="modal-content cadre-alerte">
-        <h2 class="titre-modal-alerte" id="alerteServeurTitre"></h2>
-        <p class="texte-alerte" id="alerteServeurMsg"></p>
-        <div id="alerteServeurSaisie" class="doublon-carte carte-alerte"></div>
-        <div id="alerteServeurListe"></div>
-        <div class="flex-btn" id="alerteServeurChoix">
-          <button class="btn-cancel" data-action="fermerAlerteServeur">NE PAS ENREGISTRER</button>
-          <button class="btn-force" data-action="forcerDepuisAlerte">FORCER L'AJOUT</button>
+    <!-- Alerte de doublon avant enregistrement : comparaison côte à côte -->
+    <div id="boxConfirmation" class="voile" style="display: none">
+      <div class="comparer" role="alertdialog" aria-modal="true" aria-labelledby="titreCas">
+        <div class="tete" id="teteDoublon">
+          <svg class="ico"><use href="#i-alerte"/></svg>
+          <div><b id="titreCas"></b><span id="titreDoublon"></span></div>
         </div>
-        <div class="flex-btn" id="alerteServeurReessai" style="display: none">
-          <button class="btn-cancel" data-action="fermerAlerteServeur">ABANDONNER</button>
-          <button class="btn-force fond-bleu" data-action="reessayerDepuisAlerte">RÉESSAYER</button>
+        <p class="consigne" id="messageAlerte"></p>
+        <div class="tableau" id="listeDoublons"></div>
+        <div id="actionSignaler">
+          <div class="boutons">
+            <button class="stop" data-action="annulerSaisie">Ne pas enregistrer</button>
+            <button class="quand-meme" data-action="demanderForcage">Enregistrer quand même…</button>
+          </div>
+          <div class="confirmer" id="confirmerForcage" style="display: none">
+            <p id="txtConfirmerForcage"></p>
+            <div class="act">
+              <button class="forcer" data-action="forcerAjout">Confirmer l'enregistrement forcé</button>
+              <button data-action="annulerForcage">Annuler</button>
+            </div>
+          </div>
         </div>
-        <button class="btn-action fond-rouge-haut" id="btnAlerteOk" data-action="fermerAlerteServeur">OK, COMPRIS</button>
+        <div id="actionBloquant" style="display: none">
+          <div class="refus">Mode bloquant : cet enregistrement est refusé. Seul un responsable peut changer le mode.</div>
+          <div class="boutons">
+            <button class="stop" data-action="annulerSaisie">Retour à la saisie</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alerte du serveur APRÈS coup (saisie refusée, doublon vu par le serveur, réseau) -->
+    <div id="modalAlerteServeur" class="voile alerte-serveur" style="display: none">
+      <div class="comparer" role="alertdialog" aria-modal="true" aria-labelledby="alerteServeurCas">
+        <div class="tete" id="teteAlerteServeur">
+          <svg class="ico"><use href="#i-alerte"/></svg>
+          <div><b id="alerteServeurCas"></b><span id="alerteServeurTitre"></span></div>
+        </div>
+        <p class="consigne" id="alerteServeurMsg"></p>
+        <div class="resume-saisie" id="alerteServeurSaisie"></div>
+        <div class="tableau" id="alerteServeurListe"></div>
+        <div id="alerteServeurChoix">
+          <div class="boutons">
+            <button class="stop" data-action="fermerAlerteServeur">Ne pas enregistrer</button>
+            <button class="quand-meme" data-action="demanderForcageServeur">Enregistrer quand même…</button>
+          </div>
+          <div class="confirmer" id="confirmerForcageServeur" style="display: none">
+            <p id="txtConfirmerForcageServeur"></p>
+            <div class="act">
+              <button class="forcer" data-action="forcerDepuisAlerte">Confirmer l'enregistrement forcé</button>
+              <button data-action="annulerForcageServeur">Annuler</button>
+            </div>
+          </div>
+        </div>
+        <div class="boutons" id="alerteServeurReessai" style="display: none">
+          <button class="stop" data-action="reessayerDepuisAlerte">Réessayer</button>
+          <button class="quand-meme neutre" data-action="fermerAlerteServeur">Abandonner</button>
+        </div>
+        <div class="boutons" id="blocAlerteOk">
+          <button class="stop" id="btnAlerteOk" data-action="fermerAlerteServeur">OK, compris</button>
+        </div>
       </div>
     </div>
 

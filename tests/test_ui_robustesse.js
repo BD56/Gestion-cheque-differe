@@ -41,7 +41,7 @@ async function saisirClavier(page, piece, nom, prenom) {
     await page.waitForTimeout(100);
     assert.ok(await page.isVisible("#boxConfirmation"), "écran ALERTE FRAUDE local");
     assert.match(await page.textContent("#titreDoublon"), /ALERTE FRAUDE/);
-    await page.click("text=ABANDONNER");
+    await page.click("#actionSignaler >> text=Ne pas enregistrer");
     // Plusieurs rechargements ensuite : pas de doublon fantôme une fois écrite et rechargée
     await page.evaluate(() => {
       rechargerCacheVerif();
@@ -71,10 +71,12 @@ async function saisirClavier(page, piece, nom, prenom) {
     await page.waitForTimeout(200);
     assert.ok(await page.isVisible("#modalAlerteServeur"));
     assert.match(await page.textContent("#alerteServeurTitre"), /ALERTE FRAUDE/);
-    assert.match(await page.textContent("#alerteServeurSaisie"), /MARTIN PAUL/);
+    assert.match(await page.textContent("#alerteServeurCas"), /Ce client est déjà venu/);
+    assert.match(await page.textContent("#alerteServeurListe"), /Maintenant.*NomMARTIN.*PrénomPAUL/);
     assert.ok(await page.isVisible("#alerteServeurChoix"), "SIGNALER : choix NE PAS ENREGISTRER / FORCER");
     await page.waitForTimeout(900); // fenêtre lue (appuis ignorés 0,8 s)
-    await page.click("#alerteServeurChoix >> text=FORCER L'AJOUT");
+    await page.click("#alerteServeurChoix >> text=Enregistrer quand même…");
+    await page.click("#alerteServeurChoix >> text=Confirmer l'enregistrement forcé");
     await page.waitForTimeout(200);
     assert.ok(!(await page.isVisible("#modalAlerteServeur")));
     const derniere = env.sheets.Saisies.getRange(env.sheets.Saisies.getLastRow(), 1, 1, 6).getValues()[0];
@@ -111,7 +113,7 @@ async function saisirClavier(page, piece, nom, prenom) {
     });
     await page.waitForTimeout(200);
     assert.strictEqual(env.sheets.Saisies.getLastRow(), avant, "rien d'écrit hors période");
-    assert.match(await page.textContent("#alerteServeurTitre"), /HORS PÉRIODE/);
+    assert.match(await page.textContent("#teteAlerteServeur"), /HORS PÉRIODE/);
     assert.deepStrictEqual(erreursPage, []);
     console.log("test_ui_robustesse : OK");
   } finally {

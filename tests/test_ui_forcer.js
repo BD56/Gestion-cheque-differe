@@ -29,7 +29,8 @@ const { FakeSheet } = require("./fakesheet");
     await page.evaluate(() => {
       window.rechargerCacheVerif = window.__recharger;
     });
-    await page.click("text=FORCER L'AJOUT");
+    await page.click("#boxConfirmation >> text=Enregistrer quand même…");
+    await page.click("#boxConfirmation >> text=Confirmer l'enregistrement forcé");
     await page.waitForTimeout(250);
     assert.strictEqual(S.getLastRow(), 2, "rien écrit");
     assert.ok(await page.isVisible("#modalAlerteServeur"), "fenêtre d'alerte attendue");

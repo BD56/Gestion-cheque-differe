@@ -33,6 +33,11 @@
   comparer ; dire Safari ou Chrome. Si l'adresse change : discuter d'une parade
   (ex. adresse avec la clé en favori) AVANT de coder. Idée proposée, non décidée :
   réautoriser sous le même nom remplace l'ancienne entrée (piège du nom unique).
+  1er relevé (Mac, Sheet REFONTE test, version 2026.10.14-1459, 14/10) : « Clé absente
+  de ce navigateur » ; adresse technique
+  `n-ijetbkxwto6cqlhbmed6rj7j4kexnxcgupggffa-0lu-script.googleusercontent.com`
+  (attendu normal : la clé était déjà perdue avant cette version). À comparer avec
+  l'adresse après la PROCHAINE « Nouvelle version ».
 - **Ensuite (sur demande)** : fusions, documentation (`docs/A_REDIGER.md`, captures via
   `outils/captures.js`), migration de Vannes (`DEPLOIEMENT.md`).
 - **Leçons de cette période** : (1) ne pas réorganiser des écrans sans validation (la

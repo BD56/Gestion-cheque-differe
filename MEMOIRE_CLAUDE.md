@@ -11,7 +11,7 @@
   « Comptoir » (branche de travail actuelle, tout est poussé)**. Aucune fusion faite,
   aucune pull request. Ordre prévu (sur demande de Bryan seulement) : `design` →
   `refonte` → `generalisation` → `main` / migration Vannes.
-- **Version actuelle sur `design`** : 2026.10.14-1303 (38 séries de tests vertes,
+- **Version actuelle sur `design`** : 2026.10.14-1344 (39 séries de tests vertes,
   ESLint et Prettier propres). Numéro renouvelé par Claude à chaque push de code
   (`npm run nouvelle-version`).
 - **Bryan teste** sur le Sheet « Gestion Chèques Différés — REFONTE (test) » depuis
@@ -22,9 +22,10 @@
   navigateur : Safari / Chrome) après mise à jour ; confirmer si « Saisies :
   Chargement… » reste bloqué (sa capture venait d'une version antérieure) ; essai sur
   vraie tablette (rotation, clavier, journal, alertes, espace responsable, panneau).
-- **Dernier échange** : préchargement de l'espace responsable fait, poussé
-  (a75481a) et présenté à Bryan (« option 1 », les 3 listes) ; il ne l'a pas encore
-  essayé. Rien d'autre en cours de codage : attendre son retour ou son « go ».
+- **Dernier échange** : aperçu de l'espace responsable préparé à l'appui sur ⚙️
+  (« go » de Bryan, voir « Aperçu » dans l'historique). EN DISCUSSION, non codé :
+  précharger le CONTENU des n dernières archives après le code (Bryan demande ce que
+  vaut n et quelle option pour « plus ») ; Claude conseille n = 1 (voir §4).
 - **Ensuite (sur demande)** : fusions, documentation (`docs/A_REDIGER.md`, captures via
   `outils/captures.js`), migration de Vannes (`DEPLOIEMENT.md`).
 - **Leçons de cette période** : (1) ne pas réorganiser des écrans sans validation (la
@@ -254,6 +255,27 @@ box-sizing) → corrigé par la refonte.
   plus récente compte (`seq`). Au verrouillage : `listesAdmin` vidé et listes effacées
   de la page. Préchargement AVANT le code impossible (données protégées par le code).
   Test `test_ui_prechargement` (38 séries).
+- Aperçu de l'espace responsable (version 2026.10.14-1344, décision Bryan après
+  discussion) : constat partagé avec Bryan → le code protège surtout les ACTIONS ; en
+  lecture, un appareil autorisé a déjà sans code toutes les saisies de l'offre
+  (copie de détection, impression libre de « Toute l'offre », que Bryan GARDE libre),
+  l'annuaire, les réglages. Donc : `apercuResponsable(cle)` (Securite.gs,
+  `exigerTablette_`) renvoie mode, dates, réglages, chiffres, saisies
+  (`listeSaisies_`), NOMS des archives (`listeArchives_`), appareils
+  (`listeTablettes_` : nom, dates, id au hasard ; ni clé ni empreinte). Restent derrière
+  le code : contenu des archives (`donneesArchive`), codes faux tapés
+  (`essaisInconnus`), recréation des robots (getInfosAdmin), toutes les actions.
+  Page : `preparerApercuAdmin()` dans `afficherZoneVerrou` (appui sur ⚙️ ou reverrou
+  espace ouvert) ; RIEN n'est affiché avant que le serveur accepte le code ; au
+  déverrouillage `utiliserApercuAdmin()` remplit les listes (`listesAdmin`) et la vue
+  d'ensemble (`appliquerInfosAdmin`, sans alertes), puis getInfosAdmin + listes
+  rechargées comme avant. Aperçu arrivé après le code : ignoré ; oublié à la
+  fermeture / au verrouillage (`seqApercu`). `afficherListeAdmin` dessine la liste
+  connue même si un rechargement est en route. Réglages modifiés pendant le
+  rechargement : gardés (`reglagesModifies`). Chiffrer les données avant le code :
+  écarté (6 chiffres = essais hors ligne sans limite ; n'aurait rien protégé de
+  plus). Tests : test_tablettes (refus sans clé, rien de la sécurité, aucun robot
+  recréé), `test_ui_apercu` (39 séries ; vérifié qu'il échoue sans l'aperçu).
 **REFONTE GRAPHIQUE TERMINÉE (7 étapes + 5 bis) sur `design`.** En attente de Bryan :
 essai sur le Sheet de test (git checkout design, npm run push, Installer, déploiement)
 puis sur tablette réelle : rotation, clavier, journal, alertes, espace responsable,
@@ -424,6 +446,7 @@ quand Bryan le demande.
    Google) : seul Chromium est testé ici. Espace responsable : les 3 listes
    préchargées au déverrouillage arrivent bien (3 appels serveur en parallèle) et
    « Saisies : Chargement… » ne reste plus bloqué. Nom d'appareil en double refusé.
+   Aperçu : après le code, vue d'ensemble / saisies / réglages visibles sans attente.
 
 ## 4. Points ouverts / idées non faites
 - Pull request `generalisation` → `main` : à ouvrir **après** le test de Bryan (il n'a pas
@@ -444,6 +467,11 @@ quand Bryan le demande.
 - **Annuaire à la demande** (nom demandé au serveur au N° tapé au lieu de l'annuaire
   entier dans chaque tablette) : intéressant pour le RGPD ; pré-remplissage ~1 s plus
   tard et impossible hors réseau. À discuter après la refonte.
+- **Archives** (question de Bryan, 14/10) : précharger après le code le CONTENU des n
+  dernières offres ? Aujourd'hui : noms de toutes les archives (léger, ≤ 3 ans) ;
+  contenu chargé à l'impression (1-2 s, usage rare). Conseil de Claude : n = 1 (la
+  dernière offre, la plus consultée) ; « plus » = la liste actuelle (choisir une
+  archive la charge à la demande). En attente de la décision de Bryan.
 - Renommer un appareil depuis « Code & appareils » : non fait (on retire puis on
   réautorise sous un autre nom).
 - Couleur réglable par structure (maquette C) : idée en réserve.

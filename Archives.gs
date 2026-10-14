@@ -2,7 +2,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Archives_() {
-  return "2026.10.14-1303";
+  return "2026.10.14-1344";
 }
 
 // =================================================================
@@ -49,6 +49,10 @@ function purgerArchives_() {
 // Liste des archives, la plus récente d'abord.
 function listerArchives(jeton) {
   exigerAdmin_(jeton);
+  return listeArchives_();
+}
+// Noms des archives seulement : le contenu d'une archive demande le code.
+function listeArchives_() {
   const liste = [];
   SpreadsheetApp.getActiveSpreadsheet()
     .getSheets()

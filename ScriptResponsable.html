@@ -1,5 +1,5 @@
 <!-- Espace responsable : code, corrections, archives, réglages, tablettes. -->
-<script data-version="2026.10.14-1303">
+<script data-version="2026.10.14-1344">
   // =================================================================
   // --- ESPACE RESPONSABLE (code PIN) ---
   // Le jeton n'est gardé qu'en mémoire : il disparaît à la fermeture du
@@ -26,8 +26,9 @@
   }
 
   // --- Listes de l'espace responsable (saisies, archives, appareils) ---
-  // Préchargées en arrière-plan dès le déverrouillage : à l'ouverture d'un écran, la
-  // liste déjà reçue s'affiche tout de suite puis est rechargée (état le plus récent).
+  // Préparées avant le code (aperçu, plus bas) puis rechargées dès le déverrouillage : à
+  // l'ouverture d'un écran, la liste déjà reçue s'affiche tout de suite puis est
+  // rechargée (état le plus récent).
   // Effacées au verrouillage (noms, N° de pièce).
   let listesAdmin = {};
   // forcer : après une modification, nouvel appel même si un autre est en route (sa
@@ -65,7 +66,7 @@
   // la liste rechargée — ou attente du préchargement s'il est encore en route.
   function afficherListeAdmin(fonction, dessiner) {
     const l = listesAdmin[fonction];
-    if (l && l.donnees && !l.enCours) dessiner(l.donnees, true);
+    if (l && l.donnees) dessiner(l.donnees, true);
     lireListeAdmin(fonction, function (d) {
       dessiner(d, false);
     });
@@ -76,6 +77,41 @@
     });
   }
 
+  // --- Aperçu : préparé à l'appui sur ⚙️, pendant que le code est tapé ---
+  // Lectures qu'un appareil autorisé obtient déjà sans code (saisies, chiffres, réglages,
+  // noms des archives, appareils) : rien n'est affiché avant que le serveur accepte le
+  // code ; ensuite tout apparaît aussitôt, puis est rechargé. Oublié à la fermeture.
+  let apercuAdmin = null,
+    seqApercu = 0;
+  function preparerApercuAdmin() {
+    apercuAdmin = null;
+    const seq = ++seqApercu;
+    google.script.run
+      .withSuccessHandler(function (a) {
+        if (seq === seqApercu && !jetonAdmin) apercuAdmin = a; // arrivé après le code : inutile
+      })
+      .withFailureHandler(function () {})
+      .apercuResponsable(CLE_TABLETTE);
+  }
+  function oublierApercuAdmin() {
+    apercuAdmin = null;
+    seqApercu++;
+  }
+  // Au déverrouillage : écrans remplis avec l'aperçu, avant les réponses à jour
+  function utiliserApercuAdmin() {
+    const a = apercuAdmin;
+    oublierApercuAdmin();
+    if (!a) return;
+    [
+      ["listerSaisies", a.saisies],
+      ["listerArchives", a.archives],
+      ["listerTablettes", a.tablettes],
+    ].forEach(function (p) {
+      listesAdmin[p[0]] = { donnees: p[1] || [], enCours: false, attente: [], seq: 0 };
+    });
+    appliquerInfosAdmin(a, true);
+  }
+
   function afficherZoneVerrou(message) {
     document.getElementById("zoneAdmin").style.display = "none";
     document.getElementById("railAdmin").style.display = "none";
@@ -83,6 +119,7 @@
     document.getElementById("adminSous").textContent = "Impression libre · le reste demande le code";
     document.getElementById("contenuAdmin").classList.add("verrouille");
     allerEcran("impression"); // l'impression reste possible sans code
+    preparerApercuAdmin();
     document.getElementById("msgVerrou").textContent = message || "";
     document.getElementById("txtVerrou").textContent = "…";
     google.script.run
@@ -152,12 +189,14 @@
     jetonAdmin = null;
     saisieEnCours = null;
     listesAdmin = {};
+    oublierApercuAdmin();
     listeSaisies = [];
     document.getElementById("listeSaisies").textContent = "";
     document.getElementById("listeTablettes").textContent = "";
     document.getElementById("selArchive").textContent = "";
     // rien d'une session ne survit à la suivante : réglages rechargés, dates relues
     reglagesCharges = false;
+    reglagesModifies = false;
     document.getElementById("champsReglages").innerHTML = "";
     delete document.getElementById("modalDateDebut").dataset.modifie;
     delete document.getElementById("modalDateFin").dataset.modifie;
@@ -178,6 +217,7 @@
     document.getElementById("adminSous").textContent =
       "Déverrouillé · se reverrouille après 10 min sans action";
     allerEcran("ensemble");
+    utiliserApercuAdmin();
     rafraichirEnsemble(true);
     prechargerListesAdmin();
   }
@@ -185,19 +225,23 @@
   // fait foi). Au déverrouillage, les réglages sont aussi chargés dans leur formulaire.
   function rafraichirEnsemble(avecReglages) {
     appelAdmin("getInfosAdmin", [], function (infos) {
-      majAffichageMode(infos.mode);
-      if (infos.annuaireActif) majAffichageModeAnnuaire(infos.modeAnnuaire);
-      const dD = document.getElementById("modalDateDebut"),
-        dF = document.getElementById("modalDateFin");
-      if (!dD.dataset.modifie && !dF.dataset.modifie) {
-        dD.value = infos.dates.debut;
-        dF.value = infos.dates.fin;
-      }
-      majResumeOperation(infos.dates.debut, infos.dates.fin);
-      majChiffres(infos.chiffres);
-      if (avecReglages) remplirFormulaireReglages(infos.config);
-      afficherAlertesAdmin(infos);
+      appliquerInfosAdmin(infos, avecReglages);
     });
+  }
+  function appliquerInfosAdmin(infos, avecReglages) {
+    majAffichageMode(infos.mode);
+    if (infos.annuaireActif) majAffichageModeAnnuaire(infos.modeAnnuaire);
+    const dD = document.getElementById("modalDateDebut"),
+      dF = document.getElementById("modalDateFin");
+    if (!dD.dataset.modifie && !dF.dataset.modifie) {
+      dD.value = infos.dates.debut;
+      dF.value = infos.dates.fin;
+    }
+    majResumeOperation(infos.dates.debut, infos.dates.fin);
+    majChiffres(infos.chiffres);
+    // formulaire déjà rempli par l'aperçu et modifié depuis : la saisie est gardée
+    if (avecReglages && !reglagesModifies) remplirFormulaireReglages(infos.config);
+    if (infos.robots) afficherAlertesAdmin(infos); // pas dans l'aperçu (avant le code)
   }
   function ouvrirEnsemble() {
     allerEcran("ensemble");
@@ -547,9 +591,11 @@
     ["PRECISION_NOTES", "Précision du champ Notes, entre parenthèses (facultatif)"],
     ["PASSAGES_MAX", "Passages autorisés par client et par offre (1 à 10)"],
   ];
-  let reglagesCharges = false;
+  let reglagesCharges = false,
+    reglagesModifies = false;
   function remplirFormulaireReglages(cfg) {
     reglagesCharges = true;
+    reglagesModifies = false;
     const zone = document.getElementById("champsReglages");
     zone.innerHTML = "";
     CHAMPS_CONFIG.forEach(function (c) {
@@ -737,6 +783,12 @@
   ["modalDateDebut", "modalDateFin"].forEach(function (id) {
     document.getElementById(id).addEventListener("input", function () {
       this.dataset.modifie = "1";
+    });
+  });
+  // Réglages en cours de modification : idem
+  ["input", "change"].forEach(function (evt) {
+    document.querySelector('#modalParametres [data-ecran="reglages"]').addEventListener(evt, function () {
+      reglagesModifies = true;
     });
   });
 </script>

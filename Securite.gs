@@ -3,7 +3,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Securite_() {
-  return "2026.10.14-1303";
+  return "2026.10.14-1344";
 }
 
 // =================================================================
@@ -407,6 +407,10 @@ function appairerTablette(pin, nom) {
 
 function listerTablettes(jeton) {
   exigerAdmin_(jeton);
+  return listeTablettes_();
+}
+// Ni clé ni empreinte : nom, dates et identifiant (tiré au hasard, sans lien avec la clé)
+function listeTablettes_() {
   const props = PropertiesService.getDocumentProperties();
   return lireTablettes_().map(function (t) {
     return { id: t.id, nom: t.nom, creeLe: t.creeLe, vueLe: props.getProperty("TABLETTE_VUE_" + t.id) || "" };
@@ -465,6 +469,27 @@ function retirerToutesTablettesPanneau() {
   } finally {
     lock.releaseLock();
   }
+}
+
+// Espace responsable, AVANT le code (appui sur ⚙️) : lectures préparées pendant que le
+// code est tapé, affichées seulement une fois le code accepté. Réservé aux appareils
+// autorisés, qui obtiennent déjà tout cela sans code (copie de détection, impression
+// libre de toute l'offre). Restent derrière le code : contenu des archives, codes faux
+// tapés (information de sécurité), recréation des robots de nuit, toutes les actions.
+function apercuResponsable(cle) {
+  exigerTablette_(cle);
+  const f = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FEUILLE_SAISIES);
+  return {
+    mode: modeSecurite_(f),
+    dates: lireDates_(),
+    annuaireActif: ANNUAIRE_ACTIF,
+    modeAnnuaire: getModeAnnuaire(),
+    config: getConfig(),
+    chiffres: chiffresOffre_(f),
+    saisies: listeSaisies_(),
+    archives: listeArchives_(),
+    tablettes: listeTablettes_(),
+  };
 }
 
 // Tout ce qu'affiche l'espace responsable, en un appel.

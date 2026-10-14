@@ -3,7 +3,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Saisie_() {
-  return "2026.10.14-1303";
+  return "2026.10.14-1344";
 }
 
 // =================================================================
@@ -332,6 +332,9 @@ function verifierPiece(piece, cle) {
 // Saisies de l'offre en cours, la plus récente d'abord.
 function listerSaisies(jeton) {
   exigerAdmin_(jeton);
+  return listeSaisies_();
+}
+function listeSaisies_() {
   const feuille = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FEUILLE_SAISIES);
   if (!feuille) return [];
   const derniere = feuille.getLastRow();

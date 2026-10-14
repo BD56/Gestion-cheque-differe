@@ -30,6 +30,8 @@ refuse(() => c.genererDonneesImpression("offre", ""));
 refuse(() => c.getDatesOperation());
 refuse(() => c.getInfosPanneau());
 refuse(() => c.ouvrirSessionAdmin("258025", "cle-bidon-cle-bidon-cle-bidon-cle-bidon"));
+refuse(() => c.apercuResponsable());
+refuse(() => c.apercuResponsable("cle-bidon-cle-bidon-cle-bidon-cle-bidon"));
 // 1re installation : n'importe qui ayant le lien ne peut PAS choisir le code…
 assert.strictEqual(J(c.definirPin("258025", null, null)).ok, false);
 assert.strictEqual(c.etatAdmin().pinDefini, false);
@@ -57,6 +59,21 @@ assert.ok(!JSON.stringify(P).includes(cle), "clé jamais stockée en clair");
 // Avec la clé : tout fonctionne
 assert.strictEqual(J(c.traiterSaisie("DUPONT", "JEAN", "P1", "10", "", cle)).status, "SUCCES");
 assert.strictEqual(J(c.chargerCacheVerif(cle)).offre.length, 1);
+// Aperçu de l'espace responsable (avant le code) : lectures seulement, rien de la
+// sécurité (codes faux tapés, robots), aucune action (robots de nuit non recréés)
+const nbRobots = c.ScriptApp.getProjectTriggers().length;
+const ap = J(c.apercuResponsable(cle));
+assert.strictEqual(ap.saisies.length, 1);
+assert.strictEqual(ap.saisies[0].nom, "DUPONT");
+assert.strictEqual(ap.chiffres.saisies, 1);
+assert.deepStrictEqual(
+  ap.tablettes.map((t) => t.nom),
+  ["Caisse centrale 1"]
+);
+assert.ok(Array.isArray(ap.archives) && ap.config && ap.dates);
+assert.ok(!("essaisInconnus" in ap) && !("robots" in ap), "rien de la sécurité avant le code");
+assert.ok(!JSON.stringify(ap).includes(cle) && !JSON.stringify(ap).includes("hash"), "ni clé ni empreinte");
+assert.strictEqual(c.ScriptApp.getProjectTriggers().length, nbRobots, "aucun robot recréé");
 // Rechargement léger : sans l'annuaire (la tablette garde le sien), offre toujours là
 assert.strictEqual(J(c.chargerCacheVerif(cle, true)).annuaire, null);
 assert.strictEqual(J(c.chargerCacheVerif(cle, true)).offre.length, 1);

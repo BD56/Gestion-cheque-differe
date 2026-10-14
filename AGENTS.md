@@ -167,6 +167,11 @@ Décision : `docs/retours-vibe/decisions/2026-10-11_generalisation.md`.
   jeton de session `CacheService` (10 min d'inactivité) **lié à la tablette** (envoyé
   `{ j: jeton, c: clé }`), 5 échecs → blocage 15 min.
   Protège : réglages, mode, mode annuaire, dates, clôture, archives, corrections.
+  (Branche `design`) Le code protège les **actions**, le **contenu des archives** et
+  les infos de sécurité (codes faux tapés) ; les **lectures** qu'un appareil autorisé
+  obtient déjà sans code (saisies, chiffres, réglages, noms des archives, appareils)
+  sont préparées à l'appui sur ⚙️ par `apercuResponsable(clé)` et affichées seulement
+  une fois le code accepté (décision de Bryan, 14/10).
   Présentation : **6 tuiles** (Saisies, Archives, Opération, Sécurité, Réglages, Code)
   ouvrant chacune un sous-écran (« ← Retour ») + Clôturer / Verrouiller à part.
   Bouton « Ouvrir Google Sheets » retiré de l'appli (tout passe par l'appli).

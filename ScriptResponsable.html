@@ -1,5 +1,5 @@
 <!-- Espace responsable : code, corrections, archives, réglages, tablettes. -->
-<script data-version="2026.10.14-1141">
+<script data-version="2026.10.14-1303">
   // =================================================================
   // --- ESPACE RESPONSABLE (code PIN) ---
   // Le jeton n'est gardé qu'en mémoire : il disparaît à la fermeture du
@@ -23,6 +23,57 @@
     });
     // jeton lié à cette tablette : il est envoyé avec sa clé
     runner[nomFonction].apply(runner, args.concat([{ j: jetonAdmin, c: CLE_TABLETTE }]));
+  }
+
+  // --- Listes de l'espace responsable (saisies, archives, appareils) ---
+  // Préchargées en arrière-plan dès le déverrouillage : à l'ouverture d'un écran, la
+  // liste déjà reçue s'affiche tout de suite puis est rechargée (état le plus récent).
+  // Effacées au verrouillage (noms, N° de pièce).
+  let listesAdmin = {};
+  // forcer : après une modification, nouvel appel même si un autre est en route (sa
+  // réponse, partie avant la modification, serait ancienne) ; seule la dernière compte.
+  function lireListeAdmin(fonction, surListe, forcer) {
+    const l =
+      listesAdmin[fonction] ||
+      (listesAdmin[fonction] = { donnees: null, enCours: false, attente: [], seq: 0 });
+    if (surListe) l.attente.push(surListe);
+    if (l.enCours && !forcer) return; // déjà demandée (préchargement en route) : pas de second appel
+    l.enCours = true;
+    const seq = ++l.seq;
+    appelAdmin(
+      fonction,
+      [],
+      function (donnees) {
+        if (seq !== l.seq) return; // une demande plus récente est en route : elle répondra
+        l.enCours = false;
+        if (!jetonAdmin || listesAdmin[fonction] !== l) return; // verrouillé entre-temps
+        l.donnees = donnees || [];
+        const a = l.attente;
+        l.attente = [];
+        a.forEach(function (f) {
+          f(l.donnees);
+        });
+      },
+      function () {
+        if (seq !== l.seq) return;
+        l.enCours = false;
+        l.attente = [];
+      }
+    );
+  }
+  // À l'ouverture d'un écran : liste déjà reçue tout de suite (provisoire = true), puis
+  // la liste rechargée — ou attente du préchargement s'il est encore en route.
+  function afficherListeAdmin(fonction, dessiner) {
+    const l = listesAdmin[fonction];
+    if (l && l.donnees && !l.enCours) dessiner(l.donnees, true);
+    lireListeAdmin(fonction, function (d) {
+      dessiner(d, false);
+    });
+  }
+  function prechargerListesAdmin() {
+    ["listerSaisies", "listerArchives", "listerTablettes"].forEach(function (f) {
+      lireListeAdmin(f);
+    });
   }
 
   function afficherZoneVerrou(message) {
@@ -100,6 +151,11 @@
     if (jetonAdmin) google.script.run.withFailureHandler(function () {}).fermerSessionAdmin(jetonAdmin);
     jetonAdmin = null;
     saisieEnCours = null;
+    listesAdmin = {};
+    listeSaisies = [];
+    document.getElementById("listeSaisies").textContent = "";
+    document.getElementById("listeTablettes").textContent = "";
+    document.getElementById("selArchive").textContent = "";
     // rien d'une session ne survit à la suivante : réglages rechargés, dates relues
     reglagesCharges = false;
     document.getElementById("champsReglages").innerHTML = "";
@@ -123,6 +179,7 @@
       "Déverrouillé · se reverrouille après 10 min sans action";
     allerEcran("ensemble");
     rafraichirEnsemble(true);
+    prechargerListesAdmin();
   }
   // Vue d'ensemble : chiffres, dates, mode et alertes, relus sur le serveur (« Saisies »
   // fait foi). Au déverrouillage, les réglages sont aussi chargés dans leur formulaire.
@@ -290,17 +347,18 @@
     m.textContent = sansPicto(texte || "");
     m.style.color = couleur || "var(--encre)";
   }
+  // message : résultat d'une correction / suppression à afficher au-dessus de la liste
   function chargerListeSaisies(message, couleur) {
     msgSaisies(message || "Chargement…", couleur);
-    appelAdmin("listerSaisies", [], function (liste) {
-      listeSaisies = liste || [];
-      msgSaisies(
-        message ||
-          (listeSaisies.length ? listeSaisies.length + " saisie(s)" : "Aucune saisie sur l'offre en cours."),
-        couleur
-      );
+    const dessiner = function (liste, provisoire) {
+      listeSaisies = liste;
+      const nombre = liste.length ? liste.length + " saisie(s)" : "Aucune saisie sur l'offre en cours.";
+      msgSaisies(message || nombre + (provisoire ? " · mise à jour…" : ""), couleur);
       dessinerListeSaisies();
-    });
+    };
+    if (message)
+      lireListeAdmin("listerSaisies", dessiner, true); // après une modification : liste fraîche
+    else afficherListeAdmin("listerSaisies", dessiner);
   }
   function dessinerListeSaisies() {
     const saisi = document.getElementById("rechercheSaisie").value;
@@ -445,7 +503,8 @@
     allerEcran("archives");
     const sel = document.getElementById("selArchive");
     sel.innerHTML = "<option value=''>Chargement…</option>";
-    appelAdmin("listerArchives", [], function (liste) {
+    afficherListeAdmin("listerArchives", function (liste) {
+      const choisie = sel.value;
       sel.innerHTML = "";
       if (!liste.length) {
         sel.innerHTML = "<option value=''>Aucune archive</option>";
@@ -457,6 +516,7 @@
         o.textContent = a.libelle + " — " + a.lignes + " ligne(s)";
         sel.appendChild(o);
       });
+      if (choisie) sel.value = choisie; // le choix fait pendant la mise à jour est gardé
     });
   }
   function imprimerArchive() {
@@ -562,11 +622,12 @@
     allerEcran("code");
     chargerTablettes();
   }
-  function chargerTablettes() {
+  // frais = true après un retrait : liste relue sur le serveur sans montrer l'ancienne
+  function chargerTablettes(frais) {
     const msg = document.getElementById("msgTablettes");
     msg.textContent = "Chargement…";
-    appelAdmin("listerTablettes", [], function (liste) {
-      msg.textContent = liste.length + " appareil(s) autorisé(s).";
+    const dessiner = function (liste, provisoire) {
+      msg.textContent = liste.length + " appareil(s) autorisé(s)." + (provisoire ? " Mise à jour…" : "");
       const zone = document.getElementById("listeTablettes");
       zone.textContent = "";
       document.getElementById("railNbTablettes").textContent = liste.length;
@@ -577,7 +638,7 @@
         const nom = document.createElement("b");
         nom.textContent = t.nom + (t.id === ID_TABLETTE ? " (cet appareil)" : "");
         const quand = document.createElement("small");
-        quand.textContent = "Autorisé le " + t.creeLe + (t.vueLe ? " · utilisée le " + t.vueLe : "");
+        quand.textContent = "Autorisé le " + t.creeLe + (t.vueLe ? " · utilisé le " + t.vueLe : "");
         texte.appendChild(nom);
         texte.appendChild(quand);
         const b = document.createElement("button");
@@ -592,7 +653,9 @@
         ligne.appendChild(b);
         zone.appendChild(ligne);
       });
-    });
+    };
+    if (frais) lireListeAdmin("listerTablettes", dessiner, true);
+    else afficherListeAdmin("listerTablettes", dessiner);
   }
   function retirerUneTablette(t) {
     appelAdmin("retirerTablette", [t.id], function () {
@@ -602,7 +665,7 @@
         afficherEcranAppairage("Cet appareil n'est plus autorisé.");
         return;
       }
-      chargerTablettes();
+      chargerTablettes(true);
     });
   }
   // Chaque tablette (y compris celle-ci) devra être autorisée à nouveau avec le code

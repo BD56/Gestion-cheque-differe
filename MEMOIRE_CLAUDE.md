@@ -11,7 +11,7 @@
   « Comptoir » (branche de travail actuelle, tout est poussé)**. Aucune fusion faite,
   aucune pull request. Ordre prévu (sur demande de Bryan seulement) : `design` →
   `refonte` → `generalisation` → `main` / migration Vannes.
-- **Version actuelle sur `design`** : 2026.10.14-1141 (37 séries de tests vertes,
+- **Version actuelle sur `design`** : 2026.10.14-1303 (38 séries de tests vertes,
   ESLint et Prettier propres). Numéro renouvelé par Claude à chaque push de code
   (`npm run nouvelle-version`).
 - **Bryan teste** sur le Sheet « Gestion Chèques Différés — REFONTE (test) » depuis
@@ -240,6 +240,15 @@ box-sizing) → corrigé par la refonte.
   aide, mentions, messages serveur, panneau du Sheet) SAUF « Tournez la tablette ».
   Noms internes INCHANGÉS (CLE_TABLETTE, propriété TABLETTES, sel « tablette: » de
   l'empreinte de clé, code d'erreur TABLETTE_NON_AUTORISEE) : rien à migrer.
+- Préchargement de l'espace responsable (version 2026.10.14-1303, décision Bryan) : dès le
+  déverrouillage, `prechargerListesAdmin()` lance listerSaisies / listerArchives (noms
+  seulement ; le contenu d'une archive reste chargé à l'impression) / listerTablettes.
+  À l'ouverture d'un écran (`afficherListeAdmin`) : liste reçue affichée tout de suite
+  (« · mise à jour… ») puis rechargée ; si le préchargement est en route, on l'attend
+  (pas de second appel). Après une modification : appel forcé, seule la réponse la
+  plus récente compte (`seq`). Au verrouillage : `listesAdmin` vidé et listes effacées
+  de la page. Préchargement AVANT le code impossible (données protégées par le code).
+  Test `test_ui_prechargement` (38 séries).
 **REFONTE GRAPHIQUE TERMINÉE (7 étapes + 5 bis) sur `design`.** En attente de Bryan :
 essai sur le Sheet de test (git checkout design, npm run push, Installer, déploiement)
 puis sur tablette réelle : rotation, clavier, journal, alertes, espace responsable,

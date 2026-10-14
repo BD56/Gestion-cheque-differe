@@ -10,7 +10,7 @@
 >
 > Pour la mise en production (copier-coller + même URL) : [`DEPLOIEMENT.md`](DEPLOIEMENT.md).
 >
-> **Reprise de travail (branche `generalisation`)** : lire aussi
+> **Reprise de travail (branches `generalisation`, `refonte`, `design` — travail en cours sur `design`)** : lire aussi
 > [`MEMOIRE_CLAUDE.md`](MEMOIRE_CLAUDE.md) — état, décisions, points à vérifier, tests.
 
 ## L'essentiel en 3 lignes

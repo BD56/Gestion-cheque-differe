@@ -2,9 +2,35 @@
 
 > Fichier de reprise après compactage du contexte. À lire **avec** `AGENTS.md` (référence
 > canonique) et `docs/retours-vibe/decisions/2026-10-11_generalisation.md` (décisions).
-> Dernière mise à jour : 2026-10-14 (refonte graphique terminée sur `design`).
+> Dernière mise à jour : 2026-10-14 (après midi).
 
-## 0. ▶️ Refonte graphique « Comptoir » : FAITE sur `design`, en attente de l'essai de Bryan
+## ▶️ ÉTAT ACTUEL — à lire d'abord
+- **Branches** : `main` = prod Vannes (non touchée) ; `generalisation` = version
+  généralisée testée en simulation ; `refonte` = même code réorganisé (11 .gs,
+  Script*.html, outillage npm/clasp) ; **`design` = refonte + refonte graphique
+  « Comptoir » (branche de travail actuelle, tout est poussé)**. Aucune fusion faite,
+  aucune pull request. Ordre prévu (sur demande de Bryan seulement) : `design` →
+  `refonte` → `generalisation` → `main` / migration Vannes.
+- **Version actuelle sur `design`** : 2026.10.14-1141 (37 séries de tests vertes,
+  ESLint et Prettier propres). Numéro renouvelé par Claude à chaque push de code
+  (`npm run nouvelle-version`).
+- **Bryan teste** sur le Sheet « Gestion Chèques Différés — REFONTE (test) » depuis
+  son Mac (clasp : `git pull`, `npm run push`, « Installer », puis « Nouvelle version »
+  dans Gérer les déploiements pour `/exec`). Il a signalé « beaucoup de bugs
+  d'affichage » ; corrigés à ce jour : mises en page petits écrans (audit), carte du
+  code collée à gauche sous Safari. **Attendu de Bryan** : nouvelles captures (avec le
+  navigateur : Safari / Chrome) après mise à jour ; confirmer si « Saisies :
+  Chargement… » reste bloqué (sa capture venait d'une version antérieure) ; essai sur
+  vraie tablette (rotation, clavier, journal, alertes, espace responsable, panneau).
+- **Ensuite (sur demande)** : fusions, documentation (`docs/A_REDIGER.md`, captures via
+  `outils/captures.js`), migration de Vannes (`DEPLOIEMENT.md`).
+- **Leçons de cette période** : (1) ne pas réorganiser des écrans sans validation (la
+  fusion Opération/Sécurité a été refusée → maquette des 2 idées, idée 2 retenue) ;
+  (2) Chromium ≠ Safari : un `display` écrit par script qui écrase une grille passait
+  inaperçu ; (3) le banc de test doit reproduire doGet (balise viewport) sinon les
+  petits écrans sont faux ; (4) proposer une maquette cliquable quand Bryan hésite.
+
+## 0. Refonte graphique « Comptoir » : FAITE sur `design` (historique et décisions)
 **Décidé avec Bryan (13/10)**, à partir du prototype interactif :
 - Prototype : **`docs/maquettes/comptoir-prototype.html`** (source versionnée, page
   autonome, données fictives) ; publié en artefact privé « Comptoir — prototype »
@@ -46,7 +72,7 @@
   C « Couleur de la structure » (réglable), 2 « Nuit » (sombre, maintien 2 s pour
   forcer). Idée gardée en réserve : couleur réglable par structure (C).
 
-**Plan proposé (À FAIRE VALIDER par Bryan avant de coder)** : nouvelle branche
+**Plan (validé, réalisé)** : nouvelle branche
 `design` depuis `refonte` ; une étape = un commit, tests verts, point à Bryan :
 (1) palette et icônes (variables CSS, sprite SVG) ; (2) en-tête + saisie en 3 étapes
 (garder les `id` existants : les tests UI s'en servent) ; (3) alerte comparative
@@ -227,7 +253,7 @@ de tablette unique (plusieurs magasins, plusieurs modèles) → mise en page ada
 toute taille, aide de rotation générique iPad / Android. Choix techniques laissés à
 Claude : chiffres de la vue d'ensemble calculés par le serveur depuis « Saisies » ;
 numéro de version renouvelé par Claude à chaque étape poussée (Bryan n'a qu'à faire
-`git pull` + `npm run push`). **Reste : le « go » de Bryan pour créer `design`.**
+`git pull` + `npm run push`). (« go » donné, `design` créée et terminée.)
 « Installer » sur le Sheet REFONTE (test) en 2026.10.13-2 : ✅ OK (Bryan, 13/10).
 
 ## 0 bis. Refonte du code (branche `refonte`) — FAITE (étapes 1 à 6), étape 7 reportée
@@ -394,6 +420,15 @@ quand Bryan le demande.
   l'annuaire) : non faite (#18 accepté).
 - Détection « usurpation inter-offres » (pièce d'une offre passée présentée sous un autre
   nom) : jamais faite, idée seulement.
+- **Journal du jour** : minuteur (recharger la copie toutes les 2 min quand le journal
+  est ouvert, maintenant léger sans l'annuaire) proposé, NON décidé ; aujourd'hui le
+  journal se met à jour à chaque client / ouverture / retour sur la page.
+- **Annuaire à la demande** (nom demandé au serveur au N° tapé au lieu de l'annuaire
+  entier dans chaque tablette) : intéressant pour le RGPD ; pré-remplissage ~1 s plus
+  tard et impossible hors réseau. À discuter après la refonte.
+- Renommer un appareil depuis « Code & appareils » : non fait (on retire puis on
+  réautorise sous un autre nom).
+- Couleur réglable par structure (maquette C) : idée en réserve.
 - Dette assumée : logique A/B/C à **3 endroits** (`detecterDoublons_` pour tout le
   serveur, `recalculerMarquages_`, `analyserDoublonLocal`) — à garder synchro.
 
@@ -403,7 +438,10 @@ quand Bryan le demande.
 - Honnêteté : dire ce qui n'est **pas** testé, signaler les risques (RGPD, faux négatifs).
 - **Faux négatif = pire échec** ; « Saisies » = source de vérité ; le serveur décide.
 - Ne jamais toucher `main` / la prod sans accord ; commits clairs en français.
-- Rappeler que le déploiement est manuel (`DEPLOIEMENT.md`).
+- Rappeler que le déploiement est manuel (clasp : `npm run push` puis « Nouvelle
+  version » dans Gérer les déploiements ; `DEPLOIEMENT.md` est pour `main`).
+- Envoyer des captures avant / après (SendUserFile) à chaque étape visible ; maquette
+  cliquable (artefact) quand une organisation d'écran est à choisir.
 
 ## 6. Environnement / outillage
 - Tests : `bash tests/lancer.sh` (voir `tests/README.md`). Playwright global
@@ -417,3 +455,13 @@ quand Bryan le demande.
   de « Saisies » intitulée « CODE » chez Vannes, libellé retenu « Notes ou Infos »).
 - Maquettes du panneau (tuiles vs accordéons) : faites dans l'espace temporaire de la
   session, non conservées (décision prise : tuiles).
+- **Outils de la refonte graphique** : `outils/captures.js <dossier>` (captures des
+  écrans principaux, 3 formats) ; `npm run verifier-affichage -- <dossier> [taille]`
+  (`outils/audit.js` : 10 tailles × 27 états, rapport + captures ; contrôle aussi les
+  `display` écrits par script qui écrasent une grille/flex). `tests/navigateur.js` :
+  balise viewport ajoutée (comme doGet) et option `page` (isMobile, hasTouch,
+  viewport). Seul **Chromium** est installé : Safari et la vraie page Apps Script
+  (iframe + bandeau « créée par un utilisateur de Google Apps Script ») ne sont pas
+  testables ici → captures de Bryan.
+- Artefacts publiés : prototype « Comptoir » https://claude.ai/artifact/FUmo7ZsUu5iDgi9YCow3dT ;
+  « Variantes espace responsable » https://claude.ai/artifact/KYMZHUvrqEXs4xKhti4zzp.

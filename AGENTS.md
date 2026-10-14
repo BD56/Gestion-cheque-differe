@@ -44,8 +44,8 @@ Page de la tablette :
 - **Index.html** — squelette (HTML + `CONFIG` / `DATES_INITIALES` injectés) qui inclut :
 - **Style.html** (palette en variables CSS `--…` dans `:root`), **Icones.html** (icônes
   SVG : `<svg class="ico"><use href="#i-nom"/></svg>`) et **Script*.html** — Tablette,
-  Saisie, Alertes, Impression, Offre, Formulaire, Responsable, Actions (boutons
-  `data-action`), Ocr (dormant).
+  Saisie, Alertes, Impression, Offre, Formulaire, Journal (journal du jour),
+  Responsable, Actions (boutons `data-action`), Ocr (dormant).
 - **Panneau.html** — sidebar admin dans le Sheets (menu `🚀 APPLICATION`).
 
 Chaque fichier porte le même numéro de version (`npm run nouvelle-version`) ;

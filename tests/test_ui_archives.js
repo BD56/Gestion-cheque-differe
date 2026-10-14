@@ -28,9 +28,10 @@ const { FakeSheet } = require("./fakesheet");
     await page.click('[data-ecran-lien="archives"]');
     await page.waitForTimeout(150);
     const options = await page.$$eval("#selArchive option", (os) => os.map((o) => o.textContent));
+    // Archives d'avant les résumés : dates de la 1re et de la dernière saisie
     assert.deepStrictEqual(options, [
-      "Clôturée le 15/09/2026 à 23h05 — 1 ligne(s)",
-      "Clôturée le 01/03/2026 à 23h05 — 2 ligne(s)",
+      "Le 02/03/2026 · 1 saisie · 1 €",
+      "Le 02/03/2026 · 2 saisies · 15,50 €",
     ]);
     await page.selectOption("#selArchive", "Archives_01-03-2026_23-05");
     await page.click("text=IMPRIMER CETTE ARCHIVE");

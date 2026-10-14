@@ -11,7 +11,7 @@
   « Comptoir » (branche de travail actuelle, tout est poussé)**. Aucune fusion faite,
   aucune pull request. Ordre prévu (sur demande de Bryan seulement) : `design` →
   `refonte` → `generalisation` → `main` / migration Vannes.
-- **Version actuelle sur `design`** : 2026.10.14-1344 (39 séries de tests vertes,
+- **Version actuelle sur `design`** : 2026.10.14-1359 (40 séries de tests vertes,
   ESLint et Prettier propres). Numéro renouvelé par Claude à chaque push de code
   (`npm run nouvelle-version`).
 - **Bryan teste** sur le Sheet « Gestion Chèques Différés — REFONTE (test) » depuis
@@ -22,10 +22,9 @@
   navigateur : Safari / Chrome) après mise à jour ; confirmer si « Saisies :
   Chargement… » reste bloqué (sa capture venait d'une version antérieure) ; essai sur
   vraie tablette (rotation, clavier, journal, alertes, espace responsable, panneau).
-- **Dernier échange** : aperçu de l'espace responsable préparé à l'appui sur ⚙️
-  (« go » de Bryan, voir « Aperçu » dans l'historique). EN DISCUSSION, non codé :
-  précharger le CONTENU des n dernières archives après le code (Bryan demande ce que
-  vaut n et quelle option pour « plus ») ; Claude conseille n = 1 (voir §4).
+- **Dernier échange** : résumés des archives faits (« go » de Bryan, voir « Résumés
+  des archives » dans l'historique), à présenter / faire essayer. Rien d'autre en
+  cours de codage.
 - **Ensuite (sur demande)** : fusions, documentation (`docs/A_REDIGER.md`, captures via
   `outils/captures.js`), migration de Vannes (`DEPLOIEMENT.md`).
 - **Leçons de cette période** : (1) ne pas réorganiser des écrans sans validation (la
@@ -276,6 +275,22 @@ box-sizing) → corrigé par la refonte.
   écarté (6 chiffres = essais hors ligne sans limite ; n'aurait rien protégé de
   plus). Tests : test_tablettes (refus sans clé, rien de la sécurité, aucun robot
   recréé), `test_ui_apercu` (39 séries ; vérifié qu'il échoue sans l'aperçu).
+- Résumés des archives (version 2026.10.14-1359, décision Bryan) : au lieu de
+  précharger le contenu des n dernières offres, un RÉSUMÉ par offre passée, TOUS
+  préchargés dans l'aperçu (~100 octets chacun, ≤ 3 ans d'archives, aucune donnée
+  personnelle) : dates de l'offre (réglées ; pour une archive d'avant : 1re et
+  dernière saisie), nombre de saisies, montant total (illisible = 0). PAS de nom
+  d'offre (NOM_OFFRE est un réglage fixe de la structure, pas un nom par offre — erreur
+  de Claude corrigée par Bryan) ; PAS d'ajouts forcés (Bryan n'en voit pas l'intérêt).
+  Archives.gs : `calculerResumeArchive_`, `jourDeSaisie_`, propriété
+  `RESUME_<onglet>` écrite à la clôture AVANT la création de l'onglet (une liste lue
+  entre-temps ne voit jamais l'archive sans résumé ; échec = clôture quand même) ;
+  `listeArchives_` calcule et garde le résumé manquant ; `purgerArchives_` efface
+  les résumés sans onglet. Écran Archives : « Du 01/12 au 24/12/2025 · 342 saisies ·
+  51 230 € » (`texteResumeArchive`) ; titre d'impression inchangé (« Clôturée le… »).
+  Limite connue : sur téléphone, la liste fermée coupe le montant (lisible une fois
+  ouverte) ; ligne de résumé sous la liste proposée, non faite. Tests :
+  `test_resume_archives` (40 séries), test_ui_archives adapté.
 **REFONTE GRAPHIQUE TERMINÉE (7 étapes + 5 bis) sur `design`.** En attente de Bryan :
 essai sur le Sheet de test (git checkout design, npm run push, Installer, déploiement)
 puis sur tablette réelle : rotation, clavier, journal, alertes, espace responsable,
@@ -467,11 +482,6 @@ quand Bryan le demande.
 - **Annuaire à la demande** (nom demandé au serveur au N° tapé au lieu de l'annuaire
   entier dans chaque tablette) : intéressant pour le RGPD ; pré-remplissage ~1 s plus
   tard et impossible hors réseau. À discuter après la refonte.
-- **Archives** (question de Bryan, 14/10) : précharger après le code le CONTENU des n
-  dernières offres ? Aujourd'hui : noms de toutes les archives (léger, ≤ 3 ans) ;
-  contenu chargé à l'impression (1-2 s, usage rare). Conseil de Claude : n = 1 (la
-  dernière offre, la plus consultée) ; « plus » = la liste actuelle (choisir une
-  archive la charge à la demande). En attente de la décision de Bryan.
 - Renommer un appareil depuis « Code & appareils » : non fait (on retire puis on
   réautorise sous un autre nom).
 - Couleur réglable par structure (maquette C) : idée en réserve.

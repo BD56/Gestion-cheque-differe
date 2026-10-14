@@ -1,5 +1,5 @@
 <!-- Espace responsable : code, corrections, archives, réglages, tablettes. -->
-<script data-version="2026.10.14-1344">
+<script data-version="2026.10.14-1359">
   // =================================================================
   // --- ESPACE RESPONSABLE (code PIN) ---
   // Le jeton n'est gardé qu'en mémoire : il disparaît à la fermeture du
@@ -557,16 +557,36 @@
       liste.forEach(function (a) {
         const o = document.createElement("option");
         o.value = a.nom;
-        o.textContent = a.libelle + " — " + a.lignes + " ligne(s)";
+        o.textContent = texteResumeArchive(a);
+        o.dataset.libelle = a.libelle;
         sel.appendChild(o);
       });
       if (choisie) sel.value = choisie; // le choix fait pendant la mise à jour est gardé
     });
   }
+  // « Du 01/12 au 24/12/2025 · 342 saisies · 51 230 € » (résumé gardé par le serveur)
+  function texteResumeArchive(a) {
+    const jour = function (d) {
+      const p = (d || "").split("-");
+      return p.length === 3 ? p[2] + "/" + p[1] + "/" + p[0] : d;
+    };
+    let quand = a.libelle;
+    if (a.debut && a.fin)
+      quand =
+        a.debut === a.fin
+          ? "Le " + jour(a.debut)
+          : "Du " +
+            (a.debut.slice(0, 4) === a.fin.slice(0, 4) ? formaterDateAffichage(a.debut) : jour(a.debut)) +
+            " au " +
+            jour(a.fin);
+    return (
+      quand + " · " + a.saisies + (a.saisies > 1 ? " saisies" : " saisie") + " · " + formaterTotal(a.total)
+    );
+  }
   function imprimerArchive() {
     const sel = document.getElementById("selArchive");
     if (!sel.value) return;
-    const libelle = sel.options[sel.selectedIndex].textContent.split(" — ")[0];
+    const libelle = sel.options[sel.selectedIndex].dataset.libelle;
     document.body.style.cursor = "wait";
     appelAdmin(
       "donneesArchive",

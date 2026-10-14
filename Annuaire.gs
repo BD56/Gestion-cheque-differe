@@ -2,7 +2,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Annuaire_() {
-  return "2026.10.14-1344";
+  return "2026.10.14-1359";
 }
 
 // =================================================================

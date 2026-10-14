@@ -182,6 +182,21 @@ box-sizing) → corrigé par la refonte.
   notes écrites dans le Sheet (⚠️ Ajout forcé, ℹ️ Passage), messages du serveur
   (retirés à l'affichage), OCR dormant. Tests : test_ui_cloture (37 séries).
 
+- Correctifs d'affichage (version 2026.10.14-1035) après « beaucoup de bugs
+  d'affichage » signalés par Bryan sur le site réel (SANS captures ni modèle de
+  tablette) : outil `outils/audit.js` (`npm run verifier-affichage`, 9 tailles × 27
+  états, rapport + captures). LEÇON : le banc de test n'avait pas la balise viewport
+  que doGet ajoute (addMetaTag) → en émulation tactile la page s'affichait en 980 px ;
+  ajoutée dans tests/navigateur.js. Corrigé : message bref (largeur), en-tête
+  téléphone (titre « … », boutons sur une ligne), titre des fenêtres sous la croix,
+  liste des saisies en écran étroit, mentions non justifiées, menu horizontal qui
+  suit l'entrée active, totaux « 12 605,57 € » (`formaterTotal`, affichage seul ;
+  formaterMontant reste le format écrit dans le Sheet), KPI moins grands.
+  Compatibilité anciens Safari (avant iOS 14.5) : `inset` remplacé ; repli pour
+  `gap` des boîtes flex (`@supports not (aspect-ratio…)` → marges). JS vérifié ES2015.
+  NON vérifiable ici : vrai Safari (seul Chromium installé), vraie page Apps Script
+  (iframe, bandeau Google). En attente : captures + appareil/navigateur de Bryan.
+
 **REFONTE GRAPHIQUE TERMINÉE (7 étapes + 5 bis) sur `design`.** En attente de Bryan :
 essai sur le Sheet de test (git checkout design, npm run push, Installer, déploiement)
 puis sur tablette réelle : rotation, clavier, journal, alertes, espace responsable,

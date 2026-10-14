@@ -50,7 +50,12 @@ async function ouvrir(repo, envOpts) {
   }
   const html = rendrePage(repo, { cfg: env.ctx.getConfig(), dates: env.ctx.lireDates_() }).replace(
     "<head>",
-    "<head><script>window.__SANS_CLE=" + !!(envOpts && envOpts.sansCle) + ";" + PROXY + "</script>"
+    // comme doGet (addMetaTag) : largeur de l'appareil sur tablette / téléphone
+    '<head><meta name="viewport" content="width=device-width, initial-scale=1"><script>window.__SANS_CLE=' +
+      !!(envOpts && envOpts.sansCle) +
+      ";" +
+      PROXY +
+      "</script>"
   );
   const browser = await chromium.launch();
   const page = await browser.newPage((envOpts && envOpts.page) || {}); // ex. { isMobile, hasTouch, viewport }

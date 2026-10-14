@@ -1,5 +1,5 @@
 <!-- Espace responsable : code, corrections, archives, réglages, tablettes. -->
-<script data-version="2026.10.14-1015">
+<script data-version="2026.10.14-1035">
   // =================================================================
   // --- ESPACE RESPONSABLE (code PIN) ---
   // Le jeton n'est gardé qu'en mémoire : il disparaît à la fermeture du
@@ -149,7 +149,7 @@
   function majChiffres(c) {
     if (!c) return;
     document.getElementById("kpiSaisies").textContent = c.saisies;
-    document.getElementById("kpiTotal").textContent = formaterMontant(c.total).replace(",00 €", " €");
+    document.getElementById("kpiTotal").textContent = formaterTotal(c.total);
     document.getElementById("kpiForcees").textContent = c.forcees;
     document.getElementById("kpiForcees").parentNode.classList.toggle("non-nul", c.forcees > 0);
     document.getElementById("kpiTablettes").textContent = c.tablettes;
@@ -200,6 +200,9 @@
     for (let i = 0; i < liens.length; i++)
       liens[i].setAttribute("aria-current", String(liens[i].getAttribute("data-ecran-lien") === nom));
     if (nom !== "saisies") saisieEnCours = null; // une correction laissée en plan est abandonnée
+    // menu horizontal (écran étroit) : l'entrée active reste visible
+    const actif = document.querySelector('#railAdmin [aria-current="true"]');
+    if (actif && actif.scrollIntoView) actif.scrollIntoView({ block: "nearest", inline: "nearest" });
     document.getElementById("contenuAdmin").scrollTop = 0;
   }
   // Résumé de l'offre (vue d'ensemble et écran Opération) : dates, avancement,
@@ -322,7 +325,7 @@
       if (sa.alerte) qui.appendChild(el("span", "badge", "Forcé"));
       qui.appendChild(el("small", "piece", sa.piece));
       if (sa.notes) qui.appendChild(el("small", "notes", sa.notes));
-      const montant = el("div", "mt", sa.montant || "");
+      const montant = el("div", "mt", sa.montant ? formaterMontantAffiche(sa.montant) : "");
       const actions = el("div", "actions");
       const bCor = el("button", "sec", "Corriger");
       bCor.addEventListener("click", function () {

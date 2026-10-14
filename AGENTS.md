@@ -51,6 +51,8 @@ Page de la tablette :
 Chaque fichier porte le même numéro de version (`npm run nouvelle-version`) ;
 outils : `npm test`, `npm run lint`, `npm run push` (clasp), dossier `outils/`.
 Captures d'écran (avant / après) : `NODE_PATH=$(npm root -g) node outils/captures.js <dossier>`.
+Audit d'affichage (9 tailles d'écran × 27 états : débordements, chevauchements, textes coupés, erreurs) :
+`NODE_PATH=$(npm root -g) npm run verifier-affichage -- <dossier> [taille]` → captures + `rapport.txt`.
 - **appsscript.json** — manifeste (V8, `Europe/Paris`, webapp `access: ANYONE_ANONYMOUS`).
 - **INSTALLATION.md** — créer le **modèle** (une fois) et installer l'appli pour une
   nouvelle structure (copie du modèle → menu Installer → déploiement).

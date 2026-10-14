@@ -1,5 +1,5 @@
 <!-- Journal du jour : saisies d'aujourd'hui (toutes tablettes), colonne repliable. -->
-<script data-version="2026.10.14-1015">
+<script data-version="2026.10.14-1035">
   // Lu dans la copie locale de l'offre (cacheVerif.offre, rechargée à chaque nouveau
   // client) + les saisies de cette tablette pas encore confirmées. Rien de plus n'est
   // demandé au serveur : les saisies d'une autre tablette apparaissent au prochain
@@ -102,7 +102,7 @@
     document.getElementById("listeJour").innerHTML =
       html || '<p class="vide">' + (cacheVerif ? "Aucune saisie aujourd'hui." : "Chargement…") + "</p>";
     document.getElementById("totalNb").textContent = lignes.length;
-    document.getElementById("totalMontant").textContent = formaterMontant(total).replace(",00 €", " €");
+    document.getElementById("totalMontant").textContent = formaterTotal(total);
     document.getElementById("totalForces").textContent = forcees;
     const c = document.getElementById("compteurJour");
     c.textContent = lignes.length;

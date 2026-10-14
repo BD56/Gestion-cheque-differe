@@ -1,5 +1,5 @@
 <!-- Impression et lecture des montants. -->
-<script data-version="2026.10.14-1015">
+<script data-version="2026.10.14-1035">
   function preparerImpressionAncien() {
     const d = document.getElementById("dateImpression").value;
     if (!d) {
@@ -27,6 +27,14 @@
   // 1234.5 -> "1234,50 €"
   function formaterMontant(n) {
     return n.toFixed(2).replace(".", ",") + " €";
+  }
+  // Total affiché (journal, vue d'ensemble) : 12 605,57 € — 150 € sans centimes inutiles.
+  // (affichage seulement : formaterMontant reste le format écrit dans le Sheet)
+  function formaterTotal(n) {
+    const t = formaterMontant(n).replace(",00 €", " €");
+    return t.replace(/^(\d+)/, function (e) {
+      return e.replace(/\B(?=(\d{3})+(?!\d))/g, "\u202f");
+    });
   }
   function formaterMontantAffiche(s) {
     const n = lireMontant(s);

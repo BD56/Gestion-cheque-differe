@@ -11,7 +11,8 @@
     "nouvelle-version": "node outils/version.js",
     "verifier-version": "node outils/version.js --verifier",
     "push": "node outils/version.js --verifier && clasp push",
-    "status": "clasp status"
+    "status": "clasp status",
+    "verifier-affichage": "node outils/audit.js"
   },
   "engines": {
     "node": ">=20"

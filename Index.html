@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr" data-version="2026.10.14-1645">
+<html lang="fr" data-version="2026.10.14-1653">
   <head>
     <base target="_top">
     <?!= include_('Style') ?>
@@ -101,7 +101,6 @@
           <div class="liste-jour" id="listeJour"></div>
           <div class="journal-pied">
             <button class="imprimer-jour" data-action="preparerImpression" data-args='["jour","aujourdhui","Impression du Jour"]'>Imprimer la journée →</button>
-            <span>Noms abrégés et N° masqués : l'écran peut être vu depuis la caisse.</span>
           </div>
         </div>
       </aside>
@@ -451,7 +450,6 @@
                   <div class="rangee-btn">
                     <button class="sec danger" id="btnRetirerTout" data-action="retirerToutesLesTablettes"><svg class="ico"><use href="#i-alerte"/></svg>Retirer tous les appareils</button>
                   </div>
-                  <p class="diag-appareil" id="diagTablettes"></p>
                 </div>
               </div>
             </div>
@@ -524,7 +522,6 @@
         <button class="plein" id="btnAppairer" data-action="appairerCetteTablette">Autoriser cet appareil</button>
         <div class="message-erreur" id="msgAppairage"></div>
         <button class="sec danger remplacer" id="btnRemplacerAppareil" data-action="appairerCetteTablette" data-args="[true]" style="display: none"></button>
-        <p class="diag-appareil" id="diagAppairage"></p>
       </div>
     </div>
 

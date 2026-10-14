@@ -2,7 +2,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Robots_() {
-  return "2026.10.14-1645";
+  return "2026.10.14-1653";
 }
 
 // =================================================================

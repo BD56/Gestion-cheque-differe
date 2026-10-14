@@ -177,8 +177,7 @@ Décision : `docs/retours-vibe/decisions/2026-10-11_generalisation.md`.
   pour une archive plus ancienne), effacé par la purge ; contenu chargé à l'impression.
   Clé d'appareil : une erreur passagère en lisant la liste n'est JAMAIS lue comme
   « non autorisé » (`lireTablettes_` la remonte) ; la page ne l'efface plus sur un
-  refus (seulement sur un retrait volontaire) ; diagnostic discret (raison + adresse
-  technique de la page) sur l'écran d'autorisation et dans « Code & appareils ».
+  refus (seulement sur un retrait volontaire).
   Nom déjà pris à l'autorisation (code juste) : `appairerTablette` répond `nomPris`
   (date d'autorisation, dernière utilisation) ; la personne confirme « Remplacer »
   (`remplacer = true`) → l'ancienne entrée est retirée, jamais sans confirmation.

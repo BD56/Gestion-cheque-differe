@@ -2,7 +2,7 @@
 
 > Fichier de reprise après compactage du contexte. À lire **avec** `AGENTS.md` (référence
 > canonique) et `docs/retours-vibe/decisions/2026-10-11_generalisation.md` (décisions).
-> Dernière mise à jour : 2026-10-14 (fin de journée, après un compactage du contexte).
+> Dernière mise à jour : 2026-10-14 (soir, version 2026.10.14-1653).
 
 ## ▶️ ÉTAT ACTUEL — à lire d'abord
 - **Branches** : `main` = prod Vannes (non touchée) ; `generalisation` = version
@@ -11,7 +11,7 @@
   « Comptoir » (branche de travail actuelle, tout est poussé)**. Aucune fusion faite,
   aucune pull request. Ordre prévu (sur demande de Bryan seulement) : `design` →
   `refonte` → `generalisation` → `main` / migration Vannes.
-- **Version actuelle sur `design`** : 2026.10.14-1645 (40 séries de tests vertes,
+- **Version actuelle sur `design`** : 2026.10.14-1653 (40 séries de tests vertes,
   ESLint et Prettier propres). Numéro renouvelé par Claude à chaque push de code
   (`npm run nouvelle-version`).
 - **Bryan teste** sur le Sheet « Gestion Chèques Différés — REFONTE (test) » depuis
@@ -22,28 +22,16 @@
   navigateur : Safari / Chrome) après mise à jour ; confirmer si « Saisies :
   Chargement… » reste bloqué (sa capture venait d'une version antérieure) ; essai sur
   vraie tablette (rotation, clavier, journal, alertes, espace responsable, panneau).
-- **Dernier échange** : le Mac de Bryan « n'est plus reconnu » parfois après une
-  mise à jour → DIAGNOSTIC : écran d'autorisation sans message, et réautoriser sous
-  « mac » est refusé (nom déjà pris) ⇒ le SERVEUR connaît toujours le Mac, c'est le
-  NAVIGATEUR qui a perdu la clé. Hypothèse (non vérifiée) : l'adresse technique du
-  cadre Apps Script (`n-…-script.googleusercontent.com`) change à chaque « Nouvelle
-  version » → stockage différent → clé introuvable. Fait (voir « Clé d'appareil »
-  dans l'historique) : diagnostic affiché + correction d'un vrai défaut. ATTENDU de
-  Bryan : noter l'adresse technique (Code & appareils), déployer une nouvelle version,
-  comparer ; dire Safari ou Chrome. Si l'adresse change : discuter d'une parade
-  (ex. adresse avec la clé en favori) AVANT de coder. Remplacement sous le même nom :
-  FAIT (version 2026.10.14-1645, voir « Remplacement » dans l'historique).
-  1er relevé (Mac, Sheet REFONTE test, version 2026.10.14-1459, 14/10) : « Clé absente
-  de ce navigateur » ; adresse technique
-  `n-ijetbkxwto6cqlhbmed6rj7j4kexnxcgupggffa-0lu-script.googleusercontent.com`
-  (attendu normal : la clé était déjà perdue avant cette version). Ensuite (14/10),
-  Bryan : « ça a l'air bon maintenant » après réautorisation + nouvelle version ⇒
-  hypothèse « l'adresse change à chaque version » NON confirmée. CORRECTION d'un
-  raisonnement de Claude : « nom déjà pris » ne prouvait PAS que le navigateur avait
-  perdu la clé — le défaut corrigé (incident passager ⇒ refus ⇒ clé effacée par la
-  page) laisse AUSSI l'appareil dans la liste du serveur. Cause la plus probable :
-  ce défaut (corrigé en 2026.10.14-1459). À surveiller : si l'écran d'autorisation
-  revient, relever le diagnostic (raison + adresse). Diagnostic gardé pour l'instant.
+- **Dernier échange** : (1) Mac de Bryan « plus reconnu » parfois après une mise à
+  jour : cause la plus probable = défaut CORRIGÉ en 2026.10.14-1459 (incident passager
+  de Google ⇒ refus ⇒ clé effacée par la page ; l'appareil restait dans la liste du
+  serveur, d'où « nom déjà pris »). Hypothèse « l'adresse technique du cadre change à
+  chaque version » NON confirmée (Bryan : « ça a l'air bon » après une nouvelle
+  version). Diagnostic affiché puis RETIRÉ du site à la demande de Bryan
+  (2026.10.14-1653) ; s'il revient : demander raison (message affiché ?) + navigateur.
+  (2) Remplacement sous le même nom fait (2026.10.14-1645). (3) Phrase « Noms abrégés
+  et N° masqués… » retirée du pied du journal (demande de Bryan ; la règle d'affichage
+  reste). Rien en cours de codage.
 - **Ensuite (sur demande)** : fusions, documentation (`docs/A_REDIGER.md`, captures via
   `outils/captures.js`), migration de Vannes (`DEPLOIEMENT.md`).
 - **Leçons de cette période** : (1) ne pas réorganiser des écrans sans validation (la
@@ -316,10 +304,8 @@ box-sizing) → corrigé par la refonte.
   une autorisation / un retrait pendant l'incident réécrivait la liste et perdait
   TOUS les appareils. Corrigé : l'erreur de lecture remonte (seul un JSON illisible
   donne []) ; `siNonAutorisee` n'efface plus la clé (seuls les retraits volontaires,
-  `oublierTablette`) ; diagnostic `#diagAppairage` (« Clé absente de ce navigateur » /
-  « Clé refusée par le serveur » / « Appareil retiré de la liste » / « Stockage du
-  navigateur indisponible » + « Adresse technique : <hostname> ») et `#diagTablettes`
-  (Code & appareils). Tests : test_tablettes (vérifié qu'il échoue sur l'ancien
+  `oublierTablette`) ; diagnostic (raison + adresse technique `location.hostname`)
+  affiché un temps puis RETIRÉ (2026.10.14-1653, demande de Bryan). Tests : test_tablettes (vérifié qu'il échoue sur l'ancien
   code), test_ui_tablettes (clé gardée sur refus, remplacée à la réautorisation,
   incident passager sans écran d'autorisation).
 - Remplacement sous le même nom (version 2026.10.14-1645, « go » de Bryan ; il hésitait
@@ -332,6 +318,10 @@ box-sizing) → corrigé par la refonte.
   (+ TABLETTE_VUE_ / PIN_ESSAIS_T_), possible même liste pleine ; code faux → rien.
   Un code juste remet le compteur d'essais à zéro : pas de pause de 10 s avant la
   confirmation. Tests : test_tablettes, test_ui_tablettes.
+- Retraits demandés par Bryan (version 2026.10.14-1653) : phrase « Noms abrégés et N°
+  masqués : l'écran peut être vu depuis la caisse. » du pied du journal (la règle
+  reste : noms abrégés, N° masqués) ; diagnostic de l'écran d'autorisation et de
+  « Code & appareils » (code, styles `.diag-appareil` et assertions supprimés).
 **REFONTE GRAPHIQUE TERMINÉE (7 étapes + 5 bis) sur `design`.** En attente de Bryan :
 essai sur le Sheet de test (git checkout design, npm run push, Installer, déploiement)
 puis sur tablette réelle : rotation, clavier, journal, alertes, espace responsable,

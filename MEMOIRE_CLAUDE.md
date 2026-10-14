@@ -2,7 +2,7 @@
 
 > Fichier de reprise après compactage du contexte. À lire **avec** `AGENTS.md` (référence
 > canonique) et `docs/retours-vibe/decisions/2026-10-11_generalisation.md` (décisions).
-> Dernière mise à jour : 2026-10-13 (soir).
+> Dernière mise à jour : 2026-10-14 (refonte graphique terminée sur `design`).
 
 ## 0. ▶️ Refonte graphique « Comptoir » : FAITE sur `design`, en attente de l'essai de Bryan
 **Décidé avec Bryan (13/10)**, à partir du prototype interactif :

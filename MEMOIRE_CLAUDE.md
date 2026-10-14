@@ -2,7 +2,7 @@
 
 > Fichier de reprise après compactage du contexte. À lire **avec** `AGENTS.md` (référence
 > canonique) et `docs/retours-vibe/decisions/2026-10-11_generalisation.md` (décisions).
-> Dernière mise à jour : 2026-10-14 (après midi).
+> Dernière mise à jour : 2026-10-14 (fin de journée, après un compactage du contexte).
 
 ## ▶️ ÉTAT ACTUEL — à lire d'abord
 - **Branches** : `main` = prod Vannes (non touchée) ; `generalisation` = version
@@ -22,13 +22,18 @@
   navigateur : Safari / Chrome) après mise à jour ; confirmer si « Saisies :
   Chargement… » reste bloqué (sa capture venait d'une version antérieure) ; essai sur
   vraie tablette (rotation, clavier, journal, alertes, espace responsable, panneau).
+- **Dernier échange** : préchargement de l'espace responsable fait, poussé
+  (a75481a) et présenté à Bryan (« option 1 », les 3 listes) ; il ne l'a pas encore
+  essayé. Rien d'autre en cours de codage : attendre son retour ou son « go ».
 - **Ensuite (sur demande)** : fusions, documentation (`docs/A_REDIGER.md`, captures via
   `outils/captures.js`), migration de Vannes (`DEPLOIEMENT.md`).
 - **Leçons de cette période** : (1) ne pas réorganiser des écrans sans validation (la
   fusion Opération/Sécurité a été refusée → maquette des 2 idées, idée 2 retenue) ;
   (2) Chromium ≠ Safari : un `display` écrit par script qui écrase une grille passait
   inaperçu ; (3) le banc de test doit reproduire doGet (balise viewport) sinon les
-  petits écrans sont faux ; (4) proposer une maquette cliquable quand Bryan hésite.
+  petits écrans sont faux ; (4) proposer une maquette cliquable quand Bryan hésite ;
+  (5) le compactage du contexte arrive sans prévenir : tenir CE fichier à jour à
+  chaque commit poussé (pas seulement quand Bryan le demande).
 
 ## 0. Refonte graphique « Comptoir » : FAITE sur `design` (historique et décisions)
 **Décidé avec Bryan (13/10)**, à partir du prototype interactif :
@@ -415,6 +420,10 @@ quand Bryan le demande.
    (testé par Bryan sur « Gestion Chèques Différés — REFONTE (test) », 13/10) ; les
    commentaires HTML sont retirés par `getContent` (constaté) → marque en attribut
    `data-version` depuis 2026.10.13-2 : ✅ vérifié par Bryan (« Installer » OK, 13/10).
+10. (Design) Affichage sous Safari (Mac, iPad) et dans la vraie page (iframe, bandeau
+   Google) : seul Chromium est testé ici. Espace responsable : les 3 listes
+   préchargées au déverrouillage arrivent bien (3 appels serveur en parallèle) et
+   « Saisies : Chargement… » ne reste plus bloqué. Nom d'appareil en double refusé.
 
 ## 4. Points ouverts / idées non faites
 - Pull request `generalisation` → `main` : à ouvrir **après** le test de Bryan (il n'a pas
@@ -451,6 +460,8 @@ quand Bryan le demande.
   version » dans Gérer les déploiements ; `DEPLOIEMENT.md` est pour `main`).
 - Envoyer des captures avant / après (SendUserFile) à chaque étape visible ; maquette
   cliquable (artefact) quand une organisation d'écran est à choisir.
+- Mettre à jour ce fichier dans le même commit que chaque changement poussé (Bryan
+  l'a redemandé après un compactage, 14/10).
 
 ## 6. Environnement / outillage
 - Tests : `bash tests/lancer.sh` (voir `tests/README.md`). Playwright global

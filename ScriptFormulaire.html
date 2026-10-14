@@ -1,5 +1,5 @@
 <!-- Formulaire : montant, touche Entrée, vérification du N°, copie locale, annuaire. -->
-<script data-version="2026.10.14-0225">
+<script data-version="2026.10.14-0918">
   // --- FORMATAGE AUTOMATIQUE DU MONTANT ---
   // Montant lisible -> reformaté « 1234,50 € » ; illisible -> laissé tel quel, encadré en rouge
   ["montant", "corMontant"].forEach(function (idMontant) {
@@ -56,21 +56,38 @@
   function copieFraiche() {
     return !!cacheVerif && Date.now() - cacheRecuA <= AGE_MAX_COPIE_MS;
   }
+  // L'annuaire (clients des offres passées, le plus lourd) ne change guère pendant une
+  // offre : reçu au démarrage, puis redemandé au plus une fois par heure. Les autres
+  // rechargements n'apportent que les saisies de l'offre en cours.
+  let annuaireRecuA = 0;
+  const AGE_MAX_ANNUAIRE_MS = 60 * 60 * 1000;
+  function annuaireARecharger() {
+    return !cacheVerif || !cacheVerif.annuaire || Date.now() - annuaireRecuA > AGE_MAX_ANNUAIRE_MS;
+  }
+  // Copie reçue du serveur : on garde l'annuaire déjà là si elle n'en contient pas
+  function appliquerCopie(c) {
+    if (c.annuaire === null) {
+      c.annuaire = (cacheVerif && cacheVerif.annuaire) || {};
+      if (!(cacheVerif && cacheVerif.annuaire)) annuaireRecuA = 0; // à redemander
+    } else annuaireRecuA = Date.now();
+    cacheVerif = c;
+    cacheRecuA = Date.now();
+  }
   function rechargerCacheVerif() {
     const seq = ++seqCache;
     dernierRechargementDemande = Date.now();
+    const sansAnnuaire = !annuaireARecharger();
     google.script.run
       .withSuccessHandler(function (c) {
         if (seq < seqCacheApplique) return; // réponse plus ancienne qu'une copie déjà appliquée
         seqCacheApplique = seq;
-        cacheVerif = c;
-        cacheRecuA = Date.now();
+        appliquerCopie(c);
         if (c.config) appliquerConfig(c.config);
         if (c.mode) majPuceMode(c.mode); // mode changé depuis le Sheet ou une autre tablette
         fusionnerEnAttente();
       })
       .withFailureHandler(siNonAutorisee)
-      .chargerCacheVerif(CLE_TABLETTE);
+      .chargerCacheVerif(CLE_TABLETTE, sansAnnuaire);
   }
   // Rafraîchir au retour sur la page (réveil tablette, retour d'une autre app)
   document.addEventListener("visibilitychange", function () {

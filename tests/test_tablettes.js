@@ -52,6 +52,11 @@ assert.ok(!JSON.stringify(P).includes(cle), "clé jamais stockée en clair");
 // Avec la clé : tout fonctionne
 assert.strictEqual(J(c.traiterSaisie("DUPONT", "JEAN", "P1", "10", "", cle)).status, "SUCCES");
 assert.strictEqual(J(c.chargerCacheVerif(cle)).offre.length, 1);
+// Rechargement léger : sans l'annuaire (la tablette garde le sien), offre toujours là
+assert.strictEqual(J(c.chargerCacheVerif(cle, true)).annuaire, null);
+assert.strictEqual(J(c.chargerCacheVerif(cle, true)).offre.length, 1);
+assert.strictEqual(typeof J(c.chargerCacheVerif(cle)).annuaire, "object");
+assert.notStrictEqual(J(c.chargerCacheVerif(cle)).annuaire, null);
 assert.ok(J(c.genererDonneesImpression("offre", "", cle)).length === 2);
 const s1 = J(c.ouvrirSessionAdmin("258025", cle));
 assert.ok(s1.ok);

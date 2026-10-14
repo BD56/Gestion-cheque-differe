@@ -1,5 +1,5 @@
 <!-- Tablette autorisée (appairage), démarrage, aide, panneau, mentions légales. -->
-<script data-version="2026.10.14-0225">
+<script data-version="2026.10.14-0918">
   // =================================================================
   // --- TABLETTE AUTORISÉE (appairage) ---
   // La clé reçue lors de l'autorisation est gardée dans le navigateur et envoyée à
@@ -157,8 +157,7 @@
         if (rep.config) appliquerConfig(rep.config);
         if (rep.cache && seq >= seqCacheApplique) {
           seqCacheApplique = seq;
-          cacheVerif = rep.cache;
-          cacheRecuA = Date.now();
+          appliquerCopie(rep.cache); // copie complète (annuaire compris)
           fusionnerEnAttente();
         }
         appliquerDates(rep.dates);

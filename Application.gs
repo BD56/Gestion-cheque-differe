@@ -3,7 +3,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Application_() {
-  return "2026.10.14-0225";
+  return "2026.10.14-0918";
 }
 
 // Fuseau horaire de référence (réglage du projet Apps Script : Europe/Paris par défaut).
@@ -71,12 +71,15 @@ function montantSur_(m) {
 // Données pré-chargées au démarrage pour la vérif IMMÉDIATE (locale) au blur :
 // pièces de l'offre en cours (N2) + annuaire (N3). Rafraîchi au retour sur la page
 // et après chaque saisie. NE remplace PAS la validation finale (toujours serveur).
-function chargerCacheVerif(cle) {
+// sansAnnuaire : la tablette garde l'annuaire qu'elle a déjà (lourd, et inutile à
+// recharger pendant l'offre : il ne sert qu'aux clients des offres passées) ; elle
+// le redemande au démarrage puis une fois par heure. annuaire = null dans la réponse.
+function chargerCacheVerif(cle, sansAnnuaire) {
   exigerTablette_(cle);
-  return cacheVerif_();
+  return cacheVerif_(sansAnnuaire === true);
 }
 
-function cacheVerif_() {
+function cacheVerif_(sansAnnuaire) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const feuille = ss.getSheetByName(FEUILLE_SAISIES);
   const mode = modeSecurite_(feuille);
@@ -106,8 +109,9 @@ function cacheVerif_() {
     }
   }
 
-  const annuaire = {};
-  if (ANNUAIRE_ACTIF) {
+  let annuaire = {};
+  if (sansAnnuaire) annuaire = null;
+  else if (ANNUAIRE_ACTIF) {
     const fa = _feuilleAnnuaire_();
     const ad = fa.getDataRange().getValues();
     for (let j = 1; j < ad.length; j++) {

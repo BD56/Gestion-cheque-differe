@@ -114,6 +114,22 @@ box-sizing) → corrigé par la refonte.
   « Imprimer la journée → » = preparerImpression jour. Mise en page paysage :
   `.app` à hauteur d'écran (100dvh), saisie et journal défilent chacun ; ≤ 860 px :
   défilement normal, journal sous la saisie. Nouveau test `test_ui_journal` (33).
+- ✅ Copie locale allégée (version 2026.10.14-0918, discuté avec Bryan) : l'annuaire
+  (clients des offres passées, ~100-170 Ko après quelques années, sert SEULEMENT au
+  pré-remplissage ; la détection A/B/C n'utilise que l'offre en cours) est envoyé au
+  démarrage puis au plus 1 fois / heure (`chargerCacheVerif(cle, sansAnnuaire)` →
+  `annuaire: null`, la tablette garde le sien : `appliquerCopie`, `annuaireRecuA`).
+  « Compléter » l'annuaire (deltas via DerniereVue) écarté : les suppressions (purge,
+  reconstruction) ne laissent pas de trace, gain nul (l'annuaire utile ne bouge pas
+  pendant l'offre). Tests : test_tablettes + `test_ui_copie` (34 séries).
+  Journal : il se sert de la copie de détection, rechargée à chaque client /
+  ouverture du journal / retour sur la page. Les « 2 minutes » = âge max. pour que la
+  tablette DÉCIDE seule (sinon elle attend le serveur), PAS une fréquence de
+  rechargement. Minuteur du journal (recharger la copie toutes les 2 min quand le
+  journal est ouvert) : proposé, NON décidé par Bryan.
+  Idée notée pour plus tard : annuaire à la demande (nom demandé au serveur au N°
+  tapé) → plus de 3 ans de clients en mémoire dans chaque tablette (RGPD), mais
+  pré-remplissage ~1 s plus tard et impossible hors réseau.
 - ▶️ Prochaine : étape 5 (espace responsable : menu + vue d'ensemble chiffrée,
   chiffres calculés par le serveur ; alertes de correction au nouveau style).
 

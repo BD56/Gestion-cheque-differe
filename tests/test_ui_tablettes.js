@@ -62,6 +62,11 @@ const { ouvrir } = require("./navigateur");
     await page.click("#btnRetirerTout");
     await page.waitForTimeout(250);
     assert.ok((await vis("#ecranAppairage")) && !(await vis("#modalParametres")));
+    assert.doesNotMatch(
+      await page.evaluate(() => getComputedStyle(document.getElementById("ecranAppairage")).backgroundColor),
+      /rgba/,
+      "écran d'autorisation opaque : rien de l'application derrière"
+    );
     assert.match(await txt("#txtAppairage"), /un responsable doit l'autoriser/);
     assert.ok(!(await vis("#blocPinApp2")), "code existant : pas de confirmation");
     assert.strictEqual(await page.evaluate(() => window.__store.cdTabletteCle), undefined, "clé oubliée");

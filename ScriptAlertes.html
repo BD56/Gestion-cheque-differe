@@ -1,5 +1,5 @@
 <!-- Fenêtre d'alerte du serveur, abandon, réinitialisation, bandeau de message. -->
-<script data-version="2026.10.14-1001">
+<script data-version="2026.10.14-1015">
   // --- Présentation commune des alertes : en-tête du cas, comparaison côte à côte ---
   const TEXTES_CAS = {
     A: { titre: "Ce client est déjà venu", sous: "même nom et même pièce" },
@@ -213,6 +213,24 @@
     reinitialiserFormulaire();
   }
 
+  // Message bref par-dessus tous les écrans (remplace les fenêtres alert() du navigateur)
+  let minuteurToast = null;
+  function afficherToast(texte, type) {
+    document.getElementById("toastTxt").textContent = sansPicto(texte);
+    document.getElementById("toastIco").innerHTML =
+      '<use href="#i-' + (type === "error" ? "alerte" : "check") + '"/>';
+    const t = document.getElementById("toast");
+    t.className = "toast" + (type === "error" ? " erreur" : "");
+    t.style.display = "flex";
+    clearTimeout(minuteurToast);
+    minuteurToast = setTimeout(
+      function () {
+        t.style.display = "none";
+      },
+      type === "error" ? 6000 : 3500
+    );
+  }
+
   function reinitialiserFormulaire() {
     document.getElementById("nom").value = "";
     document.getElementById("prenom").value = "";
@@ -228,10 +246,15 @@
     document.getElementById("piece").focus();
   }
 
+  // Bandeau sous le bouton « Enregistrer » : icône selon le type, sans pictogramme du serveur
   let minuteurMessage = null;
   function afficherMessage(texte, type) {
     const div = document.getElementById("statusMessage");
-    div.textContent = texte;
+    div.innerHTML =
+      '<svg class="ico"><use href="#i-' +
+      (type === "success" ? "check" : "alerte") +
+      '"/></svg>' +
+      echapper(sansPicto(texte));
     div.className = type;
     div.style.display = "block";
     // un nouveau message annule la disparition programmée du précédent (sinon il était coupé)

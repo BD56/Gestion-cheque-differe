@@ -1,5 +1,5 @@
 <!-- Espace responsable : code, corrections, archives, réglages, tablettes. -->
-<script data-version="2026.10.14-1001">
+<script data-version="2026.10.14-1015">
   // =================================================================
   // --- ESPACE RESPONSABLE (code PIN) ---
   // Le jeton n'est gardé qu'en mémoire : il disparaît à la fermeture du
@@ -16,9 +16,9 @@
       if (onErr) onErr(err);
       if (m.indexOf("ADMIN_REQUIS") !== -1) {
         verrouillerAdmin();
-        afficherZoneVerrou("🔒 Session expirée : ressaisissez le code.");
+        afficherZoneVerrou("Session expirée : ressaisissez le code.");
       } else {
-        alert("Erreur : " + m);
+        afficherToast("Erreur : " + m, "error");
       }
     });
     // jeton lié à cette tablette : il est envoyé avec sa clé
@@ -33,7 +33,7 @@
     document.getElementById("contenuAdmin").classList.add("verrouille");
     allerEcran("impression"); // l'impression reste possible sans code
     document.getElementById("msgVerrou").textContent = message || "";
-    document.getElementById("txtVerrou").textContent = "⏳ …";
+    document.getElementById("txtVerrou").textContent = "…";
     google.script.run
       .withSuccessHandler(function (etat) {
         pinDefini = etat.pinDefini;
@@ -47,7 +47,7 @@
           : "Créer le code";
       })
       .withFailureHandler(function () {
-        document.getElementById("txtVerrou").textContent = "⚠️ Serveur injoignable.";
+        document.getElementById("txtVerrou").textContent = "Serveur injoignable : vérifiez le Wi-Fi.";
       })
       .etatAdmin();
   }
@@ -164,11 +164,11 @@
       r = infos.robots || {};
     if (!r.cloture || !r.purge) {
       lignes.push(
-        "⚠️ Robot de nuit absent : la clôture automatique et la suppression des données anciennes ne se feront pas. Ouvrez le Google Sheets → menu 🚀 APPLICATION → 🧰 Installer."
+        "Robot de nuit absent : la clôture automatique et la suppression des données anciennes ne se feront pas. Ouvrez le Google Sheets → menu 🚀 APPLICATION → 🧰 Installer."
       );
     } else if (r.derniereNuitMs && Date.now() - r.derniereNuitMs > 36 * 3600000) {
       lignes.push(
-        "⚠️ Le robot de nuit n'a pas fonctionné depuis le " +
+        "Le robot de nuit n'a pas fonctionné depuis le " +
           r.derniereNuit +
           ". Ouvrez le Google Sheets → menu 🚀 APPLICATION → 🧰 Installer (et acceptez les autorisations)."
       );
@@ -176,8 +176,7 @@
     const e = infos.essaisInconnus || {};
     if (e.n)
       lignes.push(
-        "🔐 " +
-          e.n +
+        e.n +
           " code(s) faux tapé(s) depuis des appareils non autorisés (dernier le " +
           e.dernier +
           "). Si ce n'était pas vous, changez le code (menu Code & tablettes)."
@@ -285,11 +284,11 @@
   }
   function msgSaisies(texte, couleur) {
     const m = document.getElementById("msgSaisies");
-    m.textContent = texte || "";
+    m.textContent = sansPicto(texte || "");
     m.style.color = couleur || "var(--encre)";
   }
   function chargerListeSaisies(message, couleur) {
-    msgSaisies(message || "⏳ Chargement…", couleur);
+    msgSaisies(message || "Chargement…", couleur);
     appelAdmin("listerSaisies", [], function (liste) {
       listeSaisies = liste || [];
       msgSaisies(
@@ -442,7 +441,7 @@
   function ouvrirArchives() {
     allerEcran("archives");
     const sel = document.getElementById("selArchive");
-    sel.innerHTML = "<option value=''>⏳ Chargement…</option>";
+    sel.innerHTML = "<option value=''>Chargement…</option>";
     appelAdmin("listerArchives", [], function (liste) {
       sel.innerHTML = "";
       if (!liste.length) {
@@ -535,7 +534,7 @@
         appliquerConfig(cfg);
         remplirFormulaireReglages(cfg);
         msg.style.color = "var(--ok)";
-        msg.textContent = "✅ Réglages enregistrés (titre de l'onglet : au prochain chargement).";
+        msg.textContent = "Réglages enregistrés (titre de l'onglet : au prochain chargement).";
       },
       function () {
         msg.textContent = "";
@@ -562,7 +561,7 @@
   }
   function chargerTablettes() {
     const msg = document.getElementById("msgTablettes");
-    msg.textContent = "⏳ Chargement…";
+    msg.textContent = "Chargement…";
     appelAdmin("listerTablettes", [], function (liste) {
       msg.textContent = liste.length + " tablette(s) autorisée(s).";
       const zone = document.getElementById("listeTablettes");
@@ -638,7 +637,7 @@
       if (r && r.ok) {
         jetonAdmin = r.jeton;
         msg.style.color = "var(--ok)";
-        msg.textContent = "✅ Code modifié.";
+        msg.textContent = "Code modifié.";
       } else msg.textContent = (r && r.message) || "Refusé.";
     });
   }

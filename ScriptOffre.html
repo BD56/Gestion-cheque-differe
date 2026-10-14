@@ -1,5 +1,5 @@
 <!-- Mode de sécurité, clôture, dates de l'offre (affichage et réglage). -->
-<script data-version="2026.10.14-1001">
+<script data-version="2026.10.14-1015">
   let modeEnCours = false,
     modeActuel = null;
   // Interrupteur Signaler / Bloquant de la vue d'ensemble : un appui sur le mode déjà
@@ -58,7 +58,6 @@
     if (clotureEnCours) return;
     annulerCloture();
     clotureEnCours = true;
-    // (on ne ferme le panneau qu'après la réponse : la fermeture reverrouille)
     document.body.style.cursor = "wait";
     appelAdmin(
       "archiverOffreWebApp",
@@ -66,8 +65,12 @@
       function (message) {
         clotureEnCours = false;
         document.body.style.cursor = "default";
-        fermerPanneau();
-        alert(message);
+        // résultat affiché dans l'écran Opération (plus de fenêtre du navigateur)
+        const msg = document.getElementById("msgRetourModal");
+        msg.style.color = "var(--ok)";
+        msg.style.whiteSpace = "pre-line";
+        msg.textContent = sansPicto(message);
+        rafraichirEnsemble(false);
         chargerDatesAffichage(); // le mode (SIGNALER / BLOQUANT) est conservé
         rechargerCacheVerif();
       },
@@ -178,7 +181,8 @@
   }
   appliquerDates(DATES_INITIALES, true); // tout de suite, sans attendre le serveur
 
-  function sauvegarderDatesTablette() {
+  // fin déjà passée : confirmée d'un second appui sur le bouton (confirme = true)
+  function sauvegarderDatesTablette(confirme) {
     const debut = document.getElementById("modalDateDebut").value;
     const fin = document.getElementById("modalDateFin").value;
     const msg = document.getElementById("msgRetourModal");
@@ -196,13 +200,13 @@
       msg.textContent = "La date de début doit précéder la date de fin.";
       return;
     }
-    if (fin !== "" && dateFinObj < dateJour) {
-      if (
-        !confirm(
-          "⚠️ ATTENTION : La date de fin est déjà passée !\nSi vous validez, l'opération sera clôturée cette nuit.\nVoulez-vous vraiment continuer ?"
-        )
-      )
-        return;
+    if (fin !== "" && dateFinObj < dateJour && confirme !== true) {
+      msg.style.color = "var(--danger)";
+      msg.textContent = "Date de fin déjà passée : l'offre sera clôturée cette nuit.";
+      confirmerEnDeuxTemps(document.getElementById("btnMajDates"), "Confirmer ces dates", function () {
+        sauvegarderDatesTablette(true);
+      });
+      return;
     }
 
     msg.style.color = "var(--orange)";
@@ -218,8 +222,8 @@
         msg.style.color = alerte ? "var(--orange)" : "var(--ok)";
         msg.style.whiteSpace = "pre-line";
         msg.textContent = alerte
-          ? "✅ Dates mises à jour." + reponse.slice(reponse.indexOf("\n"))
-          : "✅ Dates mises à jour !";
+          ? "Dates mises à jour." + reponse.slice(reponse.indexOf("\n"))
+          : "Dates mises à jour.";
         majResumeOperation(debut, fin);
         chargerDatesAffichage();
         setTimeout(

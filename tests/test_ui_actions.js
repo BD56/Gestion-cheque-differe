@@ -28,6 +28,14 @@ const repo = process.argv[2];
     await p.click('[data-action="imprimerAuj"]');
     const appels = await p.evaluate(() => window.__appels);
     assert.deepStrictEqual(appels[appels.length - 1], ["allerVersImpression", "aujourdhui"]);
+    // Action lourde du panneau : rien au premier appui, appel au second (plus de confirm())
+    await p.click('[data-action="retirerTablettes"]');
+    assert.ok(
+      !(await p.evaluate(() => window.__appels.some((x) => x[0] === "retirerToutesTablettesPanneau")))
+    );
+    assert.match(await p.textContent("#btnRetirerTablettes"), /Confirmer/);
+    await p.click('[data-action="retirerTablettes"]');
+    assert.ok(await p.evaluate(() => window.__appels.some((x) => x[0] === "retirerToutesTablettesPanneau")));
   } finally {
     await nav.close();
   }

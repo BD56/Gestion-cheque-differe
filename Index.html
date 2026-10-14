@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr" data-version="2026.10.14-1001">
+<html lang="fr" data-version="2026.10.14-1015">
   <head>
     <base target="_top">
     <?!= include_('Style') ?>
@@ -144,7 +144,7 @@
             <ul>
               <li>Remplissez le <strong>N° de pièce</strong>, le <strong>Nom</strong>, le <strong>Prénom</strong>, le montant et les notes. La touche <strong>Entrée</strong> passe au champ suivant.</li>
               <li>Touchez <strong>Enregistrer</strong>.</li>
-              <li class="encadre-aide vert">🟢 <strong>Bandeau vert</strong> : saisie enregistrée. Le formulaire se vide pour le client suivant.</li>
+              <li class="encadre-aide vert"><strong>Bandeau vert</strong> : saisie enregistrée. Le formulaire se vide pour le client suivant.</li>
               <li>En dehors des dates de l'offre, la saisie est impossible : le haut de l'écran indique « Opération à venir », « Opération terminée » ou « Aucune opération en cours ».</li>
             </ul>
           </div>
@@ -194,7 +194,7 @@
               <li><strong>Comment faire :</strong> touchez <strong><svg class="ico"><use href="#i-appareil-photo"/></svg></strong> (en haut), photographiez <strong>cette bande</strong> bien à plat → le <strong>Nom</strong>, le <strong>Prénom</strong> et le <strong>N° de pièce</strong> se remplissent tout seuls.</li>
               <li><strong>Pièces reconnues :</strong> Passeport, Nouvelle carte d'identité, Ancienne carte d'identité, Titre de séjour. <em>(Ne fonctionne pas avec la Carte Vitale ni le permis de conduire.)</em></li>
               <li><strong>Pour une bonne lecture :</strong> la bande doit <strong>remplir la largeur</strong>, être <strong>nette</strong>, <strong>bien éclairée</strong>, <strong>sans reflet</strong>, et dans le <strong>sens de lecture</strong>.</li>
-              <li class="encadre-aide orange">⚠️ <strong>Vérifiez toujours :</strong> relisez le <strong>Nom</strong>, le <strong>Prénom</strong> et le <strong>N° de pièce</strong>, et corrigez si besoin <strong>avant de valider</strong>.</li>
+              <li class="encadre-aide orange"><strong>Vérifiez toujours :</strong> relisez le <strong>Nom</strong>, le <strong>Prénom</strong> et le <strong>N° de pièce</strong>, et corrigez si besoin <strong>avant de valider</strong>.</li>
               <li><strong>Si ça ne marche pas :</strong> reprenez la photo ou <strong>saisissez à la main</strong>. Le scan est une aide, pas une obligation.</li>
               <li><strong>1ᵉʳ usage :</strong> le tout premier scan prend quelques secondes (chargement du lecteur), ensuite c'est rapide.</li>
             </ul>
@@ -204,8 +204,8 @@
             <button class="retour" data-action="allerAide" data-args='["accueil"]'><svg class="ico"><use href="#i-chevron"/></svg>Retour</button>
             <h3 class="titre-ecran"><svg class="ico"><use href="#i-bouclier"/></svg> Modes de sécurité</h3>
             <ul>
-              <li>🟡 <strong>SIGNALER</strong> : l'application alerte mais laisse <strong>forcer</strong> l'ajout.</li>
-              <li>🔴 <strong>BLOQUANT</strong> : les alertes rouges refusent la saisie, sans possibilité de forcer. L'homonyme (orange) reste forçable.</li>
+              <li><span class="pastille orange"></span><strong>SIGNALER</strong> : l'application alerte mais laisse <strong>forcer</strong> l'ajout.</li>
+              <li><span class="pastille rouge"></span><strong>BLOQUANT</strong> : les alertes rouges refusent la saisie, sans possibilité de forcer. L'homonyme (orange) reste forçable.</li>
               <li>Le mode est <strong>conservé</strong> d'une offre à l'autre.</li>
               <li>Réglage : <svg class="ico"><use href="#i-reglages"/></svg> → code → menu <strong><svg class="ico"><use href="#i-bouclier"/></svg> Sécurité</strong>, interrupteur <strong>Signaler / Bloquant</strong>. Le mode en cours est affiché en haut de l'écran de saisie.</li>
             </ul>
@@ -338,7 +338,7 @@
                   </div>
                 </div>
                 <div class="rangee-btn">
-                  <button class="sec accent" data-action="sauvegarderDatesTablette">Mettre à jour les dates</button>
+                  <button class="sec accent" id="btnMajDates" data-action="sauvegarderDatesTablette">Mettre à jour les dates</button>
                   <button class="sec danger" data-action="demanderCloture"><svg class="ico"><use href="#i-alerte"/></svg>Clôturer maintenant</button>
                 </div>
                 <div class="message-haut" id="msgRetourModal"></div>
@@ -501,25 +501,26 @@
 
     <div id="ecranAppairage" class="modal-overlay ecran-appairage">
       <div class="modal-content largeur-420">
-        <h2 class="titre-haut-centre"><svg class="ico"><use href="#i-cadenas"/></svg> Tablette non autorisée</h2>
+        <svg class="ico grande"><use href="#i-tablette"/></svg>
+        <h2 class="titre-haut-centre">Autoriser cette tablette</h2>
         <p class="texte-appairage" id="txtAppairage"></p>
         <div class="input-group" id="blocActivationApp" style="display: none">
-          <label>Code d'activation (affiché dans le Google Sheets)</label>
+          <label class="etiquette" for="activationApp">Code d'activation (affiché dans le Google Sheets)</label>
           <input type="text" id="activationApp" inputmode="numeric" maxlength="9" autocomplete="off" placeholder="1234-5678">
         </div>
         <div class="input-group">
-          <label id="lblPinApp">Code responsable (6 chiffres)</label>
+          <label class="etiquette" id="lblPinApp" for="pinApp">Code responsable (6 chiffres)</label>
           <input type="password" id="pinApp" inputmode="numeric" maxlength="6" autocomplete="off">
         </div>
         <div class="input-group" id="blocPinApp2" style="display: none">
-          <label>Confirmer le code</label>
+          <label class="etiquette" for="pinApp2">Confirmer le code</label>
           <input type="password" id="pinApp2" inputmode="numeric" maxlength="6" autocomplete="off">
         </div>
         <div class="input-group">
-          <label>Nom de cette tablette</label>
+          <label class="etiquette" for="nomTablette">Nom de cette tablette</label>
           <input type="text" id="nomTablette" value="Tablette caisse" maxlength="40" autocomplete="off">
         </div>
-        <button class="btn-action fond-bleu" id="btnAppairer" data-action="appairerCetteTablette">AUTORISER CETTE TABLETTE</button>
+        <button class="plein" id="btnAppairer" data-action="appairerCetteTablette">Autoriser cette tablette</button>
         <div class="message-erreur" id="msgAppairage"></div>
       </div>
     </div>
@@ -590,14 +591,17 @@
 
     <div id="modalAnnuaire" class="modal-overlay">
       <div class="modal-content">
-        <h2 class="titre-modal-info"><svg class="ico"><use href="#i-personne"/></svg> Client connu</h2>
+        <h2 class="titre-modal"><svg class="ico"><use href="#i-personne"/></svg> Client connu</h2>
         <p class="texte-14" id="msgAnnuaire"></p>
-        <div class="flex-btn">
-          <button class="btn-cancel" data-action="ignorerAnnuaire">IGNORER</button>
-          <button class="btn-force fond-vert" data-action="utiliserAnnuaire">UTILISER</button>
+        <div class="rangee-btn">
+          <button class="sec accent" data-action="utiliserAnnuaire">Pré-remplir</button>
+          <button class="sec" data-action="ignorerAnnuaire">Ignorer</button>
         </div>
       </div>
     </div>
+
+    <!-- Message bref par-dessus tout (impression impossible, erreur du serveur…) -->
+    <div class="toast" id="toast" role="status" style="display: none"><svg class="ico" id="toastIco"><use href="#i-check"/></svg><span id="toastTxt"></span></div>
 
     <!-- Tablette tenue en hauteur (écran tactile seulement) : invitation à la tourner,
          jamais bloquante ; la saisie ou l'alerte en cours restent en place dessous -->

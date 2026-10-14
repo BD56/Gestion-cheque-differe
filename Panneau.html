@@ -1,155 +1,199 @@
 <!doctype html>
-<html data-version="2026.10.14-1001">
+<html data-version="2026.10.14-1015">
   <head>
     <base target="_top" />
     <style>
+      /* Panneau du Google Sheets (barre latérale de 300 px) : palette « Comptoir ». */
+      :root {
+        --fond: #f5f3f0;
+        --surface: #ffffff;
+        --encre: #1c1917;
+        --doux: #6f6863;
+        --trait: #e5dfd8;
+        --trait-fort: #d3cbc2;
+        --accent: #0f766e;
+        --accent-doux: #e3f1ef;
+        --ok: #15803d;
+        --danger: #c81e1e;
+        --danger-doux: #fcebea;
+        --orange: #b45309;
+        --orange-doux: #fdf1e2;
+        color-scheme: light;
+      }
+      * {
+        box-sizing: border-box;
+      }
       body {
-        font-family: "Segoe UI", Tahoma, sans-serif;
-        padding: 15px;
-        background-color: #f8f9fa;
-        margin: 0;
-      }
-      h3 {
-        text-align: center;
-        color: #3c4043;
-        margin-top: 0;
-        font-size: 18px;
-      }
-
-      .btn {
-        width: 100%;
-        padding: 12px;
-        margin-bottom: 12px;
-        border: none;
-        border-radius: 8px;
-        color: white;
-        font-weight: bold;
-        cursor: pointer;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         font-size: 14px;
-        transition: 0.2s;
+        color: var(--encre);
+        background: var(--fond);
+        margin: 0;
+        padding: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
       }
-      .btn:hover {
-        opacity: 0.9;
+      button,
+      input {
+        font: inherit;
+        color: inherit;
       }
-      .btn-print {
-        background-color: #1a73e8;
+      :focus-visible {
+        outline: 3px solid var(--accent);
+        outline-offset: 2px;
       }
-      .btn-offre {
-        background-color: #34a853;
+      .boite {
+        background: var(--surface);
+        border: 1px solid var(--trait);
+        border-radius: 14px;
+        padding: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
       }
-      .btn-mode-signaler {
-        background-color: #f2994a;
-      }
-      .btn-mode-bloquant {
-        background-color: #d93025;
-      }
-      .btn-archive {
-        background-color: #d93025;
-        margin-top: 20px;
-      }
-
-      .date-box {
-        background: #e8eaed;
-        padding: 12px;
-        border-radius: 8px;
-        margin-bottom: 12px;
-        text-align: center;
-        border: 1px solid #dadce0;
+      h2 {
+        margin: 0;
+        font-size: 11.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: var(--doux);
       }
       label {
-        font-size: 12px;
-        color: #5f6368;
-        display: block;
-        margin-bottom: 8px;
-        font-weight: bold;
+        font-size: 12.5px;
+        color: var(--doux);
+        font-weight: 650;
       }
       input[type="date"] {
-        width: 90%;
-        padding: 8px;
-        margin-bottom: 10px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        font-size: 14px;
+        width: 100%;
+        height: 40px;
+        padding: 0 10px;
+        border: 1.5px solid var(--trait-fort);
+        border-radius: 10px;
+        background: var(--surface);
       }
-      hr {
-        border: 0;
-        height: 1px;
-        background: #ddd;
-        margin: 20px 0;
-      }
-
-      /* Boîte de légende de l'historique */
-      .legend-box {
-        background: #fff3cd;
-        padding: 12px;
-        border-radius: 8px;
-        border: 1px solid #ffeeba;
-        margin-bottom: 15px;
-        font-size: 12px;
-        color: #856404;
-      }
-      .legend-box h4 {
-        margin: 0 0 8px 0;
-        font-size: 13px;
+      .btn {
+        width: 100%;
+        min-height: 40px;
+        padding: 8px 12px;
+        border-radius: 10px;
+        border: 1.5px solid var(--trait-fort);
+        background: var(--surface);
+        font-weight: 650;
+        cursor: pointer;
         text-align: center;
-        color: #d35400;
       }
-      .legend-box p {
-        margin: 4px 0;
-        line-height: 1.4;
+      .btn.accent {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #fff;
       }
-      /* Mises en forme autrefois écrites dans le HTML (style="…") */
-      .btn-gris {
-        background-color: #5f6368;
+      .btn.danger {
+        color: var(--danger);
+        border-color: var(--danger);
       }
-      .sans-marge-bas {
-        margin-bottom: 0;
+      .btn.a-confirmer {
+        background: var(--danger);
+        border-color: var(--danger);
+        color: #fff;
       }
-      .btn-gris-sans-marge {
-        background-color: #5f6368;
-        margin-bottom: 0;
+      .btn.mode-signaler {
+        background: var(--orange-doux);
+        border-color: var(--orange-doux);
+        color: var(--orange);
       }
-      .msg-dates {
-        font-size: 11px;
-        font-weight: bold;
-        margin-top: 5px;
+      .btn.mode-bloquant {
+        background: var(--danger-doux);
+        border-color: var(--danger-doux);
+        color: var(--danger);
+      }
+      .note {
+        margin: 0;
+        font-size: 12.5px;
+        color: var(--doux);
+        line-height: 1.45;
+      }
+      .legende p {
+        margin: 0;
+        font-size: 12.5px;
+        line-height: 1.45;
+      }
+      .msg {
+        font-size: 12.5px;
+        font-weight: 650;
+        white-space: pre-line;
+      }
+      .msg:empty {
+        display: none;
+      }
+      .message-panneau {
+        background: var(--surface);
+        border: 1.5px solid var(--accent);
+        border-radius: 12px;
+        padding: 10px 12px;
+        font-size: 13px;
+        white-space: pre-line;
+        line-height: 1.45;
+      }
+      .message-panneau.erreur {
+        border-color: var(--danger);
+        color: var(--danger);
+      }
+      .message-panneau:empty {
+        display: none;
       }
     </style>
   </head>
   <body>
-    <h3>⚙️ Paramètres</h3>
+    <div class="message-panneau" id="msgPanneau" role="status"></div>
 
-    <button class="btn btn-print" data-action="imprimerAuj">🖨️ VOIR JOUR (AUJ)</button>
-
-    <div class="date-box">
-      <label>📅 Voir un jour précédent :</label>
+    <div class="boite">
+      <h2>Consulter les saisies</h2>
+      <button class="btn accent" data-action="imprimerAuj">Aujourd'hui</button>
+      <label for="dateImpression">Un jour précédent</label>
       <input type="date" id="dateImpression" />
-      <button class="btn btn-gris-sans-marge" data-action="imprimerAncien">VOIR CE JOUR</button>
+      <button class="btn" data-action="imprimerAncien">Voir ce jour</button>
+      <button class="btn" data-action="voirOffre">Toute l'offre</button>
     </div>
 
-    <button class="btn btn-offre" data-action="voirOffre">📚 TOUTE L'OFFRE</button>
-
-    <hr />
-
-    <div class="legend-box">
-      <h4>📖 Légende des Notes</h4>
-      <p><strong>Cas A :</strong> Vrai doublon <em>(Nom & Pièce identiques)</em></p>
-      <p><strong>Cas B :</strong> Anomalie / Usurpation <em>(Nom différent, Même Pièce)</em></p>
-      <p><strong>Cas C :</strong> Homonyme <em>(Même Nom, Pièce différente)</em></p>
+    <div class="boite legende">
+      <h2>Légende des notes</h2>
+      <p><strong>Cas A</strong> : vrai doublon (même nom, même pièce).</p>
+      <p><strong>Cas B</strong> : usurpation possible (même pièce, autre nom).</p>
+      <p><strong>Cas C</strong> : homonyme (même nom, autre pièce).</p>
     </div>
 
-    <hr />
-    <div class="date-box">
-      <label>📅 Opération en cours :</label>
-      <input type="date" id="dateDebut" title="Date de début" />
-      <input type="date" id="dateFin" title="Date de fin" />
-      <button class="btn btn-offre sans-marge-bas" data-action="sauvegarderDatesPC">METTRE À JOUR</button>
-      <div class="msg-dates" id="msgDates"></div>
+    <div class="boite">
+      <h2>Opération</h2>
+      <label for="dateDebut">Début</label>
+      <input type="date" id="dateDebut" />
+      <label for="dateFin">Fin</label>
+      <input type="date" id="dateFin" />
+      <button class="btn accent" data-action="sauvegarderDatesPC">Mettre à jour les dates</button>
+      <div class="msg" id="msgDates"></div>
+      <button class="btn danger" id="btnCloturer" data-action="cloturer">Clôturer l'offre maintenant</button>
     </div>
-    <button class="btn" id="btnMode" data-action="changerMode">⏳ Chargement Mode...</button>
-    <button class="btn btn-archive" data-action="cloturer">⚠️ CLÔTURER L'OFFRE</button>
-    <button class="btn btn-gris" data-action="reinitialiserPin">🔑 RÉINITIALISER LE CODE RESPONSABLE</button>
-    <button class="btn btn-gris" data-action="retirerTablettes">📱 RETIRER TOUTES LES TABLETTES</button>
+
+    <div class="boite">
+      <h2>Mode de sécurité</h2>
+      <button class="btn" id="btnMode" data-action="changerMode">Chargement…</button>
+      <p class="note">
+        Signaler : alerte, l'hôtesse peut forcer. Bloquant : fraude et usurpation refusées (l'homonyme reste
+        possible après vérification).
+      </p>
+    </div>
+
+    <div class="boite">
+      <h2>Code et tablettes</h2>
+      <button class="btn" id="btnReinitPin" data-action="reinitialiserPin">
+        Réinitialiser le code responsable
+      </button>
+      <button class="btn danger" id="btnRetirerTablettes" data-action="retirerTablettes">
+        Retirer toutes les tablettes
+      </button>
+      <p class="note">Une confirmation est demandée par un second appui (5 s).</p>
+    </div>
 
     <script>
       window.onload = function () {
@@ -161,45 +205,67 @@
 
         google.script.run.withSuccessHandler(majMode).withFailureHandler(erreurChargement).getInfosPanneau();
       };
+
+      // Messages en haut du panneau (plus de fenêtres alert())
+      function message(texte, erreur) {
+        const m = document.getElementById("msgPanneau");
+        m.textContent = (texte || "").replace(/^[^A-Za-zÀ-ÿ0-9]+/, "");
+        m.className = "message-panneau" + (erreur ? " erreur" : "");
+        window.scrollTo(0, 0);
+      }
       function erreurChargement(err) {
-        document.getElementById("btnMode").innerHTML =
-          "⚠️ " + (err && err.message ? err.message : "Erreur de chargement");
+        document.getElementById("btnMode").textContent = "Mode inconnu";
+        message(err && err.message ? err.message : "Erreur de chargement", true);
       }
 
       // Les actions sensibles sont réservées aux éditeurs du classeur (contrôle serveur).
       function echec(err) {
-        alert("⚠️ " + (err && err.message ? err.message : err));
+        message(err && err.message ? err.message : String(err), true);
         google.script.run.withSuccessHandler(majMode).withFailureHandler(erreurChargement).getInfosPanneau();
       }
 
-      function reinitialiserPin() {
-        if (
-          !confirm(
-            "Effacer le code responsable ?\n\nUn code d'activation va s'afficher : il permet de créer le nouveau code depuis l'application (n'importe quelle tablette)."
-          )
-        )
+      // Second appui dans les 5 s pour confirmer une action lourde
+      function confirmerEnDeuxTemps(btn, texteConfirmation, action) {
+        if (btn.dataset.confirmer) {
+          clearTimeout(Number(btn.dataset.minuteur));
+          delete btn.dataset.confirmer;
+          btn.textContent = btn.dataset.avant;
+          btn.classList.remove("a-confirmer");
+          action();
           return;
-        google.script.run
-          .withSuccessHandler(function (msg) {
-            alert(msg);
-          })
-          .withFailureHandler(echec)
-          .reinitialiserPinPanneau();
+        }
+        btn.dataset.avant = btn.textContent;
+        btn.dataset.confirmer = "1";
+        btn.textContent = texteConfirmation;
+        btn.classList.add("a-confirmer");
+        btn.dataset.minuteur = setTimeout(function () {
+          delete btn.dataset.confirmer;
+          btn.textContent = btn.dataset.avant;
+          btn.classList.remove("a-confirmer");
+        }, 5000);
+      }
+
+      function reinitialiserPin() {
+        confirmerEnDeuxTemps(
+          document.getElementById("btnReinitPin"),
+          "Confirmer : effacer le code",
+          function () {
+            google.script.run.withSuccessHandler(message).withFailureHandler(echec).reinitialiserPinPanneau();
+          }
+        );
       }
 
       function retirerTablettes() {
-        if (
-          !confirm(
-            "Retirer TOUTES les tablettes ?\n\nChacune devra être autorisée à nouveau avec le code responsable (liste pleine, tablettes perdues…)."
-          )
-        )
-          return;
-        google.script.run
-          .withSuccessHandler(function (msg) {
-            alert(msg);
-          })
-          .withFailureHandler(echec)
-          .retirerToutesTablettesPanneau();
+        confirmerEnDeuxTemps(
+          document.getElementById("btnRetirerTablettes"),
+          "Confirmer : retirer TOUTES les tablettes",
+          function () {
+            google.script.run
+              .withSuccessHandler(message)
+              .withFailureHandler(echec)
+              .retirerToutesTablettesPanneau();
+          }
+        );
       }
 
       function imprimerAuj() {
@@ -214,35 +280,40 @@
       }
 
       function changerMode() {
-        document.getElementById("btnMode").innerHTML = "⏳ MAJ...";
+        document.getElementById("btnMode").textContent = "Mise à jour…";
         google.script.run.withSuccessHandler(majMode).withFailureHandler(echec).basculerModeWebApp();
       }
 
       function majMode(infosOuMode) {
         const mode = typeof infosOuMode === "string" ? infosOuMode : infosOuMode.mode;
         const btn = document.getElementById("btnMode");
-        btn.innerHTML = "🛡️ MODE : " + mode;
-        btn.className = mode === "BLOQUANT" ? "btn btn-mode-bloquant" : "btn btn-mode-signaler";
+        btn.textContent =
+          mode === "BLOQUANT" ? "Mode Bloquant · passer en Signaler" : "Mode Signaler · passer en Bloquant";
+        btn.className = mode === "BLOQUANT" ? "btn mode-bloquant" : "btn mode-signaler";
       }
 
       function cloturer() {
-        if (confirm("🚨 CLÔTURE DE L'OFFRE\n\nÊtes-vous sûr de vouloir archiver et vider la liste ?")) {
-          google.script.run
-            .withSuccessHandler(function (msg) {
-              alert(msg);
-              // le mode est conservé à la clôture : simple rafraîchissement de l'affichage
-              google.script.run
-                .withSuccessHandler(majMode)
-                .withFailureHandler(erreurChargement)
-                .getInfosPanneau();
+        confirmerEnDeuxTemps(
+          document.getElementById("btnCloturer"),
+          "Confirmer : archiver et vider la liste",
+          function () {
+            google.script.run
+              .withSuccessHandler(function (msg) {
+                message(msg);
+                // le mode est conservé à la clôture : simple rafraîchissement de l'affichage
+                google.script.run
+                  .withSuccessHandler(majMode)
+                  .withFailureHandler(erreurChargement)
+                  .getInfosPanneau();
 
-              // Offre clôturée : les dates affichées sur le panneau sont vidées
-              document.getElementById("dateDebut").value = "";
-              document.getElementById("dateFin").value = "";
-            })
-            .withFailureHandler(echec)
-            .archiverOffreWebApp();
-        }
+                // Offre clôturée : les dates affichées sur le panneau sont vidées
+                document.getElementById("dateDebut").value = "";
+                document.getElementById("dateFin").value = "";
+              })
+              .withFailureHandler(echec)
+              .archiverOffreWebApp();
+          }
+        );
       }
 
       // Au chargement, on récupère les dates
@@ -253,7 +324,7 @@
         })
         .withFailureHandler(function (err) {
           document.getElementById("msgDates").textContent =
-            "⚠️ " + (err && err.message ? err.message : "Dates non chargées");
+            err && err.message ? err.message : "Dates non chargées";
         })
         .getDatesOperation();
 
@@ -261,14 +332,13 @@
         const debut = document.getElementById("dateDebut").value;
         const fin = document.getElementById("dateFin").value;
         const msg = document.getElementById("msgDates");
-        msg.style.color = "orange";
-        msg.innerHTML = "Enregistrement...";
+        msg.style.color = "var(--orange)";
+        msg.textContent = "Enregistrement…";
         google.script.run
           .withSuccessHandler(function (rep) {
             const alerte = rep.indexOf("⚠️") !== -1;
-            msg.style.color = alerte ? "#b06000" : "green";
-            msg.style.whiteSpace = "pre-line";
-            msg.textContent = rep;
+            msg.style.color = alerte ? "var(--orange)" : "var(--ok)";
+            msg.textContent = rep.replace(/^[^A-Za-zÀ-ÿ0-9]+/, "");
             setTimeout(
               function () {
                 msg.textContent = "";
@@ -277,7 +347,7 @@
             );
           })
           .withFailureHandler(function (err) {
-            msg.innerHTML = "";
+            msg.textContent = "";
             echec(err);
           })
           .setDatesOperation(debut, fin);

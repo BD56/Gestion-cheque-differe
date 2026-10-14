@@ -1,5 +1,5 @@
 <!-- Styles de la page (Index.html). -->
-<style data-version="2026.10.14-1001">
+<style data-version="2026.10.14-1015">
   /* Palette « Comptoir » (clair uniquement). Les couleurs d'alerte (danger rouge,
      orange) ne sont jamais adoucies. Police du système : rien à télécharger. */
   :root {
@@ -844,6 +844,7 @@
     #ecranAppairage,
     #boxConfirmation,
     #ecranTourner,
+    #toast,
     #modalAnnuaire {
       display: none !important;
     }
@@ -1436,6 +1437,108 @@
     border: 1px solid var(--trait);
     box-shadow: none;
     max-width: none;
+  }
+
+  /* --- Fenêtres (aide, mentions, client connu, autorisation de la tablette) --- */
+  .modal-overlay {
+    background-color: rgba(28, 25, 23, 0.5);
+    padding: 16px;
+  }
+  .modal-content {
+    width: 100%;
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.25);
+  }
+  .btn-close-modal {
+    top: 14px;
+    right: 14px;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    border: 1px solid var(--trait);
+    background: var(--surface);
+    color: var(--encre);
+    display: grid;
+    place-items: center;
+    padding: 0;
+  }
+  .titre-modal {
+    font-size: 19px;
+  }
+  .separateur {
+    background: var(--trait);
+  }
+  .modal-content .rangee-btn {
+    margin-top: 12px;
+  }
+  /* Tablette non autorisée : rien de l'application ne se voit derrière */
+  .modal-overlay.ecran-appairage {
+    background-color: var(--fond);
+  }
+  .ecran-appairage .modal-content {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    border: 1px solid var(--trait);
+    box-shadow: none;
+  }
+  .ecran-appairage .modal-content h2 {
+    margin: 4px 0 0;
+  }
+  .ecran-appairage input {
+    height: 50px;
+    border: 1.5px solid var(--trait-fort);
+    border-radius: 12px;
+  }
+  .ecran-appairage input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-doux);
+  }
+  .ecran-appairage .input-group {
+    margin-bottom: 8px;
+  }
+  .ecran-appairage .plein {
+    margin-top: 6px;
+  }
+  .pastille {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: 0;
+  }
+  .pastille.orange {
+    background: var(--orange);
+  }
+  .pastille.rouge {
+    background: var(--danger);
+  }
+  #statusMessage .ico {
+    margin-right: 8px;
+  }
+
+  /* Message bref par-dessus tout */
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(22px + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%);
+    z-index: 2600;
+    max-width: calc(100% - 32px);
+    background: var(--encre);
+    color: #fff;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-weight: 650;
+    font-size: 14px;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  }
+  .toast.erreur {
+    background: var(--danger);
   }
 
   /* --- Tablette tenue en hauteur : invitation à la tourner --- */

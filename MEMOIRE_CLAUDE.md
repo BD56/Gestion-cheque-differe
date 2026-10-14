@@ -1,10 +1,10 @@
-# Mémoire de travail — Claude (branches `generalisation`, `refonte`, bientôt `design`)
+# Mémoire de travail — Claude (branches `generalisation`, `refonte`, `design`)
 
 > Fichier de reprise après compactage du contexte. À lire **avec** `AGENTS.md` (référence
 > canonique) et `docs/retours-vibe/decisions/2026-10-11_generalisation.md` (décisions).
 > Dernière mise à jour : 2026-10-13 (soir).
 
-## 0. ▶️ TÂCHE EN COURS : refonte graphique « Comptoir » (pas encore commencée)
+## 0. ▶️ Refonte graphique « Comptoir » : FAITE sur `design`, en attente de l'essai de Bryan
 **Décidé avec Bryan (13/10)**, à partir du prototype interactif :
 - Prototype : **`docs/maquettes/comptoir-prototype.html`** (source versionnée, page
   autonome, données fictives) ; publié en artefact privé « Comptoir — prototype »
@@ -167,8 +167,27 @@ box-sizing) → corrigé par la refonte.
   même » (`continuerEnHauteur`, sessionStorage `cdEnHauteur`, en mémoire si refusé).
   La présentation en hauteur reste utilisable. `tests/navigateur.js` : option
   `page` (isMobile, hasTouch, viewport). Test `test_ui_tourner` (36 séries).
-- ▶️ Prochaine : étape 7 (autres écrans :
-  aide, mentions, appairage, fenêtre annuaire, Panneau.html du Sheet).
+- ✅ Étape 7 — autres écrans (version 2026.10.14-1015) : plus AUCUNE fenêtre native
+  du navigateur sur la tablette : `afficherToast(texte, type)` (ScriptAlertes, message
+  bref en bas, rouge si erreur) pour impression impossible / erreurs serveur ;
+  date de fin déjà passée → second appui sur `#btnMajDates` ; résultat de clôture
+  affiché dans l'écran Opération (l'espace reste ouvert). Fenêtres (aide, mentions,
+  client connu) restylées ; écran d'autorisation restylé et OPAQUE (testé) ;
+  `afficherMessage` : icône + texte sans pictogramme (`sansPicto`). Aide : pastilles
+  de couleur au lieu de 🟡🔴. Panneau.html (Sheet, 300 px) réécrit : palette
+  Comptoir, sections, message en haut (`#msgPanneau`), confirmations par second
+  appui (clôture, réinitialisation du code, retrait des tablettes), plus de
+  alert()/confirm(). Emojis restants VOLONTAIRES : menu du Sheet (🚀 APPLICATION,
+  🔑, 🧰…) et leurs mentions dans les textes, « ⏳ n saisie en cours d'envoi »,
+  notes écrites dans le Sheet (⚠️ Ajout forcé, ℹ️ Passage), messages du serveur
+  (retirés à l'affichage), OCR dormant. Tests : test_ui_cloture (37 séries).
+
+**REFONTE GRAPHIQUE TERMINÉE (7 étapes + 5 bis) sur `design`.** En attente de Bryan :
+essai sur le Sheet de test (git checkout design, npm run push, Installer, déploiement)
+puis sur tablette réelle : rotation, clavier, journal, alertes, espace responsable,
+panneau du Sheet. Ensuite seulement : fusion `design` → `refonte` (ou autre), sur
+demande ; puis la documentation (docs/A_REDIGER.md, captures à refaire avec
+outils/captures.js).
 
 **Tranché par Bryan (13/10, après relecture du plan)** : journal = chèques de TOUTES
 les tablettes (copie locale, décalage ≤ 2 min pour les autres tablettes). Pas de modèle

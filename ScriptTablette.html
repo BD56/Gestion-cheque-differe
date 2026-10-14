@@ -1,5 +1,5 @@
 <!-- Tablette autorisée (appairage), démarrage, aide, panneau, mentions légales. -->
-<script data-version="2026.10.14-1001">
+<script data-version="2026.10.14-1015">
   // =================================================================
   // --- TABLETTE AUTORISÉE (appairage) ---
   // La clé reçue lors de l'autorisation est gardée dans le navigateur et envoyée à
@@ -47,7 +47,7 @@
   function afficherEcranAppairage(message) {
     document.getElementById("ecranAppairage").style.display = "flex";
     document.getElementById("msgAppairage").textContent = message || "";
-    document.getElementById("txtAppairage").textContent = "⏳ …";
+    document.getElementById("txtAppairage").textContent = "…";
     google.script.run
       .withSuccessHandler(function (etat) {
         pinDefiniAppairage = etat.pinDefini;
@@ -61,10 +61,11 @@
         document.getElementById("blocActivationApp").style.display = pinDefiniAppairage ? "none" : "block";
         if (!STOCKAGE_OK)
           document.getElementById("msgAppairage").textContent =
-            "⚠️ Ce navigateur ne peut pas mémoriser l'autorisation : elle sera redemandée à chaque ouverture.";
+            "Ce navigateur ne peut pas mémoriser l'autorisation : elle sera redemandée à chaque ouverture.";
       })
       .withFailureHandler(function () {
-        document.getElementById("txtAppairage").textContent = "⚠️ Serveur injoignable. Rechargez la page.";
+        document.getElementById("txtAppairage").textContent =
+          "Serveur injoignable : vérifiez le Wi-Fi puis rechargez la page.";
       })
       .etatAdmin();
   }
@@ -164,7 +165,7 @@
         if (siNonAutorisee(err)) return;
         // serveur injoignable : on le dit, et on réessaie tout seul
         afficherMessage(
-          "⚠️ Connexion au serveur impossible : nouvel essai dans 20 s (vérifiez le Wi-Fi).",
+          "Connexion au serveur impossible : nouvel essai dans 20 s (vérifiez le Wi-Fi).",
           "error"
         );
         setTimeout(function () {

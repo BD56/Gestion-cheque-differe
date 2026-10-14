@@ -47,7 +47,9 @@ const { FakeSheet } = require("./fakesheet");
     await page.waitForTimeout(100);
     await page.click(".btn-print-jour");
     await page.waitForTimeout(150);
-    assert.deepStrictEqual(await page.evaluate(() => window.__alertes), ["Aucune donnée trouvée."]);
+    assert.ok(await page.isVisible("#toast"), "message dans la page");
+    assert.match(await page.textContent("#toast"), /Rien à imprimer/);
+    assert.deepStrictEqual(await page.evaluate(() => window.__alertes), [], "plus de fenêtre du navigateur");
     assert.deepStrictEqual(erreursPage, []);
     console.log("test_ui_archives : OK");
   } finally {

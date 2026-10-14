@@ -72,7 +72,12 @@ Web, « Exécuter en tant que : moi », « Accès : tout le monde ».
   HTML (`getContent`) → la marque de version est un attribut `data-version`.
 - `globalThis["version_X_"]` voit bien les fonctions de tous les `.gs`.
 
-### Refonte graphique (à venir)
-- Captures d'écran à refaire pour l'aide et la doc.
+### Refonte graphique (faite sur la branche `design`)
+- Captures d'écran à refaire pour l'aide et la doc : `outils/captures.js <dossier>`
+  (saisie, aide, alertes, journal, espace responsable ; 3 formats).
+- Décrire : saisie en 3 étapes, verdict sous le N°, alerte comparative et forçage
+  confirmé, journal du jour (replié par défaut, mémorisé par tablette, mis à jour au
+  rythme de la copie locale), espace responsable (vue d'ensemble en lecture seule,
+  Opération, Sécurité…), « Tournez la tablette », panneau du Sheet.
 - Décrire la palette (variables CSS) et les règles : les alertes A/B/C restent très
   visibles (rouge / orange), boutons de 48 px minimum, pas de police externe.

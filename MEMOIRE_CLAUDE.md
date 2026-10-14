@@ -444,8 +444,9 @@ quand Bryan le demande.
    éditeur (`estEditeurDuClasseur_` repose sur `Session.getActiveUser()`).
 4. Ce que Google **recopie** lors d'une copie du modèle (propriétés du document).
 5. `installer()` crée bien les déclencheurs (nuit 1h clôture, 3h purge).
-   À Vannes : vérifier le **nom des anciens onglets d'archives** (seul le format
-   `Archives_jj-mm-aaaa_hh-mm` est purgé ; la 1re nuit supprimera ceux de plus de 3 ans).
+   À Vannes : ✅ les anciens onglets d'archives ont le bon format (ex.
+   `Archives_26-02-2026_00-44`, confirmé par Bryan le 14/10) → purgés après 3 ans
+   avec leur résumé ; résumé = dates de la 1re et de la dernière saisie.
 6. Parcours complet : autorisation, saisie, doublons, passages, correction, impression,
    archives, clôture.
 7. Le robot de nuit passe la vérification `triggerUid` (sinon l'espace responsable

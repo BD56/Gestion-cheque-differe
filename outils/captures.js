@@ -56,7 +56,6 @@ async function ecrans(format) {
     await page.fill("#piece", "123456789012");
     await page.press("#piece", "Tab");
     await prendre("5-piece-deja-vue");
-    await fermer("modalDoublonPiece");
     await page.fill("#nom", "MARTIN");
     await page.fill("#prenom", "SOPHIE");
     await page.fill("#montant", "40");

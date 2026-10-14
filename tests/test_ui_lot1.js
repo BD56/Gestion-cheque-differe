@@ -8,7 +8,6 @@ async function remplir(page, piece, nom, prenom, montant) {
   await page.fill("#piece", piece);
   await page.focus("#nom");
   await page.waitForTimeout(50);
-  if (await page.isVisible("#modalDoublonPiece")) await page.click("#modalDoublonPiece >> text=OK"); // « N° déjà enregistré »
   await page.fill("#nom", nom);
   await page.fill("#prenom", prenom);
   await page.fill("#montant", montant || "10");

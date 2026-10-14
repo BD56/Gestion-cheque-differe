@@ -24,8 +24,11 @@ async function saisirClavier(page, piece, nom, prenom) {
     await page.keyboard.type("AB123");
     await page.keyboard.press("Enter");
     await page.waitForTimeout(100);
-    assert.ok(await page.isVisible("#modalDoublonPiece"), "avertissement N° dès la 2e saisie");
-    await page.click("#modalDoublonPiece >> text=OK");
+    assert.match(
+      await page.textContent("#verdictPiece"),
+      /déjà enregistré/,
+      "avertissement N° dès la 2e saisie"
+    );
     assert.strictEqual(
       await page.inputValue("#nom"),
       "",

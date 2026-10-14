@@ -69,7 +69,21 @@ box-sizing) → corrigé par la refonte.
   RESTENT volontairement en emojis : messages du serveur et titres d'alerte (🛑 ⚠️ ✅,
   étape 3), puces de modes 🟡🔴 et ⏳ (étapes 2 et 5), menu du Sheet 🚀🔑 (Google
   n'affiche pas d'icônes dans un menu ; l'aide y renvoie), Panneau.html (étape 7).
-- ▶️ Prochaine : étape 2 (en-tête + saisie en 3 étapes).
+- ✅ Étape 2 — en-tête + saisie en 3 étapes (version 2026.10.14-0200) : en-tête
+  `.haut` (marque = NOM_OFFRE `#txtNomOffre` + « Saisie client », puce `#puceOffre`
+  « Offre en cours · jj/mm → jj/mm · jour n sur N » / à venir / terminée / aucune,
+  puce `#puceMode` mise à jour par `majPuceMode` au démarrage, au changement et à
+  chaque rechargement de la copie locale) ; bloc `#horsPeriode` à la place du
+  formulaire hors période ; étapes 1 Pièce / 2 Client / 3 Détails (numéros verts
+  quand remplis, `majEtapes`) ; ids des champs inchangés, libellés gardés (réglables).
+  **Fenêtre « N° déjà enregistré » SUPPRIMÉE → verdict `#verdictPiece` sous le N°**
+  (rouge ; orange si passage encore autorisé ; vert « pas encore enregistré » ; effacé
+  à la frappe ; réponse serveur tardive ignorée si le N° a changé). Bouton
+  « Enregistrer » (`etatBoutonValider`). Textes neutres (« Détails », « Enregistrer »)
+  car l'offre est réglable (pas forcément des chèques) — à confirmer par Bryan.
+  Écran étroit : en-tête sur 2 lignes, numéros masqués, champs empilés (≤ 480 px).
+  Nouveau test : `test_ui_saisie` (31 séries).
+- ▶️ Prochaine : étape 3 (alerte comparative + forçage confirmé dans la fenêtre).
 
 **Tranché par Bryan (13/10, après relecture du plan)** : journal = chèques de TOUTES
 les tablettes (copie locale, décalage ≤ 2 min pour les autres tablettes). Pas de modèle

@@ -143,8 +143,12 @@ const saisir = (e, n, p, pi, notes) => J(e.ctx.traiterSaisie(n, p, pi, "10", not
     await page.keyboard.type("AB1");
     await page.keyboard.press("Enter");
     await page.waitForTimeout(100);
-    assert.match(await page.textContent("#msgDoublonPiece"), /1 fois.*Jusqu'à 2 passages/);
-    await page.click("#modalDoublonPiece >> text=OK");
+    assert.match(await page.textContent("#verdictPiece"), /1 fois.*Jusqu'à 2 passages/);
+    assert.match(
+      await page.getAttribute("#verdictPiece", "class"),
+      /info/,
+      "passage encore autorisé : orange"
+    );
     await page.fill("#nom", "DUPONT");
     await page.fill("#prenom", "JEAN");
     await page.fill("#montant", "10");
@@ -157,8 +161,8 @@ const saisir = (e, n, p, pi, notes) => J(e.ctx.traiterSaisie(n, p, pi, "10", not
     await page.keyboard.type("AB1");
     await page.keyboard.press("Enter");
     await page.waitForTimeout(100);
-    assert.match(await page.textContent("#msgDoublonPiece"), /limite de 2 passages atteinte/);
-    await page.click("#modalDoublonPiece >> text=OK");
+    assert.match(await page.textContent("#verdictPiece"), /limite de 2 passages atteinte/);
+    assert.match(await page.getAttribute("#verdictPiece", "class"), /ko/);
     await page.fill("#nom", "DUPONT");
     await page.fill("#prenom", "JEAN");
     await page.fill("#montant", "10");

@@ -23,9 +23,6 @@ const { FakeSheet } = require("./fakesheet");
     await page.fill("#montant", "5");
     await page.fill("#piece", "AB123");
     await page.press("#piece", "Tab");
-    await page.evaluate(() => {
-      document.getElementById("modalDoublonPiece").style.display = "none";
-    });
     await page.click("#btnValider");
     await page.waitForTimeout(100);
     assert.ok(await page.isVisible("#actionSignaler"), "tablette périmée : propose de forcer");
@@ -49,9 +46,6 @@ const { FakeSheet } = require("./fakesheet");
     await page.fill("#montant", "5");
     await page.fill("#piece", "AB123");
     await page.press("#piece", "Tab");
-    await page.evaluate(() => {
-      document.getElementById("modalDoublonPiece").style.display = "none";
-    });
     await page.click("#btnValider");
     await page.waitForTimeout(100);
     assert.ok((await page.isVisible("#actionBloquant")) && !(await page.isVisible("#actionSignaler")));

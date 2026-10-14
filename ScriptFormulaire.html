@@ -1,5 +1,5 @@
 <!-- Formulaire : montant, touche Entrée, vérification du N°, copie locale, annuaire. -->
-<script data-version="2026.10.14-0149">
+<script data-version="2026.10.14-0200">
   // --- FORMATAGE AUTOMATIQUE DU MONTANT ---
   // Montant lisible -> reformaté « 1234,50 € » ; illisible -> laissé tel quel, encadré en rouge
   ["montant", "corMontant"].forEach(function (idMontant) {
@@ -66,6 +66,7 @@
         cacheVerif = c;
         cacheRecuA = Date.now();
         if (c.config) appliquerConfig(c.config);
+        if (c.mode) majPuceMode(c.mode); // mode changé depuis le Sheet ou une autre tablette
         fusionnerEnAttente();
       })
       .withFailureHandler(siNonAutorisee)
@@ -139,19 +140,21 @@
   }
 
   document.getElementById("piece").addEventListener("blur", function () {
-    const val = this.value.trim();
-    if (val === "") return; // champ vide -> rien
+    const champ = this,
+      val = this.value.trim();
+    const pn = normPieceJS(val);
+    if (pn === "") return; // champ vide (ou sans lettre ni chiffre) -> rien
     if (!copieFraiche()) {
       // copie absente ou trop ancienne -> repli serveur (rare)
       google.script.run
-        .withSuccessHandler(afficherVerifPiece)
+        .withSuccessHandler(function (res) {
+          if (champ.value.trim() === val) afficherVerifPiece(res); // pas pour un N° déjà retapé
+        })
         .withFailureHandler(siNonAutorisee)
         .verifierPiece(val, CLE_TABLETTE);
       return;
     }
     // Vérif 100% locale (instantanée)
-    const pn = normPieceJS(val);
-    if (pn === "") return;
     const matches = cacheVerif.offre.filter(function (d) {
       return d.pieceNorm === pn;
     });
@@ -163,20 +166,52 @@
         annuaire: cacheVerif.annuaire[pn],
         modeAnnuaire: cacheVerif.modeAnnuaire,
       });
+    } else {
+      afficherVerifPiece({ trouve: false });
     }
   });
+
+  // Verdict sous le N° : effacé dès que le numéro change
+  function masquerVerdict() {
+    const v = document.getElementById("verdictPiece");
+    v.style.display = "none";
+    v.innerHTML = "";
+  }
+  function afficherVerdict(classe, icone, html) {
+    const v = document.getElementById("verdictPiece");
+    v.className = "verdict " + classe;
+    v.innerHTML = '<svg class="ico"><use href="#i-' + icone + '"/></svg>' + html;
+    v.style.display = "block";
+  }
+  document.getElementById("piece").addEventListener("input", masquerVerdict);
+
+  // Étapes 1-2-3 : le numéro passe au vert quand ses champs obligatoires sont remplis
+  function majEtapes() {
+    const plein = function (id) {
+      return document.getElementById(id).value.trim() !== "";
+    };
+    document.getElementById("num1").classList.toggle("fait", plein("piece"));
+    document.getElementById("num2").classList.toggle("fait", plein("nom") && plein("prenom"));
+    document.getElementById("num3").classList.toggle("fait", !MONTANT_OBLIGATOIRE || plein("montant"));
+  }
+  ["piece", "nom", "prenom", "montant", "notes"].forEach(function (id) {
+    document.getElementById(id).addEventListener("input", majEtapes);
+  });
+  majEtapes();
 
   function afficherVerifPiece(res) {
     if (!res) return;
     if (res.trouve) {
-      // Niveau 2 : doublon sur l'offre en cours -> modale d'avertissement (prioritaire)
+      // Niveau 2 : doublon sur l'offre en cours -> message sous le N° (la décision se fait à la validation)
       const max = passagesMaxJS(),
         nb = (res.matches || []).length;
-      let msg;
+      let msg,
+        classe = "ko";
       if (max === 1) {
         msg = "Ce numéro est déjà enregistré sur cette offre.";
         if (res.mode === "BLOQUANT") msg += " (sera refusé à la validation)";
       } else if (nb < max) {
+        classe = "info";
         msg =
           "Ce numéro est déjà enregistré " +
           nb +
@@ -192,32 +227,24 @@
           " passages atteinte" +
           (res.mode === "BLOQUANT" ? " (sera refusé à la validation)." : ".");
       }
-      document.getElementById("msgDoublonPiece").innerHTML = msg;
-      let html = "";
+      let html = echapper(msg) + "<ul>";
       (res.matches || []).forEach(function (d) {
-        html += "<div class='doublon-carte'>";
-        html += "📅 " + echapper(d.date) + " (Ligne " + echapper(d.ligne) + ")<br>";
-        html += "👤 " + echapper(d.nom) + " " + echapper(d.prenom);
-        if (d.montant !== "") html += "<br>💶 " + echapper(formaterMontantAffiche(d.montant));
-        html += "</div>";
+        html += "<li>" + echapper(d.nom) + " " + echapper(d.prenom) + " · " + echapper(d.date);
+        if (d.montant !== "") html += " · " + echapper(formaterMontantAffiche(d.montant));
+        html += "</li>";
       });
-      document.getElementById("listeDoublonPiece").innerHTML = html;
-      document.getElementById("modalDoublonPiece").style.display = "flex";
+      afficherVerdict(classe, "alerte", html + "</ul>");
       // Pas de pré-remplissage ici : l'hôtesse doit recopier le nom LU sur la pièce
       // présentée. Pré-remplir avec le nom déjà enregistré transformait une usurpation
       // (même pièce, autre personne = cas B) en « vrai doublon » A si elle ne corrigeait pas.
       return;
     }
+    afficherVerdict("ok", "check", "Numéro pas encore enregistré sur cette offre.");
     // Niveau 3 (annuaire) : pièce connue d'une offre passée, pas sur l'offre en cours
     if (res.annuaire) {
       if (res.modeAnnuaire === "B") proposerAnnuaire(res.annuaire);
       else remplirAnnuaire(res.annuaire); // 'C' = pré-remplissage doux (défaut)
     }
-  }
-
-  function fermerDoublonPiece() {
-    document.getElementById("modalDoublonPiece").style.display = "none";
-    document.getElementById("nom").focus(); // on continue la saisie
   }
 
   // --- NIVEAU 3 : auto-complétion depuis l'annuaire inter-offres ---

@@ -1,5 +1,5 @@
 <!-- Espace responsable : code, corrections, archives, réglages, tablettes. -->
-<script data-version="2026.10.14-0149">
+<script data-version="2026.10.14-0200">
   // =================================================================
   // --- ESPACE RESPONSABLE (code PIN) ---
   // Le jeton n'est gardé qu'en mémoire : il disparaît à la fermeture du
@@ -482,6 +482,7 @@
   function appliquerConfig(cfg) {
     CONFIG = cfg;
     MONTANT_OBLIGATOIRE = cfg.MONTANT_OBLIGATOIRE !== "NON";
+    majEtapes();
     document.getElementById("txtNomOffre").textContent = cfg.NOM_OFFRE;
     document.getElementById("lblMontant").textContent =
       cfg.LIBELLE_MONTANT + " (€)" + (MONTANT_OBLIGATOIRE ? " *" : "");

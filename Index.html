@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr" data-version="2026.10.14-0149">
+<html lang="fr" data-version="2026.10.14-0200">
   <head>
     <base target="_top">
     <?!= include_('Style') ?>
@@ -7,68 +7,99 @@
   <body>
     <?!= include_('Icones') ?>
 
-    <div class="container">
-      <div class="header-app">
-        <h2><svg class="ico"><use href="#i-stylo"/></svg> Saisie Client</h2>
-        <div class="header-buttons">
-          <button class="btn-settings" id="btnScan" title="Scanner la pièce" aria-label="Scanner la pièce" style="display: none"><svg class="ico"><use href="#i-appareil-photo"/></svg></button>
-          <button class="btn-settings" data-action="ouvrirAide" title="Aide et consignes" aria-label="Aide et consignes"><svg class="ico"><use href="#i-aide"/></svg></button>
-          <button class="btn-settings" data-action="ouvrirPanneau" title="Panneau de contrôle" aria-label="Panneau de contrôle"><svg class="ico"><use href="#i-reglages"/></svg></button>
+    <div class="app">
+      <header class="haut">
+        <div class="marque">
+          <div class="logo"><svg class="ico"><use href="#i-check"/></svg></div>
+          <div><b id="txtNomOffre"><?= cfg.NOM_OFFRE ?></b><small>Saisie client</small></div>
         </div>
-      </div>
-      <div class="subtitle" id="txtNomOffre"><?= cfg.NOM_OFFRE ?></div>
+        <span class="puce" id="puceOffre"><svg class="ico"><use href="#i-calendrier"/></svg><span id="sousTitreOperation">Chargement des dates…</span></span>
+        <div class="espace"></div>
+        <span class="puce mode" id="puceMode" style="display: none"><svg class="ico"><use href="#i-bouclier"/></svg><span id="txtMode"></span></span>
+        <button class="icone-btn" id="btnScan" title="Scanner la pièce" aria-label="Scanner la pièce" style="display: none"><svg class="ico"><use href="#i-appareil-photo"/></svg></button>
+        <button class="icone-btn" data-action="ouvrirAide" title="Aide et consignes" aria-label="Aide et consignes"><svg class="ico"><use href="#i-aide"/></svg></button>
+        <button class="icone-btn" data-action="ouvrirPanneau" title="Panneau de contrôle" aria-label="Panneau de contrôle"><svg class="ico"><use href="#i-reglages"/></svg></button>
+      </header>
 
-      <div class="sous-titre-operation" id="sousTitreOperation">⏳ Chargement des dates...</div>
+      <main class="zone-form">
+        <div class="colonne-saisie">
+          <div class="hors-periode" id="horsPeriode" style="display: none">
+            <svg class="ico"><use href="#i-calendrier"/></svg>
+            <p id="txtHorsPeriode"></p>
+          </div>
 
-      <div id="formulaireSaisie" style="display: none"><!-- affiché seulement si l'offre est en cours (appliquerDates) -->
-        <input type="file" id="ocrFile" accept="image/*" capture="environment" style="display: none">
-        <div class="statut-ocr" id="ocrStatus"></div>
-        <div style="display: none" class="indice-annuaire" id="indiceAnnuaire">⤷ Nom/Prénom pré-remplis depuis l'historique — vérifiez.</div>
-        <div class="input-group">
-          <label>N° de Pièce *</label>
-          <input type="text" id="piece" placeholder="Saisir le numéro..." autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false">
-        </div>
-        <div class="input-group">
-          <label>Nom *</label>
-          <input type="text" id="nom" placeholder="Ex. : DUPONT" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false">
-        </div>
-        <div class="input-group">
-          <label>Prénom *</label>
-          <input type="text" id="prenom" placeholder="Ex. : JEAN" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false">
-        </div>
-        <div class="input-group">
-          <label id="lblMontant"><?= cfg.LIBELLE_MONTANT ?> (€)<?= cfg.MONTANT_OBLIGATOIRE === "NON" ? "" : " *" ?></label>
-          <input type="text" id="montant" placeholder="Ex: 150,50" autocomplete="off">
-        </div>
-        <div class="input-group">
-          <label id="lblNotes"><?= cfg.LIBELLE_NOTES ?><?= cfg.PRECISION_NOTES ? " (" + cfg.PRECISION_NOTES + ")" : "" ?></label>
-          <input type="text" id="notes" placeholder="Commentaire..." autocomplete="off">
-        </div>
-        <button class="btn-submit" id="btnValider" data-action="envoyerSaisie">VÉRIFIER ET VALIDER</button>
-      </div>
+          <div class="saisie" id="formulaireSaisie" style="display: none"><!-- affiché seulement si l'offre est en cours (appliquerDates) -->
+            <input type="file" id="ocrFile" accept="image/*" capture="environment" style="display: none">
+            <div class="statut-ocr" id="ocrStatus"></div>
+            <section class="etape">
+              <div class="num" id="num1">1</div>
+              <div class="etape-corps">
+                <h2>Pièce d'identité</h2>
+                <label class="etiquette" for="piece">N° de pièce *</label>
+                <input class="grand" type="text" id="piece" placeholder="Saisir le numéro" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false">
+                <div class="verdict" id="verdictPiece" role="status" style="display: none"></div>
+              </div>
+            </section>
+            <section class="etape">
+              <div class="num" id="num2">2</div>
+              <div class="etape-corps">
+                <h2>Client</h2>
+                <div class="deux">
+                  <div>
+                    <label class="etiquette" for="nom">Nom *</label>
+                    <input type="text" id="nom" placeholder="Ex. : DUPONT" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false">
+                  </div>
+                  <div>
+                    <label class="etiquette" for="prenom">Prénom *</label>
+                    <input type="text" id="prenom" placeholder="Ex. : JEAN" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false">
+                  </div>
+                </div>
+                <div style="display: none" class="indice-annuaire" id="indiceAnnuaire">Nom et prénom pré-remplis depuis une offre passée : vérifiez-les avec la pièce.</div>
+              </div>
+            </section>
+            <section class="etape">
+              <div class="num" id="num3">3</div>
+              <div class="etape-corps">
+                <h2>Détails</h2>
+                <div class="deux">
+                  <div>
+                    <label class="etiquette" for="montant" id="lblMontant"><?= cfg.LIBELLE_MONTANT ?> (€)<?= cfg.MONTANT_OBLIGATOIRE === "NON" ? "" : " *" ?></label>
+                    <input type="text" id="montant" placeholder="Ex. : 150,50" inputmode="decimal" autocomplete="off">
+                  </div>
+                  <div>
+                    <label class="etiquette" for="notes" id="lblNotes"><?= cfg.LIBELLE_NOTES ?><?= cfg.PRECISION_NOTES ? " (" + cfg.PRECISION_NOTES + ")" : "" ?></label>
+                    <input class="note" type="text" id="notes" placeholder="Commentaire" autocomplete="off">
+                  </div>
+                </div>
+              </div>
+            </section>
+            <button class="valider" id="btnValider" data-action="envoyerSaisie"><svg class="ico"><use href="#i-check"/></svg><span>Enregistrer</span></button>
+          </div>
 
-      <div id="boxConfirmation">
-        <div class="doublon-titre" id="titreDoublon"></div>
-        <div class="message-alerte" id="messageAlerte"></div>
-        <div id="listeDoublons"></div>
+          <div id="boxConfirmation">
+            <div class="doublon-titre" id="titreDoublon"></div>
+            <div class="message-alerte" id="messageAlerte"></div>
+            <div id="listeDoublons"></div>
 
-        <div id="actionSignaler">
-          <div class="flex-btn">
-            <button class="btn-cancel" data-action="annulerSaisie">ABANDONNER</button>
-            <button class="btn-force" data-action="forcerAjout">FORCER L'AJOUT</button>
+            <div id="actionSignaler">
+              <div class="flex-btn">
+                <button class="btn-cancel" data-action="annulerSaisie">ABANDONNER</button>
+                <button class="btn-force" data-action="forcerAjout">FORCER L'AJOUT</button>
+              </div>
+            </div>
+            <div id="actionBloquant" style="display: none">
+              <button class="btn-retour-bloquant" data-action="annulerSaisie">RETOUR À LA SAISIE</button>
+            </div>
+          </div>
+
+          <div id="statusMessage" role="status"></div>
+          <div style="display: none" class="envoi-en-cours" id="envoiEnCours"></div>
+
+          <div class="footer-legal">
+            <a data-action="ouvrirMentions">© 2026 DESJARDINS Bryan - Mentions légales</a>
           </div>
         </div>
-        <div id="actionBloquant" style="display: none">
-          <button class="btn-retour-bloquant" data-action="annulerSaisie">RETOUR À LA SAISIE</button>
-        </div>
-      </div>
-
-      <div id="statusMessage"></div>
-      <div style="display: none" class="envoi-en-cours" id="envoiEnCours"></div>
-    </div>
-
-    <div class="footer-legal">
-      <a data-action="ouvrirMentions">© 2026 DESJARDINS Bryan - Mentions légales</a>
+      </main>
     </div>
 
     <div id="modalAide" class="modal-overlay">
@@ -103,7 +134,7 @@
             <h3 class="titre-ecran"><svg class="ico"><use href="#i-stylo"/></svg> Saisir un client</h3>
             <ul>
               <li>Remplissez le <strong>N° de pièce</strong>, le <strong>Nom</strong>, le <strong>Prénom</strong>, le montant et les notes. La touche <strong>Entrée</strong> passe au champ suivant.</li>
-              <li>Touchez <strong>VÉRIFIER ET VALIDER</strong>.</li>
+              <li>Touchez <strong>Enregistrer</strong>.</li>
               <li class="encadre-aide vert">🟢 <strong>Bandeau vert</strong> : saisie enregistrée. Le formulaire se vide pour le client suivant.</li>
               <li>En dehors des dates de l'offre, la saisie est impossible : le haut de l'écran indique « Opération à venir », « Opération terminée » ou « Aucune opération en cours ».</li>
             </ul>
@@ -129,8 +160,8 @@
             <button class="retour" data-action="allerAide" data-args='["accueil"]'><svg class="ico"><use href="#i-chevron"/></svg>Retour</button>
             <h3 class="titre-ecran"><svg class="ico"><use href="#i-loupe"/></svg> Vérification du N°</h3>
             <ul>
-              <li>Dès que vous quittez le champ <strong>N° de pièce</strong>, l'application le vérifie.</li>
-              <li><strong>Déjà enregistré sur l'offre en cours</strong> : une fenêtre vous le signale avec la ligne concernée. Recopiez quand même le nom lu sur la pièce : la décision se fait à la validation.</li>
+              <li>Dès que vous quittez le champ <strong>N° de pièce</strong>, l'application le vérifie et affiche le résultat juste en dessous (vert : pas encore enregistré sur cette offre).</li>
+              <li><strong>Déjà enregistré sur l'offre en cours</strong> : un message rouge s'affiche sous le numéro, avec le client déjà enregistré. Recopiez quand même le nom lu sur la pièce : la décision se fait à la validation.</li>
               <li><strong>Client d'une offre passée</strong> : le Nom et le Prénom se pré-remplissent (ou une fenêtre vous le propose, selon le réglage). <strong>Vérifiez-les avec la pièce.</strong></li>
             </ul>
           </div>
@@ -363,15 +394,6 @@
 
           <p>Responsabilité : L'auteur fournit uniquement l'outil logiciel. L'établissement utilisateur est le responsable du traitement des données collectées : utilisation conforme de l'outil, information des clients, durée de conservation et accès aux données (respect du RGPD) lui incombent exclusivement. L'auteur décline toute responsabilité en cas d'usage abusif, détourné ou négligent de ces informations par l'établissement.</p>
         </div>
-      </div>
-    </div>
-
-    <div id="modalDoublonPiece" class="modal-overlay">
-      <div class="modal-content">
-        <h2 class="titre-modal-alerte"><svg class="ico"><use href="#i-alerte"/></svg> N° de pièce déjà enregistré</h2>
-        <p class="texte-alerte" id="msgDoublonPiece"></p>
-        <div id="listeDoublonPiece"></div>
-        <button class="btn-action fond-bleu-haut" data-action="fermerDoublonPiece">OK</button>
       </div>
     </div>
 

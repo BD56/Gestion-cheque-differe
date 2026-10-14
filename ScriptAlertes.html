@@ -1,5 +1,5 @@
 <!-- Fenêtre d'alerte du serveur, abandon, réinitialisation, bandeau de message. -->
-<script data-version="2026.10.14-0149">
+<script data-version="2026.10.14-0200">
   // --- Fenêtre d'alerte du serveur (ne touche pas au formulaire en cours de frappe) ---
   const alertesEnFile = [];
   let alerteCourante = null;
@@ -107,7 +107,7 @@
   function annulerSaisie() {
     saisieEncadre = null;
     document.getElementById("boxConfirmation").style.display = "none";
-    document.getElementById("formulaireSaisie").style.display = dansPeriode() ? "block" : "none";
+    afficherFormulaireSiPeriode();
     document.getElementById("statusMessage").style.display = "none";
     reinitialiserFormulaire();
   }
@@ -122,6 +122,8 @@
     delete document.getElementById("prenom").dataset.prerempli;
     const ind = document.getElementById("indiceAnnuaire");
     if (ind) ind.style.display = "none";
+    masquerVerdict();
+    majEtapes();
     document.getElementById("piece").focus();
   }
 

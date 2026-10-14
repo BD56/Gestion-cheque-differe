@@ -1,5 +1,5 @@
 <!-- Mode de sécurité, clôture, dates de l'offre (affichage et réglage). -->
-<script data-version="2026.10.14-0149">
+<script data-version="2026.10.14-0200">
   let modeEnCours = false;
   function changerMode() {
     if (modeEnCours) return; // un double appui ne rebascule pas
@@ -22,7 +22,16 @@
     );
   }
 
+  // Puce du mode dans l'en-tête (le personnel voit si les alertes rouges seront refusées)
+  function majPuceMode(mode) {
+    const puce = document.getElementById("puceMode");
+    document.getElementById("txtMode").textContent = mode === "BLOQUANT" ? "Mode Bloquant" : "Mode Signaler";
+    puce.className = mode === "BLOQUANT" ? "puce mode bloquant" : "puce mode";
+    puce.style.display = "";
+  }
+
   function majAffichageMode(mode) {
+    majPuceMode(mode);
     const btn = document.getElementById("btnMode");
     btn.innerHTML = "🛡️ MODE : " + mode;
     document.getElementById("resumeSecurite").textContent = mode;
@@ -83,12 +92,23 @@
       .getDatesOperation(CLE_TABLETTE);
   }
 
-  // Affiche l'état de l'offre et montre/masque le formulaire selon les dates.
+  // Retour au formulaire (après l'encadré de doublon) : seulement pendant l'offre
+  function afficherFormulaireSiPeriode() {
+    const ouvert = dansPeriode();
+    document.getElementById("formulaireSaisie").style.display = ouvert ? "block" : "none";
+    document.getElementById("horsPeriode").style.display = ouvert ? "none" : "block";
+  }
+
+  // Affiche l'état de l'offre (puce de l'en-tête) et montre/masque le formulaire selon les dates.
   function appliquerDates(dates, sansCache) {
     periodeOperation = dates;
+    const puce = document.getElementById("puceOffre");
     const affichage = document.getElementById("sousTitreOperation");
     const formulaire = document.getElementById("formulaireSaisie");
     let isVerrouille = true;
+    let etat = "fermee",
+      texte = "Aucune opération en cours",
+      explication = "Aucune opération en cours : la saisie est fermée.";
     const dateJour = new Date();
     dateJour.setHours(0, 0, 0, 0);
 
@@ -101,26 +121,30 @@
       finObj.setHours(0, 0, 0, 0);
 
       if (dateJour >= debutObj && dateJour <= finObj) {
-        affichage.innerHTML = "Opération du " + strDebut + " au " + strFin;
-        affichage.style.color = "var(--encre)";
+        const jour = Math.round((dateJour - debutObj) / 86400000) + 1;
+        const total = Math.round((finObj - debutObj) / 86400000) + 1;
+        etat = "en-cours";
+        texte = "Offre en cours · " + strDebut + " → " + strFin + " · jour " + jour + " sur " + total;
         isVerrouille = false; // On est dans les dates, on déverrouille !
       } else if (dateJour > finObj) {
-        affichage.innerHTML = "🛑 Opération terminée (du " + strDebut + " au " + strFin + ")";
-        affichage.style.color = "var(--danger)";
+        texte = "Offre terminée · du " + strDebut + " au " + strFin;
+        explication = "L'offre est terminée (du " + strDebut + " au " + strFin + ") : la saisie est fermée.";
       } else {
-        affichage.innerHTML = "⏳ Opération à venir (du " + strDebut + " au " + strFin + ")";
-        affichage.style.color = "var(--orange)";
+        etat = "a-venir";
+        texte = "Offre à venir · du " + strDebut + " au " + strFin;
+        explication = "L'offre commence le " + strDebut + " : la saisie ouvrira ce jour-là.";
       }
-    } else {
-      affichage.innerHTML = "🛑 Aucune opération en cours";
-      affichage.style.color = "var(--danger)";
     }
+    affichage.textContent = texte;
+    puce.className = "puce " + etat;
 
     // Verrouillage/Déverrouillage visuel du formulaire (pas par-dessus un encadré de
     // doublon en attente de décision : il réapparaît à ABANDONNER / FORCER)
     const encadreOuvert = document.getElementById("boxConfirmation").style.display === "block";
     if (formulaire && !encadreOuvert) {
       formulaire.style.display = isVerrouille ? "none" : "block";
+      document.getElementById("horsPeriode").style.display = isVerrouille ? "block" : "none";
+      document.getElementById("txtHorsPeriode").textContent = explication;
     }
 
     // Mise à jour des cases dans la modale (sauf si le responsable est en train de

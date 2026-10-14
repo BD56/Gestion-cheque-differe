@@ -1,10 +1,17 @@
 <!-- Envoi d'une saisie, encadré de doublon, contrôle A/B/C local, saisies en attente. -->
-<script data-version="2026.10.14-0149">
+<script data-version="2026.10.14-0200">
   let memNom = "",
     memPrenom = "",
     memPiece = "",
     memMontant = "",
     memNotes = "";
+
+  // Bouton « Enregistrer » : texte normal, ou attente de la réponse du serveur
+  function etatBoutonValider(enAttente) {
+    const btn = document.getElementById("btnValider");
+    btn.lastElementChild.textContent = enAttente ? "Recherche…" : "Enregistrer";
+    btn.disabled = enAttente;
+  }
 
   let derniereValidation = 0;
   function envoyerSaisie() {
@@ -54,16 +61,13 @@
 
     if (!copieFraiche()) {
       // Copie locale absente ou trop ancienne (réseau en panne ?) -> on attend le serveur
-      const btn = document.getElementById("btnValider");
-      btn.innerHTML = "⏳ Recherche...";
-      btn.disabled = true;
+      etatBoutonValider(true);
       google.script.run
         .withSuccessHandler(function (rep) {
           traitementTermine(rep, saisie);
         })
         .withFailureHandler(function (err) {
-          btn.innerHTML = "VÉRIFIER ET VALIDER";
-          btn.disabled = false;
+          etatBoutonValider(false);
           if (!siNonAutorisee(err))
             afficherMessage(
               "⚠️ Connexion impossible : saisie NON enregistrée. Vérifiez le Wi-Fi puis validez à nouveau.",
@@ -103,9 +107,7 @@
 
   let saisieEncadre = null; // la saisie affichée dans l'encadré de doublon
   function traitementTermine(reponse, saisie) {
-    const btn = document.getElementById("btnValider");
-    btn.innerHTML = "VÉRIFIER ET VALIDER";
-    btn.disabled = false;
+    etatBoutonValider(false);
 
     if (reponse.status === "SUCCES") {
       afficherMessage(reponse.message, "success");
@@ -176,7 +178,7 @@
     const sa = saisieEncadre;
     saisieEncadre = null;
     document.getElementById("boxConfirmation").style.display = "none";
-    document.getElementById("formulaireSaisie").style.display = dansPeriode() ? "block" : "none";
+    afficherFormulaireSiPeriode();
     reinitialiserFormulaire();
     if (sa)
       envoyerForcage({

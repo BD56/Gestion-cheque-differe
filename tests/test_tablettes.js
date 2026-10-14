@@ -59,6 +59,21 @@ assert.ok(!JSON.stringify(P).includes(cle), "clé jamais stockée en clair");
 // Avec la clé : tout fonctionne
 assert.strictEqual(J(c.traiterSaisie("DUPONT", "JEAN", "P1", "10", "", cle)).status, "SUCCES");
 assert.strictEqual(J(c.chargerCacheVerif(cle)).offre.length, 1);
+// Erreur passagère de Google en lisant la liste : pas « non autorisé », liste intacte
+const lireVraie = env.props.getProperty;
+env.props.getProperty = (k) => {
+  if (k === "TABLETTES") throw new Error("Service error: Properties");
+  return lireVraie(k);
+};
+assert.throws(
+  () => c.chargerCacheVerif(cle),
+  (e) => /Service error/.test(e.message) && !/TABLETTE_NON_AUTORISEE/.test(e.message)
+);
+sansPause();
+assert.throws(() => c.appairerTablette("258025", "Autre"), /Service error/);
+env.props.getProperty = lireVraie;
+assert.strictEqual(JSON.parse(P.TABLETTES).length, 1, "liste intacte");
+assert.strictEqual(J(c.chargerCacheVerif(cle)).offre.length, 1, "l'appareil remarche ensuite");
 // Aperçu de l'espace responsable (avant le code) : lectures seulement, rien de la
 // sécurité (codes faux tapés, robots), aucune action (robots de nuit non recréés)
 const nbRobots = c.ScriptApp.getProjectTriggers().length;

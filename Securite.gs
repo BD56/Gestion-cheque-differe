@@ -3,7 +3,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Securite_() {
-  return "2026.10.14-1359";
+  return "2026.10.14-1459";
 }
 
 // =================================================================
@@ -319,9 +319,13 @@ function reinitialiserPinPanneau() {
 //     - Le panneau du Sheet (éditeurs du classeur) passe sans clé.
 //     - Retrait d'une tablette / de toutes : espace responsable, menu « Code & tablettes ».
 // =================================================================
+// Erreur passagère de Google en lisant la liste : remontée telle quelle (« réessayez »),
+// JAMAIS lue comme une liste vide — sinon l'appareil serait déclaré non autorisé, et une
+// autorisation ou un retrait réécrirait la liste en perdant tous les appareils.
 function lireTablettes_() {
+  const brut = PropertiesService.getDocumentProperties().getProperty("TABLETTES");
   try {
-    return JSON.parse(PropertiesService.getDocumentProperties().getProperty("TABLETTES") || "[]");
+    return JSON.parse(brut || "[]");
   } catch (e) {
     return [];
   }

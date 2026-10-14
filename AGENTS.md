@@ -175,6 +175,10 @@ Décision : `docs/retours-vibe/decisions/2026-10-11_generalisation.md`.
   (dates de l'offre — à défaut 1re et dernière saisie —, nombre de saisies, montant
   total) calculé à la clôture, gardé en propriété `RESUME_<onglet>` (calculé une fois
   pour une archive plus ancienne), effacé par la purge ; contenu chargé à l'impression.
+  Clé d'appareil : une erreur passagère en lisant la liste n'est JAMAIS lue comme
+  « non autorisé » (`lireTablettes_` la remonte) ; la page ne l'efface plus sur un
+  refus (seulement sur un retrait volontaire) ; diagnostic discret (raison + adresse
+  technique de la page) sur l'écran d'autorisation et dans « Code & appareils ».
   Présentation : **6 tuiles** (Saisies, Archives, Opération, Sécurité, Réglages, Code)
   ouvrant chacune un sous-écran (« ← Retour ») + Clôturer / Verrouiller à part.
   Bouton « Ouvrir Google Sheets » retiré de l'appli (tout passe par l'appli).

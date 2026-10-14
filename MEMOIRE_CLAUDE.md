@@ -11,7 +11,7 @@
   « Comptoir » (branche de travail actuelle, tout est poussé)**. Aucune fusion faite,
   aucune pull request. Ordre prévu (sur demande de Bryan seulement) : `design` →
   `refonte` → `generalisation` → `main` / migration Vannes.
-- **Version actuelle sur `design`** : 2026.10.14-1359 (40 séries de tests vertes,
+- **Version actuelle sur `design`** : 2026.10.14-1459 (40 séries de tests vertes,
   ESLint et Prettier propres). Numéro renouvelé par Claude à chaque push de code
   (`npm run nouvelle-version`).
 - **Bryan teste** sur le Sheet « Gestion Chèques Différés — REFONTE (test) » depuis
@@ -22,9 +22,17 @@
   navigateur : Safari / Chrome) après mise à jour ; confirmer si « Saisies :
   Chargement… » reste bloqué (sa capture venait d'une version antérieure) ; essai sur
   vraie tablette (rotation, clavier, journal, alertes, espace responsable, panneau).
-- **Dernier échange** : résumés des archives faits (« go » de Bryan, voir « Résumés
-  des archives » dans l'historique), à présenter / faire essayer. Rien d'autre en
-  cours de codage.
+- **Dernier échange** : le Mac de Bryan « n'est plus reconnu » parfois après une
+  mise à jour → DIAGNOSTIC : écran d'autorisation sans message, et réautoriser sous
+  « mac » est refusé (nom déjà pris) ⇒ le SERVEUR connaît toujours le Mac, c'est le
+  NAVIGATEUR qui a perdu la clé. Hypothèse (non vérifiée) : l'adresse technique du
+  cadre Apps Script (`n-…-script.googleusercontent.com`) change à chaque « Nouvelle
+  version » → stockage différent → clé introuvable. Fait (voir « Clé d'appareil »
+  dans l'historique) : diagnostic affiché + correction d'un vrai défaut. ATTENDU de
+  Bryan : noter l'adresse technique (Code & appareils), déployer une nouvelle version,
+  comparer ; dire Safari ou Chrome. Si l'adresse change : discuter d'une parade
+  (ex. adresse avec la clé en favori) AVANT de coder. Idée proposée, non décidée :
+  réautoriser sous le même nom remplace l'ancienne entrée (piège du nom unique).
 - **Ensuite (sur demande)** : fusions, documentation (`docs/A_REDIGER.md`, captures via
   `outils/captures.js`), migration de Vannes (`DEPLOIEMENT.md`).
 - **Leçons de cette période** : (1) ne pas réorganiser des écrans sans validation (la
@@ -291,6 +299,18 @@ box-sizing) → corrigé par la refonte.
   Limite connue : sur téléphone, la liste fermée coupe le montant (lisible une fois
   ouverte) ; ligne de résumé sous la liste proposée, non faite. Tests :
   `test_resume_archives` (40 séries), test_ui_archives adapté.
+- Clé d'appareil (version 2026.10.14-1459, « go » de Bryan) : DÉFAUT trouvé —
+  `lireTablettes_` renvoyait [] sur toute erreur, donc un incident passager de Google
+  ⇒ « TABLETTE_NON_AUTORISEE » ⇒ la page effaçait la clé (perte définitive) ; pire :
+  une autorisation / un retrait pendant l'incident réécrivait la liste et perdait
+  TOUS les appareils. Corrigé : l'erreur de lecture remonte (seul un JSON illisible
+  donne []) ; `siNonAutorisee` n'efface plus la clé (seuls les retraits volontaires,
+  `oublierTablette`) ; diagnostic `#diagAppairage` (« Clé absente de ce navigateur » /
+  « Clé refusée par le serveur » / « Appareil retiré de la liste » / « Stockage du
+  navigateur indisponible » + « Adresse technique : <hostname> ») et `#diagTablettes`
+  (Code & appareils). Tests : test_tablettes (vérifié qu'il échoue sur l'ancien
+  code), test_ui_tablettes (clé gardée sur refus, remplacée à la réautorisation,
+  incident passager sans écran d'autorisation).
 **REFONTE GRAPHIQUE TERMINÉE (7 étapes + 5 bis) sur `design`.** En attente de Bryan :
 essai sur le Sheet de test (git checkout design, npm run push, Installer, déploiement)
 puis sur tablette réelle : rotation, clavier, journal, alertes, espace responsable,

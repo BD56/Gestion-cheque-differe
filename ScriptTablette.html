@@ -1,5 +1,5 @@
 <!-- Tablette autorisée (appairage), démarrage, aide, panneau, mentions légales. -->
-<script data-version="2026.10.14-1359">
+<script data-version="2026.10.14-1459">
   // =================================================================
   // --- TABLETTE AUTORISÉE (appairage) ---
   // La clé reçue lors de l'autorisation est gardée dans le navigateur et envoyée à
@@ -28,25 +28,50 @@
   let CLE_TABLETTE = lireStockage("cdTabletteCle");
   let ID_TABLETTE = lireStockage("cdTabletteId");
 
+  // Retrait volontaire (cet appareil, ou tous) depuis l'espace responsable
   function oublierTablette() {
+    raisonAppairage = "Appareil retiré de la liste";
     CLE_TABLETTE = null;
     ID_TABLETTE = null;
     ecrireStockage("cdTabletteCle", null);
     ecrireStockage("cdTabletteId", null);
   }
   // Erreur « tablette non autorisée » (retirée par un responsable, clé perdue…) ?
+  // La clé n'est PAS effacée : inutile si l'appareil a vraiment été retiré (une nouvelle
+  // autorisation la remplace), mais si le refus était passager, l'appareil remarche au
+  // prochain chargement au lieu de perdre son autorisation.
   function siNonAutorisee(err) {
     const m = err && err.message ? err.message : String(err || "");
     if (m.indexOf("TABLETTE_NON_AUTORISEE") === -1) return false;
-    oublierTablette();
+    raisonAppairage = "Clé refusée par le serveur";
     afficherEcranAppairage("Cet appareil n'est plus autorisé. Un responsable doit l'autoriser à nouveau.");
     return true;
+  }
+
+  // Diagnostic discret (écran d'autorisation, « Code & appareils ») : pourquoi
+  // l'autorisation est demandée, et adresse technique de la page. La clé est rangée par
+  // le navigateur sous cette adresse : si elle change (après un déploiement ?), la clé
+  // n'est plus retrouvée.
+  let raisonAppairage = "";
+  function adresseTechnique() {
+    try {
+      return window.location.hostname || "inconnue";
+    } catch (e) {
+      return "inconnue";
+    }
+  }
+  function majDiagAppareil() {
+    const adresse = "Adresse technique : " + adresseTechnique();
+    document.getElementById("diagAppairage").textContent =
+      (raisonAppairage ? raisonAppairage + " · " : "") + adresse;
+    document.getElementById("diagTablettes").textContent = "Cet appareil · " + adresse;
   }
 
   let pinDefiniAppairage = true;
   function afficherEcranAppairage(message) {
     document.getElementById("ecranAppairage").style.display = "flex";
     document.getElementById("msgAppairage").textContent = message || "";
+    majDiagAppareil();
     document.getElementById("txtAppairage").textContent = "…";
     google.script.run
       .withSuccessHandler(function (etat) {
@@ -186,8 +211,12 @@
     const mois = ("0" + (auj.getMonth() + 1)).slice(-2);
     const jour = ("0" + auj.getDate()).slice(-2);
     document.getElementById("dateImpression").value = annee + "-" + mois + "-" + jour;
+    majDiagAppareil();
     if (CLE_TABLETTE) demarrerApplication();
-    else afficherEcranAppairage();
+    else {
+      raisonAppairage = STOCKAGE_OK ? "Clé absente de ce navigateur" : "Stockage du navigateur indisponible";
+      afficherEcranAppairage();
+    }
   };
 
   // --- Tablette tenue en hauteur : invitation à la tourner (jamais bloquante) ---

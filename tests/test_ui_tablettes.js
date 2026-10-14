@@ -12,6 +12,11 @@ const { ouvrir } = require("./navigateur");
     // Tablette neuve, 1re installation : écran d'autorisation, rien d'autre n'a été chargé
     assert.ok(await vis("#ecranAppairage"));
     assert.match(await txt("#txtAppairage"), /code d'activation/);
+    assert.match(
+      await txt("#diagAppairage"),
+      /^Clé absente de ce navigateur · Adresse technique : \S+$/,
+      "diagnostic : raison + adresse"
+    );
     assert.ok((await vis("#blocPinApp2")) && (await vis("#blocActivationApp")));
     assert.strictEqual(
       await page.evaluate(() => cacheVerif),
@@ -63,6 +68,7 @@ const { ouvrir } = require("./navigateur");
     await page.click('[data-ecran-lien="code"]');
     await page.waitForTimeout(200);
     assert.match(await txt("#listeTablettes"), /Caisse centrale 1\s+\(cet appareil\)/);
+    assert.match(await txt("#diagTablettes"), /^Cet appareil · Adresse technique : \S+$/);
     await page.click("#btnRetirerTout");
     assert.match(await txt("#btnRetirerTout"), /Confirmer/, "second appui demandé");
     assert.ok(await vis("#modalParametres"), "rien de retiré au premier appui");
@@ -77,6 +83,7 @@ const { ouvrir } = require("./navigateur");
     assert.match(await txt("#txtAppairage"), /un responsable doit l'autoriser/);
     assert.ok(!(await vis("#blocPinApp2")), "code existant : pas de confirmation");
     assert.strictEqual(await page.evaluate(() => window.__store.cdTabletteCle), undefined, "clé oubliée");
+    assert.match(await txt("#diagAppairage"), /^Appareil retiré de la liste · /);
     // Ré-autorisation ; puis retrait côté serveur pendant l'usage -> l'écran revient
     await page.fill("#pinApp", "258025");
     await page.click("#btnAppairer");
@@ -87,6 +94,29 @@ const { ouvrir } = require("./navigateur");
     await page.waitForTimeout(250);
     assert.ok(await vis("#ecranAppairage"));
     assert.match(await txt("#msgAppairage"), /plus autorisé/);
+    assert.match(await txt("#diagAppairage"), /^Clé refusée par le serveur · /);
+    assert.ok(
+      await page.evaluate(() => !!window.__store.cdTabletteCle),
+      "clé gardée (refus peut-être passager)"
+    );
+    // Nouvelle autorisation : la clé est remplacée
+    const ancienne = await page.evaluate(() => window.__store.cdTabletteCle);
+    await page.fill("#pinApp", "258025");
+    await page.click("#btnAppairer");
+    await page.waitForTimeout(300);
+    assert.ok(!(await vis("#ecranAppairage")));
+    assert.notStrictEqual(await page.evaluate(() => window.__store.cdTabletteCle), ancienne, "clé remplacée");
+    // Incident passager de Google en lisant la liste : pas d'écran d'autorisation, clé gardée
+    const lireVraie = env.props.getProperty;
+    env.props.getProperty = (k) => {
+      if (k === "TABLETTES") throw new Error("Service error: Properties");
+      return lireVraie(k);
+    };
+    await page.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
+    await page.waitForTimeout(250);
+    env.props.getProperty = lireVraie;
+    assert.ok(!(await vis("#ecranAppairage")), "pas d'écran d'autorisation sur un incident passager");
+    assert.ok(await page.evaluate(() => !!window.__store.cdTabletteCle), "clé gardée");
     assert.deepStrictEqual(erreursPage, []);
     console.log("test_ui_tablettes : OK");
   } finally {

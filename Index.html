@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr" data-version="2026.10.14-1359">
+<html lang="fr" data-version="2026.10.14-1459">
   <head>
     <base target="_top">
     <?!= include_('Style') ?>
@@ -451,6 +451,7 @@
                   <div class="rangee-btn">
                     <button class="sec danger" id="btnRetirerTout" data-action="retirerToutesLesTablettes"><svg class="ico"><use href="#i-alerte"/></svg>Retirer tous les appareils</button>
                   </div>
+                  <p class="diag-appareil" id="diagTablettes"></p>
                 </div>
               </div>
             </div>
@@ -522,6 +523,7 @@
         </div>
         <button class="plein" id="btnAppairer" data-action="appairerCetteTablette">Autoriser cet appareil</button>
         <div class="message-erreur" id="msgAppairage"></div>
+        <p class="diag-appareil" id="diagAppairage"></p>
       </div>
     </div>
 

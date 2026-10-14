@@ -44,6 +44,11 @@ assert.match(
 );
 sansPause();
 r = J(c.appairerTablette("258025", "  Caisse centrale 1  "));
+// Nom obligatoire et unique (majuscules, accents, espaces et tirets ignorés)
+for (const k in env.props._store) if (k.indexOf("PIN_ESSAIS") === 0) delete env.props._store[k];
+assert.match(J(c.appairerTablette("258025", "   ")).message, /Donnez un nom/);
+assert.match(J(c.appairerTablette("258025", "caisse CENTRALE-1")).message, /déjà le nom d'un autre appareil/);
+assert.strictEqual(JSON.parse(env.props._store.TABLETTES).length, 1, "aucun doublon enregistré");
 assert.ok(r.ok);
 assert.strictEqual(r.cle.length, 64);
 assert.strictEqual(r.nom, "Caisse centrale 1");
@@ -121,5 +126,5 @@ for (let i = 0; i < 20; i++) {
   assert.ok(J(c.appairerTablette("333333", "T" + i)).ok);
 }
 sansPause();
-assert.match(J(c.appairerTablette("333333", "T21")).message, /20 tablettes maximum/);
+assert.match(J(c.appairerTablette("333333", "T21")).message, /20 appareils maximum/);
 console.log("test_tablettes : OK");

@@ -3,7 +3,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Securite_() {
-  return "2026.10.14-1053";
+  return "2026.10.14-1141";
 }
 
 // =================================================================
@@ -227,7 +227,7 @@ function texteActivation_(code) {
     "\n(valable " +
     ACTIVATION_DUREE_H +
     " h, une seule fois)\n\n" +
-    "Sur la tablette, ouvrez l'application : elle demande ce code, puis de choisir le code " +
+    "Sur l'appareil (tablette, ordinateur…), ouvrez l'application : elle demande ce code, puis de choisir le code " +
     "responsable (6 chiffres). Ne le communiquez qu'au responsable."
   );
 }
@@ -354,7 +354,7 @@ function exigerTablette_(cle) {
     return;
   }
   if (estEditeurDuClasseur_()) return;
-  throw new Error("TABLETTE_NON_AUTORISEE : cette tablette n'est pas (ou plus) autorisée.");
+  throw new Error("TABLETTE_NON_AUTORISEE : cet appareil n'est pas (ou plus) autorisé.");
 }
 
 // Autorise la tablette qui appelle (code responsable requis). Renvoie la clé à garder.
@@ -371,11 +371,27 @@ function appairerTablette(pin, nom) {
         ok: false,
         message:
           TABLETTES_MAX +
-          " tablettes maximum : retirez-en une depuis l'espace responsable (menu Code & tablettes), ou toutes depuis le panneau du Google Sheets.",
+          " appareils maximum : retirez-en un depuis l'espace responsable (menu Code & appareils), ou tous depuis le panneau du Google Sheets.",
+      };
+    // Nom obligatoire et unique (majuscules, accents, espaces ignorés : « Mac » = « mac ») :
+    // sinon impossible de savoir quel appareil retirer. Vérifié après le code : on ne
+    // dévoile pas les noms existants à qui n'a pas le code.
+    nom = (nom || "").toString().trim().slice(0, 40);
+    if (_normId_(nom) === "")
+      return { ok: false, message: "Donnez un nom à cet appareil (ex. Caisse 3, Accueil)." };
+    const pris = liste.some(function (t) {
+      return _normId_(t.nom) === _normId_(nom);
+    });
+    if (pris)
+      return {
+        ok: false,
+        message:
+          "« " +
+          nom +
+          " » est déjà le nom d'un autre appareil. Choisissez-en un autre (ex. Caisse 2, Accueil).",
       };
     const cle = Utilities.getUuid().replace(/-/g, "") + Utilities.getUuid().replace(/-/g, "");
     const id = Utilities.getUuid().replace(/-/g, "").slice(0, 10);
-    nom = (nom || "").toString().trim().slice(0, 40) || "Tablette " + (liste.length + 1);
     liste.push({
       id: id,
       nom: nom,
@@ -409,7 +425,7 @@ function retirerTablette(id, jeton) {
     );
     PropertiesService.getDocumentProperties().deleteProperty("TABLETTE_VUE_" + id);
     PropertiesService.getDocumentProperties().deleteProperty("PIN_ESSAIS_T_" + id);
-    return "Tablette retirée.";
+    return "Appareil retiré.";
   } finally {
     lock.releaseLock();
   }
@@ -426,7 +442,7 @@ function retirerToutesTablettes(jeton) {
       props.deleteProperty("PIN_ESSAIS_T_" + t.id);
     });
     ecrireTablettes_([]);
-    return "Toutes les tablettes ont été retirées : chacune devra être autorisée à nouveau.";
+    return "Tous les appareils ont été retirés : chacun devra être autorisé à nouveau.";
   } finally {
     lock.releaseLock();
   }
@@ -445,7 +461,7 @@ function retirerToutesTablettesPanneau() {
       props.deleteProperty("PIN_ESSAIS_T_" + t.id);
     });
     ecrireTablettes_([]);
-    return "✅ Toutes les tablettes ont été retirées : autorisez à nouveau celles du magasin (avec le code responsable).";
+    return "✅ Tous les appareils ont été retirés : autorisez à nouveau ceux du magasin (avec le code responsable).";
   } finally {
     lock.releaseLock();
   }

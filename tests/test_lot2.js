@@ -174,6 +174,6 @@ e = env0();
 assert.throws(() => e.ctx.retirerToutesTablettesPanneau(), /Google Sheets/);
 e.props.setProperty("TABLETTES", JSON.stringify([{ id: "x", nom: "T", hash: "h" }]));
 e.activeEmail = e.owner;
-assert.match(e.ctx.retirerToutesTablettesPanneau(), /retirées/);
+assert.match(e.ctx.retirerToutesTablettesPanneau(), /retirés/);
 assert.strictEqual(e.props._store.TABLETTES, "[]");
 console.log("test_lot2 : OK");

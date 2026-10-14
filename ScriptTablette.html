@@ -1,5 +1,5 @@
 <!-- Tablette autorisée (appairage), démarrage, aide, panneau, mentions légales. -->
-<script data-version="2026.10.14-1053">
+<script data-version="2026.10.14-1141">
   // =================================================================
   // --- TABLETTE AUTORISÉE (appairage) ---
   // La clé reçue lors de l'autorisation est gardée dans le navigateur et envoyée à
@@ -39,7 +39,7 @@
     const m = err && err.message ? err.message : String(err || "");
     if (m.indexOf("TABLETTE_NON_AUTORISEE") === -1) return false;
     oublierTablette();
-    afficherEcranAppairage("Cette tablette n'est plus autorisée. Un responsable doit l'autoriser à nouveau.");
+    afficherEcranAppairage("Cet appareil n'est plus autorisé. Un responsable doit l'autoriser à nouveau.");
     return true;
   }
 
@@ -52,8 +52,8 @@
       .withSuccessHandler(function (etat) {
         pinDefiniAppairage = etat.pinDefini;
         document.getElementById("txtAppairage").textContent = pinDefiniAppairage
-          ? "Pour utiliser l'application sur cette tablette, un responsable doit l'autoriser une fois avec son code."
-          : "Aucun code responsable n'existe : saisissez le code d'activation affiché dans le Google Sheets (menu 🚀 APPLICATION → 🔑 Code d'activation), puis choisissez le code responsable (6 chiffres). Il servira à autoriser les tablettes et à ouvrir l'espace responsable.";
+          ? "Pour utiliser l'application sur cet appareil, un responsable doit l'autoriser une fois avec son code, sous un nom qui lui est propre."
+          : "Aucun code responsable n'existe : saisissez le code d'activation affiché dans le Google Sheets (menu 🚀 APPLICATION → 🔑 Code d'activation), puis choisissez le code responsable (6 chiffres). Il servira à autoriser les appareils et à ouvrir l'espace responsable.";
         document.getElementById("lblPinApp").textContent = pinDefiniAppairage
           ? "Code responsable (6 chiffres)"
           : "Nouveau code responsable (6 chiffres)";
@@ -77,6 +77,11 @@
     msg.textContent = "";
     if (!/^\d{6}$/.test(pin)) {
       msg.textContent = "Le code doit contenir exactement 6 chiffres.";
+      return;
+    }
+    if (normIdJS(nom) === "") {
+      msg.textContent = "Donnez un nom à cet appareil (ex. Caisse 3, Accueil).";
+      document.getElementById("nomTablette").focus();
       return;
     }
     const btn = document.getElementById("btnAppairer");

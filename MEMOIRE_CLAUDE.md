@@ -205,6 +205,15 @@ box-sizing) → corrigé par la refonte.
   un flex (le contrôle détecte bien l'ancien bug) ; taille « grand-ecran » 2000 px.
   Messages de liste alignés à gauche. Capture « Saisies : ⏳ Chargement… » prise sur
   une version ANTÉRIEURE (⏳ retiré depuis) : à revérifier par Bryan après mise à jour.
+- Appareils (version 2026.10.14-1141, décision Bryan) : NOM OBLIGATOIRE ET UNIQUE à
+  l'autorisation (`appairerTablette` : comparaison `_normId_`, vérifiée APRÈS le code
+  pour ne pas dévoiler les noms ; champ vide avec exemple, plus de « Tablette
+  caisse » par défaut ; contrôle aussi côté page). Doublons existants laissés tels
+  quels. « tablette » → « appareil » dans TOUS les textes affichés (menu Code &
+  appareils, Autoriser cet appareil, (cet appareil), Retirer tous les appareils,
+  aide, mentions, messages serveur, panneau du Sheet) SAUF « Tournez la tablette ».
+  Noms internes INCHANGÉS (CLE_TABLETTE, propriété TABLETTES, sel « tablette: » de
+  l'empreinte de clé, code d'erreur TABLETTE_NON_AUTORISEE) : rien à migrer.
 **REFONTE GRAPHIQUE TERMINÉE (7 étapes + 5 bis) sur `design`.** En attente de Bryan :
 essai sur le Sheet de test (git checkout design, npm run push, Installer, déploiement)
 puis sur tablette réelle : rotation, clavier, journal, alertes, espace responsable,

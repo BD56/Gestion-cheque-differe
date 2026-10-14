@@ -23,6 +23,13 @@ const { ouvrir } = require("./navigateur");
     assert.match(await txt("#msgAppairage"), /6 chiffres/);
     await page.fill("#pinApp", "258025");
     await page.fill("#pinApp2", "258025");
+    assert.strictEqual(
+      await page.inputValue("#nomTablette"),
+      "",
+      "nom à choisir (plus de « Tablette caisse »)"
+    );
+    await page.click("#btnAppairer");
+    assert.match(await txt("#msgAppairage"), /Donnez un nom/, "nom obligatoire");
     await page.fill("#nomTablette", "Caisse centrale 1");
     await page.click("#btnAppairer");
     await page.waitForTimeout(100);
@@ -55,7 +62,7 @@ const { ouvrir } = require("./navigateur");
     await page.waitForTimeout(200);
     await page.click('[data-ecran-lien="code"]');
     await page.waitForTimeout(200);
-    assert.match(await txt("#listeTablettes"), /Caisse centrale 1\s+\(cette tablette\)/);
+    assert.match(await txt("#listeTablettes"), /Caisse centrale 1\s+\(cet appareil\)/);
     await page.click("#btnRetirerTout");
     assert.match(await txt("#btnRetirerTout"), /Confirmer/, "second appui demandé");
     assert.ok(await vis("#modalParametres"), "rien de retiré au premier appui");
@@ -79,7 +86,7 @@ const { ouvrir } = require("./navigateur");
     await page.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
     await page.waitForTimeout(250);
     assert.ok(await vis("#ecranAppairage"));
-    assert.match(await txt("#msgAppairage"), /plus autorisée/);
+    assert.match(await txt("#msgAppairage"), /plus autorisé/);
     assert.deepStrictEqual(erreursPage, []);
     console.log("test_ui_tablettes : OK");
   } finally {

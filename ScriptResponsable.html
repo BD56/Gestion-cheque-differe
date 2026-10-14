@@ -1,5 +1,5 @@
 <!-- Espace responsable : code, corrections, archives, réglages, tablettes. -->
-<script data-version="2026.10.14-1053">
+<script data-version="2026.10.14-1141">
   // =================================================================
   // --- ESPACE RESPONSABLE (code PIN) ---
   // Le jeton n'est gardé qu'en mémoire : il disparaît à la fermeture du
@@ -179,7 +179,7 @@
         e.n +
           " code(s) faux tapé(s) depuis des appareils non autorisés (dernier le " +
           e.dernier +
-          "). Si ce n'était pas vous, changez le code (menu Code & tablettes)."
+          "). Si ce n'était pas vous, changez le code (menu Code & appareils)."
       );
     const z = document.getElementById("alerteAdmin");
     z.textContent = "";
@@ -566,7 +566,7 @@
     const msg = document.getElementById("msgTablettes");
     msg.textContent = "Chargement…";
     appelAdmin("listerTablettes", [], function (liste) {
-      msg.textContent = liste.length + " tablette(s) autorisée(s).";
+      msg.textContent = liste.length + " appareil(s) autorisé(s).";
       const zone = document.getElementById("listeTablettes");
       zone.textContent = "";
       document.getElementById("railNbTablettes").textContent = liste.length;
@@ -575,9 +575,9 @@
         ligne.className = "ligne-tablette";
         const texte = document.createElement("div");
         const nom = document.createElement("b");
-        nom.textContent = t.nom + (t.id === ID_TABLETTE ? " (cette tablette)" : "");
+        nom.textContent = t.nom + (t.id === ID_TABLETTE ? " (cet appareil)" : "");
         const quand = document.createElement("small");
-        quand.textContent = "Autorisée le " + t.creeLe + (t.vueLe ? " · utilisée le " + t.vueLe : "");
+        quand.textContent = "Autorisé le " + t.creeLe + (t.vueLe ? " · utilisée le " + t.vueLe : "");
         texte.appendChild(nom);
         texte.appendChild(quand);
         const b = document.createElement("button");
@@ -599,7 +599,7 @@
       if (t.id === ID_TABLETTE) {
         oublierTablette();
         fermerPanneau();
-        afficherEcranAppairage("Cette tablette n'est plus autorisée.");
+        afficherEcranAppairage("Cet appareil n'est plus autorisé.");
         return;
       }
       chargerTablettes();
@@ -609,7 +609,7 @@
   function retirerToutesLesTablettes() {
     confirmerEnDeuxTemps(
       document.getElementById("btnRetirerTout"),
-      "Confirmer : retirer TOUTES les tablettes",
+      "Confirmer : retirer TOUS les appareils",
       retirerToutesMaintenant
     );
   }

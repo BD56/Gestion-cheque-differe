@@ -2,7 +2,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Installation_() {
-  return "2026.10.14-1053";
+  return "2026.10.14-1141";
 }
 
 // =================================================================
@@ -94,7 +94,7 @@ function afficherCodeActivation() {
   if (PropertiesService.getDocumentProperties().getProperty("ADMIN_PIN_HASH")) {
     ui.alert(
       "🔑 Code d'activation",
-      "Un code responsable existe déjà : il sert à autoriser les tablettes.\n\n" +
+      "Un code responsable existe déjà : il sert à autoriser les appareils (tablettes, ordinateurs…).\n\n" +
         "Code oublié ? Panneau ⚙️ (à droite) → « Réinitialiser le code responsable » : un code d'activation sera alors affiché.",
       ui.ButtonSet.OK
     );

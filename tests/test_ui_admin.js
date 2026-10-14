@@ -52,9 +52,15 @@ const { ouvrir } = require("./navigateur");
     assert.match(await txt("#resumeOperation"), /^Du \d\d\/\d\d au \d\d\/\d\d$/);
     assert.match(await txt("#noteOffre"), /^Jour \d sur 3 · clôture automatique dans la nuit du/);
     assert.ok(!(await page.isVisible("text=OUVRIR GOOGLE SHEETS")));
+    assert.strictEqual(await txt("#txtModeAdmin"), "Mode Signaler", "vue d'ensemble : mode affiché");
+    assert.ok(
+      !(await vis("#segmentMode")) && !(await vis("#modalDateFin")),
+      "vue d'ensemble : rien à modifier"
+    );
+    // Sécurité (« Modifier → » du mode) : appui sur le mode déjà actif = rien ; sur l'autre = bascule
+    await page.click('[data-ecran="ensemble"] .boite:has-text("Mode de sécurité") .lien-modifier');
+    assert.strictEqual(await page.getAttribute('[data-ecran-lien="securite"]', "aria-current"), "true");
     assert.strictEqual(await page.getAttribute("#modeSignaler", "aria-pressed"), "true");
-    assert.strictEqual(await page.inputValue("#modalDateFin"), env.props._store.DATE_FIN);
-    // Mode : appui sur le mode déjà actif = rien ; sur l'autre = bascule
     await page.click("#modeSignaler");
     await page.waitForTimeout(100);
     assert.strictEqual(env.sheets.Saisies.getRange("Z1").getValue(), "SIGNALER");
@@ -63,7 +69,10 @@ const { ouvrir } = require("./navigateur");
     assert.strictEqual(env.sheets.Saisies.getRange("Z1").getValue(), "BLOQUANT");
     assert.strictEqual(await page.getAttribute("#modeBloquant", "aria-pressed"), "true");
     assert.strictEqual(await txt("#txtMode"), "Mode Bloquant", "puce de l'en-tête à jour");
-    // Dates -> résumé de l'offre
+    assert.strictEqual(await txt("#txtModeAdmin"), "Mode Bloquant", "vue d'ensemble à jour");
+    // Opération (menu) : dates -> résumé de l'offre
+    await page.click('[data-ecran-lien="operation"]');
+    assert.strictEqual(await page.inputValue("#modalDateFin"), env.props._store.DATE_FIN);
     await page.fill("#modalDateFin", "2099-12-31");
     await page.click("#modalParametres >> text=Mettre à jour les dates");
     await page.waitForTimeout(150);
@@ -108,6 +117,7 @@ const { ouvrir } = require("./navigateur");
     assert.ok(await vis("#zoneAdmin"));
     // Session expirée côté serveur -> retour au code avec message
     for (const k in env.cacheStore) delete env.cacheStore[k];
+    await page.click('[data-ecran-lien="securite"]');
     await page.click("#modeSignaler");
     await page.waitForTimeout(200);
     assert.ok(await page.isVisible(".btn-print-jour"), "session expirée : retour au code");

@@ -33,6 +33,7 @@ const { ouvrir } = require("./navigateur");
     }, jeton);
     await page.click('button[title="Panneau de contrôle"]');
     await page.waitForTimeout(200);
+    await page.click('[data-ecran-lien="operation"]');
     await page.fill("#modalDateFin", "2099-06-30");
     await page.evaluate(() => chargerDatesAffichage());
     await page.waitForTimeout(150);

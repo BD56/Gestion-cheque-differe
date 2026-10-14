@@ -1,5 +1,5 @@
 <!-- Espace responsable : code, corrections, archives, réglages, tablettes. -->
-<script data-version="2026.10.14-0940">
+<script data-version="2026.10.14-0955">
   // =================================================================
   // --- ESPACE RESPONSABLE (code PIN) ---
   // Le jeton n'est gardé qu'en mémoire : il disparaît à la fermeture du
@@ -203,45 +203,49 @@
     if (nom !== "saisies") saisieEnCours = null; // une correction laissée en plan est abandonnée
     document.getElementById("contenuAdmin").scrollTop = 0;
   }
-  // Bloc « Offre » : dates, avancement, clôture automatique
+  // Résumé de l'offre (vue d'ensemble et écran Opération) : dates, avancement,
+  // clôture automatique
   function majResumeOperation(debut, fin) {
-    const resume = document.getElementById("resumeOperation"),
-      note = document.getElementById("noteOffre"),
-      barre = document.getElementById("barreOffre");
-    if (!debut || !fin) {
-      resume.textContent = "Aucune date";
-      note.textContent = "Saisissez les dates de l'offre puis « Mettre à jour les dates ».";
-      barre.style.width = "0";
-      return;
+    let resume = "Aucune date",
+      note = "Saisissez les dates de l'offre dans « Opération ».",
+      largeur = "0";
+    if (debut && fin) {
+      resume = "Du " + formaterDateAffichage(debut) + " au " + formaterDateAffichage(fin);
+      const j = new Date();
+      j.setHours(0, 0, 0, 0);
+      const d = new Date(debut),
+        f = new Date(fin);
+      d.setHours(0, 0, 0, 0);
+      f.setHours(0, 0, 0, 0);
+      const total = Math.round((f - d) / 86400000) + 1,
+        jour = Math.round((j - d) / 86400000) + 1;
+      const lendemain = new Date(f.getTime() + 86400000);
+      const nuit =
+        "clôture automatique dans la nuit du " +
+        formaterDateAffichage(fin) +
+        " au " +
+        ("0" + lendemain.getDate()).slice(-2) +
+        "/" +
+        ("0" + (lendemain.getMonth() + 1)).slice(-2) +
+        ".";
+      if (jour < 1) note = "Commence dans " + (1 - jour) + " jour(s) · " + nuit;
+      else if (jour > total) {
+        note = "Terminée : archivage cette nuit.";
+        largeur = "100%";
+      } else {
+        note = "Jour " + jour + " sur " + total + " · " + nuit;
+        largeur = Math.round((jour / total) * 100) + "%";
+      }
     }
-    resume.textContent = "Du " + formaterDateAffichage(debut) + " au " + formaterDateAffichage(fin);
-    const j = new Date();
-    j.setHours(0, 0, 0, 0);
-    const d = new Date(debut),
-      f = new Date(fin);
-    d.setHours(0, 0, 0, 0);
-    f.setHours(0, 0, 0, 0);
-    const total = Math.round((f - d) / 86400000) + 1,
-      jour = Math.round((j - d) / 86400000) + 1;
-    const lendemain = new Date(f.getTime() + 86400000);
-    const nuit =
-      "clôture automatique dans la nuit du " +
-      formaterDateAffichage(fin) +
-      " au " +
-      ("0" + lendemain.getDate()).slice(-2) +
-      "/" +
-      ("0" + (lendemain.getMonth() + 1)).slice(-2) +
-      ".";
-    if (jour < 1) {
-      note.textContent = "Commence dans " + (1 - jour) + " jour(s) · " + nuit;
-      barre.style.width = "0";
-    } else if (jour > total) {
-      note.textContent = "Terminée : archivage cette nuit.";
-      barre.style.width = "100%";
-    } else {
-      note.textContent = "Jour " + jour + " sur " + total + " · " + nuit;
-      barre.style.width = Math.round((jour / total) * 100) + "%";
-    }
+    document.querySelectorAll("#modalParametres .resume-offre").forEach(function (e) {
+      e.textContent = resume;
+    });
+    document.querySelectorAll("#modalParametres .note-offre").forEach(function (e) {
+      e.textContent = note;
+    });
+    document.querySelectorAll("#modalParametres .barre-offre").forEach(function (e) {
+      e.style.width = largeur;
+    });
   }
 
   // Bouton à confirmer d'un second appui (dans les 5 s) : suppression, retrait…

@@ -79,6 +79,10 @@ async function ecrans(format) {
     await prendre("10-responsable-ensemble");
     await page.click('[data-ecran-lien="saisies"]');
     await prendre("11-responsable-saisies");
+    await page.click('[data-ecran-lien="operation"]');
+    await prendre("12-responsable-operation");
+    await page.click('[data-ecran-lien="securite"]');
+    await prendre("13-responsable-securite");
     if (erreursPage.length) console.log(format + " : erreurs de la page : " + erreursPage.join(" | "));
   } finally {
     await browser.close();

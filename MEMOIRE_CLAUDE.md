@@ -150,6 +150,16 @@ box-sizing) → corrigé par la refonte.
   de Style.html (sinon écrasées). Nouveau test `test_chiffres` (35 séries).
   Restent avec confirm()/alert() natifs : message de fin de clôture (alert),
   fenêtre de l'appairage. Écran étroit : menu horizontal défilant.
+- ✅ Étape 5 bis (version 2026.10.14-0955) — désaccord de Bryan sur la fusion Opération /
+  Sécurité ; maquette des 2 idées (artefact « Variantes espace responsable »
+  https://claude.ai/artifact/KYMZHUvrqEXs4xKhti4zzp) ; Bryan choisit l'IDÉE 2 :
+  Vue d'ensemble EN LECTURE SEULE (chiffres, résumé de l'offre, mode affiché en puce
+  `#puceModeAdmin`, liens « Modifier → », impression) ; écrans « Opération » (dates +
+  clôture confirmée) et « Sécurité » (interrupteur Signaler / Bloquant + bloc
+  « Anciens clients » `#blocAnnuaire` pour le pré-remplissage) revenus dans le menu.
+  Résumé de l'offre en classes `.resume-offre` / `.note-offre` / `.barre-offre`
+  (présent dans les deux écrans). Leçon : ne pas fusionner/réorganiser des écrans
+  sans le faire valider (ce n'est pas que du style).
 - ▶️ Prochaine : étape 6 (écran « Tournez la tablette »), puis 7 (autres écrans :
   aide, mentions, appairage, fenêtre annuaire, Panneau.html du Sheet).
 

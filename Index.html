@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr" data-version="2026.10.14-0940">
+<html lang="fr" data-version="2026.10.14-0955">
   <head>
     <base target="_top">
     <?!= include_('Style') ?>
@@ -207,7 +207,7 @@
               <li>🟡 <strong>SIGNALER</strong> : l'application alerte mais laisse <strong>forcer</strong> l'ajout.</li>
               <li>🔴 <strong>BLOQUANT</strong> : les alertes rouges refusent la saisie, sans possibilité de forcer. L'homonyme (orange) reste forçable.</li>
               <li>Le mode est <strong>conservé</strong> d'une offre à l'autre.</li>
-              <li>Réglage : <svg class="ico"><use href="#i-reglages"/></svg> → code → <strong>Vue d'ensemble</strong>, interrupteur <strong>Signaler / Bloquant</strong>. Le mode en cours est affiché en haut de l'écran de saisie.</li>
+              <li>Réglage : <svg class="ico"><use href="#i-reglages"/></svg> → code → menu <strong><svg class="ico"><use href="#i-bouclier"/></svg> Sécurité</strong>, interrupteur <strong>Signaler / Bloquant</strong>. Le mode en cours est affiché en haut de l'écran de saisie.</li>
             </ul>
           </div>
 
@@ -227,9 +227,9 @@
             <button class="retour" data-action="allerAide" data-args='["accueil"]'><svg class="ico"><use href="#i-chevron"/></svg>Retour</button>
             <h3 class="titre-ecran"><svg class="ico"><use href="#i-calendrier"/></svg> Dates &amp; clôture</h3>
             <ul>
-              <li><strong>Lancer ou prolonger</strong> : <svg class="ico"><use href="#i-reglages"/></svg> → code → <strong>Vue d'ensemble</strong>, bloc « Offre » : modifiez les dates puis <strong>Mettre à jour les dates</strong>.</li>
+              <li><strong>Lancer ou prolonger</strong> : <svg class="ico"><use href="#i-reglages"/></svg> → code → menu <strong><svg class="ico"><use href="#i-calendrier"/></svg> Opération</strong> : modifiez les dates puis <strong>Mettre à jour les dates</strong>.</li>
               <li><strong>Fin de l'offre</strong> : rien à faire. La nuit suivant le dernier jour, l'offre est clôturée et archivée automatiquement.</li>
-              <li>Clôture immédiate possible : <strong>Clôturer maintenant</strong> (bloc « Offre »), puis <strong>Clôturer l'offre</strong> pour confirmer.</li>
+              <li>Clôture immédiate possible : <strong>Clôturer maintenant</strong> (menu Opération), puis <strong>Clôturer l'offre</strong> pour confirmer.</li>
             </ul>
           </div>
 
@@ -262,6 +262,8 @@
         <nav class="rail" id="railAdmin" aria-label="Menu responsable" style="display: none">
           <button data-ecran-lien="ensemble" data-action="ouvrirEnsemble"><svg class="ico"><use href="#i-tableau"/></svg>Vue d'ensemble</button>
           <button data-ecran-lien="saisies" data-action="ouvrirSaisies"><svg class="ico"><use href="#i-liste"/></svg>Saisies<span class="val" id="railNbSaisies"></span></button>
+          <button data-ecran-lien="operation" data-action="allerEcran" data-args='["operation"]'><svg class="ico"><use href="#i-calendrier"/></svg>Opération</button>
+          <button data-ecran-lien="securite" data-action="allerEcran" data-args='["securite"]'><svg class="ico"><use href="#i-bouclier"/></svg>Sécurité</button>
           <button data-ecran-lien="impression" data-action="allerEcran" data-args='["impression"]'><svg class="ico"><use href="#i-imprimer"/></svg>Impression</button>
           <button data-ecran-lien="archives" data-action="ouvrirArchives"><svg class="ico"><use href="#i-archive"/></svg>Archives</button>
           <button data-ecran-lien="reglages" data-action="allerEcran" data-args='["reglages"]'><svg class="ico"><use href="#i-etiquette"/></svg>Réglages</button>
@@ -297,41 +299,15 @@
               </div>
               <div class="deux-blocs">
                 <div class="boite">
-                  <h3>Offre</h3>
-                  <b class="dates-offre" id="resumeOperation">—</b>
-                  <div class="progression"><i id="barreOffre"></i></div>
-                  <p class="note-doux" id="noteOffre"></p>
-                  <div class="ligne-dates">
-                    <div class="colonne">
-                      <label class="label-date" for="modalDateDebut">Début</label>
-                      <input class="champ-date" type="date" id="modalDateDebut">
-                    </div>
-                    <div class="colonne">
-                      <label class="label-date" for="modalDateFin">Fin</label>
-                      <input class="champ-date" type="date" id="modalDateFin">
-                    </div>
-                  </div>
-                  <div class="rangee-btn">
-                    <button class="sec accent" data-action="sauvegarderDatesTablette">Mettre à jour les dates</button>
-                    <button class="sec danger" data-action="demanderCloture"><svg class="ico"><use href="#i-alerte"/></svg>Clôturer maintenant</button>
-                  </div>
-                  <div class="message-haut" id="msgRetourModal"></div>
-                  <div class="confirmer" id="confirmerCloture" style="display: none">
-                    <p>Clôturer l'offre ? Les saisies partent dans les archives et les tablettes affichent « aucune opération ».</p>
-                    <div class="act">
-                      <button class="forcer" data-action="cloturerOffre">Clôturer l'offre</button>
-                      <button data-action="annulerCloture">Annuler</button>
-                    </div>
-                  </div>
+                  <h3>Offre<button class="lien-modifier" data-action="allerEcran" data-args='["operation"]'>Modifier →</button></h3>
+                  <b class="dates-offre resume-offre" id="resumeOperation">—</b>
+                  <div class="progression"><i class="barre-offre"></i></div>
+                  <p class="note-doux note-offre" id="noteOffre"></p>
                 </div>
                 <div class="boite">
-                  <h3>Mode de sécurité</h3>
-                  <div class="segment" id="segmentMode">
-                    <button class="signaler" id="modeSignaler" data-action="choisirMode" data-args='["SIGNALER"]' aria-pressed="false">Signaler</button>
-                    <button class="bloquant" id="modeBloquant" data-action="choisirMode" data-args='["BLOQUANT"]' aria-pressed="false">Bloquant</button>
-                  </div>
+                  <h3>Mode de sécurité<button class="lien-modifier" data-action="allerEcran" data-args='["securite"]'>Modifier →</button></h3>
+                  <span class="puce mode" id="puceModeAdmin"><svg class="ico"><use href="#i-bouclier"/></svg><span id="txtModeAdmin">—</span></span>
                   <p class="note-doux">Signaler : alerte, l'hôtesse peut forcer. Bloquant : fraude et usurpation refusées (l'homonyme reste possible après vérification).</p>
-                  <button style="display: none" class="sec" id="btnModeAnnuaire" data-action="changerModeAnnuaire"></button>
                 </div>
               </div>
               <div class="boite">
@@ -340,6 +316,57 @@
                   <button class="sec accent" data-action="preparerImpression" data-args='["jour","aujourdhui","Impression du Jour"]'><svg class="ico"><use href="#i-imprimer"/></svg>Aujourd'hui</button>
                   <button class="sec" data-action="allerEcran" data-args='["impression"]'><svg class="ico"><use href="#i-calendrier"/></svg>Un autre jour…</button>
                   <button class="sec" data-action="preparerImpression" data-args='["offre","","Impression Offre Complète"]'><svg class="ico"><use href="#i-livre"/></svg>Toute l'offre</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="sous-ecran" data-ecran="operation">
+              <h2 class="titre-vue">Opération</h2>
+              <div class="boite">
+                <h3>Offre en cours</h3>
+                <b class="dates-offre resume-offre">—</b>
+                <div class="progression"><i class="barre-offre"></i></div>
+                <p class="note-doux note-offre"></p>
+                <div class="ligne-dates">
+                  <div class="colonne">
+                    <label class="label-date" for="modalDateDebut">Début</label>
+                    <input class="champ-date" type="date" id="modalDateDebut">
+                  </div>
+                  <div class="colonne">
+                    <label class="label-date" for="modalDateFin">Fin</label>
+                    <input class="champ-date" type="date" id="modalDateFin">
+                  </div>
+                </div>
+                <div class="rangee-btn">
+                  <button class="sec accent" data-action="sauvegarderDatesTablette">Mettre à jour les dates</button>
+                  <button class="sec danger" data-action="demanderCloture"><svg class="ico"><use href="#i-alerte"/></svg>Clôturer maintenant</button>
+                </div>
+                <div class="message-haut" id="msgRetourModal"></div>
+                <div class="confirmer" id="confirmerCloture" style="display: none">
+                  <p>Clôturer l'offre ? Les saisies partent dans les archives et les tablettes affichent « aucune opération ».</p>
+                  <div class="act">
+                    <button class="forcer" data-action="cloturerOffre">Clôturer l'offre</button>
+                    <button data-action="annulerCloture">Annuler</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="sous-ecran" data-ecran="securite">
+              <h2 class="titre-vue">Sécurité</h2>
+              <div class="boite">
+                <h3>Mode de sécurité</h3>
+                <div class="segment" id="segmentMode">
+                  <button class="signaler" id="modeSignaler" data-action="choisirMode" data-args='["SIGNALER"]' aria-pressed="false">Signaler</button>
+                  <button class="bloquant" id="modeBloquant" data-action="choisirMode" data-args='["BLOQUANT"]' aria-pressed="false">Bloquant</button>
+                </div>
+                <p class="note-doux">Signaler : alerte, l'hôtesse peut forcer. Bloquant : fraude et usurpation refusées (l'homonyme reste possible après vérification). Le mode reste le même d'une offre à l'autre.</p>
+              </div>
+              <div class="boite" id="blocAnnuaire" style="display: none">
+                <h3>Anciens clients</h3>
+                <p class="note-doux">Quand le N° de pièce d'un client d'une offre passée est tapé, son nom et son prénom peuvent être pré-remplis automatiquement, ou après confirmation.</p>
+                <div class="rangee-btn">
+                  <button class="sec" id="btnModeAnnuaire" data-action="changerModeAnnuaire"></button>
                 </div>
               </div>
             </div>

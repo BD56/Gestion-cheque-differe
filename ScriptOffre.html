@@ -1,5 +1,5 @@
 <!-- Mode de sécurité, clôture, dates de l'offre (affichage et réglage). -->
-<script data-version="2026.10.14-0940">
+<script data-version="2026.10.14-0955">
   let modeEnCours = false,
     modeActuel = null;
   // Interrupteur Signaler / Bloquant de la vue d'ensemble : un appui sur le mode déjà
@@ -38,6 +38,10 @@
   function majAffichageMode(mode) {
     modeActuel = mode;
     majPuceMode(mode);
+    document.getElementById("txtModeAdmin").textContent =
+      mode === "BLOQUANT" ? "Mode Bloquant" : "Mode Signaler";
+    document.getElementById("puceModeAdmin").className =
+      mode === "BLOQUANT" ? "puce mode bloquant" : "puce mode";
     document.getElementById("modeSignaler").setAttribute("aria-pressed", String(mode !== "BLOQUANT"));
     document.getElementById("modeBloquant").setAttribute("aria-pressed", String(mode === "BLOQUANT"));
   }

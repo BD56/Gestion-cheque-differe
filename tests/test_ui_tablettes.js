@@ -117,6 +117,41 @@ const { ouvrir } = require("./navigateur");
     env.props.getProperty = lireVraie;
     assert.ok(!(await vis("#ecranAppairage")), "pas d'écran d'autorisation sur un incident passager");
     assert.ok(await page.evaluate(() => !!window.__store.cdTabletteCle), "clé gardée");
+    // Clé perdue par le navigateur : le nom est déjà pris -> remplacement proposé, confirmé d'un appui
+    await page.evaluate(() => {
+      delete window.__store.cdTabletteCle;
+      afficherEcranAppairage();
+    });
+    await page.waitForTimeout(150);
+    await page.fill("#pinApp", "258025");
+    await page.fill("#nomTablette", "caisse centrale 1");
+    await page.click("#btnAppairer");
+    await page.waitForTimeout(250);
+    assert.match(
+      await txt("#msgAppairage"),
+      /« Caisse centrale 1 » est déjà le nom d'un appareil autorisé le/
+    );
+    assert.ok(await vis("#btnRemplacerAppareil"), "remplacement proposé");
+    assert.strictEqual(await txt("#btnRemplacerAppareil"), "Remplacer « caisse centrale 1 »");
+    assert.strictEqual(await page.inputValue("#pinApp"), "258025", "code gardé pour confirmer");
+    assert.strictEqual(
+      JSON.parse(env.props._store.TABLETTES).length,
+      1,
+      "rien de remplacé sans confirmation"
+    );
+    await page.fill("#nomTablette", "Caisse centrale 2");
+    assert.ok(!(await vis("#btnRemplacerAppareil")), "nom changé : proposition retirée");
+    await page.fill("#nomTablette", "caisse centrale 1");
+    await page.click("#btnAppairer");
+    await page.waitForTimeout(250);
+    const idAvant = JSON.parse(env.props._store.TABLETTES)[0].id;
+    await page.click("#btnRemplacerAppareil");
+    await page.waitForTimeout(300);
+    assert.ok(!(await vis("#ecranAppairage")), "appareil remplacé et démarré");
+    const apres = JSON.parse(env.props._store.TABLETTES);
+    assert.strictEqual(apres.length, 1, "remplacé, pas ajouté");
+    assert.notStrictEqual(apres[0].id, idAvant);
+    assert.ok(await page.evaluate(() => !!window.__store.cdTabletteCle), "nouvelle clé mémorisée");
     assert.deepStrictEqual(erreursPage, []);
     console.log("test_ui_tablettes : OK");
   } finally {

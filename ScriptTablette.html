@@ -1,5 +1,5 @@
 <!-- Tablette autorisée (appairage), démarrage, aide, panneau, mentions légales. -->
-<script data-version="2026.10.14-1459">
+<script data-version="2026.10.14-1645">
   // =================================================================
   // --- TABLETTE AUTORISÉE (appairage) ---
   // La clé reçue lors de l'autorisation est gardée dans le navigateur et envoyée à
@@ -95,11 +95,19 @@
       .etatAdmin();
   }
 
-  function appairerCetteTablette() {
+  // Nom changé : le remplacement proposé ne vaut plus
+  document.getElementById("nomTablette").addEventListener("input", function () {
+    document.getElementById("btnRemplacerAppareil").style.display = "none";
+  });
+  // remplacer = true : bouton « Remplacer », proposé quand le nom est déjà pris (cet
+  // appareil a perdu son autorisation) ; l'ancienne autorisation ne servira plus.
+  function appairerCetteTablette(remplacer) {
     const pin = document.getElementById("pinApp").value.trim();
     const nom = document.getElementById("nomTablette").value.trim();
     const msg = document.getElementById("msgAppairage");
+    const btnRemplacer = document.getElementById("btnRemplacerAppareil");
     msg.textContent = "";
+    btnRemplacer.style.display = "none";
     if (!/^\d{6}$/.test(pin)) {
       msg.textContent = "Le code doit contenir exactement 6 chiffres.";
       return;
@@ -117,6 +125,13 @@
     const autoriser = function () {
       google.script.run
         .withSuccessHandler(function (r) {
+          if (r && r.nomPris) {
+            // code juste, nom déjà pris : le code reste saisi pour confirmer d'un appui
+            btnRemplacer.textContent = "Remplacer « " + nom + " »";
+            btnRemplacer.style.display = "";
+            fin(r.message);
+            return;
+          }
           document.getElementById("pinApp").value = "";
           document.getElementById("pinApp2").value = "";
           if (!r || !r.ok) {
@@ -134,7 +149,7 @@
         .withFailureHandler(function (err) {
           fin("Erreur : " + (err && err.message ? err.message : err));
         })
-        .appairerTablette(pin, nom);
+        .appairerTablette(pin, nom, remplacer === true);
     };
     btn.disabled = true;
     if (pinDefiniAppairage) {

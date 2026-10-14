@@ -13,6 +13,7 @@ env.sheets.Saisies = new FakeSheet("Saisies", [
 env.sheets.Saisies.getRange("Z1").setValue("SIGNALER");
 const c = env.ctx,
   P = env.props._store;
+const _norm = (x) => x.toLowerCase();
 const refuse = (f) => assert.throws(f, /TABLETTE_NON_AUTORISEE/);
 const sansPause = (g) => {
   const k = "PIN_ESSAIS_" + (g || "INCONNU");
@@ -49,7 +50,9 @@ r = J(c.appairerTablette("258025", "  Caisse centrale 1  "));
 // Nom obligatoire et unique (majuscules, accents, espaces et tirets ignorés)
 for (const k in env.props._store) if (k.indexOf("PIN_ESSAIS") === 0) delete env.props._store[k];
 assert.match(J(c.appairerTablette("258025", "   ")).message, /Donnez un nom/);
-assert.match(J(c.appairerTablette("258025", "caisse CENTRALE-1")).message, /déjà le nom d'un autre appareil/);
+const pris = J(c.appairerTablette("258025", "caisse CENTRALE-1"));
+assert.ok(pris.nomPris && !pris.ok, "nom pris : remplacement proposé, rien de fait");
+assert.match(pris.message, /« Caisse centrale 1 » est déjà le nom d'un appareil autorisé le /);
 assert.strictEqual(JSON.parse(env.props._store.TABLETTES).length, 1, "aucun doublon enregistré");
 assert.ok(r.ok);
 assert.strictEqual(r.cle.length, 64);
@@ -159,4 +162,25 @@ for (let i = 0; i < 20; i++) {
 }
 sansPause();
 assert.match(J(c.appairerTablette("333333", "T21")).message, /20 appareils maximum/);
+// Remplacement sous le même nom (appareil qui a perdu sa clé) : possible même liste
+// pleine ; l'ancienne clé ne sert plus ; code faux : rien n'est remplacé
+const t5 = JSON.parse(P.TABLETTES).find((t) => t.nom === "T5");
+P["TABLETTE_VUE_" + t5.id] = "13/10/2026";
+sansPause();
+assert.match(J(c.appairerTablette("333333", "t5")).message, /autorisé le .* \(utilisé le 13\/10\/2026\)/);
+sansPause();
+assert.strictEqual(J(c.appairerTablette("000000", "T5", true)).ok, false);
+assert.ok(
+  JSON.parse(P.TABLETTES).some((t) => t.id === t5.id),
+  "code faux : ancienne entrée gardée"
+);
+sansPause();
+const rem = J(c.appairerTablette("333333", "T5", true));
+assert.ok(rem.ok && rem.cle);
+const apres = JSON.parse(P.TABLETTES);
+assert.strictEqual(apres.length, 20, "remplacé, pas ajouté");
+assert.ok(!apres.some((t) => t.id === t5.id), "ancienne entrée retirée");
+assert.ok(!("TABLETTE_VUE_" + t5.id in P), "et ses traces");
+assert.strictEqual(apres.filter((t) => _norm(t.nom) === "t5").length, 1);
+assert.ok(J(c.chargerCacheVerif(rem.cle)).offre, "nouvelle clé acceptée");
 console.log("test_tablettes : OK");

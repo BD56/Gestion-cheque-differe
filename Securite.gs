@@ -3,7 +3,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Securite_() {
-  return "2026.10.14-1459";
+  return "2026.10.14-1645";
 }
 
 // =================================================================
@@ -362,37 +362,53 @@ function exigerTablette_(cle) {
 }
 
 // Autorise la tablette qui appelle (code responsable requis). Renvoie la clé à garder.
-function appairerTablette(pin, nom) {
+// remplacer = true : le nom est déjà pris et la personne a confirmé le remplacement
+// (appareil qui a perdu son autorisation, appareil changé) : l'ancienne entrée est
+// retirée, sa clé ne sert plus.
+function appairerTablette(pin, nom, remplacer) {
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
     const props = PropertiesService.getDocumentProperties();
     const v = verifierPin_(props, pin, "INCONNU");
     if (!v.ok) return v;
-    const liste = lireTablettes_();
-    if (liste.length >= TABLETTES_MAX)
-      return {
-        ok: false,
-        message:
-          TABLETTES_MAX +
-          " appareils maximum : retirez-en un depuis l'espace responsable (menu Code & appareils), ou tous depuis le panneau du Google Sheets.",
-      };
+    let liste = lireTablettes_();
     // Nom obligatoire et unique (majuscules, accents, espaces ignorés : « Mac » = « mac ») :
     // sinon impossible de savoir quel appareil retirer. Vérifié après le code : on ne
     // dévoile pas les noms existants à qui n'a pas le code.
     nom = (nom || "").toString().trim().slice(0, 40);
     if (_normId_(nom) === "")
       return { ok: false, message: "Donnez un nom à cet appareil (ex. Caisse 3, Accueil)." };
-    const pris = liste.some(function (t) {
+    const ancien = liste.filter(function (t) {
       return _normId_(t.nom) === _normId_(nom);
-    });
-    if (pris)
+    })[0];
+    if (ancien && remplacer !== true) {
+      const vu = props.getProperty("TABLETTE_VUE_" + ancien.id);
+      return {
+        ok: false,
+        nomPris: true,
+        message:
+          "« " +
+          ancien.nom +
+          " » est déjà le nom d'un appareil autorisé le " +
+          ancien.creeLe +
+          (vu ? " (utilisé le " + vu + ")" : "") +
+          ". Remplacez-le si c'est cet appareil (il a perdu son autorisation) : l'ancienne autorisation ne servira plus. Sinon, choisissez un autre nom.",
+      };
+    }
+    if (ancien) {
+      liste = liste.filter(function (t) {
+        return t.id !== ancien.id;
+      });
+      props.deleteProperty("TABLETTE_VUE_" + ancien.id);
+      props.deleteProperty("PIN_ESSAIS_T_" + ancien.id);
+    }
+    if (liste.length >= TABLETTES_MAX)
       return {
         ok: false,
         message:
-          "« " +
-          nom +
-          " » est déjà le nom d'un autre appareil. Choisissez-en un autre (ex. Caisse 2, Accueil).",
+          TABLETTES_MAX +
+          " appareils maximum : retirez-en un depuis l'espace responsable (menu Code & appareils), ou tous depuis le panneau du Google Sheets.",
       };
     const cle = Utilities.getUuid().replace(/-/g, "") + Utilities.getUuid().replace(/-/g, "");
     const id = Utilities.getUuid().replace(/-/g, "").slice(0, 10);

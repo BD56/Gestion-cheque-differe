@@ -179,6 +179,9 @@ Décision : `docs/retours-vibe/decisions/2026-10-11_generalisation.md`.
   « non autorisé » (`lireTablettes_` la remonte) ; la page ne l'efface plus sur un
   refus (seulement sur un retrait volontaire) ; diagnostic discret (raison + adresse
   technique de la page) sur l'écran d'autorisation et dans « Code & appareils ».
+  Nom déjà pris à l'autorisation (code juste) : `appairerTablette` répond `nomPris`
+  (date d'autorisation, dernière utilisation) ; la personne confirme « Remplacer »
+  (`remplacer = true`) → l'ancienne entrée est retirée, jamais sans confirmation.
   Présentation : **6 tuiles** (Saisies, Archives, Opération, Sécurité, Réglages, Code)
   ouvrant chacune un sous-écran (« ← Retour ») + Clôturer / Verrouiller à part.
   Bouton « Ouvrir Google Sheets » retiré de l'appli (tout passe par l'appli).

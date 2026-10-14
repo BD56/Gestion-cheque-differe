@@ -11,7 +11,7 @@
   « Comptoir » (branche de travail actuelle, tout est poussé)**. Aucune fusion faite,
   aucune pull request. Ordre prévu (sur demande de Bryan seulement) : `design` →
   `refonte` → `generalisation` → `main` / migration Vannes.
-- **Version actuelle sur `design`** : 2026.10.14-1459 (40 séries de tests vertes,
+- **Version actuelle sur `design`** : 2026.10.14-1645 (40 séries de tests vertes,
   ESLint et Prettier propres). Numéro renouvelé par Claude à chaque push de code
   (`npm run nouvelle-version`).
 - **Bryan teste** sur le Sheet « Gestion Chèques Différés — REFONTE (test) » depuis
@@ -31,8 +31,8 @@
   dans l'historique) : diagnostic affiché + correction d'un vrai défaut. ATTENDU de
   Bryan : noter l'adresse technique (Code & appareils), déployer une nouvelle version,
   comparer ; dire Safari ou Chrome. Si l'adresse change : discuter d'une parade
-  (ex. adresse avec la clé en favori) AVANT de coder. Idée proposée, non décidée :
-  réautoriser sous le même nom remplace l'ancienne entrée (piège du nom unique).
+  (ex. adresse avec la clé en favori) AVANT de coder. Remplacement sous le même nom :
+  FAIT (version 2026.10.14-1645, voir « Remplacement » dans l'historique).
   1er relevé (Mac, Sheet REFONTE test, version 2026.10.14-1459, 14/10) : « Clé absente
   de ce navigateur » ; adresse technique
   `n-ijetbkxwto6cqlhbmed6rj7j4kexnxcgupggffa-0lu-script.googleusercontent.com`
@@ -322,6 +322,16 @@ box-sizing) → corrigé par la refonte.
   (Code & appareils). Tests : test_tablettes (vérifié qu'il échoue sur l'ancien
   code), test_ui_tablettes (clé gardée sur refus, remplacée à la réautorisation,
   incident passager sans écran d'autorisation).
+- Remplacement sous le même nom (version 2026.10.14-1645, « go » de Bryan ; il hésitait
+  avec « demander à l'utilisateur » → Claude a choisi les deux : remplacement
+  proposé, jamais automatique). Code juste + nom pris : réponse `nomPris` (message
+  avec date d'autorisation et dernière utilisation de l'ancien) ; bouton rouge
+  « Remplacer « nom » » sous le message (`#btnRemplacerAppareil`, même action avec
+  `data-args="[true]"`), code gardé dans le champ ; nom modifié → proposition
+  retirée. Serveur : `appairerTablette(pin, nom, remplacer)` retire l'ancienne entrée
+  (+ TABLETTE_VUE_ / PIN_ESSAIS_T_), possible même liste pleine ; code faux → rien.
+  Un code juste remet le compteur d'essais à zéro : pas de pause de 10 s avant la
+  confirmation. Tests : test_tablettes, test_ui_tablettes.
 **REFONTE GRAPHIQUE TERMINÉE (7 étapes + 5 bis) sur `design`.** En attente de Bryan :
 essai sur le Sheet de test (git checkout design, npm run push, Installer, déploiement)
 puis sur tablette réelle : rotation, clavier, journal, alertes, espace responsable,

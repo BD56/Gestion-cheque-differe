@@ -22,19 +22,19 @@ const { FakeSheet } = require("./fakesheet");
     await page.fill("#pinConfirme", "258025");
     await page.click("#btnDeverrouiller");
     await page.waitForTimeout(150);
-    await page.click('#modalParametres .tuile:has-text("Saisies")');
+    await page.click('[data-ecran-lien="saisies"]');
     await page.waitForTimeout(150);
-    assert.strictEqual(await page.$$eval("#listeSaisies .doublon-carte", (x) => x.length), 3);
+    assert.strictEqual(await page.$$eval("#listeSaisies .ligne-saisie", (x) => x.length), 3);
     assert.strictEqual(await page.$$eval("#listeSaisies img", (x) => x.length), 0, "pas d'injection HTML");
     // Recherche
     await page.fill("#rechercheSaisie", "jean dupont");
     await page.waitForTimeout(50);
-    assert.strictEqual(await page.$$eval("#listeSaisies .doublon-carte", (x) => x.length), 1);
+    assert.strictEqual(await page.$$eval("#listeSaisies .ligne-saisie", (x) => x.length), 1);
     await page.fill("#rechercheSaisie", "cd 456");
-    assert.strictEqual(await page.$$eval("#listeSaisies .doublon-carte", (x) => x.length), 1);
+    assert.strictEqual(await page.$$eval("#listeSaisies .ligne-saisie", (x) => x.length), 1);
     await page.fill("#rechercheSaisie", "");
     // Correction de DUPONT avec la pièce de MARTIN -> alerte B, puis forcer
-    const carteDupont = page.locator("#listeSaisies .doublon-carte", { hasText: "DUPONT" });
+    const carteDupont = page.locator("#listeSaisies .ligne-saisie", { hasText: "DUPONT" });
     await carteDupont.locator("text=CORRIGER").click();
     assert.strictEqual(await page.inputValue("#corPiece"), "AB123");
     await page.fill("#corPiece", "CD456");
@@ -49,9 +49,15 @@ const { FakeSheet } = require("./fakesheet");
     assert.match(await page.textContent("#msgSaisies"), /forcée/);
     assert.ok(await page.isVisible("#vueListeSaisies"));
     // Suppression de MARTIN (confirmée)
+    const supprimer = page
+      .locator("#listeSaisies .ligne-saisie", { hasText: "MARTIN" })
+      .locator("text=Supprimer");
+    await supprimer.click();
+    await page.waitForTimeout(100);
+    assert.strictEqual(S.getLastRow(), 4, "premier appui : rien de supprimé");
     await page
-      .locator("#listeSaisies .doublon-carte", { hasText: "MARTIN" })
-      .locator("text=SUPPRIMER")
+      .locator("#listeSaisies .ligne-saisie", { hasText: "MARTIN" })
+      .locator("text=Confirmer la suppression")
       .click();
     await page.waitForTimeout(200);
     assert.deepStrictEqual(
@@ -61,28 +67,29 @@ const { FakeSheet } = require("./fakesheet");
         .map((x) => x[3]),
       ["CD456", "ZZ9"]
     );
-    assert.strictEqual(await page.$$eval("#listeSaisies .doublon-carte", (x) => x.length), 2);
+    assert.strictEqual(await page.$$eval("#listeSaisies .ligne-saisie", (x) => x.length), 2);
     // Le cache local de vérif est rechargé (CD456 n'appartient plus qu'à DUPONT)
     await page.waitForTimeout(100);
     const offre = await page.evaluate(() => cacheVerif.offre.map((o) => o.pieceNorm + ":" + o.nom));
     assert.deepStrictEqual(offre.slice(0, 1), ["CD456:DUPONT"]);
     // Session expirée pendant la correction -> modale fermée, verrou affiché
     for (const k in env.cacheStore) delete env.cacheStore[k];
-    await page
-      .locator("#listeSaisies .doublon-carte", { hasText: "DUPONT" })
-      .locator("text=CORRIGER")
-      .click();
+    await page.locator("#listeSaisies .ligne-saisie", { hasText: "DUPONT" }).locator("text=CORRIGER").click();
     await page.click("#vueCorrection >> text=ENREGISTRER");
     await page.waitForTimeout(200);
     assert.ok(!(await page.isVisible("#listeSaisies")) && (await page.isVisible("#zoneVerrou")));
-    // Retour depuis la liste des saisies -> accueil
+    // Menu : de la liste des saisies à la vue d'ensemble
     await page.fill("#pinSaisi", "258025");
     await page.press("#pinSaisi", "Enter");
     await page.waitForTimeout(150);
-    await page.click('#modalParametres .tuile:has-text("Saisies")');
+    await page.click('[data-ecran-lien="saisies"]');
     await page.waitForTimeout(100);
-    await page.click('[data-ecran="saisies"] .retour');
-    assert.ok(await page.isVisible("#zoneAdmin .tuiles"));
+    await page.click('[data-ecran-lien="ensemble"]');
+    assert.ok((await page.isVisible('[data-ecran="ensemble"]')) && !(await page.isVisible("#listeSaisies")));
+    await page.waitForTimeout(150);
+    // chiffres relus dans « Saisies » : 2 lignes ; plus de doublon depuis la suppression de MARTIN
+    assert.strictEqual(await page.textContent("#kpiSaisies"), "2");
+    assert.strictEqual(await page.textContent("#kpiForcees"), "0");
     assert.deepStrictEqual(erreursPage, []);
     assert.deepStrictEqual(await page.evaluate(() => window.__alertes), []);
     console.log("test_ui_corrections : OK");

@@ -3,7 +3,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Securite_() {
-  return "2026.10.14-0918";
+  return "2026.10.14-0940";
 }
 
 // =================================================================
@@ -317,7 +317,7 @@ function reinitialiserPinPanneau() {
 //     - La tablette garde une clé secrète (localStorage) ; le serveur n'en garde
 //       que l'empreinte (comme le code), dans les propriétés du document.
 //     - Le panneau du Sheet (éditeurs du classeur) passe sans clé.
-//     - Retrait d'une tablette / de toutes : espace responsable, tuile « Tablettes ».
+//     - Retrait d'une tablette / de toutes : espace responsable, menu « Code & tablettes ».
 // =================================================================
 function lireTablettes_() {
   try {
@@ -371,7 +371,7 @@ function appairerTablette(pin, nom) {
         ok: false,
         message:
           TABLETTES_MAX +
-          " tablettes maximum : retirez-en une depuis l'espace responsable (tuile 🔑), ou toutes depuis le panneau du Google Sheets.",
+          " tablettes maximum : retirez-en une depuis l'espace responsable (menu Code & tablettes), ou toutes depuis le panneau du Google Sheets.",
       };
     const cle = Utilities.getUuid().replace(/-/g, "") + Utilities.getUuid().replace(/-/g, "");
     const id = Utilities.getUuid().replace(/-/g, "").slice(0, 10);
@@ -477,5 +477,6 @@ function getInfosAdmin(jeton) {
     robots: etatRobots_(),
     robotsCrees: robotsCrees.length,
     essaisInconnus: inconnus,
+    chiffres: chiffresOffre_(f),
   };
 }

@@ -33,7 +33,7 @@ function feuille() {
 }
 
 async function ecrans(format) {
-  const { page, browser, erreursPage } = await ouvrir(repo, { sheets: feuille() });
+  const { env, page, browser, erreursPage } = await ouvrir(repo, { sheets: feuille() });
   const prendre = async (nom) => {
     await page.waitForTimeout(150);
     await page.screenshot({ path: path.join(dossier, nom + "-" + format + ".png"), fullPage: true });
@@ -70,6 +70,15 @@ async function ecrans(format) {
     await prendre("7-enregistre");
     await page.click("#languette");
     await prendre("8-journal");
+    // Espace responsable : verrouillé (code + impression libre), puis déverrouillé
+    await page.click('button[title="Panneau de contrôle"]');
+    await prendre("9-responsable-code");
+    const jeton = env.creerCode("258025").jeton;
+    // dans la page : variables de ScriptResponsable.html
+    await page.evaluate("jetonAdmin = " + JSON.stringify(jeton) + "; afficherZoneAdmin();");
+    await prendre("10-responsable-ensemble");
+    await page.click('[data-ecran-lien="saisies"]');
+    await prendre("11-responsable-saisies");
     if (erreursPage.length) console.log(format + " : erreurs de la page : " + erreursPage.join(" | "));
   } finally {
     await browser.close();

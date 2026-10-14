@@ -1,23 +1,28 @@
 <!-- Mode de sécurité, clôture, dates de l'offre (affichage et réglage). -->
-<script data-version="2026.10.14-0918">
-  let modeEnCours = false;
+<script data-version="2026.10.14-0940">
+  let modeEnCours = false,
+    modeActuel = null;
+  // Interrupteur Signaler / Bloquant de la vue d'ensemble : un appui sur le mode déjà
+  // actif ne fait rien ; sinon bascule (le serveur renvoie le mode réellement écrit)
+  function choisirMode(mode) {
+    if (mode !== modeActuel) changerMode();
+  }
   function changerMode() {
     if (modeEnCours) return; // un double appui ne rebascule pas
-    const btn = document.getElementById("btnMode"),
-      avant = btn.innerHTML;
     modeEnCours = true;
-    btn.innerHTML = "⏳ MAJ...";
+    document.getElementById("segmentMode").classList.add("en-cours");
     appelAdmin(
       "basculerModeWebApp",
       [],
       function (mode) {
         modeEnCours = false;
+        document.getElementById("segmentMode").classList.remove("en-cours");
         majAffichageMode(mode);
         if (cacheVerif) cacheVerif.mode = mode; // contrôle local A/B/C à jour tout de suite
       },
       function () {
         modeEnCours = false;
-        btn.innerHTML = avant;
+        document.getElementById("segmentMode").classList.remove("en-cours");
       }
     );
   }
@@ -31,37 +36,42 @@
   }
 
   function majAffichageMode(mode) {
+    modeActuel = mode;
     majPuceMode(mode);
-    const btn = document.getElementById("btnMode");
-    btn.innerHTML = "🛡️ MODE : " + mode;
-    document.getElementById("resumeSecurite").textContent = mode;
-    btn.className = mode === "BLOQUANT" ? "btn-action btn-mode-bloquant" : "btn-action btn-mode-signaler";
+    document.getElementById("modeSignaler").setAttribute("aria-pressed", String(mode !== "BLOQUANT"));
+    document.getElementById("modeBloquant").setAttribute("aria-pressed", String(mode === "BLOQUANT"));
   }
 
+  // Clôture : confirmée dans la page (« Clôturer maintenant » puis « Clôturer l'offre »)
+  function demanderCloture() {
+    document.getElementById("confirmerCloture").style.display = "flex";
+  }
+  function annulerCloture() {
+    document.getElementById("confirmerCloture").style.display = "none";
+  }
   let clotureEnCours = false;
   function cloturerOffre() {
     if (clotureEnCours) return;
-    if (confirm("🚨 CLÔTURE DE L'OFFRE\n\nÊtes-vous sûr de vouloir archiver et vider la liste ?")) {
-      clotureEnCours = true;
-      // (on ne ferme le panneau qu'après la réponse : la fermeture reverrouille)
-      document.body.style.cursor = "wait";
-      appelAdmin(
-        "archiverOffreWebApp",
-        [],
-        function (message) {
-          clotureEnCours = false;
-          document.body.style.cursor = "default";
-          fermerPanneau();
-          alert(message);
-          chargerDatesAffichage(); // le mode (SIGNALER / BLOQUANT) est conservé
-          rechargerCacheVerif();
-        },
-        function () {
-          clotureEnCours = false;
-          document.body.style.cursor = "default";
-        }
-      );
-    }
+    annulerCloture();
+    clotureEnCours = true;
+    // (on ne ferme le panneau qu'après la réponse : la fermeture reverrouille)
+    document.body.style.cursor = "wait";
+    appelAdmin(
+      "archiverOffreWebApp",
+      [],
+      function (message) {
+        clotureEnCours = false;
+        document.body.style.cursor = "default";
+        fermerPanneau();
+        alert(message);
+        chargerDatesAffichage(); // le mode (SIGNALER / BLOQUANT) est conservé
+        rechargerCacheVerif();
+      },
+      function () {
+        clotureEnCours = false;
+        document.body.style.cursor = "default";
+      }
+    );
   }
 
   // --- DATES DE L'OFFRE : affichage, formulaire ouvert ou fermé ---

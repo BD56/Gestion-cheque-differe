@@ -1,5 +1,5 @@
 <!-- Espace responsable : code, corrections, archives, réglages, tablettes. -->
-<script data-version="2026.10.14-0918">
+<script data-version="2026.10.14-0940">
   // =================================================================
   // --- ESPACE RESPONSABLE (code PIN) ---
   // Le jeton n'est gardé qu'en mémoire : il disparaît à la fermeture du
@@ -27,7 +27,11 @@
 
   function afficherZoneVerrou(message) {
     document.getElementById("zoneAdmin").style.display = "none";
+    document.getElementById("railAdmin").style.display = "none";
     document.getElementById("zoneVerrou").style.display = "block";
+    document.getElementById("adminSous").textContent = "Impression libre · le reste demande le code";
+    document.getElementById("contenuAdmin").classList.add("verrouille");
+    allerEcran("impression"); // l'impression reste possible sans code
     document.getElementById("msgVerrou").textContent = message || "";
     document.getElementById("txtVerrou").textContent = "⏳ …";
     google.script.run
@@ -39,8 +43,8 @@
         document.getElementById("pinConfirme").style.display = pinDefini ? "none" : "block";
         document.getElementById("activationVerrou").style.display = pinDefini ? "none" : "block";
         document.getElementById("btnDeverrouiller").textContent = pinDefini
-          ? "DÉVERROUILLER"
-          : "CRÉER LE CODE";
+          ? "Déverrouiller"
+          : "Créer le code";
       })
       .withFailureHandler(function () {
         document.getElementById("txtVerrou").textContent = "⚠️ Serveur injoignable.";
@@ -101,24 +105,56 @@
     document.getElementById("champsReglages").innerHTML = "";
     delete document.getElementById("modalDateDebut").dataset.modifie;
     delete document.getElementById("modalDateFin").dataset.modifie;
-    allerEcran("accueil");
+    annulerCloture();
     document.getElementById("zoneAdmin").style.display = "none";
+    document.getElementById("railAdmin").style.display = "none";
     document.getElementById("zoneVerrou").style.display = "block";
+    allerEcran("impression");
+    document.getElementById("contenuAdmin").classList.add("verrouille");
     if (document.getElementById("modalParametres").style.display === "flex") afficherZoneVerrou();
   }
 
   function afficherZoneAdmin() {
     document.getElementById("zoneVerrou").style.display = "none";
     document.getElementById("zoneAdmin").style.display = "block";
+    document.getElementById("railAdmin").style.display = "flex";
+    document.getElementById("contenuAdmin").classList.remove("verrouille");
+    document.getElementById("adminSous").textContent =
+      "Déverrouillé · se reverrouille après 10 min sans action";
+    allerEcran("ensemble");
+    rafraichirEnsemble(true);
+  }
+  // Vue d'ensemble : chiffres, dates, mode et alertes, relus sur le serveur (« Saisies »
+  // fait foi). Au déverrouillage, les réglages sont aussi chargés dans leur formulaire.
+  function rafraichirEnsemble(avecReglages) {
     appelAdmin("getInfosAdmin", [], function (infos) {
       majAffichageMode(infos.mode);
       if (infos.annuaireActif) majAffichageModeAnnuaire(infos.modeAnnuaire);
-      document.getElementById("modalDateDebut").value = infos.dates.debut;
-      document.getElementById("modalDateFin").value = infos.dates.fin;
+      const dD = document.getElementById("modalDateDebut"),
+        dF = document.getElementById("modalDateFin");
+      if (!dD.dataset.modifie && !dF.dataset.modifie) {
+        dD.value = infos.dates.debut;
+        dF.value = infos.dates.fin;
+      }
       majResumeOperation(infos.dates.debut, infos.dates.fin);
-      remplirFormulaireReglages(infos.config);
+      majChiffres(infos.chiffres);
+      if (avecReglages) remplirFormulaireReglages(infos.config);
       afficherAlertesAdmin(infos);
     });
+  }
+  function ouvrirEnsemble() {
+    allerEcran("ensemble");
+    rafraichirEnsemble(false);
+  }
+  function majChiffres(c) {
+    if (!c) return;
+    document.getElementById("kpiSaisies").textContent = c.saisies;
+    document.getElementById("kpiTotal").textContent = formaterMontant(c.total).replace(",00 €", " €");
+    document.getElementById("kpiForcees").textContent = c.forcees;
+    document.getElementById("kpiForcees").parentNode.classList.toggle("non-nul", c.forcees > 0);
+    document.getElementById("kpiTablettes").textContent = c.tablettes;
+    document.getElementById("railNbSaisies").textContent = c.saisies;
+    document.getElementById("railNbTablettes").textContent = c.tablettes;
   }
 
   // Points d'attention en tête de l'espace responsable : robot de nuit absent ou
@@ -144,29 +180,89 @@
           e.n +
           " code(s) faux tapé(s) depuis des appareils non autorisés (dernier le " +
           e.dernier +
-          "). Si ce n'était pas vous, changez le code (tuile 🔑)."
+          "). Si ce n'était pas vous, changez le code (menu Code & tablettes)."
       );
     const z = document.getElementById("alerteAdmin");
     z.textContent = "";
     lignes.forEach(function (t) {
       const d = document.createElement("div");
       d.textContent = t;
-      d.style.margin = "2px 0";
       z.appendChild(d);
     });
     z.style.display = lignes.length ? "block" : "none";
   }
 
-  // Navigation : accueil (tuiles) <-> sous-écrans de l'espace responsable
+  // Navigation : une vue à la fois ; le menu de gauche montre la vue active
   function allerEcran(nom) {
     const ecrans = document.querySelectorAll("#modalParametres .sous-ecran");
     for (let i = 0; i < ecrans.length; i++)
       ecrans[i].classList.toggle("actif", ecrans[i].getAttribute("data-ecran") === nom);
-    document.querySelector("#modalParametres .modal-content").scrollTop = 0;
+    const liens = document.querySelectorAll("#railAdmin [data-ecran-lien]");
+    for (let i = 0; i < liens.length; i++)
+      liens[i].setAttribute("aria-current", String(liens[i].getAttribute("data-ecran-lien") === nom));
+    if (nom !== "saisies") saisieEnCours = null; // une correction laissée en plan est abandonnée
+    document.getElementById("contenuAdmin").scrollTop = 0;
   }
+  // Bloc « Offre » : dates, avancement, clôture automatique
   function majResumeOperation(debut, fin) {
-    document.getElementById("resumeOperation").textContent =
-      debut && fin ? formaterDateAffichage(debut) + " → " + formaterDateAffichage(fin) : "aucune date";
+    const resume = document.getElementById("resumeOperation"),
+      note = document.getElementById("noteOffre"),
+      barre = document.getElementById("barreOffre");
+    if (!debut || !fin) {
+      resume.textContent = "Aucune date";
+      note.textContent = "Saisissez les dates de l'offre puis « Mettre à jour les dates ».";
+      barre.style.width = "0";
+      return;
+    }
+    resume.textContent = "Du " + formaterDateAffichage(debut) + " au " + formaterDateAffichage(fin);
+    const j = new Date();
+    j.setHours(0, 0, 0, 0);
+    const d = new Date(debut),
+      f = new Date(fin);
+    d.setHours(0, 0, 0, 0);
+    f.setHours(0, 0, 0, 0);
+    const total = Math.round((f - d) / 86400000) + 1,
+      jour = Math.round((j - d) / 86400000) + 1;
+    const lendemain = new Date(f.getTime() + 86400000);
+    const nuit =
+      "clôture automatique dans la nuit du " +
+      formaterDateAffichage(fin) +
+      " au " +
+      ("0" + lendemain.getDate()).slice(-2) +
+      "/" +
+      ("0" + (lendemain.getMonth() + 1)).slice(-2) +
+      ".";
+    if (jour < 1) {
+      note.textContent = "Commence dans " + (1 - jour) + " jour(s) · " + nuit;
+      barre.style.width = "0";
+    } else if (jour > total) {
+      note.textContent = "Terminée : archivage cette nuit.";
+      barre.style.width = "100%";
+    } else {
+      note.textContent = "Jour " + jour + " sur " + total + " · " + nuit;
+      barre.style.width = Math.round((jour / total) * 100) + "%";
+    }
+  }
+
+  // Bouton à confirmer d'un second appui (dans les 5 s) : suppression, retrait…
+  function confirmerEnDeuxTemps(btn, texteConfirmation, action) {
+    if (btn.dataset.confirmer) {
+      clearTimeout(Number(btn.dataset.minuteur));
+      delete btn.dataset.confirmer;
+      btn.innerHTML = btn.dataset.avant;
+      btn.classList.remove("a-confirmer");
+      action();
+      return;
+    }
+    btn.dataset.avant = btn.innerHTML;
+    btn.dataset.confirmer = "1";
+    btn.textContent = texteConfirmation;
+    btn.classList.add("a-confirmer");
+    btn.dataset.minuteur = setTimeout(function () {
+      delete btn.dataset.confirmer;
+      btn.innerHTML = btn.dataset.avant;
+      btn.classList.remove("a-confirmer");
+    }, 5000);
   }
 
   // --- Correction / suppression d'une saisie ---
@@ -178,10 +274,6 @@
     allerEcran("saisies");
     afficherVueListe();
     chargerListeSaisies();
-  }
-  function fermerSaisies() {
-    saisieEnCours = null;
-    allerEcran("accueil");
   }
   function afficherVueListe() {
     document.getElementById("vueCorrection").style.display = "none";
@@ -210,45 +302,41 @@
       filtrePiece = normPieceJS(saisi);
     const zone = document.getElementById("listeSaisies");
     zone.innerHTML = "";
+    const el = function (balise, classe, texte) {
+      const e = document.createElement(balise);
+      if (classe) e.className = classe;
+      if (texte !== undefined) e.textContent = texte;
+      return e;
+    };
     listeSaisies.forEach(function (sa) {
       const botte = normIdJS(sa.nom + sa.prenom + " " + sa.prenom + sa.nom + " " + sa.piece);
       if (filtre && botte.indexOf(filtre) === -1 && botte.indexOf(filtrePiece) === -1) return;
-      const carte = document.createElement("div");
-      carte.className = "doublon-carte";
-      if (sa.alerte) carte.style.borderLeftColor = "var(--danger)";
-      const lignes = [
-        "📅 " + sa.date + " (Ligne " + sa.ligne + ")",
-        "👤 " + sa.nom + " " + sa.prenom + (sa.alerte ? "  ⚠️" : ""),
-        "💳 " + sa.piece,
-      ];
-      if (sa.montant) lignes.push("💶 " + sa.montant);
-      if (sa.notes) lignes.push("💬 " + sa.notes);
-      lignes.forEach(function (t) {
-        const d = document.createElement("div");
-        d.textContent = t;
-        carte.appendChild(d);
-      });
-      const actions = document.createElement("div");
-      actions.className = "flex-btn";
-      actions.style.marginTop = "8px";
-      const bSup = document.createElement("button");
-      bSup.className = "btn-cancel";
-      bSup.style.background = "var(--danger)";
-      bSup.textContent = "🗑️ SUPPRIMER";
-      bSup.addEventListener("click", function () {
-        supprimerUneSaisie(sa);
-      });
-      const bCor = document.createElement("button");
-      bCor.className = "btn-force";
-      bCor.style.background = "var(--accent)";
-      bCor.textContent = "✏️ CORRIGER";
+      const ligne = el("div", "ligne-saisie" + (sa.alerte ? " forcee" : ""));
+      const quand = el("div", "quand", sa.date);
+      quand.appendChild(el("small", "", "ligne " + sa.ligne));
+      const qui = el("div", "qui");
+      qui.appendChild(el("b", "", sa.nom + " " + sa.prenom));
+      if (sa.alerte) qui.appendChild(el("span", "badge", "Forcé"));
+      qui.appendChild(el("small", "piece", sa.piece));
+      if (sa.notes) qui.appendChild(el("small", "notes", sa.notes));
+      const montant = el("div", "mt", sa.montant || "");
+      const actions = el("div", "actions");
+      const bCor = el("button", "sec", "Corriger");
       bCor.addEventListener("click", function () {
         corrigerUneSaisie(sa);
       });
-      actions.appendChild(bSup);
+      const bSup = el("button", "sec danger", "Supprimer");
+      bSup.addEventListener("click", function () {
+        confirmerEnDeuxTemps(bSup, "Confirmer la suppression", function () {
+          supprimerUneSaisie(sa);
+        });
+      });
       actions.appendChild(bCor);
-      carte.appendChild(actions);
-      zone.appendChild(carte);
+      actions.appendChild(bSup);
+      [quand, qui, montant, actions].forEach(function (x) {
+        ligne.appendChild(x);
+      });
+      zone.appendChild(ligne);
     });
   }
   document.getElementById("rechercheSaisie").addEventListener("input", dessinerListeSaisies);
@@ -287,14 +375,11 @@
     if (!saisieEnCours) return;
     const montantCor = document.getElementById("corMontant").value.trim();
     if (montantCor !== "" && lireMontant(montantCor) === null) {
-      const box0 = document.getElementById("corAlerte");
-      document.getElementById("corAlerteTitre").textContent = "Montant illisible";
+      remplirTeteAlerte("corTete", "corAlerteCas", "corAlerteTitre", {}, "Montant illisible");
       document.getElementById("corAlerteMsg").textContent = "Saisissez un nombre (ex. 150 ou 150,50).";
       document.getElementById("corAlerteListe").textContent = "";
       document.getElementById("btnForcerCorrection").style.display = "none";
-      box0.style.backgroundColor = "var(--danger-doux)";
-      box0.style.borderColor = "var(--danger-trait)";
-      box0.style.display = "block";
+      document.getElementById("corAlerte").style.display = "block";
       return;
     }
     const nouveau = {
@@ -315,25 +400,13 @@
           rechargerCacheVerif();
           return;
         }
-        // Doublon : CONFIRMATION (forçable) ou BLOQUE
-        const box = document.getElementById("corAlerte");
-        const orange = r.couleur === "ORANGE";
-        box.style.backgroundColor = orange ? "var(--orange-doux)" : "var(--danger-doux)";
-        box.style.borderColor = orange ? "var(--orange-trait)" : "var(--danger-trait)";
-        document.getElementById("corAlerteTitre").textContent = r.titre;
+        // Doublon : CONFIRMATION (forçable) ou BLOQUE -> même comparaison qu'à la saisie
+        remplirTeteAlerte("corTete", "corAlerteCas", "corAlerteTitre", r, sansPicto(r.titre));
         document.getElementById("corAlerteMsg").textContent = r.message;
-        const liste = document.getElementById("corAlerteListe");
-        liste.innerHTML = "";
-        (r.details || []).forEach(function (d) {
-          const c = document.createElement("div");
-          c.className = "doublon-carte";
-          c.textContent =
-            "📅 " + d.date + " (Ligne " + d.ligne + ") — " + d.nom + " " + d.prenom + " — 💳 " + d.piece;
-          liste.appendChild(c);
-        });
+        document.getElementById("corAlerteListe").innerHTML = tableauxComparaison(nouveau, r.details);
         document.getElementById("btnForcerCorrection").style.display =
-          r.status === "CONFIRMATION" ? "block" : "none";
-        box.style.display = "block";
+          r.status === "CONFIRMATION" ? "inline-block" : "none";
+        document.getElementById("corAlerte").style.display = "block";
       },
       function (err) {
         // Ligne qui a bougé, champ manquant… : on revient à la liste rechargée
@@ -348,20 +421,6 @@
   }
 
   function supprimerUneSaisie(sa) {
-    if (
-      !confirm(
-        "🗑️ SUPPRIMER DÉFINITIVEMENT cette saisie ?\n\n" +
-          sa.nom +
-          " " +
-          sa.prenom +
-          " — pièce " +
-          sa.piece +
-          "\n(" +
-          sa.date +
-          ")"
-      )
-    )
-      return;
     appelAdmin(
       "supprimerSaisie",
       [sa.ligne, attenduDe(sa)],
@@ -429,7 +488,8 @@
     zone.innerHTML = "";
     CHAMPS_CONFIG.forEach(function (c) {
       const lab = document.createElement("label");
-      lab.style.fontSize = "13px";
+      lab.className = "etiquette";
+      lab.htmlFor = "cfg_" + c[0];
       lab.textContent = c[1];
       const inp = document.createElement("input");
       inp.type = "text";
@@ -441,7 +501,7 @@
         inp.maxLength = 2;
       }
       inp.value = cfg[c[0]] || "";
-      inp.style.marginBottom = "10px";
+      inp.className = "champ-reglage";
       zone.appendChild(lab);
       zone.appendChild(inp);
     });
@@ -503,39 +563,32 @@
       msg.textContent = liste.length + " tablette(s) autorisée(s).";
       const zone = document.getElementById("listeTablettes");
       zone.textContent = "";
+      document.getElementById("railNbTablettes").textContent = liste.length;
       liste.forEach(function (t) {
-        const carte = document.createElement("div");
-        carte.className = "doublon-carte";
-        [
-          "📱 " + t.nom + (t.id === ID_TABLETTE ? "  (cette tablette)" : ""),
-          "Autorisée le " + t.creeLe + (t.vueLe ? " — utilisée le " + t.vueLe : ""),
-        ].forEach(function (x) {
-          const d = document.createElement("div");
-          d.textContent = x;
-          carte.appendChild(d);
-        });
+        const ligne = document.createElement("div");
+        ligne.className = "ligne-tablette";
+        const texte = document.createElement("div");
+        const nom = document.createElement("b");
+        nom.textContent = t.nom + (t.id === ID_TABLETTE ? " (cette tablette)" : "");
+        const quand = document.createElement("small");
+        quand.textContent = "Autorisée le " + t.creeLe + (t.vueLe ? " · utilisée le " + t.vueLe : "");
+        texte.appendChild(nom);
+        texte.appendChild(quand);
         const b = document.createElement("button");
-        b.className = "btn-cancel";
-        b.style.background = "var(--danger)";
-        b.style.marginTop = "8px";
-        b.textContent = "RETIRER";
+        b.className = "sec danger";
+        b.textContent = "Retirer";
         b.addEventListener("click", function () {
-          retirerUneTablette(t);
+          confirmerEnDeuxTemps(b, "Confirmer le retrait", function () {
+            retirerUneTablette(t);
+          });
         });
-        carte.appendChild(b);
-        zone.appendChild(carte);
+        ligne.appendChild(texte);
+        ligne.appendChild(b);
+        zone.appendChild(ligne);
       });
     });
   }
   function retirerUneTablette(t) {
-    if (
-      !confirm(
-        "Retirer l'autorisation de « " +
-          t.nom +
-          " » ?\nElle ne pourra plus utiliser l'application tant qu'un responsable ne l'aura pas autorisée à nouveau."
-      )
-    )
-      return;
     appelAdmin("retirerTablette", [t.id], function () {
       if (t.id === ID_TABLETTE) {
         oublierTablette();
@@ -546,13 +599,15 @@
       chargerTablettes();
     });
   }
+  // Chaque tablette (y compris celle-ci) devra être autorisée à nouveau avec le code
   function retirerToutesLesTablettes() {
-    if (
-      !confirm(
-        "⚠️ Retirer TOUTES les tablettes ?\nChacune (y compris celle-ci) devra être autorisée à nouveau avec le code."
-      )
-    )
-      return;
+    confirmerEnDeuxTemps(
+      document.getElementById("btnRetirerTout"),
+      "Confirmer : retirer TOUTES les tablettes",
+      retirerToutesMaintenant
+    );
+  }
+  function retirerToutesMaintenant() {
     appelAdmin("retirerToutesTablettes", [], function (message) {
       oublierTablette();
       fermerPanneau();

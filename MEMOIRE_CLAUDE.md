@@ -130,8 +130,28 @@ box-sizing) → corrigé par la refonte.
   Idée notée pour plus tard : annuaire à la demande (nom demandé au serveur au N°
   tapé) → plus de 3 ans de clients en mémoire dans chaque tablette (RGPD), mais
   pré-remplissage ~1 s plus tard et impossible hors réseau.
-- ▶️ Prochaine : étape 5 (espace responsable : menu + vue d'ensemble chiffrée,
-  chiffres calculés par le serveur ; alertes de correction au nouveau style).
+- ✅ Étape 5 — espace responsable (version 2026.10.14-0940) : `#modalParametres` =
+  écran plein `.admin` (en-tête, menu `#railAdmin` à gauche, `#contenuAdmin`).
+  Verrouillé : carte « Code responsable » (`#zoneVerrou`) + vue « Imprimer · sans code »
+  (impression TOUJOURS libre, décision d'origine conservée), pas de menu.
+  Déverrouillé : menu Vue d'ensemble / Saisies / Impression / Archives / Réglages /
+  Code & tablettes / Verrouiller ; `allerEcran(nom)` (une vue `.sous-ecran` à la fois,
+  `aria-current` dans le menu). Vue d'ensemble : chiffres du SERVEUR
+  (`getInfosAdmin().chiffres` = `chiffresOffre_` dans Saisie.gs : saisies, total
+  — `nombreMontant_`, illisible = 0 —, ajouts forcés lus dans les notes, tablettes),
+  bloc Offre (dates + barre d'avancement + « clôture automatique dans la nuit du… »,
+  dates modifiables, « Clôturer maintenant » → confirmation DANS la page, plus de
+  confirm()), interrupteur Signaler / Bloquant (`choisirMode`), bouton
+  pré-remplissage, Imprimer. Anciens écrans Opération / Sécurité fusionnés dans la
+  vue d'ensemble. Saisies en lignes (Corriger / Supprimer ; suppression et retraits
+  de tablettes confirmés d'un 2e appui `confirmerEnDeuxTemps`, plus de confirm()) ;
+  alerte de correction = même comparaison que la saisie. Aide mise à jour (plus de
+  « tuiles »). Classes CSS mortes retirées ; règles « écran étroit » déplacées en fin
+  de Style.html (sinon écrasées). Nouveau test `test_chiffres` (35 séries).
+  Restent avec confirm()/alert() natifs : message de fin de clôture (alert),
+  fenêtre de l'appairage. Écran étroit : menu horizontal défilant.
+- ▶️ Prochaine : étape 6 (écran « Tournez la tablette »), puis 7 (autres écrans :
+  aide, mentions, appairage, fenêtre annuaire, Panneau.html du Sheet).
 
 **Tranché par Bryan (13/10, après relecture du plan)** : journal = chèques de TOUTES
 les tablettes (copie locale, décalage ≤ 2 min pour les autres tablettes). Pas de modèle

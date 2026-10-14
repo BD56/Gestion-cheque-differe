@@ -33,18 +33,13 @@ const { ouvrir } = require("./navigateur");
     }, jeton);
     await page.click('button[title="Panneau de contrôle"]');
     await page.waitForTimeout(200);
-    await page.click('#modalParametres .tuile:has-text("Opération")');
-    await page.waitForTimeout(100);
     await page.fill("#modalDateFin", "2099-06-30");
     await page.evaluate(() => chargerDatesAffichage());
     await page.waitForTimeout(150);
     assert.strictEqual(await page.inputValue("#modalDateFin"), "2099-06-30", "saisie en cours non écrasée");
 
-    // Bouton de mode : erreur serveur -> libellé rétabli (plus bloqué sur « ⏳ MAJ... »)
-    await page.click("#modalParametres .retour >> nth=0").catch(() => {});
-    await page.evaluate(() => allerEcran("securite"));
-    await page.waitForTimeout(50);
-    const avant = await page.textContent("#btnMode");
+    // Interrupteur de mode : erreur serveur -> utilisable à nouveau (pas bloqué « en cours »)
+    const avant = await page.getAttribute("#modeSignaler", "aria-pressed");
     const vrai = env.ctx.basculerModeWebApp;
     env.ctx.basculerModeWebApp = () => {
       throw new Error("panne");
@@ -55,7 +50,12 @@ const { ouvrir } = require("./navigateur");
       changerMode();
     });
     await page.waitForTimeout(200);
-    assert.strictEqual(await page.textContent("#btnMode"), avant, "libellé rétabli après l'erreur");
+    assert.strictEqual(await page.getAttribute("#modeSignaler", "aria-pressed"), avant, "mode inchangé");
+    assert.doesNotMatch(
+      await page.getAttribute("#segmentMode", "class"),
+      /en-cours/,
+      "rétabli après l'erreur"
+    );
     env.ctx.basculerModeWebApp = vrai;
     await page.evaluate(() => {
       changerMode();

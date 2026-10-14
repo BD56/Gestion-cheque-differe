@@ -25,7 +25,7 @@ const { FakeSheet } = require("./fakesheet");
     await page.fill("#pinSaisi", "258025");
     await page.press("#pinSaisi", "Enter");
     await page.waitForTimeout(150);
-    await page.click('#modalParametres .tuile:has-text("Archives")');
+    await page.click('[data-ecran-lien="archives"]');
     await page.waitForTimeout(150);
     const options = await page.$$eval("#selArchive option", (os) => os.map((o) => o.textContent));
     assert.deepStrictEqual(options, [

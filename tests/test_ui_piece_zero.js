@@ -46,7 +46,7 @@ const { FakeSheet } = require("./fakesheet");
       document.getElementById("rechercheSaisie").value = "012345678901";
       dessinerListeSaisies();
     });
-    assert.strictEqual(await page.$$eval("#listeSaisies .doublon-carte", (x) => x.length), 1);
+    assert.strictEqual(await page.$$eval("#listeSaisies .ligne-saisie", (x) => x.length), 1);
     assert.deepStrictEqual(erreursPage, []);
     console.log("test_ui_piece_zero : OK");
   } finally {

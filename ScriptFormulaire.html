@@ -1,5 +1,5 @@
 <!-- Formulaire : montant, touche Entrée, vérification du N°, copie locale, annuaire. -->
-<script data-version="2026.10.14-0918">
+<script data-version="2026.10.14-0940">
   // --- FORMATAGE AUTOMATIQUE DU MONTANT ---
   // Montant lisible -> reformaté « 1234,50 € » ; illisible -> laissé tel quel, encadré en rouge
   ["montant", "corMontant"].forEach(function (idMontant) {
@@ -322,7 +322,8 @@
   function majAffichageModeAnnuaire(mode) {
     const btn = document.getElementById("btnModeAnnuaire");
     btn.style.display = "block";
-    btn.innerHTML = "🪪 Auto-complétion : " + (mode === "B" ? "Demander (modale)" : "Auto (doux)");
+    btn.textContent =
+      "Pré-remplissage des anciens clients : " + (mode === "B" ? "demander d'abord" : "automatique");
   }
   let modeAnnuaireEnCours = false;
   function changerModeAnnuaire() {
@@ -330,7 +331,7 @@
     const btn = document.getElementById("btnModeAnnuaire"),
       avant = btn.innerHTML;
     modeAnnuaireEnCours = true;
-    btn.innerHTML = "⏳ MAJ...";
+    btn.textContent = "Mise à jour…";
     appelAdmin(
       "basculerModeAnnuaire",
       [],

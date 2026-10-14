@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr" data-version="2026.10.14-0918">
+<html lang="fr" data-version="2026.10.14-0940">
   <head>
     <base target="_top">
     <?!= include_('Style') ?>
@@ -179,8 +179,9 @@
             <button class="retour" data-action="allerAide" data-args='["accueil"]'><svg class="ico"><use href="#i-chevron"/></svg>Retour</button>
             <h3 class="titre-ecran"><svg class="ico"><use href="#i-imprimer"/></svg> Imprimer</h3>
             <ul>
-              <li>Touchez <strong><svg class="ico"><use href="#i-reglages"/></svg></strong> puis <strong><svg class="ico"><use href="#i-imprimer"/></svg> IMPRIMER AUJOURD'HUI</strong>, ou <strong><svg class="ico"><use href="#i-livre"/></svg> TOUTE L'OFFRE</strong> pour toute l'offre en cours.</li>
-              <li><strong>Un jour oublié</strong> : dans <svg class="ico"><use href="#i-reglages"/></svg>, choisissez la date sous « Imprimer un jour précédent » puis <strong>IMPRIMER</strong>.</li>
+              <li><strong>La journée</strong> : dans le journal du jour (à droite), touchez <strong>Imprimer la journée →</strong>.</li>
+              <li>Ou touchez <strong><svg class="ico"><use href="#i-reglages"/></svg></strong> (en haut à droite) : <strong>Aujourd'hui</strong>, ou <strong>Toute l'offre</strong> pour toute l'offre en cours.</li>
+              <li><strong>Un jour oublié</strong> : au même endroit, choisissez la date sous « Un jour précédent » puis <strong>Imprimer ce jour</strong>.</li>
               <li>Aucun code n'est demandé pour imprimer.</li>
             </ul>
           </div>
@@ -206,7 +207,7 @@
               <li>🟡 <strong>SIGNALER</strong> : l'application alerte mais laisse <strong>forcer</strong> l'ajout.</li>
               <li>🔴 <strong>BLOQUANT</strong> : les alertes rouges refusent la saisie, sans possibilité de forcer. L'homonyme (orange) reste forçable.</li>
               <li>Le mode est <strong>conservé</strong> d'une offre à l'autre.</li>
-              <li>Réglage : <svg class="ico"><use href="#i-reglages"/></svg> → Espace responsable → tuile <strong><svg class="ico"><use href="#i-bouclier"/></svg> Sécurité</strong>.</li>
+              <li>Réglage : <svg class="ico"><use href="#i-reglages"/></svg> → code → <strong>Vue d'ensemble</strong>, interrupteur <strong>Signaler / Bloquant</strong>. Le mode en cours est affiché en haut de l'écran de saisie.</li>
             </ul>
           </div>
 
@@ -215,9 +216,9 @@
             <h3 class="titre-ecran"><svg class="ico"><use href="#i-cle"/></svg> Code &amp; tablettes</h3>
             <ul>
               <li><strong>Code responsable</strong> : 6 chiffres. Il ouvre l'espace responsable (mode, dates, corrections, archives, réglages, clôture). Pour le créer, l'application demande le <strong>code d'activation</strong> affiché dans le Google Sheets (menu 🚀 APPLICATION → 🔑 Code d'activation).</li>
-              <li>L'espace se reverrouille à la fermeture du panneau ou après 10 min sans action.</li>
+              <li>L'espace se reverrouille quand on le ferme, avec <strong>Verrouiller</strong>, ou après 10 min sans action.</li>
               <li>Après un code faux, patientez 10 s ; 5 codes faux bloquent 15 min.</li>
-              <li><strong>Tablettes</strong> : chacune est autorisée une fois avec le code. Une tablette non autorisée ne voit rien, même avec le lien. Liste et retrait : tuile <strong><svg class="ico"><use href="#i-cle"/></svg> Code &amp; tablettes</strong>.</li>
+              <li><strong>Tablettes</strong> : chacune est autorisée une fois avec le code. Une tablette non autorisée ne voit rien, même avec le lien. Liste et retrait : menu <strong><svg class="ico"><use href="#i-tablette"/></svg> Code &amp; tablettes</strong> (un second appui confirme le retrait).</li>
               <li><strong>Code oublié</strong> : il se réinitialise depuis le panneau <svg class="ico"><use href="#i-reglages"/></svg> du Google Sheets (personnes ayant accès au fichier), qui affiche un code d'activation pour en créer un nouveau.</li>
             </ul>
           </div>
@@ -226,9 +227,9 @@
             <button class="retour" data-action="allerAide" data-args='["accueil"]'><svg class="ico"><use href="#i-chevron"/></svg>Retour</button>
             <h3 class="titre-ecran"><svg class="ico"><use href="#i-calendrier"/></svg> Dates &amp; clôture</h3>
             <ul>
-              <li><strong>Lancer ou prolonger</strong> : <svg class="ico"><use href="#i-reglages"/></svg> → Espace responsable → tuile <strong><svg class="ico"><use href="#i-calendrier"/></svg> Opération</strong>, puis modifiez les dates.</li>
+              <li><strong>Lancer ou prolonger</strong> : <svg class="ico"><use href="#i-reglages"/></svg> → code → <strong>Vue d'ensemble</strong>, bloc « Offre » : modifiez les dates puis <strong>Mettre à jour les dates</strong>.</li>
               <li><strong>Fin de l'offre</strong> : rien à faire. La nuit suivant le dernier jour, l'offre est clôturée et archivée automatiquement.</li>
-              <li>Clôture immédiate possible : bouton <strong><svg class="ico"><use href="#i-alerte"/></svg> CLÔTURER L'OFFRE</strong> de l'espace responsable.</li>
+              <li>Clôture immédiate possible : <strong>Clôturer maintenant</strong> (bloc « Offre »), puis <strong>Clôturer l'offre</strong> pour confirmer.</li>
             </ul>
           </div>
 
@@ -236,8 +237,8 @@
             <button class="retour" data-action="allerAide" data-args='["accueil"]'><svg class="ico"><use href="#i-chevron"/></svg>Retour</button>
             <h3 class="titre-ecran"><svg class="ico"><use href="#i-liste"/></svg> Corrections &amp; archives</h3>
             <ul>
-              <li><strong>Corriger ou supprimer une saisie</strong> : tuile <strong><svg class="ico"><use href="#i-liste"/></svg> Saisies</strong>, recherchez par nom ou N°. Une correction est <strong>re-vérifiée</strong> comme une nouvelle saisie.</li>
-              <li><strong>Anciennes offres</strong> : tuile <strong><svg class="ico"><use href="#i-archive"/></svg> Archives</strong>, choisissez l'offre puis imprimez.</li>
+              <li><strong>Corriger ou supprimer une saisie</strong> : menu <strong><svg class="ico"><use href="#i-liste"/></svg> Saisies</strong>, recherchez par nom ou N°. Une correction est <strong>re-vérifiée</strong> comme une nouvelle saisie ; une suppression se confirme d'un second appui.</li>
+              <li><strong>Anciennes offres</strong> : menu <strong><svg class="ico"><use href="#i-archive"/></svg> Archives</strong>, choisissez l'offre puis imprimez.</li>
               <li>Les archives sont <strong>supprimées automatiquement 3 ans</strong> après la clôture de l'offre.</li>
             </ul>
           </div>
@@ -246,142 +247,207 @@
       </div>
     </div>
 
-    <div id="modalParametres" class="modal-overlay">
-      <div class="modal-content">
-        <button class="btn-close-modal" data-action="fermerPanneau" aria-label="Fermer"><svg class="ico"><use href="#i-fermer"/></svg></button>
-        <h2 class="titre-haut"><svg class="ico"><use href="#i-reglages"/></svg> Paramètres</h2>
-        <hr class="separateur">
-
-        <!-- ===== ACCUEIL : impression (libre) + espace responsable ===== -->
-        <div class="sous-ecran actif" data-ecran="accueil">
-        <button class="btn-action btn-print-jour" data-action="preparerImpression" data-args='["jour","aujourdhui","Impression du Jour"]'><svg class="ico"><use href="#i-imprimer"/></svg> IMPRIMER AUJOURD'HUI</button>
-
-        <div class="encadre-gris">
-          <label class="label-discret"><svg class="ico"><use href="#i-calendrier"/></svg> Imprimer un jour précédent :</label>
-          <div class="print-row">
-            <input type="date" id="dateImpression" class="input-date">
-            <button class="btn-action btn-gris-ligne" data-action="preparerImpressionAncien">IMPRIMER</button>
-          </div>
+    <!-- Espace responsable : écran plein. Verrouillé : code + impression (libre).
+         Déverrouillé : menu à gauche, une vue à la fois (allerEcran). -->
+    <section id="modalParametres" class="admin" aria-label="Espace responsable" style="display: none">
+      <header class="haut">
+        <div class="marque">
+          <div class="logo"><svg class="ico"><use href="#i-cadenas"/></svg></div>
+          <div><b>Espace responsable</b><small id="adminSous">Impression libre · le reste demande le code</small></div>
         </div>
+        <div class="espace"></div>
+        <button class="icone-btn btn-close-modal" data-action="fermerPanneau" title="Revenir à la saisie" aria-label="Revenir à la saisie"><svg class="ico"><use href="#i-fermer"/></svg></button>
+      </header>
+      <div class="admin-corps">
+        <nav class="rail" id="railAdmin" aria-label="Menu responsable" style="display: none">
+          <button data-ecran-lien="ensemble" data-action="ouvrirEnsemble"><svg class="ico"><use href="#i-tableau"/></svg>Vue d'ensemble</button>
+          <button data-ecran-lien="saisies" data-action="ouvrirSaisies"><svg class="ico"><use href="#i-liste"/></svg>Saisies<span class="val" id="railNbSaisies"></span></button>
+          <button data-ecran-lien="impression" data-action="allerEcran" data-args='["impression"]'><svg class="ico"><use href="#i-imprimer"/></svg>Impression</button>
+          <button data-ecran-lien="archives" data-action="ouvrirArchives"><svg class="ico"><use href="#i-archive"/></svg>Archives</button>
+          <button data-ecran-lien="reglages" data-action="allerEcran" data-args='["reglages"]'><svg class="ico"><use href="#i-etiquette"/></svg>Réglages</button>
+          <button data-ecran-lien="code" data-action="ouvrirCodeTablettes"><svg class="ico"><use href="#i-tablette"/></svg>Code &amp; tablettes<span class="val" id="railNbTablettes"></span></button>
+          <button class="bas" data-action="verrouillerAdmin"><svg class="ico"><use href="#i-cadenas"/></svg>Verrouiller</button>
+        </nav>
+        <div class="contenu" id="contenuAdmin">
 
-        <button class="btn-action btn-print-offre" data-action="preparerImpression" data-args='["offre","","Impression Offre Complète"]'><svg class="ico"><use href="#i-livre"/></svg> TOUTE L'OFFRE</button>
-
-        <hr class="separateur-large">
-
-        <!-- Espace responsable (code PIN vérifié côté serveur) -->
-        <div id="zoneVerrou">
-          <h3 class="titre-haut-centre"><svg class="ico"><use href="#i-cadenas"/></svg> Espace responsable</h3>
-          <p class="texte-verrou" id="txtVerrou"></p>
-          <input style="display: none" class="marge-bas-10" type="text" id="activationVerrou" inputmode="numeric" autocomplete="off" maxlength="9" placeholder="Code d'activation (affiché dans le Google Sheets)">
-          <input class="marge-bas-10" type="password" id="pinSaisi" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="Code (6 chiffres)">
-          <input style="display: none" class="marge-bas-10" type="password" id="pinConfirme" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="Confirmer le code">
-          <button class="btn-action btn-bleu" id="btnDeverrouiller" data-action="deverrouillerAdmin">DÉVERROUILLER</button>
-          <div class="message-erreur" id="msgVerrou"></div>
-        </div>
-
-        <div id="zoneAdmin" style="display: none">
-          <h3 class="titre-haut-centre"><svg class="ico"><use href="#i-cadenas-ouvert"/></svg> Espace responsable</h3>
-          <div style="display: none" class="alerte-admin" id="alerteAdmin"></div>
-          <div class="tuiles">
-            <button class="tuile" data-action="ouvrirSaisies"><svg class="ico"><use href="#i-liste"/></svg>Saisies<small>corriger / supprimer</small></button>
-            <button class="tuile" data-action="ouvrirArchives"><svg class="ico"><use href="#i-archive"/></svg>Archives<small>offres clôturées</small></button>
-            <button class="tuile" data-action="allerEcran" data-args='["operation"]'><svg class="ico"><use href="#i-calendrier"/></svg>Opération<small id="resumeOperation">—</small></button>
-            <button class="tuile" data-action="allerEcran" data-args='["securite"]'><svg class="ico"><use href="#i-bouclier"/></svg>Sécurité<small id="resumeSecurite">—</small></button>
-            <button class="tuile" data-action="allerEcran" data-args='["reglages"]'><svg class="ico"><use href="#i-etiquette"/></svg>Réglages<small>textes de la structure</small></button>
-            <button class="tuile" data-action="ouvrirCodeTablettes"><svg class="ico"><use href="#i-cle"/></svg>Code &amp; tablettes<small>code, tablettes autorisées</small></button>
-          </div>
-          <div class="pied">
-            <button class="btn-action btn-archive" data-action="cloturerOffre"><svg class="ico"><use href="#i-alerte"/></svg> CLÔTURER L'OFFRE</button>
-            <button class="btn-action btn-sombre" data-action="verrouillerAdmin"><svg class="ico"><use href="#i-cadenas"/></svg> VERROUILLER</button>
-          </div>
-        </div>
-        </div>
-
-        <!-- ===== SOUS-ÉCRANS DE L'ESPACE RESPONSABLE ===== -->
-        <div class="sous-ecran" data-ecran="saisies">
-          <button class="retour" data-action="fermerSaisies"><svg class="ico"><use href="#i-chevron"/></svg>Retour</button>
-          <h3 class="titre-ecran"><svg class="ico"><use href="#i-liste"/></svg> Saisies de l'offre en cours</h3>
-          <div id="vueListeSaisies">
-            <input class="marge-bas-10" type="text" id="rechercheSaisie" placeholder="Rechercher (nom, prénom, pièce)…" autocomplete="off">
-            <div class="message-liste" id="msgSaisies"></div>
-            <div id="listeSaisies"></div>
-          </div>
-          <div id="vueCorrection" style="display: none">
-            <div class="input-group"><label>N° de Pièce *</label><input type="text" id="corPiece" autocomplete="off"></div>
-            <div class="input-group"><label>Nom *</label><input type="text" id="corNom" autocomplete="off"></div>
-            <div class="input-group"><label>Prénom *</label><input type="text" id="corPrenom" autocomplete="off"></div>
-            <div class="input-group"><label id="corLblMontant">Montant (€)</label><input type="text" id="corMontant" autocomplete="off"></div>
-            <div class="input-group"><label id="corLblNotes">Notes</label><input type="text" id="corNotes" autocomplete="off"></div>
-            <div style="display: none" class="encadre-correction" id="corAlerte">
-              <div class="doublon-titre" id="corAlerteTitre"></div>
-              <div class="message-alerte" id="corAlerteMsg"></div>
-              <div id="corAlerteListe"></div>
-              <button class="btn-action btn-orange" id="btnForcerCorrection" data-action="enregistrerCorrection" data-args='[true]'>FORCER LA CORRECTION</button>
-            </div>
-            <div class="flex-btn">
-              <button class="btn-cancel" data-action="annulerCorrection">ANNULER</button>
-              <button class="btn-force fond-vert" data-action="enregistrerCorrection" data-args='[false]'>ENREGISTRER</button>
+          <!-- Code responsable (vérifié par le serveur) -->
+          <div class="verrou" id="zoneVerrou">
+            <div class="carte-verrou">
+              <svg class="ico grande"><use href="#i-cadenas"/></svg>
+              <h2>Code responsable</h2>
+              <p class="texte-verrou" id="txtVerrou"></p>
+              <input style="display: none" class="champ-code activation" type="text" id="activationVerrou" inputmode="numeric" autocomplete="off" maxlength="9" placeholder="Code d'activation (Google Sheets)">
+              <input class="champ-code" type="password" id="pinSaisi" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="Code (6 chiffres)" aria-label="Code responsable">
+              <input style="display: none" class="champ-code" type="password" id="pinConfirme" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="Confirmer le code">
+              <button class="plein" id="btnDeverrouiller" data-action="deverrouillerAdmin">Déverrouiller</button>
+              <div class="message-erreur" id="msgVerrou"></div>
             </div>
           </div>
-        </div>
 
-        <div class="sous-ecran" data-ecran="archives">
-          <button class="retour" data-action="allerEcran" data-args='["accueil"]'><svg class="ico"><use href="#i-chevron"/></svg>Retour</button>
-          <h3 class="titre-ecran"><svg class="ico"><use href="#i-archive"/></svg> Archives (offres clôturées)</h3>
-          <select class="liste-archives" id="selArchive"></select>
-          <button class="btn-action btn-bleu" data-action="imprimerArchive"><svg class="ico"><use href="#i-imprimer"/></svg> IMPRIMER CETTE ARCHIVE</button>
-        </div>
+          <div id="zoneAdmin" style="display: none">
+            <div style="display: none" class="alerte-admin" id="alerteAdmin"></div>
 
-        <div class="sous-ecran" data-ecran="operation">
-          <button class="retour" data-action="allerEcran" data-args='["accueil"]'><svg class="ico"><use href="#i-chevron"/></svg>Retour</button>
-          <h3 class="titre-ecran"><svg class="ico"><use href="#i-calendrier"/></svg> Opération en cours</h3>
-          <div class="ligne-dates">
-            <div class="colonne">
-              <label class="label-date">Début :</label>
-              <input class="champ-date" type="date" id="modalDateDebut">
+            <div class="sous-ecran" data-ecran="ensemble">
+              <h2 class="titre-vue">Vue d'ensemble</h2>
+              <div class="kpis">
+                <div class="kpi"><span>Saisies sur l'offre</span><b id="kpiSaisies">—</b></div>
+                <div class="kpi"><span>Montant total</span><b id="kpiTotal">—</b></div>
+                <div class="kpi rouge"><span>Ajouts forcés</span><b id="kpiForcees">—</b></div>
+                <div class="kpi"><span>Tablettes autorisées</span><b id="kpiTablettes">—</b></div>
+              </div>
+              <div class="deux-blocs">
+                <div class="boite">
+                  <h3>Offre</h3>
+                  <b class="dates-offre" id="resumeOperation">—</b>
+                  <div class="progression"><i id="barreOffre"></i></div>
+                  <p class="note-doux" id="noteOffre"></p>
+                  <div class="ligne-dates">
+                    <div class="colonne">
+                      <label class="label-date" for="modalDateDebut">Début</label>
+                      <input class="champ-date" type="date" id="modalDateDebut">
+                    </div>
+                    <div class="colonne">
+                      <label class="label-date" for="modalDateFin">Fin</label>
+                      <input class="champ-date" type="date" id="modalDateFin">
+                    </div>
+                  </div>
+                  <div class="rangee-btn">
+                    <button class="sec accent" data-action="sauvegarderDatesTablette">Mettre à jour les dates</button>
+                    <button class="sec danger" data-action="demanderCloture"><svg class="ico"><use href="#i-alerte"/></svg>Clôturer maintenant</button>
+                  </div>
+                  <div class="message-haut" id="msgRetourModal"></div>
+                  <div class="confirmer" id="confirmerCloture" style="display: none">
+                    <p>Clôturer l'offre ? Les saisies partent dans les archives et les tablettes affichent « aucune opération ».</p>
+                    <div class="act">
+                      <button class="forcer" data-action="cloturerOffre">Clôturer l'offre</button>
+                      <button data-action="annulerCloture">Annuler</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="boite">
+                  <h3>Mode de sécurité</h3>
+                  <div class="segment" id="segmentMode">
+                    <button class="signaler" id="modeSignaler" data-action="choisirMode" data-args='["SIGNALER"]' aria-pressed="false">Signaler</button>
+                    <button class="bloquant" id="modeBloquant" data-action="choisirMode" data-args='["BLOQUANT"]' aria-pressed="false">Bloquant</button>
+                  </div>
+                  <p class="note-doux">Signaler : alerte, l'hôtesse peut forcer. Bloquant : fraude et usurpation refusées (l'homonyme reste possible après vérification).</p>
+                  <button style="display: none" class="sec" id="btnModeAnnuaire" data-action="changerModeAnnuaire"></button>
+                </div>
+              </div>
+              <div class="boite">
+                <h3>Imprimer</h3>
+                <div class="rangee-btn">
+                  <button class="sec accent" data-action="preparerImpression" data-args='["jour","aujourdhui","Impression du Jour"]'><svg class="ico"><use href="#i-imprimer"/></svg>Aujourd'hui</button>
+                  <button class="sec" data-action="allerEcran" data-args='["impression"]'><svg class="ico"><use href="#i-calendrier"/></svg>Un autre jour…</button>
+                  <button class="sec" data-action="preparerImpression" data-args='["offre","","Impression Offre Complète"]'><svg class="ico"><use href="#i-livre"/></svg>Toute l'offre</button>
+                </div>
+              </div>
             </div>
-            <div class="colonne">
-              <label class="label-date">Fin :</label>
-              <input class="champ-date" type="date" id="modalDateFin">
+
+            <div class="sous-ecran" data-ecran="saisies">
+              <h2 class="titre-vue">Saisies de l'offre en cours</h2>
+              <div id="vueListeSaisies">
+                <input class="recherche" type="text" id="rechercheSaisie" placeholder="Rechercher (nom, prénom, pièce)…" autocomplete="off">
+                <div class="message-liste" id="msgSaisies"></div>
+                <div id="listeSaisies"></div>
+              </div>
+              <div id="vueCorrection" style="display: none">
+                <div class="boite formulaire-correction">
+                  <h3>Corriger la saisie</h3>
+                  <div class="deux">
+                    <div><label class="etiquette" for="corPiece">N° de pièce *</label><input type="text" id="corPiece" autocomplete="off"></div>
+                    <div></div>
+                    <div><label class="etiquette" for="corNom">Nom *</label><input type="text" id="corNom" autocomplete="off"></div>
+                    <div><label class="etiquette" for="corPrenom">Prénom *</label><input type="text" id="corPrenom" autocomplete="off"></div>
+                    <div><label class="etiquette" id="corLblMontant" for="corMontant">Montant (€)</label><input type="text" id="corMontant" autocomplete="off"></div>
+                    <div><label class="etiquette" id="corLblNotes" for="corNotes">Notes</label><input type="text" id="corNotes" autocomplete="off"></div>
+                  </div>
+                  <div class="rangee-btn">
+                    <button class="sec accent" data-action="enregistrerCorrection" data-args='[false]'>Enregistrer la correction</button>
+                    <button class="sec" data-action="annulerCorrection">Annuler</button>
+                  </div>
+                </div>
+                <div style="display: none" class="comparer en-ligne" id="corAlerte">
+                  <div class="tete" id="corTete">
+                    <svg class="ico"><use href="#i-alerte"/></svg>
+                    <div><b id="corAlerteCas"></b><span id="corAlerteTitre"></span></div>
+                  </div>
+                  <p class="consigne" id="corAlerteMsg"></p>
+                  <div class="tableau" id="corAlerteListe"></div>
+                  <div class="boutons">
+                    <button class="quand-meme" id="btnForcerCorrection" data-action="enregistrerCorrection" data-args='[true]'>Corriger quand même (la ligne sera marquée)</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="sous-ecran" data-ecran="archives">
+              <h2 class="titre-vue">Archives (offres clôturées)</h2>
+              <div class="boite">
+                <select class="liste-archives" id="selArchive"></select>
+                <div class="rangee-btn">
+                  <button class="sec accent" data-action="imprimerArchive"><svg class="ico"><use href="#i-imprimer"/></svg>Imprimer cette archive</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="sous-ecran" data-ecran="reglages">
+              <h2 class="titre-vue">Réglages de la structure</h2>
+              <div class="boite">
+                <div id="champsReglages"></div>
+                <label class="case-a-cocher">
+                  <input class="largeur-auto" type="checkbox" id="cfg_MONTANT_OBLIGATOIRE"> Montant obligatoire
+                </label>
+                <div class="rangee-btn">
+                  <button class="sec accent" data-action="enregistrerReglages">Enregistrer les réglages</button>
+                </div>
+                <div class="message" id="msgReglages"></div>
+              </div>
+            </div>
+
+            <div class="sous-ecran" data-ecran="code">
+              <h2 class="titre-vue">Code &amp; tablettes</h2>
+              <div class="deux-blocs">
+                <div class="boite">
+                  <h3>Changer le code responsable</h3>
+                  <input class="champ-code" type="password" id="pinNouveau" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="Nouveau code (6 chiffres)">
+                  <input class="champ-code" type="password" id="pinNouveau2" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="Confirmer le nouveau code">
+                  <div class="rangee-btn">
+                    <button class="sec accent" data-action="changerPin">Enregistrer le code</button>
+                  </div>
+                  <div class="message" id="msgPin"></div>
+                </div>
+                <div class="boite">
+                  <h3>Tablettes autorisées</h3>
+                  <div class="message-tablettes" id="msgTablettes"></div>
+                  <div id="listeTablettes"></div>
+                  <div class="rangee-btn">
+                    <button class="sec danger" id="btnRetirerTout" data-action="retirerToutesLesTablettes"><svg class="ico"><use href="#i-alerte"/></svg>Retirer toutes les tablettes</button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-          <button class="btn-action btn-vert" data-action="sauvegarderDatesTablette">METTRE À JOUR LES DATES</button>
-          <div class="message-haut" id="msgRetourModal"></div>
-        </div>
 
-        <div class="sous-ecran" data-ecran="securite">
-          <button class="retour" data-action="allerEcran" data-args='["accueil"]'><svg class="ico"><use href="#i-chevron"/></svg>Retour</button>
-          <h3 class="titre-ecran"><svg class="ico"><use href="#i-bouclier"/></svg> Sécurité</h3>
-          <button class="btn-action" id="btnMode" data-action="changerMode">⏳ Chargement Mode...</button>
-          <button style="display: none" class="btn-action btn-gris" id="btnModeAnnuaire" data-action="changerModeAnnuaire"></button>
-        </div>
+          <!-- Impression : libre (sans code), affichée sous le code ou dans le menu -->
+          <div class="sous-ecran" data-ecran="impression">
+            <h2 class="titre-vue">Imprimer <small>sans code</small></h2>
+            <div class="boite">
+              <div class="rangee-btn">
+                <button class="sec accent btn-print-jour" data-action="preparerImpression" data-args='["jour","aujourdhui","Impression du Jour"]'><svg class="ico"><use href="#i-imprimer"/></svg>Aujourd'hui</button>
+                <button class="sec" data-action="preparerImpression" data-args='["offre","","Impression Offre Complète"]'><svg class="ico"><use href="#i-livre"/></svg>Toute l'offre</button>
+              </div>
+              <label class="label-discret" for="dateImpression">Un jour précédent</label>
+              <div class="rangee-btn">
+                <input type="date" id="dateImpression" class="input-date">
+                <button class="sec" data-action="preparerImpressionAncien"><svg class="ico"><use href="#i-calendrier"/></svg>Imprimer ce jour</button>
+              </div>
+            </div>
+          </div>
 
-        <div class="sous-ecran" data-ecran="reglages">
-          <button class="retour" data-action="allerEcran" data-args='["accueil"]'><svg class="ico"><use href="#i-chevron"/></svg>Retour</button>
-          <h3 class="titre-ecran"><svg class="ico"><use href="#i-etiquette"/></svg> Réglages de la structure</h3>
-          <div id="champsReglages"></div>
-          <label class="case-a-cocher">
-            <input class="largeur-auto" type="checkbox" id="cfg_MONTANT_OBLIGATOIRE"> Montant obligatoire
-          </label>
-          <button class="btn-action btn-vert-haut" data-action="enregistrerReglages">ENREGISTRER LES RÉGLAGES</button>
-          <div class="message" id="msgReglages"></div>
-        </div>
-
-        <div class="sous-ecran" data-ecran="code">
-          <button class="retour" data-action="allerEcran" data-args='["accueil"]'><svg class="ico"><use href="#i-chevron"/></svg>Retour</button>
-          <h3 class="titre-ecran"><svg class="ico"><use href="#i-cle"/></svg> Code responsable</h3>
-          <input class="marge-bas-10" type="password" id="pinNouveau" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="Nouveau code (6 chiffres)">
-          <input class="marge-bas-10" type="password" id="pinNouveau2" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="Confirmer le nouveau code">
-          <button class="btn-action btn-vert" data-action="changerPin">ENREGISTRER LE CODE</button>
-          <div class="message" id="msgPin"></div>
-          <hr class="separateur-large">
-          <h3 class="titre-ecran"><svg class="ico"><use href="#i-tablette"/></svg> Tablettes autorisées</h3>
-          <div class="message-tablettes" id="msgTablettes"></div>
-          <div id="listeTablettes"></div>
-          <button class="btn-action btn-archive marge-haut-10" data-action="retirerToutesLesTablettes"><svg class="ico"><use href="#i-alerte"/></svg> RETIRER TOUTES LES TABLETTES</button>
         </div>
       </div>
-    </div>
+    </section>
 
     <div id="modalMentions" class="modal-overlay">
       <div class="modal-content largeur-500">

@@ -36,7 +36,7 @@ const { ouvrir } = require("./navigateur");
     await page.click("#modalAide .btn-close-modal");
     await page.click('button[title="Panneau de contrôle"]');
     await page.waitForTimeout(100);
-    assert.ok(await page.isVisible('#modalParametres [data-ecran="accueil"]'));
+    assert.ok(await page.isVisible("#modalParametres #zoneVerrou"));
     assert.deepStrictEqual(erreursPage, []);
     console.log("test_ui_aide: OK");
   } finally {

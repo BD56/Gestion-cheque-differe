@@ -3,7 +3,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Saisie_() {
-  return "2026.10.14-0918";
+  return "2026.10.14-0940";
 }
 
 // =================================================================
@@ -355,6 +355,31 @@ function listerSaisies(jeton) {
     });
   }
   return liste.reverse();
+}
+
+// Vue d'ensemble de l'espace responsable : chiffres de l'offre en cours, lus dans
+// « Saisies » (source de vérité). Montant illisible : compté pour 0.
+function chiffresOffre_(feuille) {
+  const r = { saisies: 0, total: 0, forcees: 0, tablettes: lireTablettes_().length };
+  if (!feuille || feuille.getLastRow() < 2) return r;
+  const valeurs = feuille.getRange(2, 1, feuille.getLastRow() - 1, NB_COLONNES).getValues();
+  valeurs.forEach(function (v) {
+    if (v.join("") === "") return;
+    r.saisies++;
+    r.total += nombreMontant_(v[IDX.MONTANT]);
+    const notes = v[IDX.NOTES] ? v[IDX.NOTES].toString() : "";
+    if (notes !== notes.replace(ALERTE_FORCE_REGEX, "")) r.forcees++;
+  });
+  r.total = Math.round(r.total * 100) / 100;
+  return r;
+}
+// 150 | "150,50 €" | "1 234,50" -> nombre ; illisible -> 0
+function nombreMontant_(m) {
+  if (typeof m === "number") return isFinite(m) ? m : 0;
+  let t = (m || "").toString().replace(/[\s\u00a0\u202f€']/g, "");
+  if (t.indexOf(",") !== -1 && t.indexOf(".") !== -1) t = t.replace(/\./g, "").replace(",", ".");
+  else t = t.replace(",", ".");
+  return /^\d+(\.\d+)?$/.test(t) ? parseFloat(t) : 0;
 }
 
 // La ligne contient-elle toujours ce que l'écran affichait ?

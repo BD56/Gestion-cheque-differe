@@ -43,50 +43,60 @@ const { ouvrir } = require("./navigateur");
     await page.click("#btnDeverrouiller");
     await page.waitForTimeout(150);
     assert.ok((await vis("#zoneAdmin")) && !(await vis("#zoneVerrou")), "zone admin ouverte");
-    // Accueil déverrouillé : 6 tuiles + résumés, pas de bouton Google Sheets
-    assert.strictEqual(await page.$$eval("#zoneAdmin .tuile", (x) => x.length), 6);
-    assert.strictEqual(await txt("#resumeSecurite"), "SIGNALER");
-    assert.match(await txt("#resumeOperation"), /→/);
+    // Déverrouillé : menu de gauche + vue d'ensemble chiffrée (calculée par le serveur)
+    assert.ok(await vis("#railAdmin"), "menu visible");
+    assert.strictEqual(await page.getAttribute('[data-ecran-lien="ensemble"]', "aria-current"), "true");
+    assert.ok(!(await vis(".btn-print-jour")), "impression : dans son propre écran");
+    assert.strictEqual(await txt("#kpiSaisies"), "0");
+    assert.strictEqual(await txt("#kpiTablettes"), "0"); // contrôle des tablettes neutralisé ici
+    assert.match(await txt("#resumeOperation"), /^Du \d\d\/\d\d au \d\d\/\d\d$/);
+    assert.match(await txt("#noteOffre"), /^Jour \d sur 3 · clôture automatique dans la nuit du/);
     assert.ok(!(await page.isVisible("text=OUVRIR GOOGLE SHEETS")));
-    await page.click('#modalParametres .tuile:has-text("Sécurité")');
-    assert.ok(!(await page.isVisible(".btn-print-jour")), "sous-écran : accueil masqué");
-    assert.match(await txt("#btnMode"), /SIGNALER/);
+    assert.strictEqual(await page.getAttribute("#modeSignaler", "aria-pressed"), "true");
     assert.strictEqual(await page.inputValue("#modalDateFin"), env.props._store.DATE_FIN);
-    // Mode
-    await page.click("#btnMode");
+    // Mode : appui sur le mode déjà actif = rien ; sur l'autre = bascule
+    await page.click("#modeSignaler");
     await page.waitForTimeout(100);
-    assert.match(await txt("#btnMode"), /BLOQUANT/);
+    assert.strictEqual(env.sheets.Saisies.getRange("Z1").getValue(), "SIGNALER");
+    await page.click("#modeBloquant");
+    await page.waitForTimeout(100);
     assert.strictEqual(env.sheets.Saisies.getRange("Z1").getValue(), "BLOQUANT");
-    assert.strictEqual(await txt("#resumeSecurite"), "BLOQUANT");
-    await page.click('[data-ecran="securite"] .retour');
-    assert.ok((await page.isVisible(".btn-print-jour")) && (await page.isVisible("#zoneAdmin .tuiles")));
-    // Opération : dates -> résumé de la tuile
-    await page.click('#modalParametres .tuile:has-text("Opération")');
+    assert.strictEqual(await page.getAttribute("#modeBloquant", "aria-pressed"), "true");
+    assert.strictEqual(await txt("#txtMode"), "Mode Bloquant", "puce de l'en-tête à jour");
+    // Dates -> résumé de l'offre
     await page.fill("#modalDateFin", "2099-12-31");
-    await page.click("text=METTRE À JOUR LES DATES");
+    await page.click("#modalParametres >> text=Mettre à jour les dates");
     await page.waitForTimeout(150);
     assert.strictEqual(env.props._store.DATE_FIN, "2099-12-31");
-    await page.click('[data-ecran="operation"] .retour');
     assert.match(await txt("#resumeOperation"), /31\/12$/);
+    // Clôture : confirmation dans la page, « Annuler » ne fait rien
+    await page.click("#modalParametres >> text=Clôturer maintenant");
+    assert.ok(await vis("#confirmerCloture"));
+    await page.click("#confirmerCloture >> text=Annuler");
+    assert.ok(!(await vis("#confirmerCloture")));
+    // Impression (menu) : libre
+    await page.click('[data-ecran-lien="impression"]');
+    assert.ok((await vis(".btn-print-jour")) && !(await vis('[data-ecran="ensemble"]')));
     // Réglages -> appliqués à l'écran
-    await page.click('#modalParametres .tuile:has-text("Réglages")');
+    await page.click('[data-ecran-lien="reglages"]');
     assert.strictEqual(await page.inputValue("#cfg_NOM_STRUCTURE"), "l'Hypermarché Carrefour Vannes");
     await page.fill("#cfg_NOM_OFFRE", "Bons cadeaux");
     await page.fill("#cfg_LIBELLE_MONTANT", "Valeur");
     await page.uncheck("#cfg_MONTANT_OBLIGATOIRE");
-    await page.click("text=ENREGISTRER LES RÉGLAGES");
+    await page.click("#modalParametres >> text=Enregistrer les réglages");
     await page.waitForTimeout(100);
     assert.strictEqual(await txt("#txtNomOffre"), "Bons cadeaux");
     assert.strictEqual(await txt("#lblMontant"), "Valeur (€)");
     assert.strictEqual(env.props._store.CFG_MONTANT_OBLIGATOIRE, "NON");
-    // Fermer (depuis un sous-écran) -> reverrouille et rouvre sur l'accueil ; mauvais code ; bon code
+    // Fermer (depuis une vue) -> reverrouille ; rouvre sur le code + impression ; mauvais code ; bon code
     await page.click("#modalParametres .btn-close-modal");
     await page.waitForTimeout(100);
     await page.click('button[title="Panneau de contrôle"]');
     await page.waitForTimeout(100);
-    assert.ok(await page.isVisible(".btn-print-jour"), "réouverture sur l'accueil");
+    assert.ok(await page.isVisible(".btn-print-jour"), "réouverture : impression libre");
+    assert.ok(!(await vis("#railAdmin")), "verrouillé : pas de menu");
     assert.ok((await vis("#zoneVerrou")) && !(await vis("#pinConfirme")));
-    assert.strictEqual(await txt("#btnDeverrouiller"), "DÉVERROUILLER");
+    assert.strictEqual(await txt("#btnDeverrouiller"), "Déverrouiller");
     await page.fill("#pinSaisi", "111111");
     await page.press("#pinSaisi", "Enter");
     await page.waitForTimeout(100);
@@ -96,12 +106,11 @@ const { ouvrir } = require("./navigateur");
     await page.press("#pinSaisi", "Enter");
     await page.waitForTimeout(150);
     assert.ok(await vis("#zoneAdmin"));
-    // Session expirée côté serveur -> retour au verrou avec message
+    // Session expirée côté serveur -> retour au code avec message
     for (const k in env.cacheStore) delete env.cacheStore[k];
-    await page.click('#modalParametres .tuile:has-text("Sécurité")');
-    await page.click("#btnMode");
+    await page.click("#modeSignaler");
     await page.waitForTimeout(200);
-    assert.ok(await page.isVisible(".btn-print-jour"), "session expirée : retour à l'accueil");
+    assert.ok(await page.isVisible(".btn-print-jour"), "session expirée : retour au code");
     assert.ok(await vis("#zoneVerrou"));
     assert.match(await txt("#msgVerrou"), /expirée/);
     // Saisie toujours libre, montant désormais facultatif

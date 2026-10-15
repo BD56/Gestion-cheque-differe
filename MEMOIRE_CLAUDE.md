@@ -170,8 +170,22 @@ identique avant/après : `n-ijetbkxwto6cqlhbmed6rj7j4kexnxcgupggffa-0lu-script�
   « Enregistrer » devra faire un vrai POST vers un cadre caché ⇒ ajouter un `doPost`
   minimal (ne fait rien, ne journalise pas la clé ; POST et non GET pour que la clé
   ne soit jamais dans une adresse). Page d'essai : « 2. Enregistrer » = méthode 2 par
-  défaut. Restent à rapporter : reconnexion après Cmd+Q (écran vert ?), nom du site
-  dans « Mots de passe », iPad, Chrome.
+  défaut.
+  **Safari Mac (15/10, 15h38, Safari 26.6.2) : ✅ RÉUSSI** — après fermeture, écran
+  vert « Reconnu par : le gestionnaire de mots de passe (champ rempli
+  automatiquement) ». Entrée rangée sous **googleusercontent.com**, site web =
+  l'adresse technique EXACTE du projet (`n-gjhgrd…-0lu-script.googleusercontent.com`,
+  propre à chaque projet : celle de l'app est `n-ijetbk…`). Conséquences : une
+  copie par magasin = entrées séparées ; si Google change l'adresse technique, la
+  suggestion peut disparaître (repli : code responsable + « Remplacer ») ; à
+  vérifier un jour : Safari propose-t-il l'entrée sur la page d'un AUTRE projet
+  Apps Script (même domaine googleusercontent.com) ? risque faible (choix de
+  l'utilisateur + clé inutile sans l'adresse /exec de l'app).
+  **iPad : PROBLÈME** — onglet `googleusercontent.com` en page entière « Google
+  Drive · Impossible d'ouvrir le fichier pour le moment ». Hypothèse de Claude (non
+  vérifiée) : l'envoi réel n'a pas trouvé le cadre caché ⇒ ouvert dans un nouvel
+  onglet ⇒ POST vers /exec hors cadre ⇒ erreur Google. Question posée à Bryan : à
+  quelle étape ? nouvel onglet ? Chrome pas encore essayé.
 - **Corrections déjà faites à cette occasion (14/10)** : erreur passagère de lecture
   de la liste ≠ « non autorisé » ; clé jamais effacée sur un refus ; remplacement
   sous le même nom (voir historique §0).

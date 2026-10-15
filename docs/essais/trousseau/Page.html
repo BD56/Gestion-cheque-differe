@@ -14,12 +14,12 @@
         font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       }
       main {
-        max-width: 560px;
+        max-width: 440px;
         margin: 0 auto;
       }
       h1 {
-        font-size: 22px;
-        margin: 0 0 4px;
+        font-size: 24px;
+        margin: 8px 0 4px;
       }
       .sous-titre {
         color: #5f5e58;
@@ -28,54 +28,71 @@
       .carte {
         background: #fff;
         border: 1px solid #e3e1d9;
-        border-radius: 12px;
-        padding: 16px;
+        border-radius: 14px;
+        padding: 20px;
         margin-bottom: 16px;
-      }
-      .carte h2 {
-        font-size: 17px;
-        margin: 0 0 8px;
       }
       label {
         display: block;
         font-weight: 600;
-        margin: 12px 0 4px;
+        margin: 14px 0 4px;
+      }
+      label:first-of-type {
+        margin-top: 0;
       }
       input {
         width: 100%;
         font: inherit;
-        padding: 10px 12px;
+        font-size: 18px;
+        padding: 12px 14px;
         border: 1px solid #cfccc2;
-        border-radius: 8px;
+        border-radius: 10px;
         background: #fff;
-      }
-      .boutons {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-top: 14px;
       }
       button {
         font: inherit;
         font-weight: 600;
-        padding: 10px 14px;
-        border-radius: 8px;
-        border: 1px solid #1d1d1b;
-        background: #1d1d1b;
-        color: #fff;
+        border-radius: 10px;
         cursor: pointer;
       }
-      button.sec {
+      .principal {
+        display: block;
+        width: 100%;
+        margin-top: 18px;
+        padding: 16px;
+        font-size: 19px;
+        border: 0;
+        background: #1d1d1b;
+        color: #fff;
+      }
+      .secondaire {
+        display: block;
+        width: 100%;
+        margin-top: 10px;
+        padding: 12px;
+        border: 1px solid #1d1d1b;
         background: #fff;
         color: #1d1d1b;
       }
-      .cle {
-        font: 600 20px/1.2 ui-monospace, Menlo, monospace;
-        letter-spacing: 1px;
+      .lien {
+        display: block;
+        margin: 14px auto 0;
+        padding: 6px;
+        border: 0;
+        background: none;
+        color: #3d5a99;
+        font-weight: 500;
+        text-decoration: underline;
       }
-      #resultat {
+      .cle {
+        margin: 8px 0 0;
+        font: 600 18px/1.2 ui-monospace, Menlo, monospace;
+        letter-spacing: 1px;
+        color: #5f5e58;
+      }
+      #message {
         min-height: 1.45em;
-        margin-top: 12px;
+        margin: 14px 0 0;
         font-weight: 600;
       }
       .ok {
@@ -84,24 +101,41 @@
       .ko {
         color: #b3261e;
       }
-      ol {
-        padding-left: 20px;
-        margin: 0;
+      .connecte {
+        text-align: center;
+        padding: 32px 20px;
+        border-color: #9fd3b0;
+        background: #eef8f1;
       }
-      li + li {
-        margin-top: 6px;
+      .rond {
+        width: 96px;
+        height: 96px;
+        margin: 0 auto 16px;
+        border-radius: 50%;
+        background: #17703a;
+        color: #fff;
+        font-size: 56px;
+        line-height: 96px;
       }
-      dl {
-        display: grid;
-        grid-template-columns: max-content 1fr;
-        gap: 4px 12px;
-        margin: 0;
-        font-size: 14px;
+      .connecte h2 {
+        font-size: 30px;
+        margin: 0 0 6px;
+        color: #17703a;
       }
-      dt {
+      .connecte p {
+        margin: 4px 0;
+      }
+      .diag {
+        font-size: 13px;
         color: #5f5e58;
       }
-      dd {
+      .diag dl {
+        display: grid;
+        grid-template-columns: max-content 1fr;
+        gap: 2px 10px;
+        margin: 0;
+      }
+      .diag dd {
         margin: 0;
         word-break: break-all;
       }
@@ -112,152 +146,227 @@
   </head>
   <body>
     <main>
-      <h1>Essai trousseau</h1>
-      <p class="sous-titre">
-        Safari garde-t-il une clé dans « Mots de passe » quand il oublie le stockage de la page ?
-      </p>
+      <h1 id="titre">Connexion</h1>
+      <p class="sous-titre" id="sousTitre">Essai : le gestionnaire de mots de passe retrouve-t-il l'appareil ?</p>
 
-      <div class="carte">
-        <h2>Cet appareil</h2>
+      <!-- Un seul formulaire (connexion ou création) : le gestionnaire de mots de passe
+           ne voit qu'un couple identifiant / mot de passe. -->
+      <form class="carte" id="formulaire" method="post" autocomplete="on">
+        <label for="nom">Identifiant</label>
+        <input id="nom" name="username" type="text" autocomplete="username" autocapitalize="off" />
+        <label for="cle">Mot de passe</label>
+        <input id="cle" name="password" type="password" autocomplete="current-password" />
+        <p id="cleVisible" class="cle" hidden></p>
+        <button type="button" class="secondaire" id="btnCreer" hidden>1. Créer la clé</button>
+        <button type="submit" class="principal" id="btnPrincipal">Connexion</button>
+        <button type="submit" class="lien" id="btnAutreMethode" hidden>Rien proposé ? Essayer l'autre méthode</button>
+        <p id="message" role="status"></p>
+        <button type="button" class="lien" id="btnMode">Première fois ? Créer l'appareil d'essai</button>
+      </form>
+      <iframe name="cibleEssai" title="Envoi du formulaire (autre méthode)"></iframe>
+
+      <section class="carte connecte" id="ecranConnecte" hidden>
+        <div class="rond" aria-hidden="true">✓</div>
+        <h2>Connecté</h2>
+        <p>Appareil : <strong id="nomConnecte"></strong></p>
+        <p id="parQuoi"></p>
+        <button type="button" class="principal" id="btnDeconnexion">Se déconnecter</button>
+        <p class="diag">« Se déconnecter » vide la mémoire du navigateur, comme Safari quand on le quitte.</p>
+      </section>
+
+      <section class="carte diag">
         <dl>
           <dt>Mémoire du navigateur</dt>
           <dd id="diagMemoire">…</dd>
           <dt>Adresse technique</dt>
           <dd id="diagAdresse">…</dd>
-          <dt>Dans un cadre</dt>
-          <dd id="diagCadre">…</dd>
           <dt>Navigateur</dt>
           <dd id="diagNavigateur">…</dd>
         </dl>
-      </div>
-
-      <form class="carte" id="formulaire" method="post" autocomplete="on">
-        <h2>Clé de l'appareil</h2>
-        <label for="nom">Nom de l'appareil</label>
-        <input id="nom" name="username" type="text" autocomplete="username" value="Essai Mac" />
-        <label for="cle">Clé</label>
-        <input id="cle" name="password" type="password" autocomplete="current-password" />
-        <p id="cleVisible" class="cle" hidden></p>
-        <div class="boutons">
-          <button type="button" class="sec" id="btnCreer">1. Créer une clé</button>
-          <button type="submit" id="btnMethode1">2. Enregistrer (méthode 1)</button>
-          <button type="submit" class="sec" id="btnMethode2">Enregistrer (méthode 2)</button>
-          <button type="button" class="sec" id="btnVerifier">Vérifier la clé</button>
-        </div>
-        <p id="resultat"></p>
-      </form>
-      <iframe name="cibleEssai" title="Envoi du formulaire (méthode 2)"></iframe>
-
-      <div class="carte">
-        <h2>Déroulé</h2>
-        <ol>
-          <li>« Créer une clé », puis « Enregistrer (méthode 1) ». Safari propose-t-il d'enregistrer le mot de passe ? Si oui, acceptez.</li>
-          <li>Sinon : « Enregistrer (méthode 2) ». Sinon encore : effacez le champ Clé, retapez la clé affichée à la main, puis méthode 1.</li>
-          <li>Quittez Safari (Cmd+Q), rouvrez cette page : « Mémoire du navigateur » doit dire « vide ».</li>
-          <li>Touchez le champ Nom ou Clé : Safari propose-t-il « Essai Mac » ? Choisissez-le, puis « Vérifier la clé ».</li>
-          <li>Dans l'app « Mots de passe » (ou Safari › Réglages › Mots de passe) : sous quel site la clé est-elle rangée ?</li>
-        </ol>
-      </div>
+      </section>
     </main>
 
     <script>
-      const MARQUEUR = "cdEssaiTrousseau";
+      const MEMOIRE = "cdEssaiCle";
+      let mode = "connexion"; // ou "creation"
       let adresseExec = "";
+      const el = (id) => document.getElementById(id);
 
-      function lireMarqueur() {
+      function lireMemoire() {
         try {
-          return window.localStorage.getItem(MARQUEUR);
+          return window.localStorage.getItem(MEMOIRE);
         } catch (e) {
-          return "illisible";
+          return null;
         }
       }
-      function ecrireMarqueur(v) {
+      function ecrireMemoire(v) {
         try {
-          window.localStorage.setItem(MARQUEUR, v);
+          if (v === null) window.localStorage.removeItem(MEMOIRE);
+          else window.localStorage.setItem(MEMOIRE, v);
         } catch (e) {
           // stockage refusé : le diagnostic l'affiche
         }
+        majDiagnostic();
       }
       function majDiagnostic() {
-        const m = lireMarqueur();
-        document.getElementById("diagMemoire").textContent =
-          m === null
-            ? "vide (rien de gardé depuis la dernière ouverture)"
-            : m === "illisible"
-              ? "inaccessible"
-              : "gardée (clé créée le " + m + ")";
-        document.getElementById("diagAdresse").textContent = location.hostname;
-        let cadre = "non";
+        let etat;
         try {
-          cadre = window.self !== window.top ? "oui" : "non";
+          etat = window.localStorage.getItem(MEMOIRE) === null ? "vide" : "clé gardée";
         } catch (e) {
-          cadre = "oui (autre site)";
+          etat = "inaccessible";
         }
-        document.getElementById("diagCadre").textContent = cadre;
-        document.getElementById("diagNavigateur").textContent = navigator.userAgent;
+        el("diagMemoire").textContent = etat;
+        el("diagAdresse").textContent = location.hostname;
+        el("diagNavigateur").textContent = navigator.userAgent;
       }
-      function resultat(texte, classe) {
-        const r = document.getElementById("resultat");
-        r.textContent = texte;
-        r.className = classe || "";
+      function message(texte, classe) {
+        el("message").textContent = texte || "";
+        el("message").className = classe || "";
       }
       function erreur(err) {
-        resultat("Erreur : " + (err && err.message ? err.message : err), "ko");
+        message("Erreur : " + (err && err.message ? err.message : err), "ko");
+      }
+      // Le navigateur signale-t-il un champ rempli automatiquement ? (indication seulement)
+      function rempliAutomatiquement(champ) {
+        for (const sel of [":autofill", ":-webkit-autofill"]) {
+          try {
+            if (champ.matches(sel)) return true;
+          } catch (e) {
+            // sélecteur inconnu de ce navigateur
+          }
+        }
+        return false;
       }
 
-      document.getElementById("btnCreer").addEventListener("click", function () {
-        resultat("…");
+      function afficherFormulaire(nouveauMode, texte, classe) {
+        mode = nouveauMode;
+        const creation = mode === "creation";
+        el("formulaire").hidden = false;
+        el("ecranConnecte").hidden = true;
+        el("titre").textContent = creation ? "Créer l'appareil d'essai" : "Connexion";
+        el("sousTitre").textContent = creation
+          ? "Comme une première autorisation : la clé est créée, puis enregistrée dans les mots de passe."
+          : "Essai : le gestionnaire de mots de passe retrouve-t-il l'appareil ?";
+        el("btnCreer").hidden = !creation;
+        el("btnAutreMethode").hidden = true;
+        el("btnPrincipal").textContent = creation ? "2. Enregistrer" : "Connexion";
+        el("btnMode").textContent = creation ? "Retour à la connexion" : "Première fois ? Créer l'appareil d'essai";
+        el("cleVisible").hidden = true;
+        el("cle").value = "";
+        if (creation && !el("nom").value) el("nom").value = "Essai Mac";
+        if (!creation) el("nom").value = "";
+        message(texte, classe);
+      }
+      function afficherConnecte(nom, parQuoi) {
+        el("formulaire").hidden = true;
+        el("ecranConnecte").hidden = false;
+        el("titre").textContent = "Bienvenue";
+        el("sousTitre").textContent = "L'application se serait ouverte ici.";
+        el("nomConnecte").textContent = nom;
+        el("parQuoi").textContent = "Reconnu par : " + parQuoi;
+      }
+
+      el("btnMode").addEventListener("click", function () {
+        afficherFormulaire(mode === "creation" ? "connexion" : "creation");
+      });
+
+      el("btnCreer").addEventListener("click", function () {
+        message("…");
         google.script.run
           .withSuccessHandler(function (cle) {
-            document.getElementById("cle").value = cle;
-            const visible = document.getElementById("cleVisible");
-            visible.textContent = cle;
-            visible.hidden = false;
-            ecrireMarqueur(new Date().toLocaleString("fr-FR"));
-            majDiagnostic();
-            resultat("Clé créée. Étape suivante : « Enregistrer (méthode 1) ».");
+            el("cle").value = cle;
+            el("cleVisible").textContent = cle;
+            el("cleVisible").hidden = false;
+            el("btnAutreMethode").hidden = false;
+            message("Clé créée. Touchez « 2. Enregistrer » : le navigateur doit proposer d'enregistrer le mot de passe.");
           })
           .withFailureHandler(erreur)
-          .creerCleEssai();
+          .creerCleEssai(el("nom").value);
       });
 
-      // Méthode 1 : événement d'envoi, sans changer de page.
-      // Méthode 2 : envoi réel du formulaire vers un cadre caché (doPost).
-      document.getElementById("formulaire").addEventListener("submit", function (e) {
-        const methode2 = e.submitter && e.submitter.id === "btnMethode2";
-        if (!document.getElementById("cle").value) {
-          e.preventDefault();
-          resultat("Créez d'abord une clé (ou choisissez celle que Safari propose).", "ko");
-          return;
-        }
-        if (methode2 && adresseExec) {
+      el("formulaire").addEventListener("submit", function (e) {
+        const autreMethode = e.submitter && e.submitter.id === "btnAutreMethode";
+        const cle = el("cle").value.trim();
+        if (autreMethode && adresseExec && cle) {
+          // envoi réel vers le cadre caché (doPost)
           this.action = adresseExec;
           this.target = "cibleEssai";
-          resultat("Envoyé (méthode 2). Safari a-t-il proposé d'enregistrer le mot de passe ?");
+        } else {
+          e.preventDefault();
+        }
+        if (!cle) {
+          message(mode === "creation" ? "Touchez d'abord « 1. Créer la clé »." : "Mot de passe vide.", "ko");
           return;
         }
-        e.preventDefault();
-        resultat("Envoyé (méthode 1). Safari a-t-il proposé d'enregistrer le mot de passe ?");
-      });
-
-      document.getElementById("btnVerifier").addEventListener("click", function () {
-        resultat("…");
+        if (mode === "creation") {
+          ecrireMemoire(cle);
+          const nom = el("nom").value.trim() || "Essai";
+          // laisse le temps au navigateur de proposer l'enregistrement
+          setTimeout(function () {
+            afficherConnecte(nom, "la nouvelle clé (première autorisation)");
+          }, 600);
+          return;
+        }
+        const auto = rempliAutomatiquement(el("cle"));
+        message("…");
         google.script.run
           .withSuccessHandler(function (r) {
-            if (r === "ok") resultat("✅ C'est bien la clé créée : le trousseau l'a gardée.", "ok");
-            else if (r === "aucune") resultat("Aucune clé créée sur ce projet pour l'instant.", "ko");
-            else resultat("❌ Ce n'est pas la dernière clé créée (champ vide ou autre clé).", "ko");
+            if (!r.ok) {
+              message(
+                r.raison === "aucune"
+                  ? "Aucun appareil d'essai créé : « Première fois ? »."
+                  : "Mot de passe refusé (ce n'est pas la dernière clé créée).",
+                "ko"
+              );
+              return;
+            }
+            ecrireMemoire(cle);
+            afficherConnecte(
+              r.nom,
+              auto
+                ? "le gestionnaire de mots de passe (champ rempli automatiquement)"
+                : "le mot de passe (choisi dans les suggestions ou tapé)"
+            );
           })
           .withFailureHandler(erreur)
-          .verifierCleEssai(document.getElementById("cle").value);
+          .connexionEssai(cle);
       });
 
+      el("btnDeconnexion").addEventListener("click", function () {
+        ecrireMemoire(null);
+        afficherFormulaire(
+          "connexion",
+          "Déconnecté. Touchez le champ Identifiant : le navigateur doit proposer l'appareil enregistré."
+        );
+      });
+
+      // Démarrage : comme l'application, la clé gardée par le navigateur suffit.
       majDiagnostic();
       google.script.run
         .withSuccessHandler(function (url) {
           adresseExec = url;
         })
         .adresseEssai();
+      const gardee = lireMemoire();
+      if (!gardee) {
+        afficherFormulaire("connexion");
+      } else {
+        el("formulaire").hidden = true;
+        message("…");
+        google.script.run
+          .withSuccessHandler(function (r) {
+            if (r.ok) afficherConnecte(r.nom, "la mémoire du navigateur (rien à saisir)");
+            else {
+              ecrireMemoire(null);
+              afficherFormulaire("connexion", "La clé gardée n'est plus valable : connectez-vous.", "ko");
+            }
+          })
+          .withFailureHandler(function (err) {
+            afficherFormulaire("connexion");
+            erreur(err);
+          })
+          .connexionEssai(gardee);
+      }
     </script>
   </body>
 </html>

@@ -148,6 +148,22 @@ identique avant/après : `n-ijetbkxwto6cqlhbmed6rj7j4kexnxcgupggffa-0lu-script�
   après Cmd+Q, « Vérifier » ✅, nom du site dans « Mots de passe », Mac puis iPad.
   Si ça marche : l'intégrer à l'écran d'autorisation (repli : code responsable +
   « Remplacer »), après discussion.
+  **Résultat (Bryan, 15/10)** : « ça a l'air de fonctionner » sur Safari Mac (détails
+  non donnés : méthode, nom du site). Modèle discuté : identifiant + mot de passe de
+  l'APPAREIL (= nom + clé au hasard, gardés par le trousseau) pour ouvrir le site ;
+  code responsable (caisse centrale) pour l'espace responsable et autoriser /
+  remplacer un appareil ; ses champs restent HORS du formulaire (jamais dans le
+  trousseau). Contre-proposition de Bryan : identifiant + mot de passe CHOISIS par
+  l'utilisateur (comptes) + code responsable à part en option → avis de Claude :
+  change le modèle (accès depuis n'importe où avec le mot de passe, mots de passe
+  faibles), gros chantier ; si comptes : un par personne avec rôle (traçabilité).
+  Préférence de Claude : appareils autorisés + trousseau. Bryan n'a pas tranché.
+  **Page d'essai v2** (demande de Bryan) : écran Connexion (identifiant, mot de
+  passe, gros bouton) ⇒ écran vert « Connecté » + « Reconnu par : » (mémoire du
+  navigateur / gestionnaire, indice `:autofill` / nouvelle clé) ; « Première fois ? »
+  = créer + enregistrer ; « Se déconnecter » vide la mémoire ; ancienne clé
+  toujours valable (même propriété CLE_ESSAI). Essai demandé : Safari Mac, iPad,
+  Chrome.
 - **Corrections déjà faites à cette occasion (14/10)** : erreur passagère de lecture
   de la liste ≠ « non autorisé » ; clé jamais effacée sur un refus ; remplacement
   sous le même nom (voir historique §0).

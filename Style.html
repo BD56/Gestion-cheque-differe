@@ -1,5 +1,5 @@
 <!-- Styles de la page (Index.html). -->
-<style data-version="2026.10.15-1659">
+<style data-version="2026.10.15-1725">
   /* Palette « Comptoir » (clair uniquement). Les couleurs d'alerte (danger rouge,
      orange) ne sont jamais adoucies. Police du système : rien à télécharger. */
   :root {
@@ -1023,11 +1023,11 @@
   .largeur-auto {
     width: auto;
   }
-  .ecran-appairage {
+  .ecran-connexion {
     z-index: 3000;
     background-color: var(--fond);
   }
-  .texte-appairage {
+  .texte-connexion {
     font-size: 14px;
     color: var(--encre);
     line-height: 1.4;
@@ -1505,40 +1505,40 @@
     margin-top: 12px;
   }
   /* Connexion : rien de l'application ne se voit derrière */
-  .modal-overlay.ecran-appairage {
+  .modal-overlay.ecran-connexion {
     background-color: var(--fond);
   }
-  .ecran-appairage .modal-content {
+  .ecran-connexion .modal-content {
     display: flex;
     flex-direction: column;
     gap: 6px;
     border: 1px solid var(--trait);
     box-shadow: none;
   }
-  .ecran-appairage .modal-content h2 {
+  .ecran-connexion .modal-content h2 {
     margin: 4px 0 0;
   }
-  .ecran-appairage input {
+  .ecran-connexion input {
     height: 50px;
     border: 1.5px solid var(--trait-fort);
     border-radius: 12px;
   }
-  .ecran-appairage input:focus {
+  .ecran-connexion input:focus {
     border-color: var(--accent);
     box-shadow: 0 0 0 4px var(--accent-doux);
   }
-  .ecran-appairage .input-group {
+  .ecran-connexion .input-group {
     margin-bottom: 8px;
   }
-  .ecran-appairage .plein {
+  .ecran-connexion .plein {
     margin-top: 6px;
   }
-  .ecran-appairage form {
+  .ecran-connexion form {
     display: flex;
     flex-direction: column;
     gap: 6px;
   }
-  .ecran-appairage .sec {
+  .ecran-connexion .sec {
     justify-content: center;
     min-height: 48px;
   }
@@ -1983,7 +1983,7 @@
     .boite > * + * {
       margin-top: 10px;
     }
-    .ecran-appairage .modal-content > * + * {
+    .ecran-connexion .modal-content > * + * {
       margin-top: 6px;
     }
     .admin .confirmer > * + * {

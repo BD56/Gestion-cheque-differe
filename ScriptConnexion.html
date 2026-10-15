@@ -1,5 +1,5 @@
 <!-- Connexion (comptes), démarrage, aide, panneau, mentions légales. -->
-<script data-version="2026.10.15-1659">
+<script data-version="2026.10.15-1725">
   // =================================================================
   // --- CONNEXION (compte de la caisse centrale) ---
   // La session reçue à la connexion est gardée dans le navigateur et envoyée à
@@ -29,7 +29,7 @@
   }
   let SESSION = lireStockage("cdSession");
   let COMPTE = lireStockage("cdCompte") || "";
-  // Ancienne autorisation d'appareil : plus utilisée
+  // Ancienne autorisation d'appareil (remplacée par les comptes) : effacée du navigateur
   ecrireStockage("cdTabletteCle", null);
   ecrireStockage("cdTabletteId", null);
 
@@ -45,7 +45,7 @@
   // reste telle quelle : une saisie en cours de frappe n'est pas perdue.
   function estRefusSession(err) {
     const m = err && err.message ? err.message : String(err || "");
-    return m.indexOf("CONNEXION_REQUISE") !== -1 || m.indexOf("TABLETTE_NON_AUTORISEE") !== -1;
+    return m.indexOf("CONNEXION_REQUISE") !== -1;
   }
   function siNonAutorisee(err) {
     if (!estRefusSession(err)) return false;

@@ -3,7 +3,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Saisie_() {
-  return "2026.10.15-1659";
+  return "2026.10.15-1725";
 }
 
 // =================================================================
@@ -11,7 +11,7 @@ function version_Saisie_() {
 // =================================================================
 
 function traiterSaisie(nom, prenom, piece, montant, notes, cle) {
-  exigerTablette_(cle);
+  exigerSession_(cle);
   const lock = LockService.getScriptLock();
   try {
     lock.waitLock(10000); // Verrou pour éviter les race conditions
@@ -190,7 +190,7 @@ function controlerChamps_(nom, prenom, piece, montant) {
 // messageErreur / flagIdentite / flagPiece : ignorés (gardés pour la
 // compatibilité d'appel avec Index.html).
 function forcerSaisie(nom, prenom, piece, montant, notes, messageErreur, flagIdentite, flagPiece, cle) {
-  exigerTablette_(cle);
+  exigerSession_(cle);
   const lock = LockService.getScriptLock();
   try {
     lock.waitLock(10000); // Verrou pour éviter les doublons forcés
@@ -280,7 +280,7 @@ function forcerSaisie(nom, prenom, piece, montant, notes, messageErreur, flagIde
 //     (la décision A/B/C reste à traiterSaisie, à la validation).
 // =================================================================
 function verifierPiece(piece, cle) {
-  exigerTablette_(cle);
+  exigerSession_(cle);
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const feuille = ss.getSheetByName(FEUILLE_SAISIES);
   if (!feuille) return { trouve: false };

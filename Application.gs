@@ -3,7 +3,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Application_() {
-  return "2026.10.15-1659";
+  return "2026.10.15-1725";
 }
 
 // Fuseau horaire de référence (réglage du projet Apps Script : Europe/Paris par défaut).
@@ -91,7 +91,7 @@ function montantSur_(m) {
 // recharger pendant l'offre : il ne sert qu'aux clients des offres passées) ; elle
 // le redemande au démarrage puis une fois par heure. annuaire = null dans la réponse.
 function chargerCacheVerif(cle, sansAnnuaire) {
-  exigerTablette_(cle);
+  exigerSession_(cle);
   return cacheVerif_(sansAnnuaire === true);
 }
 
@@ -156,7 +156,7 @@ function cacheVerif_(sansAnnuaire) {
 // dates et le cache de vérification. Le cache (toute l'offre + l'annuaire) n'est
 // envoyé que si l'offre est en cours : hors période, la saisie est impossible.
 function demarrage(cle) {
-  exigerTablette_(cle);
+  exigerSession_(cle);
   return {
     infos: infosPanneau_(),
     dates: lireDates_(),
@@ -167,7 +167,7 @@ function demarrage(cle) {
 
 // --- PANNEAU ET IMPRESSION ---
 function getInfosPanneau(cle) {
-  exigerTablette_(cle);
+  exigerSession_(cle);
   return infosPanneau_();
 }
 
@@ -186,7 +186,7 @@ function infosPanneau_() {
 //  - 'offre' : toutes les lignes non vides, date + heure — comme OFFRE_COMPLETE.
 // Renvoie [] s'il n'y a aucune ligne à imprimer.
 function genererDonneesImpression(type, dateChoisieStr, cle) {
-  exigerTablette_(cle);
+  exigerSession_(cle);
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const feuille = ss.getSheetByName(FEUILLE_SAISIES);
   if (!feuille) return [];

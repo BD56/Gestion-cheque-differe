@@ -8,7 +8,7 @@ const J = (x) => (x === undefined ? null : JSON.parse(JSON.stringify(x)));
 
 const PROXY = `
 (function () {
-  var store = window.__SANS_CLE ? {} : { cdSession: 'S1.session-de-test', cdCompte: 'Caisse test' };
+  var store = window.__SESSION ? { cdSession: window.__SESSION, cdCompte: 'Caisse test' } : {};
   var faux = { getItem: function (k) { return (k in store) ? store[k] : null; }, setItem: function (k, v) { store[k] = String(v); }, removeItem: function (k) { delete store[k]; } };
   try { Object.defineProperty(window, 'localStorage', { value: faux, configurable: true }); } catch (e) {}
   window.__store = store;
@@ -55,8 +55,8 @@ async function ouvrir(repo, envOpts) {
   }).replace(
     "<head>",
     // comme doGet (addMetaTag) : largeur de l'appareil sur tablette / téléphone
-    '<head><meta name="viewport" content="width=device-width, initial-scale=1"><script>window.__SANS_CLE=' +
-      !!(envOpts && envOpts.sansCle) +
+    '<head><meta name="viewport" content="width=device-width, initial-scale=1"><script>window.__SESSION=' +
+      JSON.stringify(envOpts && envOpts.sansSession ? null : env.connecter()) +
       ";" +
       PROXY +
       "</script>"

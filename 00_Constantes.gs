@@ -3,7 +3,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_00_Constantes_() {
-  return "2026.10.15-1659";
+  return "2026.10.15-1725";
 }
 
 // =================================================================
@@ -38,9 +38,6 @@ const ADMIN_SESSION_SEC = 600; // session responsable : 10 min d'inactivité
 // Code d'activation (voir Securite.gs) : durée de validité, essais
 const ACTIVATION_DUREE_H = 24;
 const ACTIVATION_ESSAIS_MAX = 10;
-
-// Tablettes autorisées (voir Securite.gs)
-const TABLETTES_MAX = 20;
 
 // Comptes (identifiant + mot de passe, voir Securite.gs)
 const COMPTES_MAX = 20;
@@ -84,6 +81,6 @@ const FICHIERS_PAGE = [
   "ScriptOffre",
   "ScriptResponsable",
   "ScriptSaisie",
-  "ScriptTablette",
+  "ScriptConnexion",
   "Panneau",
 ];

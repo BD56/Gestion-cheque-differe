@@ -4,8 +4,8 @@ const assert = require("assert");
 const { ouvrir, J } = require("./navigateur");
 (async () => {
   const { env, page, browser, erreursPage } = await ouvrir(process.argv[2], {
-    sansCle: true,
-    tabletteReelle: true,
+    sansSession: true,
+    sessionReelle: true,
     urlAppli: "https://appli.test/exec",
   });
   const P = env.props._store;

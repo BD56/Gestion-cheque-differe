@@ -128,11 +128,28 @@ function makeEnv(opts = {}) {
       formatDate: opts.formatDate || require("./fmt").fmt,
     },
   });
-  if (!opts.tabletteReelle) env.ctx.exigerTablette_ = function () {};
+  // Par défaut, le contrôle de la session est neutralisé (sessionReelle : vrai contrôle)
+  if (!opts.sessionReelle) env.ctx.exigerSession_ = function () {};
   // Code d'activation (normalement affiché dans le Google Sheets)
   env.activation = () => env.ctx.genererCodeActivation_();
-  // Crée le code responsable comme à la 1re installation et renvoie la réponse
-  env.creerCode = (pin) => env.ctx.definirPin(pin, null, null, env.activation());
+  // Compte « Caisse test » (créé au besoin, comme à la 1re installation) : sa session
+  env.session = null;
+  env.connecter = () => {
+    if (env.session && env.ctx.compteDeSession_(env.session)) return env.session;
+    const r =
+      env.ctx.lireComptes_().length === 0
+        ? env.ctx.premierCompte(env.activation(), "Caisse test", "motdepasse-test")
+        : env.ctx.connexion("Caisse test", "motdepasse-test");
+    if (!r.ok) throw new Error("Compte de test : " + r.message);
+    env.session = r.session;
+    return env.session;
+  };
+  // Crée le code responsable (par le compte connecté). Le jeton est lié à ce compte : il
+  // est renvoyé avec sa session, { j, c }, comme la page l'envoie (j seul : pour la page).
+  env.creerCode = (pin) => {
+    const r = env.ctx.definirPin(pin, null, env.connecter());
+    return r.ok ? Object.assign({}, r, { jeton: { j: r.jeton, c: env.session } }) : r;
+  };
   return env;
 }
 module.exports = { makeEnv };

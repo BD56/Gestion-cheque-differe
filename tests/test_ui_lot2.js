@@ -30,7 +30,7 @@ const { ouvrir } = require("./navigateur");
     const jeton = env.creerCode("258025").jeton;
     await page.evaluate((j) => {
       jetonAdmin = j;
-    }, jeton);
+    }, jeton.j);
     await page.click('button[title="Panneau de contrôle"]');
     await page.waitForTimeout(200);
     await page.click('[data-ecran-lien="operation"]');

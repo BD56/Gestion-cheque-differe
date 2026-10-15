@@ -19,15 +19,14 @@ assert.strictEqual(c.definirPin("12a4", null).ok, false);
 assert.strictEqual(c.definirPin("123", null).ok, false);
 assert.strictEqual(c.definirPin("1234", null).ok, false, "4 chiffres refusés");
 assert.strictEqual(c.definirPin("1234567", null).ok, false, "7 chiffres refusés");
-// Création : code d'activation exigé (affiché seulement dans le Google Sheets)
-assert.match(c.definirPin("258025", null).message, /activation requis/);
-let act = env.activation();
-assert.match(act, /^\d{4}-\d{4}$/);
-assert.match(c.definirPin("258025", null, null, "0000-0000").message, /incorrect/);
-assert.strictEqual(c.etatAdmin().pinDefini, false, "code non créé avec une mauvaise activation");
-const r = J(c.definirPin("258025", null, null, " " + act + " "));
-assert.ok(r.ok && r.jeton);
-assert.ok(!("ACTIVATION_HASH" in env.props._store), "code d'activation à usage unique");
+// Création : réservée à un compte connecté (ou au panneau du Sheet)
+assert.match(c.definirPin("258025", null).message, /Connectez-vous avec un compte/);
+assert.match(c.definirPin("258025", null, "S1.bidon").message, /Connectez-vous avec un compte/);
+assert.strictEqual(c.etatAdmin().pinDefini, false);
+const session = env.connecter();
+const r0 = J(c.definirPin("258025", null, session));
+assert.ok(r0.ok && r0.jeton);
+const r = { jeton: { j: r0.jeton, c: session } }; // jeton lié au compte : envoyé avec sa session
 assert.ok(!JSON.stringify(env.props._store).includes("258025"), "code stocké en clair !");
 // Changement sans jeton refusé une fois le code défini
 doitRefuser(() => c.definirPin("999999", null));
@@ -69,24 +68,6 @@ for (let i = 2; i <= 4; i++) {
 sansPause();
 assert.match(c.ouvrirSessionAdmin("000000").message, /bloqué 15 min/);
 assert.match(c.ouvrirSessionAdmin("258025").message, /Réessayez/); // même le bon code est bloqué
-// Les codes faux d'un appareil NON autorisé (écran d'autorisation) ont leur propre
-// compteur : ils ne bloquent pas l'espace responsable des tablettes autorisées.
-for (let i = 0; i < 6; i++) {
-  const e = JSON.parse(env.props._store.PIN_ESSAIS_INCONNU || "{}");
-  e.dernier = 0;
-  env.props._store.PIN_ESSAIS_INCONNU = JSON.stringify(e);
-  c.appairerTablette("111111", "pirate");
-}
-assert.match(
-  J(c.appairerTablette("258025", "X")).message,
-  /Réessayez|Patientez/,
-  "autorisation bloquée pour les inconnus"
-);
-assert.strictEqual(
-  JSON.parse(env.props._store.PIN_INCONNUS).n,
-  5,
-  "codes faux d'inconnus comptés (essais pendant le blocage non comptés)"
-);
 {
   const e = etat();
   e.bloque = Date.now() - 1;
@@ -96,7 +77,6 @@ sansPause(); // fin du blocage
 assert.ok(c.ouvrirSessionAdmin("258025").ok);
 // Changement de code avec jeton
 assert.ok(c.definirPin("135791", ok.jeton).ok);
-assert.ok(!("PIN_INCONNUS" in env.props._store), "avertissement soldé au changement de code");
 assert.strictEqual(c.ouvrirSessionAdmin("258025").ok, false);
 sansPause();
 assert.ok(c.ouvrirSessionAdmin("135791").ok);
@@ -111,24 +91,26 @@ c.setDatesOperation("", "", undefined);
 const reset = c.reinitialiserPinPanneau();
 assert.match(reset, /effacé/);
 assert.strictEqual(c.etatAdmin().pinDefini, false);
-// Le panneau affiche un code d'activation : n'importe quelle tablette peut recréer le code
-act = reset.match(/(\d{4}-\d{4})/)[1];
+// Un compte existe : pas de code d'activation ; un compte connecté choisit le nouveau code
+assert.doesNotMatch(reset, /\d{4}-\d{4}/);
 env.activeEmail = "";
-assert.ok(c.definirPin("246802", null, null, act).ok, "code recréé avec le code d'activation du panneau");
+assert.ok(c.definirPin("246802", null, session).ok, "code recréé par un compte connecté");
 assert.ok(c.ouvrirSessionAdmin("246802").ok);
-// Activation : expirée / trop d'essais
-env.activeEmail = "editeur@example.com";
-c.reinitialiserPinPanneau();
-env.activeEmail = "";
-env.props._store.ACTIVATION_EXPIRE = String(Date.now() - 1);
-assert.match(c.definirPin("246802", null, null, "1234-5678").message, /expiré/);
-act = env.activation();
-for (let i = 0; i < 10; i++) c.definirPin("246802", null, null, "0000-0000");
+// Code d'activation (1er compte) : expiré / trop d'essais
+const e2 = makeEnv({ repo: process.argv[2] });
+e2.activation();
+e2.props._store.ACTIVATION_EXPIRE = String(Date.now() - 1);
+assert.match(e2.ctx.premierCompte("1234-5678", "Caisse 1", "motdepasse1").message, /expiré/);
+const act = e2.activation();
+for (let i = 0; i < 10; i++) e2.ctx.premierCompte("0000-0000", "Caisse 1", "motdepasse1");
 assert.match(
-  c.definirPin("246802", null, null, act).message,
+  e2.ctx.premierCompte(act, "Caisse 1", "motdepasse1").message,
   /Trop d'essais/,
   "le bon code ne passe plus après 10 essais"
 );
+assert.strictEqual(e2.ctx.lireComptes_().length, 0);
+env.activeEmail = "editeur@example.com";
+c.reinitialiserPinPanneau();
 assert.strictEqual(c.etatAdmin().pinDefini, false);
 env.activeEmail = "inconnu@example.com";
 doitRefuser(() => c.basculerModeAnnuaire());

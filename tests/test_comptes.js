@@ -5,7 +5,7 @@ const { FakeSheet } = require("./fakesheet");
 const J = (x) => JSON.parse(JSON.stringify(x));
 const env = makeEnv({
   repo: process.argv[2],
-  tabletteReelle: true,
+  sessionReelle: true,
   props: { DATE_DEBUT: "2000-01-01", DATE_FIN: "2099-12-31" },
 });
 env.sheets.Saisies = new FakeSheet("Saisies", [
@@ -42,7 +42,20 @@ assert.strictEqual(finDe("2026-12-31T22:30:00Z"), "2027-01-01T02:00:00.000Z", "c
 
 // --- 1re installation : aucun compte, code d'activation exigé ---
 assert.deepStrictEqual(J(c.etatAdmin()), { pinDefini: false, comptes: false });
-assert.throws(() => c.traiterSaisie("A", "B", "P1", "1", ""), /TABLETTE_NON_AUTORISEE/);
+// Sans session : tout ce que la page utilise est refusé (un lien qui fuite ne donne rien)
+for (const f of [
+  () => c.traiterSaisie("A", "B", "P1", "1", ""),
+  () => c.forcerSaisie("A", "B", "P1", "1", "", "", false, false),
+  () => c.chargerCacheVerif(),
+  () => c.verifierPiece("P1"),
+  () => c.genererDonneesImpression("offre", ""),
+  () => c.getDatesOperation(),
+  () => c.getInfosPanneau(),
+  () => c.demarrage(),
+  () => c.ouvrirSessionAdmin("258025", "x".repeat(64)),
+  () => c.apercuResponsable("x".repeat(64)),
+])
+  assert.throws(f, /CONNEXION_REQUISE/);
 assert.match(J(c.premierCompte("", "Caisse centrale 1", "motdepasse1")).message, /Code d'activation requis/);
 const act = env.activation();
 assert.match(J(c.premierCompte(act, "  ", "motdepasse1")).message, /Choisissez un identifiant/);
@@ -169,25 +182,41 @@ assert.ok(!Object.keys(P).some((k) => /^(COMPTE|CPT_|SESSION_)/.test(k)));
 assert.ok(J(c.premierCompte(env.activation(), "Caisse centrale 1", "motdepasse1")).ok);
 refuse(() => c.chargerCacheVerif(s1b));
 
-// --- Ancienne méthode (appareil autorisé) : toujours acceptée jusqu'à son retrait ---
-assert.ok(J(c.definirPin("246802", null, null, env.activation())).ok);
-const t = J(c.appairerTablette("246802", "Tablette 1"));
-assert.ok(t.ok);
-c.chargerCacheVerif(t.cle);
-assert.match(
-  J(c.retirerCodeResponsable({ j: J(c.ouvrirSessionAdmin("246802", t.cle)).jeton, c: t.cle }, t.cle)).message,
-  /Connectez-vous avec un compte/,
-  "un appareil sans compte ne peut pas retirer le code"
+// --- Ancienne clé d'appareil (avant les comptes) : refusée ---
+refuse(() => c.chargerCacheVerif("0123456789abcdef".repeat(4)));
+
+// --- Ce que la session donne : démarrage, aperçu, impression ---
+const s3 = J(c.connexion("Caisse centrale 1", "motdepasse1")).session;
+const dem = J(c.demarrage(s3));
+assert.ok(dem.config && dem.config.PASSAGES_MAX, "réglages envoyés à la page");
+assert.ok(!JSON.stringify(dem).includes("docs.google.com"), "pas d'adresse du Sheet");
+assert.ok(J(c.genererDonneesImpression("offre", "", s3)).length >= 1);
+assert.strictEqual(J(c.chargerCacheVerif(s3, true)).annuaire, null, "rechargement léger sans l'annuaire");
+assert.notStrictEqual(J(c.chargerCacheVerif(s3)).annuaire, null);
+// Aperçu de l'espace responsable (avant le code) : lectures seulement, rien de la sécurité
+const nbRobots = c.ScriptApp.getProjectTriggers().length;
+const ap = J(c.apercuResponsable(s3));
+assert.ok(ap.saisies.length >= 1 && ap.chiffres && ap.config && ap.dates && Array.isArray(ap.archives));
+assert.deepStrictEqual(
+  ap.comptes.map((x) => x.identifiant),
+  ["Caisse centrale 1"]
 );
+assert.ok(!("robots" in ap), "rien de la sécurité avant le code");
+assert.ok(!/hash|"sel"|SESSION/.test(JSON.stringify(ap)), "ni empreinte, ni sel, ni secret");
+assert.strictEqual(c.ScriptApp.getProjectTriggers().length, nbRobots, "aucun robot recréé");
+// Jeton responsable seul (sans la session) : refusé
+const jt = J(c.ouvrirSessionAdmin("", s3)).jeton;
+assert.ok(J(c.getInfosAdmin({ j: jt, c: s3 })).config);
+assert.throws(() => c.getInfosAdmin(jt), /ADMIN_REQUIS/);
 
 // --- Menu du Sheet « 🔑 Code d'activation » : selon les COMPTES (pas le code responsable) ---
 env.activeEmail = "editeur@example.com";
 env.alertes.length = 0;
 c.afficherCodeActivation();
 assert.match(env.alertes[0], /Un compte existe déjà/);
-const env2 = makeEnv({ repo: process.argv[2], tabletteReelle: true });
+const env2 = makeEnv({ repo: process.argv[2], sessionReelle: true });
 env2.activeEmail = "editeur@example.com";
-assert.ok(J(env2.creerCode("135790")).ok, "ancien Sheet : code responsable déjà là, aucun compte");
+env2.props._store.ADMIN_PIN_HASH = "ancien-code"; // ancien Sheet : code responsable déjà là, aucun compte
 env2.ctx.afficherCodeActivation();
 assert.match(env2.alertes[0], /Code d'activation : \d{4}-\d{4}[\s\S]*créer le compte de la caisse centrale/);
 env.activeEmail = "";

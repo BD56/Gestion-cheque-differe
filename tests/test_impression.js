@@ -55,7 +55,7 @@ const ctx = loadCode(process.argv[2], {
   SpreadsheetApp: { getActiveSpreadsheet: () => ss },
   Utilities: { formatDate: fmt },
 });
-ctx.exigerTablette_ = function () {}; // contrôle tablette testé à part
+ctx.exigerSession_ = function () {}; // contrôle de la session testé à part
 
 let r = J(ctx.genererDonneesImpression("jour", "2026-09-26"));
 assert.deepStrictEqual(r[0], ["Date", "Nom", "Prénom", "N° Pièce", "Montant", "Notes ou Infos"]);

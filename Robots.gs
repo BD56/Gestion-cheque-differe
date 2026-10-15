@@ -2,7 +2,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Robots_() {
-  return "2026.10.15-1659";
+  return "2026.10.15-1725";
 }
 
 // =================================================================
@@ -52,7 +52,7 @@ function verificationClotureNocturne(e) {
 // =================================================================
 
 function getDatesOperation(cle) {
-  exigerTablette_(cle);
+  exigerSession_(cle);
   return lireDates_();
 }
 

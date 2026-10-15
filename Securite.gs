@@ -1,10 +1,9 @@
-// Sécurité : code responsable (PIN), code d'activation, sessions (jetons),
-// comptes (identifiant + mot de passe) et tablettes autorisées (ancienne méthode,
-// retirée quand la page utilisera les comptes).
+// Sécurité : comptes (identifiant + mot de passe) et leurs sessions, code responsable
+// (PIN, facultatif), code d'activation, jetons de l'espace responsable.
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Securite_() {
-  return "2026.10.15-1659";
+  return "2026.10.15-1725";
 }
 
 // =================================================================
@@ -34,11 +33,10 @@ function etatAdmin() {
   return { pinDefini: !!props.getProperty("ADMIN_PIN_HASH"), comptes: lireComptes_().length > 0 };
 }
 
-// Le jeton est LIÉ à l'appelant qui a saisi le code (tablette « T:<id> » ou compte
-// « C:<id> ») : il ne sert à rien sans sa clé / sa session. La page l'envoie avec :
-// { j: jeton, c: clé ou session }. (« E » = jeton sans appelant : panneau du Sheet ou
-// code d'activation.)
-// Session / clé de l'appelant : passée à part, ou reprise du jeton { j, c } (appels de
+// Le jeton est LIÉ au compte qui l'a obtenu (« C:<id> ») : il ne sert à rien sans sa
+// session. La page l'envoie avec : { j: jeton, c: session }. (« E » = jeton sans
+// compte : panneau du Sheet.)
+// Session de l'appelant : passée à part, ou reprise du jeton { j, c } (appels de
 // l'espace responsable, qui ajoutent le jeton en dernier argument).
 function cleAppelant_(cle, jeton) {
   return cle || (jeton && typeof jeton === "object" ? jeton.c : null);
@@ -110,10 +108,8 @@ function exigerDeclencheurOuEditeur_(e) {
 }
 
 // Vérifie le code responsable avec les protections contre les essais au hasard.
-// Compteurs SÉPARÉS par « groupe » : un par tablette autorisée (« T_<id> »), un pour
-// les appareils non autorisés (« INCONNU » : écran d'autorisation), un pour le panneau
-// du Sheet. Un inconnu qui a le lien ne peut donc PAS bloquer l'espace responsable des
-// tablettes autorisées (au pire, l'autorisation de nouvelles tablettes, 15 min).
+// Compteurs SÉPARÉS par « groupe » : un par compte (« C_<id> »), un pour le panneau du
+// Sheet : les codes faux tapés depuis un compte ne bloquent pas les autres.
 //  - après chaque code faux : 10 s de pause pendant lesquelles tout essai est refusé ;
 //  - après 5 codes faux : blocage 15 min (jamais plus long).
 // À appeler sous verrou. Renvoie { ok:true } ou { ok:false, message }.
@@ -147,22 +143,6 @@ function verifierPin_(props, pin, groupe) {
     props.deleteProperty(cleEtat);
     return { ok: true };
   }
-  if (groupe === "INCONNU") {
-    // trace visible dans l'espace responsable
-    let inc = {};
-    try {
-      inc = JSON.parse(props.getProperty("PIN_INCONNUS") || "{}");
-    } catch (e) {
-      inc = {};
-    }
-    props.setProperty(
-      "PIN_INCONNUS",
-      JSON.stringify({
-        n: (inc.n || 0) + 1,
-        dernier: Utilities.formatDate(new Date(), fuseau_(), "dd/MM/yyyy HH:mm"),
-      })
-    );
-  }
   const echecs = (etat.echecs || 0) + 1;
   if (echecs >= ADMIN_ESSAIS_MAX) {
     props.setProperty(
@@ -178,7 +158,7 @@ function verifierPin_(props, pin, groupe) {
   };
 }
 
-// Efface les compteurs d'essais (tous, ou ceux d'une tablette).
+// Efface les compteurs d'essais (tous, ou ceux d'un groupe).
 function effacerEssais_(props, groupe) {
   const tout = props.getProperties();
   for (const k in tout) {
@@ -186,11 +166,11 @@ function effacerEssais_(props, groupe) {
   }
 }
 
-// Code juste -> { ok:true, jeton } ; sinon { ok:false, message }. Appareil autorisé ou
-// compte connecté requis. Sans code responsable « à part » (choix fait à l'installation),
-// un compte connecté ouvre l'espace responsable sans code.
+// Code juste -> { ok:true, jeton } ; sinon { ok:false, message }. Compte connecté requis.
+// Sans code responsable « à part » (choix fait à l'installation), un compte connecté
+// ouvre l'espace responsable sans code.
 function ouvrirSessionAdmin(pin, cle) {
-  exigerTablette_(cle);
+  exigerSession_(cle);
   const a = appelantDeCle_(cle);
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
@@ -207,10 +187,10 @@ function ouvrirSessionAdmin(pin, cle) {
 
 // =================================================================
 // --- CODE D'ACTIVATION : prouve l'accès au Google Sheets ---
-// Créer le code responsable (1re installation, ou après « Réinitialiser le code »)
+// Créer le PREMIER compte (1re installation, ou après « Réinitialiser les comptes »)
 // exige ce code à 8 chiffres, affiché UNIQUEMENT dans le Google Sheets (menu
-// « 🧰 Installer », « 🔑 Code d'activation », ou réinitialisation du code). Sinon,
-// la première personne qui ouvre le lien pourrait choisir le code responsable.
+// « 🧰 Installer », « 🔑 Code d'activation », ou réinitialisation). Sinon, la première
+// personne qui ouvre le lien créerait le compte.
 // Usage unique, valable 24 h, 10 essais au plus. Seule son empreinte est gardée.
 // =================================================================
 function genererCodeActivation_() {
@@ -275,10 +255,9 @@ function verifierActivation_(props, code) {
   return { ok: false, message: "Code d'activation incorrect." };
 }
 
-// Création (si aucun code : code d'activation exigé, sauf panneau du Sheet ou compte
-// connecté — un compte a déjà tous les droits sans code) ou changement (session
-// responsable requise).
-function definirPin(nouveauPin, jeton, cle, activation) {
+// Création (aucun code : compte connecté — qui a déjà tous les droits sans code — ou
+// panneau du Sheet) ou changement (session responsable requise).
+function definirPin(nouveauPin, jeton, cle) {
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
@@ -289,15 +268,11 @@ function definirPin(nouveauPin, jeton, cle, activation) {
     if (!ADMIN_PIN_REGEX.test(nouveauPin))
       return { ok: false, message: "Le code doit contenir exactement 6 chiffres." };
     const appelant = appelantDeCle_(cleAppelant_(cle, jeton));
-    if (creation && !estEditeurDuClasseur_() && !(appelant && appelant.compte)) {
-      const a = verifierActivation_(props, activation);
-      if (!a.ok) return a;
-    }
+    if (creation && !estEditeurDuClasseur_() && !(appelant && appelant.compte))
+      return { ok: false, message: "Connectez-vous avec un compte pour créer le code." };
     const sel = Utilities.getUuid();
     props.setProperties({ ADMIN_PIN_SEL: sel, ADMIN_PIN_HASH: empreintePin_(sel, nouveauPin) });
     effacerEssais_(props);
-    effacerActivation_(props);
-    props.deleteProperty("PIN_INCONNUS"); // nouveau code : l'avertissement est soldé
     const garde = !creation && jetonValide_(jeton);
     return {
       ok: true,
@@ -313,8 +288,9 @@ function fermerSessionAdmin(jeton) {
   if (j && typeof j === "string") CacheService.getScriptCache().remove("ADM_" + j);
 }
 
-// Secours (panneau du Sheet, éditeurs uniquement) : efface le code et affiche un
-// code d'activation pour en créer un nouveau depuis n'importe quelle tablette.
+// Secours (panneau du Sheet, éditeurs uniquement) : efface le code responsable ; tout
+// compte connecté ouvre alors l'espace et peut en choisir un nouveau. Sans compte, un
+// code d'activation est affiché pour créer le premier.
 function reinitialiserPinPanneau() {
   exigerEditeur_();
   const props = PropertiesService.getDocumentProperties();
@@ -333,66 +309,24 @@ function reinitialiserPinPanneau() {
 }
 
 // =================================================================
-// --- TABLETTES AUTORISÉES (appairage) ---
-//     Seules les tablettes autorisées une fois par un responsable (code) peuvent
-//     utiliser l'application : saisie, vérification, impression, espace
-//     responsable. Un lien qui fuite ne donne donc accès à rien.
-//     - La tablette garde une clé secrète (localStorage) ; le serveur n'en garde
-//       que l'empreinte (comme le code), dans les propriétés du document.
-//     - Le panneau du Sheet (éditeurs du classeur) passe sans clé.
-//     - Retrait d'une tablette / de toutes : espace responsable, menu « Code & tablettes ».
+// --- ACCÈS : session d'un compte connecté ---
+//     Toutes les fonctions utilisées par la page exigent une session valable
+//     (connexion() / premierCompte()) ; un lien qui fuite ne donne donc accès à
+//     rien. Le panneau du Sheet (éditeurs du classeur) passe sans session.
 // =================================================================
-// Erreur passagère de Google en lisant la liste : remontée telle quelle (« réessayez »),
-// JAMAIS lue comme une liste vide — sinon l'appareil serait déclaré non autorisé, et une
-// autorisation ou un retrait réécrirait la liste en perdant tous les appareils.
-function lireTablettes_() {
-  const brut = PropertiesService.getDocumentProperties().getProperty("TABLETTES");
-  try {
-    return JSON.parse(brut || "[]");
-  } catch (e) {
-    return [];
-  }
-}
-function ecrireTablettes_(liste) {
-  PropertiesService.getDocumentProperties().setProperty("TABLETTES", JSON.stringify(liste));
-}
-function empreinteCle_(cle) {
-  return Utilities.base64Encode(
-    Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, "tablette:" + cle, Utilities.Charset.UTF_8)
-  );
-}
-function tabletteDeCle_(cle) {
-  if (!cle || typeof cle !== "string" || cle.length < 32) return null;
-  const h = empreinteCle_(cle);
-  const liste = lireTablettes_();
-  for (let i = 0; i < liste.length; i++) if (liste[i].hash === h) return liste[i];
-  return null;
-}
-
-// Refuse l'appel si la clé ne correspond à aucune tablette autorisée, ni à une session
-// de compte valable (sauf panneau du Sheet). Note la date de dernière utilisation (une
-// fois par jour, propriété séparée : pas de réécriture de la liste, donc pas de conflit).
-function exigerTablette_(cle) {
-  if (estSession_(cle)) {
-    const compte = compteDeSession_(cle);
-    if (compte) {
-      noterVue_("COMPTE_VUE_" + compte.id);
-      return;
-    }
-    if (estEditeurDuClasseur_()) return;
-    throw new Error(
-      "CONNEXION_REQUISE : session terminée (3 h du matin), mot de passe changé ou compte retiré."
-    );
-  }
-  const t = tabletteDeCle_(cle);
-  if (t) {
-    const props = PropertiesService.getDocumentProperties();
-    const auj = Utilities.formatDate(new Date(), fuseau_(), "dd/MM/yyyy");
-    if (props.getProperty("TABLETTE_VUE_" + t.id) !== auj) props.setProperty("TABLETTE_VUE_" + t.id, auj);
+// Refuse l'appel sans session valable (sauf panneau du Sheet). Note la date de dernière
+// utilisation du compte (une fois par jour, propriété séparée : pas de réécriture de la
+// liste des comptes, donc pas de conflit).
+function exigerSession_(cle) {
+  const compte = compteDeSession_(cle);
+  if (compte) {
+    noterVue_("COMPTE_VUE_" + compte.id);
     return;
   }
   if (estEditeurDuClasseur_()) return;
-  throw new Error("TABLETTE_NON_AUTORISEE : cet appareil n'est pas (ou plus) autorisé.");
+  throw new Error(
+    "CONNEXION_REQUISE : session terminée (3 h du matin), mot de passe changé ou compte retiré."
+  );
 }
 
 function noterVue_(cle) {
@@ -401,153 +335,19 @@ function noterVue_(cle) {
   if (props.getProperty(cle) !== auj) props.setProperty(cle, auj);
 }
 
-// Qui appelle ? Tablette autorisée ou compte connecté (null sinon). lien = attache du
-// jeton responsable ; groupe = compteur d'essais du code responsable.
+// Compte connecté qui appelle (null sinon). lien = attache du jeton responsable ;
+// groupe = compteur d'essais du code responsable.
 function appelantDeCle_(cle) {
-  if (estSession_(cle)) {
-    const c = compteDeSession_(cle);
-    return c ? { compte: true, id: c.id, nom: c.identifiant, lien: "C:" + c.id, groupe: "C_" + c.id } : null;
-  }
-  const t = tabletteDeCle_(cle);
-  return t ? { compte: false, id: t.id, nom: t.nom, lien: "T:" + t.id, groupe: "T_" + t.id } : null;
-}
-
-// Autorise la tablette qui appelle (code responsable requis). Renvoie la clé à garder.
-// remplacer = true : le nom est déjà pris et la personne a confirmé le remplacement
-// (appareil qui a perdu son autorisation, appareil changé) : l'ancienne entrée est
-// retirée, sa clé ne sert plus.
-function appairerTablette(pin, nom, remplacer) {
-  const lock = LockService.getScriptLock();
-  lock.waitLock(10000);
-  try {
-    const props = PropertiesService.getDocumentProperties();
-    const v = verifierPin_(props, pin, "INCONNU");
-    if (!v.ok) return v;
-    let liste = lireTablettes_();
-    // Nom obligatoire et unique (majuscules, accents, espaces ignorés : « Mac » = « mac ») :
-    // sinon impossible de savoir quel appareil retirer. Vérifié après le code : on ne
-    // dévoile pas les noms existants à qui n'a pas le code.
-    nom = (nom || "").toString().trim().slice(0, 40);
-    if (_normId_(nom) === "")
-      return { ok: false, message: "Donnez un nom à cet appareil (ex. Caisse 3, Accueil)." };
-    const ancien = liste.filter(function (t) {
-      return _normId_(t.nom) === _normId_(nom);
-    })[0];
-    if (ancien && remplacer !== true) {
-      const vu = props.getProperty("TABLETTE_VUE_" + ancien.id);
-      return {
-        ok: false,
-        nomPris: true,
-        message:
-          "« " +
-          ancien.nom +
-          " » est déjà le nom d'un appareil autorisé le " +
-          ancien.creeLe +
-          (vu ? " (utilisé le " + vu + ")" : "") +
-          ". Remplacez-le si c'est cet appareil (il a perdu son autorisation) : l'ancienne autorisation ne servira plus. Sinon, choisissez un autre nom.",
-      };
-    }
-    if (ancien) {
-      liste = liste.filter(function (t) {
-        return t.id !== ancien.id;
-      });
-      props.deleteProperty("TABLETTE_VUE_" + ancien.id);
-      props.deleteProperty("PIN_ESSAIS_T_" + ancien.id);
-    }
-    if (liste.length >= TABLETTES_MAX)
-      return {
-        ok: false,
-        message:
-          TABLETTES_MAX +
-          " appareils maximum : retirez-en un depuis l'espace responsable (menu Code & appareils), ou tous depuis le panneau du Google Sheets.",
-      };
-    const cle = Utilities.getUuid().replace(/-/g, "") + Utilities.getUuid().replace(/-/g, "");
-    const id = Utilities.getUuid().replace(/-/g, "").slice(0, 10);
-    liste.push({
-      id: id,
-      nom: nom,
-      hash: empreinteCle_(cle),
-      creeLe: Utilities.formatDate(new Date(), fuseau_(), "dd/MM/yyyy HH:mm"),
-    });
-    ecrireTablettes_(liste);
-    return { ok: true, cle: cle, id: id, nom: nom };
-  } finally {
-    lock.releaseLock();
-  }
-}
-
-function listerTablettes(jeton) {
-  exigerAdmin_(jeton);
-  return listeTablettes_();
-}
-// Ni clé ni empreinte : nom, dates et identifiant (tiré au hasard, sans lien avec la clé)
-function listeTablettes_() {
-  const props = PropertiesService.getDocumentProperties();
-  return lireTablettes_().map(function (t) {
-    return { id: t.id, nom: t.nom, creeLe: t.creeLe, vueLe: props.getProperty("TABLETTE_VUE_" + t.id) || "" };
-  });
-}
-
-function retirerTablette(id, jeton) {
-  exigerAdmin_(jeton);
-  const lock = LockService.getScriptLock();
-  lock.waitLock(10000);
-  try {
-    ecrireTablettes_(
-      lireTablettes_().filter(function (t) {
-        return t.id !== id;
-      })
-    );
-    PropertiesService.getDocumentProperties().deleteProperty("TABLETTE_VUE_" + id);
-    PropertiesService.getDocumentProperties().deleteProperty("PIN_ESSAIS_T_" + id);
-    return "Appareil retiré.";
-  } finally {
-    lock.releaseLock();
-  }
-}
-
-function retirerToutesTablettes(jeton) {
-  exigerAdmin_(jeton);
-  const lock = LockService.getScriptLock();
-  lock.waitLock(10000);
-  try {
-    const props = PropertiesService.getDocumentProperties();
-    lireTablettes_().forEach(function (t) {
-      props.deleteProperty("TABLETTE_VUE_" + t.id);
-      props.deleteProperty("PIN_ESSAIS_T_" + t.id);
-    });
-    ecrireTablettes_([]);
-    return "Tous les appareils ont été retirés : chacun devra être autorisé à nouveau.";
-  } finally {
-    lock.releaseLock();
-  }
-}
-
-// Secours (panneau du Sheet) : retire toutes les tablettes (liste pleine, tablettes
-// perdues…). Chacune devra être autorisée à nouveau avec le code responsable.
-function retirerToutesTablettesPanneau() {
-  exigerEditeur_();
-  const lock = LockService.getScriptLock();
-  lock.waitLock(10000);
-  try {
-    const props = PropertiesService.getDocumentProperties();
-    lireTablettes_().forEach(function (t) {
-      props.deleteProperty("TABLETTE_VUE_" + t.id);
-      props.deleteProperty("PIN_ESSAIS_T_" + t.id);
-    });
-    ecrireTablettes_([]);
-    return "✅ Tous les appareils ont été retirés : autorisez à nouveau ceux du magasin (avec le code responsable).";
-  } finally {
-    lock.releaseLock();
-  }
+  const c = compteDeSession_(cle);
+  return c ? { compte: true, id: c.id, nom: c.identifiant, lien: "C:" + c.id, groupe: "C_" + c.id } : null;
 }
 
 // =================================================================
 // --- COMPTES (identifiant + mot de passe) ---
 //     Les comptes sont ceux de la (des) caisse(s) centrale(s). Se connecter donne une
-//     SESSION valable jusqu'à 3 h du matin, que la page envoie à chaque appel à la place
-//     de la clé de tablette (le gestionnaire de mots de passe du navigateur retient le
-//     mot de passe : utile sous Safari, qui oublie le stockage de la page).
+//     SESSION valable jusqu'à 3 h du matin, que la page envoie à chaque appel (le
+//     gestionnaire de mots de passe du navigateur retient le mot de passe : utile sous
+//     Safari, qui oublie le stockage de la page quand on le quitte).
 //     - Mot de passe jamais stocké : empreinte salée, répétée MDP_TOURS fois.
 //     - Session = « S1.<compte>.<version>.<fin>.<signature> » : rien n'est stocké par
 //       session ; la signature (HMAC, secret du document) empêche de la fabriquer.
@@ -870,7 +670,7 @@ function retirerCodeResponsable(jeton, cle) {
   lock.waitLock(10000);
   try {
     const props = PropertiesService.getDocumentProperties();
-    ["ADMIN_PIN_HASH", "ADMIN_PIN_SEL", "PIN_INCONNUS"].forEach(function (k) {
+    ["ADMIN_PIN_HASH", "ADMIN_PIN_SEL"].forEach(function (k) {
       props.deleteProperty(k);
     });
     effacerEssais_(props);
@@ -894,7 +694,7 @@ function reinitialiserComptesPanneau() {
     for (const k in tout)
       if (/^(COMPTE_VUE_|CPT_ESSAIS_)/.test(k) || k === "SESSION_SECRET" || k === "COMPTES")
         props.deleteProperty(k);
-    ["ADMIN_PIN_HASH", "ADMIN_PIN_SEL", "PIN_INCONNUS"].forEach(function (k) {
+    ["ADMIN_PIN_HASH", "ADMIN_PIN_SEL"].forEach(function (k) {
       props.deleteProperty(k);
     });
     effacerEssais_(props);
@@ -909,11 +709,11 @@ function reinitialiserComptesPanneau() {
 
 // Espace responsable, AVANT le code (appui sur ⚙️) : lectures préparées pendant que le
 // code est tapé, affichées seulement une fois le code accepté. Réservé aux comptes
-// connectés (et anciens appareils autorisés), qui obtiennent déjà tout cela sans code (copie de détection, impression
-// libre de toute l'offre). Restent derrière le code : contenu des archives, codes faux
-// tapés (information de sécurité), recréation des robots de nuit, toutes les actions.
+// connectés, qui obtiennent déjà tout cela sans code (copie de détection, impression
+// libre de toute l'offre). Restent derrière le code : contenu des archives, état des
+// robots de nuit (et leur recréation), toutes les actions.
 function apercuResponsable(cle) {
-  exigerTablette_(cle);
+  exigerSession_(cle);
   const f = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FEUILLE_SAISIES);
   return {
     mode: modeSecurite_(f),
@@ -939,12 +739,6 @@ function getInfosAdmin(jeton) {
   } catch (e) {
     Logger.log("Robots de nuit : " + e);
   }
-  let inconnus = {};
-  try {
-    inconnus = JSON.parse(PropertiesService.getDocumentProperties().getProperty("PIN_INCONNUS") || "{}");
-  } catch (e) {
-    inconnus = {};
-  }
   return {
     mode: modeSecurite_(f),
     dates: lireDates_(),
@@ -953,7 +747,6 @@ function getInfosAdmin(jeton) {
     config: getConfig(),
     robots: etatRobots_(),
     robotsCrees: robotsCrees.length,
-    essaisInconnus: inconnus,
     chiffres: chiffresOffre_(f),
   };
 }

@@ -2,7 +2,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Installation_() {
-  return "2026.10.15-1659";
+  return "2026.10.15-1725";
 }
 
 // =================================================================
@@ -20,8 +20,8 @@ function installer() {
   exigerEditeur_();
   let rapport = [];
   if (nettoyerSiCopie_())
-    rapport.push("Nouvelle copie détectée : code responsable, dates et réglages hérités effacés.");
-  rapport = rapport.concat(installerFeuilles_(), installerDeclencheurs_());
+    rapport.push("Nouvelle copie détectée : comptes, code responsable, dates et réglages hérités effacés.");
+  rapport = rapport.concat(installerFeuilles_(), installerDeclencheurs_(), effacerAnciennesAutorisations_());
   let problemes = [];
   try {
     problemes = verifierInstallation_();
@@ -35,6 +35,25 @@ function installer() {
   rapport.push("Version " + version_Installation_() + ".");
   Logger.log(rapport.join("\n"));
   return rapport.join("\n");
+}
+
+// Anciennes autorisations d'appareils (remplacées par les comptes, octobre 2026) :
+// liste, dates d'utilisation, compteurs d'essais. Renvoie ce qui a été fait.
+function effacerAnciennesAutorisations_() {
+  const props = PropertiesService.getDocumentProperties();
+  const tout = props.getProperties();
+  let n = 0;
+  for (const k in tout)
+    if (
+      k === "TABLETTES" ||
+      k === "PIN_INCONNUS" ||
+      k === "PIN_ESSAIS_INCONNU" ||
+      /^(TABLETTE_VUE_|PIN_ESSAIS_T_)/.test(k)
+    ) {
+      props.deleteProperty(k);
+      n++;
+    }
+  return n ? ["Anciennes autorisations d'appareils effacées (remplacées par les comptes)."] : [];
 }
 
 // Crée les robots de nuit manquants. Renvoie la liste de ce qui a été fait.

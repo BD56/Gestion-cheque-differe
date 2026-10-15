@@ -23,7 +23,7 @@ const { FakeSheet } = require("./fakesheet");
       };
     }
     const jeton = env.creerCode("258025").jeton;
-    await page.evaluate("jetonAdmin = " + JSON.stringify(jeton));
+    await page.evaluate("jetonAdmin = " + JSON.stringify(jeton.j));
     await page.click('button[title="Panneau de contrôle"]');
     await page.waitForTimeout(300);
     assert.deepStrictEqual(appels, { listerSaisies: 1, listerArchives: 1, listerComptes: 1 }, "préchargées");

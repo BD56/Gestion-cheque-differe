@@ -35,7 +35,7 @@ Serveur (une seule portée globale : **un nom déclaré dans deux .gs = erreur**
 - **Application.gs** — `doGet`, `include_`, démarrage tablette, copie locale, impression, outils.
 - **Reglages.gs** — réglages de la structure (`getConfig` / `setConfig`).
 - **Installation.gs** — « Installer », feuilles, robots de nuit, copie du modèle, contrôle de version.
-- **Securite.gs** — code responsable, code d'activation, jetons, tablettes autorisées.
+- **Securite.gs** — comptes et sessions, code responsable, code d'activation, jetons.
 - **Saisie.gs** — `traiterSaisie`, `forcerSaisie`, `verifierPiece`, correction / suppression, mode.
 - **Detection.gs** — normalisation, doublons A/B/C, marquages (⚠️ miroir dans `ScriptSaisie.html` / `ScriptFormulaire.html`).
 - **Annuaire.gs**, **Archives.gs**, **Robots.gs** (dates + nuit), **Sheet.gs** (menu, panneau, `onEdit`).
@@ -175,17 +175,12 @@ Décision : `docs/retours-vibe/decisions/2026-10-11_generalisation.md`.
   (dates de l'offre — à défaut 1re et dernière saisie —, nombre de saisies, montant
   total) calculé à la clôture, gardé en propriété `RESUME_<onglet>` (calculé une fois
   pour une archive plus ancienne), effacé par la purge ; contenu chargé à l'impression.
-  Clé d'appareil : une erreur passagère en lisant la liste n'est JAMAIS lue comme
-  « non autorisé » (`lireTablettes_` la remonte) ; la page ne l'efface plus sur un
-  refus (seulement sur un retrait volontaire).
-  ⚠️ Limite connue (15/10) : sous **Safari** (Mac) et sur **iPad / iPhone** (tout
-  navigateur), la clé est effacée à la fermeture du navigateur (stockage des cadres
-  tiers temporaire chez WebKit ; la page Apps Script est dans un cadre
-  googleusercontent.com) ⇒ autorisation redemandée. Chrome / Edge / Android : OK.
-  Pistes et décisions : `MEMOIRE_CLAUDE.md` §0 ter.
-  Nom déjà pris à l'autorisation (code juste) : `appairerTablette` répond `nomPris`
-  (date d'autorisation, dernière utilisation) ; la personne confirme « Remplacer »
-  (`remplacer = true`) → l'ancienne entrée est retirée, jamais sans confirmation.
+  Liste des comptes : une erreur passagère de Google en la lisant n'est JAMAIS lue
+  comme « aucun compte » (`lireComptes_` la remonte).
+  ⚠️ Safari (Mac) et iPad / iPhone (tout navigateur) effacent le stockage de la page
+  à la fermeture (cadre tiers googleusercontent.com, WebKit) : la session est perdue,
+  le gestionnaire de mots de passe remplit la connexion. D'où les COMPTES (les
+  anciennes « tablettes autorisées » perdaient leur clé). `MEMOIRE_CLAUDE.md` §0 ter.
   Présentation : **6 tuiles** (Saisies, Archives, Opération, Sécurité, Réglages, Code)
   ouvrant chacune un sous-écran (« ← Retour ») + Clôturer / Verrouiller à part.
   Bouton « Ouvrir Google Sheets » retiré de l'appli (tout passe par l'appli).
@@ -243,21 +238,15 @@ Décision : `docs/retours-vibe/decisions/2026-10-11_generalisation.md`.
     contrôlées (les deux ou aucune, début ≤ fin) ; saisie incomplète refusée côté serveur
     (`controlerChamps_`) ; `reconstruireAnnuaire` réservée aux éditeurs du classeur ;
     `purgerAnnuaire` sous verrou, réécriture en une fois (en texte).
-- **Tablettes autorisées (appairage)** : seules les tablettes autorisées une fois par un
-  responsable (code) accèdent à l'appli ; clé en `localStorage` (`cdTabletteCle`),
-  empreinte côté serveur (`TABLETTES` en propriétés). `exigerTablette_(cle)` en tête
-  de toutes les fonctions utilisées par la tablette (le panneau du Sheet passe via
-  `estEditeurDuClasseur_`). Accès du déploiement : **Tout le monde** (`ANYONE_ANONYMOUS`).
-- **Comptes (identifiant + mot de passe)** — branche `design`, ÉTAPES 1 (serveur), 2
-  (page) et 3 (« Code & comptes », panneau du Sheet, textes) FAITES ; reste 4 (retrait
-  des tablettes autorisées, encore acceptées par le serveur) : ils
-  remplaceront les tablettes autorisées (Safari oublie la clé : voir MEMOIRE_CLAUDE §0
-  ter). Comptes des caisses centrales (`COMPTES` en propriétés : id, identifiant, sel,
+- **Comptes (identifiant + mot de passe)** — branche `design`, étapes 1 à 4 FAITES
+  (octobre 2026) : ils ont REMPLACÉ les tablettes autorisées (Safari oublie la clé :
+  voir MEMOIRE_CLAUDE §0 ter). Accès déploiement : **Tout le monde**
+  (`ANYONE_ANONYMOUS`) ; `exigerSession_(cle)` en tête de toutes les fonctions de la
+  page (le panneau du Sheet passe via `estEditeurDuClasseur_`). Comptes des caisses centrales (`COMPTES` en propriétés : id, identifiant, sel,
   empreinte répétée `MDP_TOURS` fois, version `v`). `connexion(identifiant, mdp)` →
   session « S1.<id>.<v>.<fin>.<HMAC> » (secret `SESSION_SECRET`, rien de stocké par
   session) valable jusqu'à **3 h du matin** (`finDeSession_`, fuseau du script) ;
-  `exigerTablette_` accepte une session (sinon `CONNEXION_REQUISE`) ou une clé de
-  tablette. Essais faux PAR COMPTE (`CPT_ESSAIS_<id>` : pause 10 s, blocage 15 min
+  `exigerSession_` exige une session valable (sinon `CONNEXION_REQUISE`). Essais faux PAR COMPTE (`CPT_ESSAIS_<id>` : pause 10 s, blocage 15 min
   après 5). 1er compte : `premierCompte(activation, …)` (code d'activation, aucun
   compte). Ensuite (espace responsable) : `creerCompte`, `listerComptes`,
   `changerMotDePasse` (version + 1 ⇒ sessions caduques ; nouvelle session si c'est
@@ -267,7 +256,7 @@ Décision : `docs/retours-vibe/decisions/2026-10-11_generalisation.md`.
   `retirerCodeResponsable` (compte connecté, espace ouvert). Secours :
   `reinitialiserComptesPanneau` (éditeurs ; tout effacé, nouveau secret, code
   d'activation). Tests : `test_comptes`.
-  **Page (étape 2)** : `#ecranConnexion` (ScriptTablette.html) = « Première
+  **Page (étape 2)** : `#ecranConnexion` (ScriptConnexion.html) = « Première
   installation » (aucun compte : code d'activation + identifiant + mot de passe × 2,
   puis question « code responsable à part ? » → `definirPin` ou rien) ou
   « Connexion ». Le formulaire est RÉELLEMENT envoyé vers le cadre caché
@@ -292,6 +281,15 @@ Décision : `docs/retours-vibe/decisions/2026-10-11_generalisation.md`.
   Panneau du Sheet : « Réinitialiser les comptes » (remplace « Retirer tous les
   appareils ») ; « Réinitialiser le code » ne donne plus de code d'activation s'il
   existe un compte. Aide « Code & comptes » et mentions légales réécrites.
+  **Étape 4 (nettoyage)** : tablettes autorisées RETIRÉES (fonctions, `TABLETTES_MAX`,
+  `PIN_INCONNUS` / `essaisInconnus`, jetons « T: ») ; `exigerTablette_` → `exigerSession_`
+  ; `definirPin` : création par un compte connecté (ou le panneau), plus de code
+  d'activation ; verrou de l'espace : « Saisissez le code » ou ouverture directe ;
+  « Installer » efface les anciennes propriétés (`effacerAnciennesAutorisations_`) ;
+  ScriptTablette.html → **ScriptConnexion.html** ; classes `.ecran-connexion`.
+  Tests : `env.connecter()` (vrai compte « Caisse test »), `env.creerCode` → jeton
+  `{ j, c }` ; options `sessionReelle` / `sansSession` ; test_tablettes retiré (ses
+  contrôles utiles sont dans test_comptes).
 - **Code d'activation** (lot 1 de l'audit) : créer le code responsable (aucun code :
   1re installation ou après « Réinitialiser ») exige un code à 8 chiffres affiché
   **uniquement dans le Google Sheets** (menu « 🧰 Installer », « 🔑 Code d'activation »,

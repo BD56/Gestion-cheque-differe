@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr" data-version="2026.10.15-1659">
+<html lang="fr" data-version="2026.10.15-1725">
   <head>
     <base target="_top">
     <?!= include_('Style') ?>
@@ -279,9 +279,7 @@
               <svg class="ico grande"><use href="#i-cadenas"/></svg>
               <h2>Code responsable</h2>
               <p class="texte-verrou" id="txtVerrou"></p>
-              <input style="display: none" class="champ-code activation" type="text" id="activationVerrou" inputmode="numeric" autocomplete="off" maxlength="9" placeholder="Code d'activation (Google Sheets)">
               <input class="champ-code" type="password" id="pinSaisi" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="Code (6 chiffres)" aria-label="Code responsable">
-              <input style="display: none" class="champ-code" type="password" id="pinConfirme" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="Confirmer le code">
               <button class="plein" id="btnDeverrouiller" data-action="deverrouillerAdmin">Déverrouiller</button>
               <div class="message-erreur" id="msgVerrou"></div>
               <p class="compte-connecte"><span id="compteVerrou"></span> <button class="lien" data-action="seDeconnecter">Se déconnecter</button></p>
@@ -515,11 +513,11 @@
     <!-- Connexion (compte de la caisse centrale) ou 1re installation. Le formulaire est
          RÉELLEMENT envoyé vers un cadre caché (doPost) : sans cela, Safari ne propose pas
          d'enregistrer le mot de passe (essai du 15/10). -->
-    <div id="ecranConnexion" class="modal-overlay ecran-appairage" style="display: none">
+    <div id="ecranConnexion" class="modal-overlay ecran-connexion" style="display: none">
       <div class="modal-content largeur-420">
         <svg class="ico grande"><use href="#i-cadenas"/></svg>
         <h2 class="titre-haut-centre" id="titreConnexion">Connexion</h2>
-        <p class="texte-appairage" id="txtConnexion"></p>
+        <p class="texte-connexion" id="txtConnexion"></p>
         <form id="formConnexion" method="post" target="cibleConnexion" autocomplete="on" novalidate>
           <div class="input-group" id="blocActivation" style="display: none">
             <label class="etiquette" for="activationConnexion">Code d'activation (affiché dans le Google Sheets)</label>
@@ -543,7 +541,7 @@
         <div class="message-erreur" id="msgConnexion" role="status"></div>
         <!-- Après le 1er compte : protéger l'espace responsable par un code à part ? -->
         <div id="blocCodeAPart" style="display: none">
-          <p class="texte-appairage">Protéger l'espace responsable par un code à part (6 chiffres) ? Sans code, tout compte connecté l'ouvre directement. Modifiable ensuite dans l'espace responsable.</p>
+          <p class="texte-connexion">Protéger l'espace responsable par un code à part (6 chiffres) ? Sans code, tout compte connecté l'ouvre directement. Modifiable ensuite dans l'espace responsable.</p>
           <div id="champsCodeAPart" style="display: none">
             <div class="input-group">
               <label class="etiquette" for="pinAPart">Code responsable (6 chiffres)</label>
@@ -662,7 +660,7 @@
     </script>
     <!-- Scripts de la page, insérés ici par le serveur (Application.gs::include_).
          Une seule portée globale : l'ordre compte pour ce qui s'exécute au chargement. -->
-    <?!= include_('ScriptTablette') ?>
+    <?!= include_('ScriptConnexion') ?>
     <?!= include_('ScriptSaisie') ?>
     <?!= include_('ScriptAlertes') ?>
     <?!= include_('ScriptImpression') ?>

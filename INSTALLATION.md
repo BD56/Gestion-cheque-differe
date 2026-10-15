@@ -62,10 +62,12 @@ Aucun copier-coller de code.
 - L'**équipe de caisse** ne reçoit **que le lien de l'application** (adresse en
   `…/exec`), **jamais** le lien du Google Sheets.
 - Le manager **ne se connecte jamais avec ce compte Google sur une tablette de
-  caisse** : sinon, depuis la tablette, on pourrait ouvrir le Sheet et se passer du
-  code responsable.
-- Les tablettes **n'ont besoin d'aucun compte Google** : chacune est autorisée une
-  fois par le manager avec son code (étape 4).
+  caisse** : sinon, depuis la tablette, on pourrait ouvrir le Sheet et se passer de
+  l'application.
+- L'application se protège par des **comptes** (identifiant + mot de passe) : ceux de
+  la (des) **caisse(s) centrale(s)**, qui a la confiance de la direction. Les
+  caissiers n'ont pas de compte : la caisse centrale connecte leur appareil quand il
+  le faut. Les appareils **n'ont besoin d'aucun compte Google**.
 
 Avec le **compte Google qui détiendra les données** (voir ci-dessus) :
 
@@ -76,26 +78,31 @@ Avec le **compte Google qui détiendra les données** (voir ci-dessus) :
    de nuit**, **purge de l'annuaire** ; les archives sont supprimées 3 ans après la
    clôture de l'offre) et efface tout réglage hérité du modèle.
    Le compte rendu affiche un **code d'activation** (8 chiffres, valable 24 h) : le
-   noter pour l'étape 4. *(Expiré ? Menu 🚀 APPLICATION → 🔑 Code d'activation.)*
+   noter pour l'étape 4. *(Expiré ? Menu 🚀 APPLICATION → 🔑 Code d'activation, tant
+   qu'aucun compte n'existe.)*
    *(Si le menu n'apparaît pas : recharger la page.)*
 3. **Mettre l'application en ligne** : *Extensions → Apps Script → **Déployer** →
    **Nouveau déploiement*** → type **Application Web** :
    - **Exécuter en tant que : Moi**
-   - **Qui a accès : Tout le monde** *(sans compte Google : c'est l'autorisation des
-     tablettes, étape 4, qui protège l'accès)*
+   - **Qui a accès : Tout le monde** *(sans compte Google : ce sont les comptes de
+     l'application, étape 4, qui protègent l'accès)*
 
    → **Déployer** → copier l'**URL** (`…/exec`) : c'est l'adresse de la tablette.
    *(C'est la seule étape que Google ne permet pas d'automatiser simplement.)*
-4. **Sur la 1re tablette**, ouvrir l'URL : l'écran **« 🔒 Tablette non autorisée »**
-   s'affiche.
-   - saisir le **code d'activation** (étape 2), **choisir le code responsable**
-     (**6 chiffres**, connu des seuls responsables) et donner un nom à la tablette
-     (ex. « Caisse centrale 1 ») → **AUTORISER**. Sans le code d'activation, personne
-     ne peut choisir le code responsable, même avec le lien ;
-   - **chaque autre tablette** : ouvrir le même lien, saisir le code, nommer la
-     tablette → **AUTORISER** (une seule fois par tablette).
-   - Une tablette non autorisée ne voit **rien**, même avec le lien.
-5. Puis **⚙️ → Espace responsable** (avec le code) :
+4. **Sur l'appareil de la caisse centrale**, ouvrir l'URL : l'écran **« Première
+   installation »** s'affiche.
+   - saisir le **code d'activation** (étape 2), puis créer le **compte de la caisse
+     centrale** : identifiant (ex. « Caisse centrale 1 ») et mot de passe (8 caractères
+     au moins, deux fois) → **Créer le compte**. Accepter que le navigateur enregistre
+     le mot de passe. Sans le code d'activation, personne ne peut créer ce compte, même
+     avec le lien ;
+   - l'application demande ensuite s'il faut **protéger l'espace responsable par un
+     code à part** (6 chiffres) : sans code, tout compte connecté l'ouvre ;
+   - **chaque autre appareil** : ouvrir le même lien et se connecter (identifiant +
+     mot de passe). D'autres comptes se créent dans **⚙️ → Code & comptes** ;
+   - sans connexion, l'application ne montre **rien**, même avec le lien. La connexion
+     se termine chaque nuit à 3 h.
+5. Puis **⚙️ → Espace responsable** :
    - tuile **🏷️ Réglages** : nom de la structure **avec l'article**
      (« l'Hypermarché X », « la société Y » — lu « L'auteur concède à … »), nom de
      l'offre, titre de l'onglet, libellé et caractère obligatoire du montant (euro),
@@ -118,23 +125,25 @@ Ce nettoyage a lieu à l'installation ou à la première ouverture de l'applicat
 — jamais sur un classeur déjà installé.
 
 ## Bon à savoir
-- **Tablette perdue / volée, ou employé parti avec une tablette** : ⚙️ → Espace
-  responsable → tuile **🔑 Code & tablettes** → **Retirer** (ou « Retirer toutes les
-  tablettes », puis ré-autoriser celles du magasin).
-- **Code responsable** : 6 chiffres. Après un code faux il faut patienter 10 s ;
-  5 codes faux bloquent 15 min. Chaque tablette autorisée a son propre compteur : des
-  codes faux tapés depuis un appareil non autorisé ne bloquent pas l'espace
-  responsable (ils sont signalés en tête de l'espace responsable).
-- **Code responsable oublié** (ou tablette volée) : ouvrir le Google Sheets → panneau
-  ⚙️ (à droite) → **Réinitialiser le code responsable** (réservé aux personnes ayant
-  accès au fichier). Un **code d'activation** s'affiche : sur n'importe quelle tablette,
-  ⚙️ → Espace responsable (ou écran d'autorisation) → saisir ce code puis choisir le
-  nouveau code responsable. Ensuite, retirer la tablette volée (tuile 🔑).
+- **Départ d'un membre de la caisse centrale, appareil perdu ou volé** : ⚙️ → Code &
+  comptes → **Mot de passe** (changer celui du compte : ses connexions ouvertes sont
+  terminées) ou **Retirer** le compte. Changer aussi le code responsable s'il existe.
+- **Mot de passe** : 8 caractères au moins. Après une erreur il faut patienter 10 s ;
+  5 erreurs bloquent CE compte 15 min (les autres comptes ne sont pas touchés).
+- **Code responsable** (facultatif) : 6 chiffres, mêmes protections ; le choisir, le
+  changer ou le retirer dans ⚙️ → Code & comptes.
+- **Plus aucun accès** (mots de passe oubliés) : ouvrir le Google Sheets → panneau ⚙️
+  (à droite) → **Réinitialiser les comptes** (réservé aux personnes ayant accès au
+  fichier) : tous les comptes et le code sont retirés, un **code d'activation**
+  s'affiche et l'application revient à la « Première installation ». **Réinitialiser
+  le code responsable** n'efface que le code (code oublié).
 - **Mode SIGNALER / BLOQUANT** : il est **conservé** d'une offre à l'autre (la clôture
   ne le change pas).
-- **Navigateur de la tablette** : l'autorisation est mémorisée par le navigateur. Si
-  ses données sont effacées (ou en navigation privée), il faut ré-autoriser la
-  tablette (1 minute avec le code).
+- **Navigateur** : la connexion est gardée par le navigateur jusqu'à 3 h du matin.
+  Safari (Mac) et tous les navigateurs d'iPad / iPhone l'oublient quand on les ferme :
+  il faut se reconnecter, le gestionnaire de mots de passe remplit les champs. Ouvrir
+  toujours l'adresse `…/exec` (favori, écran d'accueil), jamais une adresse
+  `…googleusercontent.com` proposée par l'historique.
 - **Ne pas modifier** le Google Sheets à la main : passer par l'application
   (⚙️ → Espace responsable → tuile 📋 Saisies). Si quelqu'un le fait quand même,
   la détection de doublon (`onEdit`) reste active en filet de sécurité.

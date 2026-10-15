@@ -75,7 +75,7 @@ async function ecrans(format) {
     await prendre("9-responsable-code");
     const jeton = env.creerCode("258025").jeton;
     // dans la page : variables de ScriptResponsable.html
-    await page.evaluate("jetonAdmin = " + JSON.stringify(jeton) + "; afficherZoneAdmin();");
+    await page.evaluate("jetonAdmin = " + JSON.stringify(jeton.j) + "; afficherZoneAdmin();");
     await prendre("10-responsable-ensemble");
     await page.click('[data-ecran-lien="saisies"]');
     await prendre("11-responsable-saisies");

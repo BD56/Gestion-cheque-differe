@@ -7,39 +7,24 @@ const { ouvrir } = require("./navigateur");
   try {
     assert.strictEqual(await txt("#txtNomOffre"), "Gestion Chèques Reportés");
     assert.ok(await vis("#formulaireSaisie"), "formulaire visible (dates OK)");
-    // ⚙️ : impression libre, espace responsable verrouillé, création du code
+    // ⚙️ sans code à part : l'espace s'ouvre directement pour le compte connecté
     await page.click('button[title="Panneau de contrôle"]');
-    await page.waitForTimeout(100);
+    await page.waitForTimeout(200);
+    assert.ok((await vis("#zoneAdmin")) && !(await vis("#zoneVerrou")), "ouvert sans code");
+    assert.match(await txt("#adminSous"), /Connecté : Caisse test/);
+    assert.ok(!(await vis("#btnVerrouiller")), "pas de « Verrouiller » sans code");
+    // Code à part (créé par le compte) : impression libre, le reste derrière le code
+    await page.click("#modalParametres .btn-close-modal");
+    assert.ok(env.creerCode("258025").ok);
+    await page.click('button[title="Panneau de contrôle"]');
+    await page.waitForTimeout(150);
     assert.ok((await vis(".btn-print-jour")) && (await vis("#zoneVerrou")) && !(await vis("#zoneAdmin")));
-    assert.match(await txt("#txtVerrou"), /Aucun code/);
-    assert.ok((await vis("#pinConfirme")) && (await vis("#activationVerrou")), "code d'activation demandé");
-    await page.fill("#pinSaisi", "258025");
-    await page.fill("#pinConfirme", "258026");
+    assert.match(await txt("#txtVerrou"), /Saisissez le code responsable/);
+    assert.match(await txt("#compteVerrou"), /Connecté : Caisse test/);
+    await page.fill("#pinSaisi", "2580");
     await page.click("#btnDeverrouiller");
-    assert.match(await txt("#msgVerrou"), /correspondent pas/);
+    assert.match(await txt("#msgVerrou"), /6 chiffres/);
     await page.fill("#pinSaisi", "258025");
-    await page.fill("#pinConfirme", "258025");
-    await page.click("#btnDeverrouiller");
-    assert.match(await txt("#msgVerrou"), /code d'activation/, "sans code d'activation : refusé");
-    await page.fill("#activationVerrou", "0000-0000");
-    await page.click("#btnDeverrouiller");
-    await page.waitForTimeout(150);
-    assert.match(
-      await txt("#msgVerrou"),
-      /activation requis/,
-      "aucun code d'activation généré dans le Sheet"
-    );
-    const act = env.activation(); // le responsable l'obtient dans le Google Sheets
-    await page.fill("#pinSaisi", "258025");
-    await page.fill("#pinConfirme", "258025");
-    await page.fill("#activationVerrou", "0000-0000");
-    await page.click("#btnDeverrouiller");
-    await page.waitForTimeout(150);
-    assert.match(await txt("#msgVerrou"), /incorrect/);
-    assert.strictEqual(env.ctx.etatAdmin().pinDefini, false);
-    await page.fill("#activationVerrou", act);
-    await page.fill("#pinSaisi", "258025");
-    await page.fill("#pinConfirme", "258025");
     await page.click("#btnDeverrouiller");
     await page.waitForTimeout(150);
     assert.ok((await vis("#zoneAdmin")) && !(await vis("#zoneVerrou")), "zone admin ouverte");
@@ -48,7 +33,7 @@ const { ouvrir } = require("./navigateur");
     assert.strictEqual(await page.getAttribute('[data-ecran-lien="ensemble"]', "aria-current"), "true");
     assert.ok(!(await vis(".btn-print-jour")), "impression : dans son propre écran");
     assert.strictEqual(await txt("#kpiSaisies"), "0");
-    assert.strictEqual(await txt("#kpiComptes"), "0"); // session factice, aucun compte créé ici
+    assert.strictEqual(await txt("#kpiComptes"), "1"); // le compte « Caisse test »
     assert.match(await txt("#resumeOperation"), /^Du \d\d\/\d\d au \d\d\/\d\d$/);
     assert.match(await txt("#noteOffre"), /^Jour \d sur 3 · clôture automatique dans la nuit du/);
     assert.ok(!(await page.isVisible("text=OUVRIR GOOGLE SHEETS")));
@@ -104,7 +89,7 @@ const { ouvrir } = require("./navigateur");
     await page.waitForTimeout(100);
     assert.ok(await page.isVisible(".btn-print-jour"), "réouverture : impression libre");
     assert.ok(!(await vis("#railAdmin")), "verrouillé : pas de menu");
-    assert.ok((await vis("#zoneVerrou")) && !(await vis("#pinConfirme")));
+    assert.ok(await vis("#zoneVerrou"));
     assert.strictEqual(await txt("#btnDeverrouiller"), "Déverrouiller");
     await page.fill("#pinSaisi", "111111");
     await page.press("#pinSaisi", "Enter");

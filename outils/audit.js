@@ -288,7 +288,7 @@ const ETATS = [
     "17-responsable-ensemble",
     async (p, env) => {
       const j = env.creerCode("258025").jeton;
-      await p.evaluate("jetonAdmin = " + JSON.stringify(j) + "; afficherZoneAdmin()");
+      await p.evaluate("jetonAdmin = " + JSON.stringify(j.j) + "; afficherZoneAdmin()");
     },
   ],
   [
@@ -339,17 +339,14 @@ const ETATS = [
   [
     "25-responsable-code-comptes",
     async (p, env) => {
-      env.props.setProperty(
-        "COMPTES",
-        JSON.stringify([
-          { id: "c1", identifiant: "Caisse test", creeLe: "13/10/2026 09:12" },
-          {
-            id: "c2",
-            identifiant: "Caisse centrale 2 — accueil et service client",
-            creeLe: "13/10/2026 09:30",
-          },
-        ])
-      );
+      // le compte connecté (« Caisse test ») + un second, au nom long
+      const comptes = JSON.parse(env.props.getProperty("COMPTES") || "[]");
+      comptes.push({
+        id: "c2",
+        identifiant: "Caisse centrale 2 — accueil et service client",
+        creeLe: "13/10/2026 09:30",
+      });
+      env.props.setProperty("COMPTES", JSON.stringify(comptes));
       await p.click('[data-ecran-lien="code"]');
       await p.waitForTimeout(200);
       await p.click("#listeComptes > div:first-child button");

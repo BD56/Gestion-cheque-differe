@@ -1,5 +1,5 @@
 <!-- Espace responsable : code, corrections, archives, réglages, comptes. -->
-<script data-version="2026.10.15-1659">
+<script data-version="2026.10.15-1725">
   // =================================================================
   // --- ESPACE RESPONSABLE (code PIN) ---
   // Le jeton n'est gardé qu'en mémoire : il disparaît à la fermeture du
@@ -25,7 +25,7 @@
     runner[nomFonction].apply(runner, args.concat([{ j: jetonAdmin, c: SESSION }]));
   }
 
-  // --- Listes de l'espace responsable (saisies, archives, appareils) ---
+  // --- Listes de l'espace responsable (saisies, archives, comptes) ---
   // Préparées avant le code (aperçu, plus bas) puis rechargées dès le déverrouillage : à
   // l'ouverture d'un écran, la liste déjà reçue s'affiche tout de suite puis est
   // rechargée (état le plus récent).
@@ -78,8 +78,8 @@
   }
 
   // --- Aperçu : préparé à l'appui sur ⚙️, pendant que le code est tapé ---
-  // Lectures qu'un appareil autorisé obtient déjà sans code (saisies, chiffres, réglages,
-  // noms des archives, appareils) : rien n'est affiché avant que le serveur accepte le
+  // Lectures qu'un compte connecté obtient déjà sans code (saisies, chiffres, réglages,
+  // noms des archives, comptes) : rien n'est affiché avant que le serveur accepte le
   // code ; ensuite tout apparaît aussitôt, puis est rechargé. Oublié à la fermeture.
   let apercuAdmin = null,
     seqApercu = 0;
@@ -126,19 +126,12 @@
     google.script.run
       .withSuccessHandler(function (etat) {
         pinDefini = etat.pinDefini;
-        // Pas de code à part : un compte connecté ouvre l'espace directement
-        if (!pinDefini && etat.comptes) {
+        // Pas de code à part : le compte connecté ouvre l'espace directement
+        if (!pinDefini) {
           ouvrirSansCode();
           return;
         }
-        document.getElementById("txtVerrou").textContent = pinDefini
-          ? "Saisissez le code responsable."
-          : "Aucun code n'existe : saisissez le code d'activation affiché dans le Google Sheets (menu 🚀 APPLICATION → 🔑 Code d'activation), puis choisissez le code responsable (6 chiffres).";
-        document.getElementById("pinConfirme").style.display = pinDefini ? "none" : "block";
-        document.getElementById("activationVerrou").style.display = pinDefini ? "none" : "block";
-        document.getElementById("btnDeverrouiller").textContent = pinDefini
-          ? "Déverrouiller"
-          : "Créer le code";
+        document.getElementById("txtVerrou").textContent = "Saisissez le code responsable.";
       })
       .withFailureHandler(function () {
         document.getElementById("txtVerrou").textContent = "Serveur injoignable : vérifiez le Wi-Fi.";
@@ -171,40 +164,18 @@
       msg.textContent = "Le code doit contenir exactement 6 chiffres.";
       return;
     }
-    const surReponse = function (r) {
-      document.getElementById("pinSaisi").value = "";
-      document.getElementById("pinConfirme").value = "";
-      if (r && r.ok) {
-        jetonAdmin = r.jeton;
-        afficherZoneAdmin();
-      } else msg.textContent = (r && r.message) || "Refusé.";
-    };
-    const surErreur = function (err) {
-      if (!siNonAutorisee(err)) msg.textContent = "Erreur : " + (err && err.message ? err.message : err);
-    };
-    if (!pinDefini) {
-      if (pin !== document.getElementById("pinConfirme").value.trim()) {
-        msg.textContent = "Les deux codes ne correspondent pas.";
-        return;
-      }
-      const activation = document.getElementById("activationVerrou").value.trim();
-      if (activation.replace(/\D/g, "").length !== 8) {
-        msg.textContent = "Saisissez le code d'activation (8 chiffres) affiché dans le Google Sheets.";
-        return;
-      }
-      google.script.run
-        .withSuccessHandler(function (r) {
-          if (r && r.ok) document.getElementById("activationVerrou").value = "";
-          surReponse(r);
-        })
-        .withFailureHandler(surErreur)
-        .definirPin(pin, null, SESSION, activation);
-    } else {
-      google.script.run
-        .withSuccessHandler(surReponse)
-        .withFailureHandler(surErreur)
-        .ouvrirSessionAdmin(pin, SESSION);
-    }
+    google.script.run
+      .withSuccessHandler(function (r) {
+        document.getElementById("pinSaisi").value = "";
+        if (r && r.ok) {
+          jetonAdmin = r.jeton;
+          afficherZoneAdmin();
+        } else msg.textContent = (r && r.message) || "Refusé.";
+      })
+      .withFailureHandler(function (err) {
+        if (!siNonAutorisee(err)) msg.textContent = "Erreur : " + (err && err.message ? err.message : err);
+      })
+      .ouvrirSessionAdmin(pin, SESSION);
   }
 
   function verrouillerAdmin() {
@@ -281,7 +252,7 @@
   }
 
   // Points d'attention en tête de l'espace responsable : robot de nuit absent ou
-  // arrêté, codes faux tapés depuis des appareils non autorisés.
+  // arrêté.
   function afficherAlertesAdmin(infos) {
     const lignes = [],
       r = infos.robots || {};
@@ -296,14 +267,6 @@
           ". Ouvrez le Google Sheets → menu 🚀 APPLICATION → 🧰 Installer (et acceptez les autorisations)."
       );
     }
-    const e = infos.essaisInconnus || {};
-    if (e.n)
-      lignes.push(
-        e.n +
-          " code(s) faux tapé(s) depuis des appareils non autorisés (dernier le " +
-          e.dernier +
-          "). Si ce n'était pas vous, changez le code (menu Code & appareils)."
-      );
     const z = document.getElementById("alerteAdmin");
     z.textContent = "";
     lignes.forEach(function (t) {
@@ -966,7 +929,7 @@
   }
 
   // Entrée dans les champs de code = valider
-  ["pinSaisi", "pinConfirme", "activationVerrou"].forEach(function (id) {
+  ["pinSaisi"].forEach(function (id) {
     document.getElementById(id).addEventListener("keydown", function (e) {
       if (e.key === "Enter") {
         e.preventDefault();

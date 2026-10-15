@@ -169,11 +169,19 @@ assert.doesNotMatch(e.ctx.setDatesOperation("2099-01-01", "2099-01-31", j2), /�
 e = env0("SIGNALER", [[t, "DUPONT", "JEAN", "", "10", ""]]);
 assert.strictEqual(J(e.ctx.cacheVerif_()).offre.length, 1);
 
-// 10) Panneau : retirer toutes les tablettes (éditeur seulement)
+// 10) « Installer » efface les anciennes autorisations d'appareils (remplacées par les comptes)
 e = env0();
-assert.throws(() => e.ctx.retirerToutesTablettesPanneau(), /Google Sheets/);
-e.props.setProperty("TABLETTES", JSON.stringify([{ id: "x", nom: "T", hash: "h" }]));
+Object.assign(e.props._store, {
+  TABLETTES: JSON.stringify([{ id: "x", nom: "T", hash: "h" }]),
+  TABLETTE_VUE_x: "13/10/2026",
+  PIN_ESSAIS_T_x: "{}",
+  PIN_ESSAIS_INCONNU: "{}",
+  PIN_INCONNUS: "{}",
+  PIN_ESSAIS_C_y: "{}",
+});
 e.activeEmail = e.owner;
-assert.match(e.ctx.retirerToutesTablettesPanneau(), /retirés/);
-assert.strictEqual(e.props._store.TABLETTES, "[]");
+assert.match(e.ctx.installer(), /Anciennes autorisations d'appareils effacées/);
+assert.ok(!Object.keys(e.props._store).some((k) => /TABLETTE|INCONNU|PIN_ESSAIS_T_/.test(k)));
+assert.ok("PIN_ESSAIS_C_y" in e.props._store, "compteurs des comptes gardés");
+assert.doesNotMatch(e.ctx.installer(), /Anciennes autorisations/, "rien la 2e fois");
 console.log("test_lot2 : OK");

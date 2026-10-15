@@ -209,7 +209,14 @@ identique avant/après : `n-ijetbkxwto6cqlhbmed6rj7j4kexnxcgupggffa-0lu-script�
   tous les droits (y compris créer des comptes) ; B (qui tape le mot de passe à la
   création) : question reformulée ; D : déconnexion chaque nuit (idée de Bryan :
   minuit) — avis de Claude : bien, plutôt 3 h (fermetures tardives, inventaires),
-  saisie en cours jamais perdue. En attente : B, D, puis découpage en étapes.
+  saisie en cours jamais perdue. → Bryan : ✅ **3 h**. B : quiproquo levé — les
+  comptes sont ceux de la (des) CAISSE(S) CENTRALE(S), pas de chaque caissier ⇒ qui
+  crée un compte choisit son mot de passe, modifiable ensuite dans l'espace ; les
+  caissiers qui utilisent parfois le site : la caisse centrale connecte l'appareil
+  (le navigateur peut retenir le mot de passe ⇒ comme un appareil autorisé).
+  Découpage en 4 étapes proposé (serveur comptes + sessions ; page connexion +
+  1re installation ; espace « Code & comptes » + panneau du Sheet + textes ;
+  retrait de l'autorisation des appareils + docs). En attente du « go ».
 - **Corrections déjà faites à cette occasion (14/10)** : erreur passagère de lecture
   de la liste ≠ « non autorisé » ; clé jamais effacée sur un refus ; remplacement
   sous le même nom (voir historique §0).

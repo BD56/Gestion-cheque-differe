@@ -56,6 +56,15 @@
   un problème pour Mac / iPad / Safari (autres magasins). Bryan : « attends, on
   réfléchit » ⇒ NE RIEN CODER sur ce sujet sans son « go ». À vérifier sur place : le
   navigateur réel des tablettes Android (Chrome ? Samsung Internet ?).
+  Pistes discutées (15/10, RIEN codé) : clé dans l'adresse (déconseillée : adresse
+  qui fuit = accès, dont impression « Toute l'offre ») ; site hébergé à part
+  (écarté par Bryan : centralisation) ; code d'équipe quand la clé a disparu (B,
+  simple et sûr, en réserve) ; réglage Safari « Empêcher le suivi intersites » (non
+  testé) ; app web « Ajouter au Dock » : ❌ testée par Bryan, ne garde PAS
+  l'autorisation. Bryan envisage l'authentification par COMPTE GOOGLE : limites
+  Apps Script (comptes gmail + « exécuter en tant que moi » ⇒ e-mail vide ;
+  « exécuter en tant qu'utilisateur » ⇒ chaque compte doit avoir accès au Sheet ;
+  Workspace même domaine ⇒ propre). En discussion.
 - **Ensuite (sur demande)** : fusions, documentation (`docs/A_REDIGER.md`, captures via
   `outils/captures.js`), migration de Vannes (`DEPLOIEMENT.md`).
 - **Leçons de cette période** : (1) ne pas réorganiser des écrans sans validation (la

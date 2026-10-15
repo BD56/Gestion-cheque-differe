@@ -1,5 +1,5 @@
 <!-- Connexion (comptes), démarrage, aide, panneau, mentions légales. -->
-<script data-version="2026.10.15-2028">
+<script data-version="2026.10.15-2224">
   // =================================================================
   // --- CONNEXION (compte de la caisse centrale) ---
   // La session reçue à la connexion est gardée dans le navigateur et envoyée à
@@ -158,24 +158,21 @@
       });
     }, 500);
     if (premier) {
-      // 1er compte : code responsable à part ? (ou, s'il en existe un d'avant : le
-      // garder, en choisir un autre, ne plus en demander)
-      jetonInstallation = r.jeton;
+      // 1er compte : code responsable à part ? S'il en existe un d'avant, on le dit
+      // seulement : le changer demande ce code (le code d'activation n'en tient pas lieu).
       document.getElementById("formConnexion").style.display = "none";
       document.getElementById("msgConnexion").textContent = "";
       document.getElementById("titreConnexion").textContent = "Compte créé";
       document.getElementById("txtConnexion").textContent =
         "« " + COMPTE + " » est connecté sur cet appareil.";
       document.getElementById("txtCodeAPart").textContent = pinDefini
-        ? "Un code responsable existe déjà (choisi avant) : il est demandé pour ouvrir l'espace responsable. Le garder, en choisir un autre, ou ne plus en demander (tout compte connecté ouvrira alors l'espace) ? Modifiable ensuite dans l'espace responsable."
+        ? "Un code responsable existe déjà (choisi avant) : il sera demandé pour ouvrir l'espace responsable. Pour le changer ou ne plus en demander : espace responsable → Code & comptes, avec ce code. Vous ne le connaissez pas ? Le panneau ⚙️ du Google Sheets le réinitialise."
         : "Protéger l'espace responsable par un code à part (6 chiffres) ? Sans code, tout compte connecté l'ouvre directement. Modifiable ensuite dans l'espace responsable.";
-      document.getElementById("btnCodeAPartOui").textContent = pinDefini
-        ? "Choisir un autre code"
-        : "Oui, choisir un code";
+      document.getElementById("btnCodeAPartOui").style.display = pinDefini ? "none" : "";
+      document.getElementById("btnCodeAPartNon").style.display = pinDefini ? "none" : "";
       document.getElementById("btnCodeAPartGarder").style.display = pinDefini ? "" : "none";
-      document.getElementById("btnCodeAPartNon").textContent = pinDefini
-        ? "Ne plus demander de code"
-        : "Non, pas de code";
+      document.getElementById("btnCodeAPartOui").textContent = "Oui, choisir un code";
+      document.getElementById("btnCodeAPartNon").textContent = "Non, pas de code";
       document.getElementById("champsCodeAPart").style.display = "none";
       document.getElementById("blocCodeAPart").style.display = "block";
       return;
@@ -190,35 +187,13 @@
     a.forEach(envoyerEnArrierePlan);
   }
 
-  // Après le 1er compte : « choisir » le code (2 fois) ; « garder » celui d'avant ;
-  // « aucun » = pas de code à part (celui d'avant est retiré). Le jeton de la 1re
-  // installation (code d'activation) permet de remplacer un code qu'on ne connaît pas.
-  let jetonInstallation = null;
+  // Après le 1er compte, sans code d'avant : « choisir » le code (2 fois) ou « aucun ».
+  // Avec un code d'avant : « garder » (seul choix ici).
   function choisirCodeAPart(choix) {
     const msg = document.getElementById("msgCodeAPart");
     msg.textContent = "";
-    const jeton = { j: jetonInstallation, c: SESSION };
-    const erreur = function (err) {
-      if (!siNonAutorisee(err)) msg.textContent = "Erreur : " + (err && err.message ? err.message : err);
-    };
-    if (choix === "garder" || (choix === "aucun" && !pinDefini)) {
-      jetonInstallation = null;
+    if (choix !== "choisir") {
       fermerEcranConnexion();
-      return;
-    }
-    if (choix === "aucun") {
-      google.script.run
-        .withSuccessHandler(function (r) {
-          if (!r || !r.ok) {
-            msg.textContent = (r && r.message) || "Refusé.";
-            return;
-          }
-          pinDefini = false;
-          jetonInstallation = null;
-          fermerEcranConnexion();
-        })
-        .withFailureHandler(erreur)
-        .retirerCodeResponsable(jeton, SESSION);
       return;
     }
     const champs = document.getElementById("champsCodeAPart");
@@ -244,13 +219,14 @@
           return;
         }
         pinDefini = true;
-        jetonInstallation = null;
         document.getElementById("pinAPart").value = "";
         document.getElementById("pinAPart2").value = "";
         fermerEcranConnexion();
       })
-      .withFailureHandler(erreur)
-      .definirPin(pin, jeton, SESSION);
+      .withFailureHandler(function (err) {
+        if (!siNonAutorisee(err)) msg.textContent = "Erreur : " + (err && err.message ? err.message : err);
+      })
+      .definirPin(pin, null, SESSION);
   }
 
   // Se déconnecter : cet appareil oublie la session (un autre compte pourra se connecter)

@@ -72,9 +72,7 @@ assert.ok(!JSON.stringify(P).includes(s1), "session jamais stockée");
 assert.ok(!P.ACTIVATION_HASH, "code d'activation à usage unique");
 assert.deepStrictEqual(J(c.etatAdmin()), { pinDefini: false, comptes: true });
 assert.match(J(c.premierCompte(env.activation(), "Autre", "motdepasse2")).message, /Un compte existe déjà/);
-// Le 1er compte reçoit un jeton responsable (code d'activation = accès au Sheet)
-assert.ok(r.jeton, "jeton de la 1re installation");
-assert.ok(J(c.getInfosAdmin({ j: r.jeton, c: s1 })).config);
+assert.ok(!r.jeton, "le code d'activation ne donne que le compte, pas l'espace responsable");
 
 // --- La session ouvre tout ce que la page utilise ---
 assert.strictEqual(J(c.traiterSaisie("DUPONT", "JEAN", "P1", "10", "", s1)).status, "SUCCES");
@@ -223,5 +221,21 @@ env2.props._store.ADMIN_PIN_HASH = "ancien-code"; // ancien Sheet : code respons
 env2.ctx.afficherCodeActivation();
 assert.match(env2.alertes[0], /Code d'activation : \d{4}-\d{4}[\s\S]*créer le compte de la caisse centrale/);
 env.activeEmail = "";
+
+// --- 1re installation sur un Sheet qui a déjà un code responsable : il reste exigé ---
+const env3 = makeEnv({ repo: process.argv[2], sessionReelle: true });
+env3.activeEmail = "editeur@example.com";
+assert.ok(J(env3.ctx.definirPin("111111", null, null)).ok, "code d'avant (panneau du Sheet)");
+env3.activeEmail = "";
+const s3b = J(env3.ctx.premierCompte(env3.activation(), "Caisse centrale 1", "motdepasse1")).session;
+assert.match(J(env3.ctx.ouvrirSessionAdmin("", s3b)).message, /Code faux/, "code toujours demandé");
+assert.throws(
+  () => env3.ctx.definirPin("222222", null, s3b),
+  /ADMIN_REQUIS/,
+  "pas de remplacement sans le code"
+);
+assert.throws(() => env3.ctx.retirerCodeResponsable(null, s3b), /ADMIN_REQUIS/);
+for (const k in env3.props._store) if (k.indexOf("PIN_ESSAIS_") === 0) delete env3.props._store[k];
+assert.ok(J(env3.ctx.ouvrirSessionAdmin("111111", s3b)).ok, "avec le code d'avant : ouvert");
 
 console.log("✅ test_comptes : OK");

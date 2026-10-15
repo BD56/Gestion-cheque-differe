@@ -2,7 +2,7 @@
 
 > Fichier de reprise après compactage du contexte. À lire **avec** `AGENTS.md` (référence
 > canonique) et `docs/retours-vibe/decisions/2026-10-11_generalisation.md` (décisions).
-> Dernière mise à jour : 2026-10-15 (version 2026.10.15-2028, comptes étapes 1-4 FAITES, modèle
+> Dernière mise à jour : 2026-10-15 (version 2026.10.15-2224, comptes étapes 1-4 FAITES, modèle
 > « code responsable = caisse centrale »).
 
 ## ▶️ ÉTAT ACTUEL — à lire d'abord
@@ -12,7 +12,7 @@
   « Comptoir » (branche de travail actuelle, tout est poussé)**. Aucune fusion faite,
   aucune pull request. Ordre prévu (sur demande de Bryan seulement) : `design` →
   `refonte` → `generalisation` → `main` / migration Vannes.
-- **Version actuelle sur `design`** : 2026.10.15-2028 (40 séries de tests vertes,
+- **Version actuelle sur `design`** : 2026.10.15-2224 (40 séries de tests vertes,
   ESLint et Prettier propres). Numéro renouvelé par Claude à chaque push de code
   (`npm run nouvelle-version`).
 - **Bryan teste** sur le Sheet « Gestion Chèques Différés — REFONTE (test) » depuis
@@ -266,6 +266,13 @@ identique avant/après : `n-ijetbkxwto6cqlhbmed6rj7j4kexnxcgupggffa-0lu-script�
   réponse donnée (HTTPS ; mot de passe vu par Google seulement ; empreinte dans les
   propriétés lisibles par les éditeurs ; session dans le navigateur ≤ 3 h ; trousseau
   et synchro iCloud ; pas de « déconnecter partout » sauf changer le mot de passe).
+  Puis Bryan : « est-ce réellement sûr ? » → Claude reconnaît 2 faiblesses : (1) le
+  pouvoir passait des éditeurs au DÉTENTEUR du code d'activation (fuite ⇒ remplacer le
+  code sans le connaître) ; (2) le jeton remis ouvrait TOUT l'espace 10 min (plus que
+  annoncé). Option A choisie (« go ») ⇒ version 2026.10.15-2224 : plus de jeton à la 1re
+  installation ; code d'avant seulement SIGNALÉ (« Continuer ») ; le changer demande ce
+  code ; inconnu : panneau du Sheet. Leçon (7) : annoncer EXACTEMENT ce qu'un
+  raccourci de sécurité permet (ici « changer le code » cachait « tout l'espace »).
 - **Corrections déjà faites à cette occasion (14/10)** : erreur passagère de lecture
   de la liste ≠ « non autorisé » ; clé jamais effacée sur un refus ; remplacement
   sous le même nom (voir historique §0).

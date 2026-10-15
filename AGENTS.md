@@ -290,11 +290,11 @@ Décision : `docs/retours-vibe/decisions/2026-10-11_generalisation.md`.
   Tests : `env.connecter()` (vrai compte « Caisse test »), `env.creerCode` → jeton
   `{ j, c }` ; options `sessionReelle` / `sansSession` ; test_tablettes retiré (ses
   contrôles utiles sont dans test_comptes).
-  **1re installation sur un Sheet qui a déjà un code responsable** (ex. Vannes, ou
-  Sheet de test) : « Un code responsable existe déjà » → Garder / Choisir un autre
-  code / Ne plus demander de code. `premierCompte` renvoie un jeton responsable (10 min)
-  : le code d'activation prouve l'accès au Sheet (qui permet déjà de réinitialiser le
-  code), le 1er compte peut donc remplacer un code qu'il ne connaît pas.
+  **1re installation sur un Sheet qui a déjà un code responsable** : l'écran le DIT
+  seulement (« il sera demandé… ; inconnu : le panneau du Sheet le réinitialise »,
+  bouton Continuer). Le code d'activation ne donne QUE le 1er compte : jamais de
+  remplacement d'un code existant sans le connaître (décision de Bryan, 15/10 : une
+  fuite du code d'activation ne doit pas ouvrir l'espace responsable).
 - **Code d'activation** (lot 1 de l'audit) : créer le code responsable (aucun code :
   1re installation ou après « Réinitialiser ») exige un code à 8 chiffres affiché
   **uniquement dans le Google Sheets** (menu « 🧰 Installer », « 🔑 Code d'activation »,

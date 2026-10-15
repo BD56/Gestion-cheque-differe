@@ -285,10 +285,12 @@
       });
 
       el("formulaire").addEventListener("submit", function (e) {
-        const autreMethode = e.submitter && e.submitter.id === "btnAutreMethode";
+        // Enregistrement : envoi RÉEL vers le cadre caché (doPost) — seule méthode qui
+        // déclenche la proposition de Safari (essai de Bryan, 15/10). « L'autre méthode »
+        // = événement d'envoi seul, sans envoi (Safari ne propose rien).
+        const sansEnvoi = e.submitter && e.submitter.id === "btnAutreMethode";
         const cle = el("cle").value.trim();
-        if (autreMethode && adresseExec && cle) {
-          // envoi réel vers le cadre caché (doPost)
+        if (mode === "creation" && !sansEnvoi && adresseExec && cle) {
           this.action = adresseExec;
           this.target = "cibleEssai";
         } else {

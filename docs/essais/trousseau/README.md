@@ -24,6 +24,9 @@ donnée de client, une fausse clé courte (ex. `3f9a-07c2-b1d4`).
   passe ⇒ écran vert **« Connecté »** (avec « Reconnu par : … »).
 - **Première fois ? Créer l'appareil d'essai** : « 1. Créer la clé » puis
   « 2. Enregistrer » ⇒ le navigateur doit proposer d'enregistrer le mot de passe.
+  « 2. Enregistrer » fait un VRAI envoi du formulaire (vers un cadre caché, `doPost`) :
+  c'est la seule méthode qui marche sous Safari Mac (essai du 15/10 ; l'événement
+  d'envoi seul, « l'autre méthode », ne déclenche rien).
 - À l'ouverture, si le navigateur a gardé la clé ⇒ « Connecté » tout de suite
   (« la mémoire du navigateur »). Sinon ⇒ écran Connexion.
 - **Se déconnecter** vide la mémoire du navigateur (comme Safari quitté).

@@ -164,6 +164,14 @@ identique avant/après : `n-ijetbkxwto6cqlhbmed6rj7j4kexnxcgupggffa-0lu-script�
   = créer + enregistrer ; « Se déconnecter » vide la mémoire ; ancienne clé
   toujours valable (même propriété CLE_ESSAI). Essai demandé : Safari Mac, iPad,
   Chrome.
+  **Résultat Safari Mac (Bryan, 15/10)** : méthode 2 (VRAI envoi du formulaire vers
+  un cadre caché, `doPost`) ⇒ Safari propose d'enregistrer ✅ ; méthode 1 (événement
+  submit + preventDefault, sans envoi) ⇒ RIEN. Conséquence pour l'app : l'étape
+  « Enregistrer » devra faire un vrai POST vers un cadre caché ⇒ ajouter un `doPost`
+  minimal (ne fait rien, ne journalise pas la clé ; POST et non GET pour que la clé
+  ne soit jamais dans une adresse). Page d'essai : « 2. Enregistrer » = méthode 2 par
+  défaut. Restent à rapporter : reconnexion après Cmd+Q (écran vert ?), nom du site
+  dans « Mots de passe », iPad, Chrome.
 - **Corrections déjà faites à cette occasion (14/10)** : erreur passagère de lecture
   de la liste ≠ « non autorisé » ; clé jamais effacée sur un refus ; remplacement
   sous le même nom (voir historique §0).

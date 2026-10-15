@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 16px;
+        background: #f6f5f1;
+        color: #1d1d1b;
+        font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      }
+      main {
+        max-width: 560px;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 22px;
+        margin: 0 0 4px;
+      }
+      .sous-titre {
+        color: #5f5e58;
+        margin: 0 0 16px;
+      }
+      .carte {
+        background: #fff;
+        border: 1px solid #e3e1d9;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 16px;
+      }
+      .carte h2 {
+        font-size: 17px;
+        margin: 0 0 8px;
+      }
+      label {
+        display: block;
+        font-weight: 600;
+        margin: 12px 0 4px;
+      }
+      input {
+        width: 100%;
+        font: inherit;
+        padding: 10px 12px;
+        border: 1px solid #cfccc2;
+        border-radius: 8px;
+        background: #fff;
+      }
+      .boutons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 14px;
+      }
+      button {
+        font: inherit;
+        font-weight: 600;
+        padding: 10px 14px;
+        border-radius: 8px;
+        border: 1px solid #1d1d1b;
+        background: #1d1d1b;
+        color: #fff;
+        cursor: pointer;
+      }
+      button.sec {
+        background: #fff;
+        color: #1d1d1b;
+      }
+      .cle {
+        font: 600 20px/1.2 ui-monospace, Menlo, monospace;
+        letter-spacing: 1px;
+      }
+      #resultat {
+        min-height: 1.45em;
+        margin-top: 12px;
+        font-weight: 600;
+      }
+      .ok {
+        color: #17703a;
+      }
+      .ko {
+        color: #b3261e;
+      }
+      ol {
+        padding-left: 20px;
+        margin: 0;
+      }
+      li + li {
+        margin-top: 6px;
+      }
+      dl {
+        display: grid;
+        grid-template-columns: max-content 1fr;
+        gap: 4px 12px;
+        margin: 0;
+        font-size: 14px;
+      }
+      dt {
+        color: #5f5e58;
+      }
+      dd {
+        margin: 0;
+        word-break: break-all;
+      }
+      iframe {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Essai trousseau</h1>
+      <p class="sous-titre">
+        Safari garde-t-il une clé dans « Mots de passe » quand il oublie le stockage de la page ?
+      </p>
+
+      <div class="carte">
+        <h2>Cet appareil</h2>
+        <dl>
+          <dt>Mémoire du navigateur</dt>
+          <dd id="diagMemoire">…</dd>
+          <dt>Adresse technique</dt>
+          <dd id="diagAdresse">…</dd>
+          <dt>Dans un cadre</dt>
+          <dd id="diagCadre">…</dd>
+          <dt>Navigateur</dt>
+          <dd id="diagNavigateur">…</dd>
+        </dl>
+      </div>
+
+      <form class="carte" id="formulaire" method="post" autocomplete="on">
+        <h2>Clé de l'appareil</h2>
+        <label for="nom">Nom de l'appareil</label>
+        <input id="nom" name="username" type="text" autocomplete="username" value="Essai Mac" />
+        <label for="cle">Clé</label>
+        <input id="cle" name="password" type="password" autocomplete="current-password" />
+        <p id="cleVisible" class="cle" hidden></p>
+        <div class="boutons">
+          <button type="button" class="sec" id="btnCreer">1. Créer une clé</button>
+          <button type="submit" id="btnMethode1">2. Enregistrer (méthode 1)</button>
+          <button type="submit" class="sec" id="btnMethode2">Enregistrer (méthode 2)</button>
+          <button type="button" class="sec" id="btnVerifier">Vérifier la clé</button>
+        </div>
+        <p id="resultat"></p>
+      </form>
+      <iframe name="cibleEssai" title="Envoi du formulaire (méthode 2)"></iframe>
+
+      <div class="carte">
+        <h2>Déroulé</h2>
+        <ol>
+          <li>« Créer une clé », puis « Enregistrer (méthode 1) ». Safari propose-t-il d'enregistrer le mot de passe ? Si oui, acceptez.</li>
+          <li>Sinon : « Enregistrer (méthode 2) ». Sinon encore : effacez le champ Clé, retapez la clé affichée à la main, puis méthode 1.</li>
+          <li>Quittez Safari (Cmd+Q), rouvrez cette page : « Mémoire du navigateur » doit dire « vide ».</li>
+          <li>Touchez le champ Nom ou Clé : Safari propose-t-il « Essai Mac » ? Choisissez-le, puis « Vérifier la clé ».</li>
+          <li>Dans l'app « Mots de passe » (ou Safari › Réglages › Mots de passe) : sous quel site la clé est-elle rangée ?</li>
+        </ol>
+      </div>
+    </main>
+
+    <script>
+      const MARQUEUR = "cdEssaiTrousseau";
+      let adresseExec = "";
+
+      function lireMarqueur() {
+        try {
+          return window.localStorage.getItem(MARQUEUR);
+        } catch (e) {
+          return "illisible";
+        }
+      }
+      function ecrireMarqueur(v) {
+        try {
+          window.localStorage.setItem(MARQUEUR, v);
+        } catch (e) {
+          // stockage refusé : le diagnostic l'affiche
+        }
+      }
+      function majDiagnostic() {
+        const m = lireMarqueur();
+        document.getElementById("diagMemoire").textContent =
+          m === null
+            ? "vide (rien de gardé depuis la dernière ouverture)"
+            : m === "illisible"
+              ? "inaccessible"
+              : "gardée (clé créée le " + m + ")";
+        document.getElementById("diagAdresse").textContent = location.hostname;
+        let cadre = "non";
+        try {
+          cadre = window.self !== window.top ? "oui" : "non";
+        } catch (e) {
+          cadre = "oui (autre site)";
+        }
+        document.getElementById("diagCadre").textContent = cadre;
+        document.getElementById("diagNavigateur").textContent = navigator.userAgent;
+      }
+      function resultat(texte, classe) {
+        const r = document.getElementById("resultat");
+        r.textContent = texte;
+        r.className = classe || "";
+      }
+      function erreur(err) {
+        resultat("Erreur : " + (err && err.message ? err.message : err), "ko");
+      }
+
+      document.getElementById("btnCreer").addEventListener("click", function () {
+        resultat("…");
+        google.script.run
+          .withSuccessHandler(function (cle) {
+            document.getElementById("cle").value = cle;
+            const visible = document.getElementById("cleVisible");
+            visible.textContent = cle;
+            visible.hidden = false;
+            ecrireMarqueur(new Date().toLocaleString("fr-FR"));
+            majDiagnostic();
+            resultat("Clé créée. Étape suivante : « Enregistrer (méthode 1) ».");
+          })
+          .withFailureHandler(erreur)
+          .creerCleEssai();
+      });
+
+      // Méthode 1 : événement d'envoi, sans changer de page.
+      // Méthode 2 : envoi réel du formulaire vers un cadre caché (doPost).
+      document.getElementById("formulaire").addEventListener("submit", function (e) {
+        const methode2 = e.submitter && e.submitter.id === "btnMethode2";
+        if (!document.getElementById("cle").value) {
+          e.preventDefault();
+          resultat("Créez d'abord une clé (ou choisissez celle que Safari propose).", "ko");
+          return;
+        }
+        if (methode2 && adresseExec) {
+          this.action = adresseExec;
+          this.target = "cibleEssai";
+          resultat("Envoyé (méthode 2). Safari a-t-il proposé d'enregistrer le mot de passe ?");
+          return;
+        }
+        e.preventDefault();
+        resultat("Envoyé (méthode 1). Safari a-t-il proposé d'enregistrer le mot de passe ?");
+      });
+
+      document.getElementById("btnVerifier").addEventListener("click", function () {
+        resultat("…");
+        google.script.run
+          .withSuccessHandler(function (r) {
+            if (r === "ok") resultat("✅ C'est bien la clé créée : le trousseau l'a gardée.", "ok");
+            else if (r === "aucune") resultat("Aucune clé créée sur ce projet pour l'instant.", "ko");
+            else resultat("❌ Ce n'est pas la dernière clé créée (champ vide ou autre clé).", "ko");
+          })
+          .withFailureHandler(erreur)
+          .verifierCleEssai(document.getElementById("cle").value);
+      });
+
+      majDiagnostic();
+      google.script.run
+        .withSuccessHandler(function (url) {
+          adresseExec = url;
+        })
+        .adresseEssai();
+    </script>
+  </body>
+</html>

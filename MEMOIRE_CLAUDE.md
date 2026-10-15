@@ -27,7 +27,9 @@
   **§0 ter**. DÉCIDÉ par Bryan : **code responsable = code de l'équipe de caisse
   centrale** (elle réautorise elle-même ses Mac / iPad) ; RIEN à coder pour ça
   (documentation seulement, plus tard). Journal des actions sensibles : proposé, NON
-  décidé. Ne rien coder sans « go ». Avant (14/10) : remplacement sous le même nom fait (1645) ; phrase
+  décidé. Ne rien coder sans « go ». Puis piste « gestionnaire de mots de passe »
+  (trousseau Safari) : **page d'essai faite** (`docs/essais/trousseau/`, « go » de
+  Bryan) ; ATTENDU : résultats de Bryan (voir §0 ter). Avant (14/10) : remplacement sous le même nom fait (1645) ; phrase
   « Noms abrégés et N° masqués… » et diagnostic d'autorisation retirés du site
   (1653). Rien en cours de codage.
 - **Ensuite (sur demande)** : fusions, documentation (`docs/A_REDIGER.md`, captures via
@@ -124,6 +126,28 @@ identique avant/après : `n-ijetbkxwto6cqlhbmed6rj7j4kexnxcgupggffa-0lu-script�
     la page se falsifie ; tous les appareils du magasin partagent l'IP publique de la
     box ; l'IP change) ; empreinte de l'appareil : identique entre tablettes, change
     aux mises à jour, brouillée par Safari.
+- **Piste « gestionnaire de mots de passe » (15/10, idée de Bryan)** : présenter la
+  clé de l'appareil comme un mot de passe (nom de l'appareil = identifiant) pour que
+  Safari la range dans son trousseau (« Mots de passe »), qui survit à Cmd+Q ; à la
+  réouverture : suggestion « Caisse 2 » → Touch ID / Face ID → appareil reconnu, sans
+  code responsable. INCERTAIN : remplissage dans le cadre tiers Google ; proposition
+  d'enregistrer sans changement de page (`google.script.run`) ; site sous lequel la
+  clé est rangée ; synchronisation iCloud vers l'iPhone personnel si identifiant
+  Apple personnel (⇒ identifiant Apple du magasin ou pas de synchro ; retrait de
+  l'appareil = parade). `PasswordCredential` : Chrome seulement. Déconseillé : ranger
+  le CODE RESPONSABLE dans le trousseau.
+  **Page d'essai** (« go » de Bryan) : `docs/essais/trousseau/` (Code.gs, Page.html,
+  README.md = mode d'emploi), projet Apps Script À PART (copier-coller, déploiement
+  « Tout le monde »), fausse clé courte en propriété de script ; méthode 1 = événement
+  submit sans changer de page, méthode 2 = envoi réel vers un cadre caché (doPost),
+  repli = frappe à la main ; diagnostic (mémoire du navigateur vide après Cmd+Q ?,
+  adresse technique, cadre, navigateur) ; « Vérifier la clé » compare au serveur.
+  Vérifiée seulement dans Chromium (bouchon de google.script.run) ; non envoyée par
+  `npm run push` (liste blanche de `.claspignore` : racine seulement, vérifié avec
+  micromatch). ATTENDU de Bryan : proposition d'enregistrer (méthode), suggestion
+  après Cmd+Q, « Vérifier » ✅, nom du site dans « Mots de passe », Mac puis iPad.
+  Si ça marche : l'intégrer à l'écran d'autorisation (repli : code responsable +
+  « Remplacer »), après discussion.
 - **Corrections déjà faites à cette occasion (14/10)** : erreur passagère de lecture
   de la liste ≠ « non autorisé » ; clé jamais effacée sur un refus ; remplacement
   sous le même nom (voir historique §0).

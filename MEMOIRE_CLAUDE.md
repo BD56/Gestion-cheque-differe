@@ -64,7 +64,13 @@
   l'autorisation. Bryan envisage l'authentification par COMPTE GOOGLE : limites
   Apps Script (comptes gmail + « exécuter en tant que moi » ⇒ e-mail vide ;
   « exécuter en tant qu'utilisateur » ⇒ chaque compte doit avoir accès au Sheet ;
-  Workspace même domaine ⇒ propre). En discussion.
+  Workspace même domaine ⇒ propre). En discussion. Bryan : Carrefour a Google
+  Workspace « pour l'instant » (durée incertaine). Avis de Claude : ne pas LIER
+  l'application à Workspace (dépendance à un choix du groupe, réglages imposés par
+  ses administrateurs, Sheet à placer dans le domaine Carrefour ⇒ question de
+  propriété de l'outil, autres structures sans Workspace) ; garder la clé d'appareil
+  (OK sur Chrome) + code d'équipe en réserve pour Apple ; Workspace = mode facultatif
+  éventuel plus tard.
 - **Ensuite (sur demande)** : fusions, documentation (`docs/A_REDIGER.md`, captures via
   `outils/captures.js`), migration de Vannes (`DEPLOIEMENT.md`).
 - **Leçons de cette période** : (1) ne pas réorganiser des écrans sans validation (la

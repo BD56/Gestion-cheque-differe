@@ -48,6 +48,9 @@
   serveur) et posé par `google.script.history.replace` ; autres pistes écartées
   (cookies tiers bloqués, Storage Access API peu praticable, identification sans
   stockage impossible). Demander quels appareils / navigateurs à Vannes.
+  ✅ CONFIRMÉ par Bryan (15/10) : Safari Mac, Cmd+Q puis réouverture ⇒ « Autoriser
+  cet appareil ». Parade proposée (clé dans le `#` de l'adresse, favori / écran
+  d'accueil) EN DISCUSSION, non codée ; test Chrome non fait.
 - **Ensuite (sur demande)** : fusions, documentation (`docs/A_REDIGER.md`, captures via
   `outils/captures.js`), migration de Vannes (`DEPLOIEMENT.md`).
 - **Leçons de cette période** : (1) ne pas réorganiser des écrans sans validation (la

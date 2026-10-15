@@ -50,7 +50,12 @@
   stockage impossible). Demander quels appareils / navigateurs à Vannes.
   ✅ CONFIRMÉ par Bryan (15/10) : Safari Mac, Cmd+Q puis réouverture ⇒ « Autoriser
   cet appareil ». Parade proposée (clé dans le `#` de l'adresse, favori / écran
-  d'accueil) EN DISCUSSION, non codée ; test Chrome non fait.
+  d'accueil) EN DISCUSSION, non codée. Chrome (Mac) : ✅ garde l'autorisation après
+  Cmd+Q (Bryan, 15/10). Vannes = PC Windows + tablettes Android (Bryan, 15/10) ⇒ pas
+  bloquant pour Vannes (Chrome / Edge / navigateurs Android à moteur Chrome) ; reste
+  un problème pour Mac / iPad / Safari (autres magasins). Bryan : « attends, on
+  réfléchit » ⇒ NE RIEN CODER sur ce sujet sans son « go ». À vérifier sur place : le
+  navigateur réel des tablettes Android (Chrome ? Samsung Internet ?).
 - **Ensuite (sur demande)** : fusions, documentation (`docs/A_REDIGER.md`, captures via
   `outils/captures.js`), migration de Vannes (`DEPLOIEMENT.md`).
 - **Leçons de cette période** : (1) ne pas réorganiser des écrans sans validation (la

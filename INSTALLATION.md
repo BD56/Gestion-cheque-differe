@@ -97,7 +97,9 @@ Avec le **compte Google qui détiendra les données** (voir ci-dessus) :
      le mot de passe. Sans le code d'activation, personne ne peut créer ce compte, même
      avec le lien ;
    - l'application demande ensuite s'il faut **protéger l'espace responsable par un
-     code à part** (6 chiffres) : sans code, tout compte connecté l'ouvre ;
+     code à part** (6 chiffres) : sans code, tout compte connecté l'ouvre. Si un code
+     existe déjà (Sheet déjà en service), elle propose de le garder, d'en choisir un
+     autre ou de ne plus en demander ;
    - **chaque autre appareil** : ouvrir le même lien et se connecter (identifiant +
      mot de passe). D'autres comptes se créent dans **⚙️ → Code & comptes** ;
    - sans connexion, l'application ne montre **rien**, même avec le lien. La connexion

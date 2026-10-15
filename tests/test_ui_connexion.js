@@ -246,6 +246,57 @@ const { ouvrir, J } = require("./navigateur");
     await attendre(300);
     assert.deepStrictEqual(await lignes(), ["Caisse centrale 1 (vous)"]);
     assert.match(J(env.ctx.connexion("Caisse centrale 2", "nouveau-mdp2")).message, /Identifiant inconnu/);
+
+    // --- 1re installation sur un Sheet qui a DÉJÀ un code responsable (ex. Vannes) ---
+    const installerAvecAncienCode = async () => {
+      env.activeEmail = "editeur@example.com";
+      env.ctx.reinitialiserComptesPanneau();
+      assert.ok(J(env.ctx.definirPin("111111", null, null)).ok, "code d'avant (panneau du Sheet)");
+      env.activeEmail = "";
+      await page.evaluate(() => {
+        fermerPanneau();
+        oublierSession();
+        afficherEcranConnexion();
+      });
+      await attendre();
+      await page.fill("#activationConnexion", env.activation());
+      await page.fill("#identifiant", "Caisse centrale 1");
+      await page.fill("#motDePasse", "motdepasse1");
+      await page.fill("#motDePasse2", "motdepasse1");
+      await page.click("#btnConnexion");
+      await attendre();
+      assert.match(await txt("#txtCodeAPart"), /Un code responsable existe déjà/);
+      assert.ok(await vis("#btnCodeAPartGarder"));
+      assert.strictEqual(await txt("#btnCodeAPartOui"), "Choisir un autre code");
+      assert.strictEqual(await txt("#btnCodeAPartNon"), "Ne plus demander de code");
+      return await stock("cdSession");
+    };
+    const ouvreAvec = (pin, s) => J(env.ctx.ouvrirSessionAdmin(pin, s)).ok;
+    // garder
+    let s = await installerAvecAncienCode();
+    await page.click("#btnCodeAPartGarder");
+    await attendre();
+    assert.ok(!(await vis("#ecranConnexion")));
+    assert.ok(ouvreAvec("111111", s), "code d'avant gardé");
+    // en choisir un autre, sans connaître l'ancien (le code d'activation en tient lieu)
+    s = await installerAvecAncienCode();
+    await page.click("#btnCodeAPartOui");
+    await page.fill("#pinAPart", "222222");
+    await page.fill("#pinAPart2", "222222");
+    await page.click("#btnCodeAPartOui");
+    await attendre();
+    assert.ok(!(await vis("#ecranConnexion")));
+    for (const k in P) if (k.indexOf("PIN_ESSAIS_") === 0) delete P[k];
+    assert.ok(!ouvreAvec("111111", s), "ancien code remplacé");
+    for (const k in P) if (k.indexOf("PIN_ESSAIS_") === 0) delete P[k];
+    assert.ok(ouvreAvec("222222", s), "nouveau code");
+    // ne plus en demander
+    s = await installerAvecAncienCode();
+    await page.click("#btnCodeAPartNon");
+    await attendre();
+    assert.ok(!(await vis("#ecranConnexion")));
+    assert.ok(!P.ADMIN_PIN_HASH, "code d'avant retiré");
+    assert.ok(ouvreAvec("", s), "l'espace s'ouvre sans code");
     assert.deepStrictEqual(erreursPage, []);
     console.log("test_ui_connexion : OK");
   } finally {

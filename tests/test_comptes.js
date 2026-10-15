@@ -72,6 +72,9 @@ assert.ok(!JSON.stringify(P).includes(s1), "session jamais stockée");
 assert.ok(!P.ACTIVATION_HASH, "code d'activation à usage unique");
 assert.deepStrictEqual(J(c.etatAdmin()), { pinDefini: false, comptes: true });
 assert.match(J(c.premierCompte(env.activation(), "Autre", "motdepasse2")).message, /Un compte existe déjà/);
+// Le 1er compte reçoit un jeton responsable (code d'activation = accès au Sheet)
+assert.ok(r.jeton, "jeton de la 1re installation");
+assert.ok(J(c.getInfosAdmin({ j: r.jeton, c: s1 })).config);
 
 // --- La session ouvre tout ce que la page utilise ---
 assert.strictEqual(J(c.traiterSaisie("DUPONT", "JEAN", "P1", "10", "", s1)).status, "SUCCES");

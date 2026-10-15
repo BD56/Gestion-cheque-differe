@@ -1,5 +1,5 @@
 <!-- Connexion (comptes), démarrage, aide, panneau, mentions légales. -->
-<script data-version="2026.10.15-1725">
+<script data-version="2026.10.15-2028">
   // =================================================================
   // --- CONNEXION (compte de la caisse centrale) ---
   // La session reçue à la connexion est gardée dans le navigateur et envoyée à
@@ -157,13 +157,26 @@
         document.getElementById(id).value = "";
       });
     }, 500);
-    if (premier && !pinDefini) {
-      // 1er compte : code responsable à part ?
+    if (premier) {
+      // 1er compte : code responsable à part ? (ou, s'il en existe un d'avant : le
+      // garder, en choisir un autre, ne plus en demander)
+      jetonInstallation = r.jeton;
       document.getElementById("formConnexion").style.display = "none";
       document.getElementById("msgConnexion").textContent = "";
       document.getElementById("titreConnexion").textContent = "Compte créé";
       document.getElementById("txtConnexion").textContent =
         "« " + COMPTE + " » est connecté sur cet appareil.";
+      document.getElementById("txtCodeAPart").textContent = pinDefini
+        ? "Un code responsable existe déjà (choisi avant) : il est demandé pour ouvrir l'espace responsable. Le garder, en choisir un autre, ou ne plus en demander (tout compte connecté ouvrira alors l'espace) ? Modifiable ensuite dans l'espace responsable."
+        : "Protéger l'espace responsable par un code à part (6 chiffres) ? Sans code, tout compte connecté l'ouvre directement. Modifiable ensuite dans l'espace responsable.";
+      document.getElementById("btnCodeAPartOui").textContent = pinDefini
+        ? "Choisir un autre code"
+        : "Oui, choisir un code";
+      document.getElementById("btnCodeAPartGarder").style.display = pinDefini ? "" : "none";
+      document.getElementById("btnCodeAPartNon").textContent = pinDefini
+        ? "Ne plus demander de code"
+        : "Non, pas de code";
+      document.getElementById("champsCodeAPart").style.display = "none";
       document.getElementById("blocCodeAPart").style.display = "block";
       return;
     }
@@ -177,12 +190,35 @@
     a.forEach(envoyerEnArrierePlan);
   }
 
-  // Après le 1er compte : oui = choisir le code (2 fois) ; non = pas de code à part.
-  function choisirCodeAPart(oui) {
+  // Après le 1er compte : « choisir » le code (2 fois) ; « garder » celui d'avant ;
+  // « aucun » = pas de code à part (celui d'avant est retiré). Le jeton de la 1re
+  // installation (code d'activation) permet de remplacer un code qu'on ne connaît pas.
+  let jetonInstallation = null;
+  function choisirCodeAPart(choix) {
     const msg = document.getElementById("msgCodeAPart");
     msg.textContent = "";
-    if (!oui) {
+    const jeton = { j: jetonInstallation, c: SESSION };
+    const erreur = function (err) {
+      if (!siNonAutorisee(err)) msg.textContent = "Erreur : " + (err && err.message ? err.message : err);
+    };
+    if (choix === "garder" || (choix === "aucun" && !pinDefini)) {
+      jetonInstallation = null;
       fermerEcranConnexion();
+      return;
+    }
+    if (choix === "aucun") {
+      google.script.run
+        .withSuccessHandler(function (r) {
+          if (!r || !r.ok) {
+            msg.textContent = (r && r.message) || "Refusé.";
+            return;
+          }
+          pinDefini = false;
+          jetonInstallation = null;
+          fermerEcranConnexion();
+        })
+        .withFailureHandler(erreur)
+        .retirerCodeResponsable(jeton, SESSION);
       return;
     }
     const champs = document.getElementById("champsCodeAPart");
@@ -208,14 +244,13 @@
           return;
         }
         pinDefini = true;
+        jetonInstallation = null;
         document.getElementById("pinAPart").value = "";
         document.getElementById("pinAPart2").value = "";
         fermerEcranConnexion();
       })
-      .withFailureHandler(function (err) {
-        if (!siNonAutorisee(err)) msg.textContent = "Erreur : " + (err && err.message ? err.message : err);
-      })
-      .definirPin(pin, null, SESSION);
+      .withFailureHandler(erreur)
+      .definirPin(pin, jeton, SESSION);
   }
 
   // Se déconnecter : cet appareil oublie la session (un autre compte pourra se connecter)

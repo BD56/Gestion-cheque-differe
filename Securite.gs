@@ -3,7 +3,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Securite_() {
-  return "2026.10.15-1725";
+  return "2026.10.15-2028";
 }
 
 // =================================================================
@@ -538,6 +538,9 @@ function connexion(identifiant, mdp) {
 
 // 1re installation : AUCUN compte. Code d'activation exigé (affiché seulement dans le
 // Google Sheets), sinon la première personne qui ouvre le lien créerait le compte.
+// Renvoie aussi un jeton responsable (10 min) : le code d'activation prouve l'accès au
+// Sheet, qui permet déjà de réinitialiser le code ; le 1er compte peut donc garder,
+// changer ou retirer un code responsable resté d'avant (ex. Sheet déjà en service).
 function premierCompte(activation, identifiant, mdp) {
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
@@ -556,7 +559,9 @@ function premierCompte(activation, identifiant, mdp) {
     const compte = nouveauCompte_(identifiant, mdp);
     ecrireComptes_([compte]);
     effacerActivation_(props);
-    return reponseConnexion_(compte);
+    const r = reponseConnexion_(compte);
+    r.jeton = creerJetonAdmin_(appelantDeCle_(r.session));
+    return r;
   } finally {
     lock.releaseLock();
   }

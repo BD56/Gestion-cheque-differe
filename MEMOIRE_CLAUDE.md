@@ -2,7 +2,7 @@
 
 > Fichier de reprise après compactage du contexte. À lire **avec** `AGENTS.md` (référence
 > canonique) et `docs/retours-vibe/decisions/2026-10-11_generalisation.md` (décisions).
-> Dernière mise à jour : 2026-10-15 (version 2026.10.15-1725, comptes étapes 1-4 FAITES, modèle
+> Dernière mise à jour : 2026-10-15 (version 2026.10.15-2028, comptes étapes 1-4 FAITES, modèle
 > « code responsable = caisse centrale »).
 
 ## ▶️ ÉTAT ACTUEL — à lire d'abord
@@ -12,7 +12,7 @@
   « Comptoir » (branche de travail actuelle, tout est poussé)**. Aucune fusion faite,
   aucune pull request. Ordre prévu (sur demande de Bryan seulement) : `design` →
   `refonte` → `generalisation` → `main` / migration Vannes.
-- **Version actuelle sur `design`** : 2026.10.15-1725 (40 séries de tests vertes,
+- **Version actuelle sur `design`** : 2026.10.15-2028 (40 séries de tests vertes,
   ESLint et Prettier propres). Numéro renouvelé par Claude à chaque push de code
   (`npm run nouvelle-version`).
 - **Bryan teste** sur le Sheet « Gestion Chèques Différés — REFONTE (test) » depuis
@@ -258,6 +258,14 @@ identique avant/après : `n-ijetbkxwto6cqlhbmed6rj7j4kexnxcgupggffa-0lu-script�
   (Étape 4). 40 séries (test_tablettes retiré, contrôles repris dans test_comptes).
   INSTALLATION.md (« Qui fait quoi », étapes 2-5, « Bon à savoir ») réécrit pour les
   comptes ; DEPLOIEMENT.md inchangé (bandeau « ne pas suivre », réécriture prévue).
+  Essai de Bryan sur le Sheet de test : le code responsable n'a PAS été demandé à la
+  1re installation (normal : un code existait déjà, gardé). « go » de Bryan ⇒ version
+  2026.10.15-2028 : dans ce cas, « Un code responsable existe déjà » → Garder / Choisir un
+  autre code / Ne plus demander de code (jeton responsable renvoyé par premierCompte).
+  Question de Bryan sur la sécurité des infos de compte (trajet, autres moments) :
+  réponse donnée (HTTPS ; mot de passe vu par Google seulement ; empreinte dans les
+  propriétés lisibles par les éditeurs ; session dans le navigateur ≤ 3 h ; trousseau
+  et synchro iCloud ; pas de « déconnecter partout » sauf changer le mot de passe).
 - **Corrections déjà faites à cette occasion (14/10)** : erreur passagère de lecture
   de la liste ≠ « non autorisé » ; clé jamais effacée sur un refus ; remplacement
   sous le même nom (voir historique §0).

@@ -193,6 +193,23 @@ identique avant/après : `n-ijetbkxwto6cqlhbmed6rj7j4kexnxcgupggffa-0lu-script�
   synchronisés par iCloud, ou du lien « Site web » de l'entrée « Mots de passe »
   (synchronisée depuis le Mac). À confirmer. PIÈGE à documenter pour l'app : ouvrir
   toujours l'adresse /exec (signet / écran d'accueil), jamais googleusercontent.
+- **NOUVELLE DIRECTION (Bryan, 15/10) : COMPTES identifiant + mot de passe** à la
+  place de la clé par appareil (« méthode éprouvée » ; Claude d'accord : le trousseau
+  gère nativement, la clé par appareil n'apporte plus assez — avec iCloud la clé
+  passe déjà d'un appareil à l'autre). Proposition de Claude (à valider, RIEN codé) :
+  1re installation = code d'activation → 1er compte → « Protéger l'espace
+  responsable par un code à part ? » (oui par défaut, modifiable) ; connexion gardée
+  par le navigateur (trousseau sous Safari) + « Se déconnecter » ; écran « Code &
+  comptes » (créer, retirer = déconnecté partout, réinitialiser le mot de passe) ;
+  mot de passe ≥ 8 caractères, empreinte seulement, pause 10 s, blocage PAR COMPTE
+  après 5 erreurs ; jamais d'inscription libre ; disparaissent : autorisation des
+  appareils, nom unique, « Remplacer » (rien à migrer : `main` n'en a pas).
+  Réponses de Bryan : A (par personne ou par poste) = au choix du magasin, l'app
+  permet plusieurs comptes ; C ✅ sans code responsable à part, tous les comptes ont
+  tous les droits (y compris créer des comptes) ; B (qui tape le mot de passe à la
+  création) : question reformulée ; D : déconnexion chaque nuit (idée de Bryan :
+  minuit) — avis de Claude : bien, plutôt 3 h (fermetures tardives, inventaires),
+  saisie en cours jamais perdue. En attente : B, D, puis découpage en étapes.
 - **Corrections déjà faites à cette occasion (14/10)** : erreur passagère de lecture
   de la liste ≠ « non autorisé » ; clé jamais effacée sur un refus ; remplacement
   sous le même nom (voir historique §0).

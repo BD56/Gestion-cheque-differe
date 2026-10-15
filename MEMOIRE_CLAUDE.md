@@ -2,7 +2,8 @@
 
 > Fichier de reprise après compactage du contexte. À lire **avec** `AGENTS.md` (référence
 > canonique) et `docs/retours-vibe/decisions/2026-10-11_generalisation.md` (décisions).
-> Dernière mise à jour : 2026-10-15 (version 2026.10.14-1653, dossier Safari).
+> Dernière mise à jour : 2026-10-15 (version 2026.10.14-1653, dossier Safari, modèle
+> « code responsable = caisse centrale »).
 
 ## ▶️ ÉTAT ACTUEL — à lire d'abord
 - **Branches** : `main` = prod Vannes (non touchée) ; `generalisation` = version
@@ -22,10 +23,11 @@
   navigateur : Safari / Chrome) après mise à jour ; confirmer si « Saisies :
   Chargement… » reste bloqué (sa capture venait d'une version antérieure) ; essai sur
   vraie tablette (rotation, clavier, journal, alertes, espace responsable, panneau).
-- **Dernier échange (15/10)** : discussion sur la perte d'autorisation des appareils
-  sous SAFARI → voir **§0 ter** (cause trouvée et confirmée, pistes, décisions). RIEN
-  n'est codé sur ce sujet : Bryan a dit « attends, on réfléchit » ⇒ ne rien coder
-  sans son « go ». Avant (14/10) : remplacement sous le même nom fait (1645) ; phrase
+- **Dernier échange (15/10)** : perte d'autorisation des appareils sous SAFARI → voir
+  **§0 ter**. DÉCIDÉ par Bryan : **code responsable = code de l'équipe de caisse
+  centrale** (elle réautorise elle-même ses Mac / iPad) ; RIEN à coder pour ça
+  (documentation seulement, plus tard). Journal des actions sensibles : proposé, NON
+  décidé. Ne rien coder sans « go ». Avant (14/10) : remplacement sous le même nom fait (1645) ; phrase
   « Noms abrégés et N° masqués… » et diagnostic d'autorisation retirés du site
   (1653). Rien en cours de codage.
 - **Ensuite (sur demande)** : fusions, documentation (`docs/A_REDIGER.md`, captures via
@@ -92,6 +94,36 @@ identique avant/après : `n-ijetbkxwto6cqlhbmed6rj7j4kexnxcgupggffa-0lu-script�
   765342, 9757, 125041, 725074 ; WebKit « Tracking Prevention » ; WebKit Bugzilla
   247565, 231879, 225297 ; Google « migration iframe » Apps Script. Aucun
   signalement trouvé spécifique à Apps Script.
+- **DÉCISION (Bryan, 15/10) — modèle « code responsable = caisse centrale »** : le site
+  sert surtout aux caisses centrales (parfois à des caissiers) ; la caisse centrale a
+  la confiance de la direction ⇒ le code responsable est LE code de l'équipe de
+  caisse centrale. Trois niveaux, déjà présents dans l'app : direction = détient le
+  Google Sheet (panneau : réinitialiser le code, mode, dates) ; caisse centrale = le
+  code (autoriser les appareils, corriger, supprimer, clôturer, réglages) ; caissiers =
+  appareil autorisé, sans code. Sous Safari, la caisse centrale réautorise son appareil
+  (code + nom + « Remplacer »). RIEN à coder ; à écrire plus tard dans la
+  documentation (et `docs/A_REDIGER.md`) : changer le code au départ d'un membre de la
+  caisse centrale (les appareils autorisés restent autorisés) ; ne jamais donner le
+  code aux caissiers. Le nom « code responsable » est gardé (générique).
+  - **Condition signalée par Claude** : code partagé ⇒ plus de « qui a fait quoi ».
+    Aujourd'hui `supprimerSaisie` fait `deleteRow` SANS trace dans l'app (reste
+    l'historique des versions de Sheets). Proposé, NON décidé : **journal des actions
+    sensibles** (onglet vu par la direction : date, action, appareil, saisie avant /
+    après ; suppression, correction, mode, clôture, réglages, appareils, code).
+  - Écartés par ce modèle (en réserve pour d'autres structures) : code d'équipe et
+    3 modes d'accès (1 appareils autorisés + code d'équipe en secours, 2 code d'équipe
+    seul valable la journée, 3 libre comme avant ; en libre, idée d'exiger le code
+    pour imprimer « Toute l'offre ») ; analyse : accès par code d'équipe valable
+    jusqu'à la fin de la journée, jamais autorisation permanente ; changer le code
+    coupe les accès ; pause 10 s sans blocage long (blocage global = toute l'équipe
+    bloquée par n'importe qui ayant le lien).
+  - Autres pistes de Bryan écartées : « laisser la clé dans l'adresse », « comptes
+    Google », « retirer la mémorisation des appareils » (= retour au lien seul, pire
+    que la clé dans l'adresse : non révocable par appareil) ; **associer la clé à
+    l'adresse IP** : impossible (Apps Script ne donne pas l'IP ; une IP déclarée par
+    la page se falsifie ; tous les appareils du magasin partagent l'IP publique de la
+    box ; l'IP change) ; empreinte de l'appareil : identique entre tablettes, change
+    aux mises à jour, brouillée par Safari.
 - **Corrections déjà faites à cette occasion (14/10)** : erreur passagère de lecture
   de la liste ≠ « non autorisé » ; clé jamais effacée sur un refus ; remplacement
   sous le même nom (voir historique §0).
@@ -554,7 +586,11 @@ quand Bryan le demande.
 
 ## 4. Points ouverts / idées non faites
 - **Appareils Apple / Safari perdent l'autorisation** (§0 ter) : non bloquant pour
-  Vannes ; piste en réserve = code d'équipe (B) ; rien codé, décision de Bryan.
+  Vannes ; DÉCIDÉ : code responsable = caisse centrale, qui réautorise (rien à coder,
+  à documenter). Code d'équipe / modes d'accès : en réserve.
+- **Journal des actions sensibles** (suppression, correction, mode, clôture,
+  réglages, appareils, code) dans un onglet vu par la direction : proposé le 15/10
+  (traçabilité nécessaire avec un code partagé par la caisse centrale), NON décidé.
 - Pull request `generalisation` → `main` : à ouvrir **après** le test de Bryan (il n'a pas
   encore demandé).
 - **Nom de l'application** (en pause, à la demande de Bryan) : acronymes retenus CLÉO

@@ -32,6 +32,22 @@
   (2) Remplacement sous le même nom fait (2026.10.14-1645). (3) Phrase « Noms abrégés
   et N° masqués… » retirée du pied du journal (demande de Bryan ; la règle d'affichage
   reste). Rien en cours de codage.
+- **⚠️ 15/10 — le Mac (« Mac Bryan », autorisé le 14/10 15:08, « utilisé le
+  15/10 ») n'est plus reconnu le 15/10 ; réautorisé sous « mac » à 11:08.** Capture
+  de Bryan : adresse technique IDENTIQUE à celle du 14/10 ⇒ le déploiement n'a PAS
+  changé l'adresse (hypothèse écartée). NOUVELLE PISTE, la plus probable : SAFARI.
+  L'application tourne dans un cadre `googleusercontent.com` dans `script.google.com`
+  = stockage « tiers » ; selon WebKit, le stockage local des cadres tiers est
+  partitionné ET ÉPHÉMÈRE (non persistant, voulu) ⇒ la clé disparaît quand Safari est
+  quitté / l'onglet fermé / l'iPad tue Safari. Chrome (ordinateur, Android) : stockage
+  partitionné mais persistant. ENJEU : sur iPad, TOUS les navigateurs utilisent WebKit
+  ⇒ les iPads du magasin perdraient leur autorisation régulièrement. TEST demandé à
+  Bryan : autoriser dans Safari, quitter Safari (Cmd+Q), rouvrir ; idem dans Chrome.
+  Parades à DISCUTER (rien codé) : clé dans l'adresse (signet / écran d'accueil),
+  de préférence dans le `#` lu par `google.script.url.getLocation` (pas envoyé au
+  serveur) et posé par `google.script.history.replace` ; autres pistes écartées
+  (cookies tiers bloqués, Storage Access API peu praticable, identification sans
+  stockage impossible). Demander quels appareils / navigateurs à Vannes.
 - **Ensuite (sur demande)** : fusions, documentation (`docs/A_REDIGER.md`, captures via
   `outils/captures.js`), migration de Vannes (`DEPLOIEMENT.md`).
 - **Leçons de cette période** : (1) ne pas réorganiser des écrans sans validation (la

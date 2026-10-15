@@ -8,7 +8,7 @@ const J = (x) => (x === undefined ? null : JSON.parse(JSON.stringify(x)));
 
 const PROXY = `
 (function () {
-  var store = window.__SANS_CLE ? {} : { cdTabletteCle: 'CLE-TEST-0123456789abcdef0123456789abcdef', cdTabletteId: 'tab-test' };
+  var store = window.__SANS_CLE ? {} : { cdSession: 'S1.session-de-test', cdCompte: 'Caisse test' };
   var faux = { getItem: function (k) { return (k in store) ? store[k] : null; }, setItem: function (k, v) { store[k] = String(v); }, removeItem: function (k) { delete store[k]; } };
   try { Object.defineProperty(window, 'localStorage', { value: faux, configurable: true }); } catch (e) {}
   window.__store = store;
@@ -48,7 +48,11 @@ async function ouvrir(repo, envOpts) {
     ]);
     env.sheets.Saisies.getRange("Z1").setValue("SIGNALER");
   }
-  const html = rendrePage(repo, { cfg: env.ctx.getConfig(), dates: env.ctx.lireDates_() }).replace(
+  const html = rendrePage(repo, {
+    cfg: env.ctx.getConfig(),
+    dates: env.ctx.lireDates_(),
+    urlAppli: (envOpts && envOpts.urlAppli) || "",
+  }).replace(
     "<head>",
     // comme doGet (addMetaTag) : largeur de l'appareil sur tablette / téléphone
     '<head><meta name="viewport" content="width=device-width, initial-scale=1"><script>window.__SANS_CLE=' +

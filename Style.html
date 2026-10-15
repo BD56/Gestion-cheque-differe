@@ -1,5 +1,5 @@
 <!-- Styles de la page (Index.html). -->
-<style data-version="2026.10.15-1612">
+<style data-version="2026.10.15-1639">
   /* Palette « Comptoir » (clair uniquement). Les couleurs d'alerte (danger rouge,
      orange) ne sont jamais adoucies. Police du système : rien à télécharger. */
   :root {
@@ -1481,7 +1481,7 @@
   .modal-content .rangee-btn {
     margin-top: 12px;
   }
-  /* Tablette non autorisée : rien de l'application ne se voit derrière */
+  /* Connexion : rien de l'application ne se voit derrière */
   .modal-overlay.ecran-appairage {
     background-color: var(--fond);
   }
@@ -1510,9 +1510,45 @@
   .ecran-appairage .plein {
     margin-top: 6px;
   }
-  .ecran-appairage .remplacer {
+  .ecran-appairage form {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .ecran-appairage .sec {
     justify-content: center;
     min-height: 48px;
+  }
+  #msgConnexion:empty {
+    display: none;
+  }
+  #blocCodeAPart > p {
+    margin-top: 0;
+  }
+  #blocCodeAPart button {
+    width: 100%;
+    justify-content: center;
+    margin-top: 8px;
+  }
+  /* Cadre qui reçoit l'envoi réel du formulaire de connexion (jamais visible) */
+  .cible-envoi {
+    display: none;
+  }
+  .compte-connecte {
+    margin: 4px 0 0;
+    font-size: 13.5px;
+    color: var(--doux);
+    text-align: center;
+  }
+  .compte-connecte .lien {
+    min-height: 40px;
+    border: 0;
+    background: none;
+    padding: 8px 6px;
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 13.5px;
+    cursor: pointer;
   }
   .pastille {
     display: inline-block;

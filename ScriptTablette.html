@@ -1,10 +1,12 @@
-<!-- Tablette autorisée (appairage), démarrage, aide, panneau, mentions légales. -->
-<script data-version="2026.10.15-1612">
+<!-- Connexion (comptes), démarrage, aide, panneau, mentions légales. -->
+<script data-version="2026.10.15-1639">
   // =================================================================
-  // --- TABLETTE AUTORISÉE (appairage) ---
-  // La clé reçue lors de l'autorisation est gardée dans le navigateur et envoyée à
+  // --- CONNEXION (compte de la caisse centrale) ---
+  // La session reçue à la connexion est gardée dans le navigateur et envoyée à
   // CHAQUE appel au serveur ; sans elle, le serveur refuse tout (un lien qui fuite
-  // ne donne accès à rien).
+  // ne donne accès à rien). Elle se termine à 3 h du matin. Safari oublie le stockage
+  // de la page quand on le quitte : son gestionnaire de mots de passe remplit alors
+  // l'identifiant et le mot de passe.
   // =================================================================
   let STOCKAGE_OK = true;
   function lireStockage(k) {
@@ -25,146 +27,205 @@
       return false;
     }
   }
-  let CLE_TABLETTE = lireStockage("cdTabletteCle");
-  let ID_TABLETTE = lireStockage("cdTabletteId");
+  let SESSION = lireStockage("cdSession");
+  let COMPTE = lireStockage("cdCompte") || "";
+  // Ancienne autorisation d'appareil : plus utilisée
+  ecrireStockage("cdTabletteCle", null);
+  ecrireStockage("cdTabletteId", null);
 
-  // Retrait volontaire (cet appareil, ou tous) depuis l'espace responsable
-  function oublierTablette() {
-    CLE_TABLETTE = null;
-    ID_TABLETTE = null;
-    ecrireStockage("cdTabletteCle", null);
-    ecrireStockage("cdTabletteId", null);
+  function oublierSession() {
+    SESSION = null;
+    COMPTE = "";
+    ecrireStockage("cdSession", null);
+    ecrireStockage("cdCompte", null);
   }
-  // Erreur « tablette non autorisée » (retirée par un responsable, clé perdue…) ?
-  // La clé n'est PAS effacée : inutile si l'appareil a vraiment été retiré (une nouvelle
-  // autorisation la remplace), mais si le refus était passager, l'appareil remarche au
-  // prochain chargement au lieu de perdre son autorisation.
-  function siNonAutorisee(err) {
+  // Session refusée par le serveur (3 h du matin passé, mot de passe changé, compte
+  // retiré) ? On la jette (elle ne redeviendra jamais valable ; une panne passagère de
+  // Google, elle, ne donne pas ce refus) et on redemande la connexion. La page derrière
+  // reste telle quelle : une saisie en cours de frappe n'est pas perdue.
+  function estRefusSession(err) {
     const m = err && err.message ? err.message : String(err || "");
-    if (m.indexOf("TABLETTE_NON_AUTORISEE") === -1) return false;
-    afficherEcranAppairage("Cet appareil n'est plus autorisé. Un responsable doit l'autoriser à nouveau.");
+    return m.indexOf("CONNEXION_REQUISE") !== -1 || m.indexOf("TABLETTE_NON_AUTORISEE") !== -1;
+  }
+  function siNonAutorisee(err) {
+    if (!estRefusSession(err)) return false;
+    oublierSession();
+    if (typeof jetonAdmin !== "undefined" && jetonAdmin) fermerPanneau();
+    const n = saisiesARenvoyer.length;
+    afficherEcranConnexion(
+      "Session terminée : reconnectez-vous." +
+        (n > 1 ? " " + n + " saisies seront envoyées ensuite." : n ? " La saisie sera envoyée ensuite." : "")
+    );
     return true;
   }
+  // Saisies refusées faute de session : envoyées (et recontrôlées) dès la reconnexion
+  let saisiesARenvoyer = [];
 
-  let pinDefiniAppairage = true;
-  function afficherEcranAppairage(message) {
-    document.getElementById("ecranAppairage").style.display = "flex";
-    document.getElementById("msgAppairage").textContent = message || "";
-    document.getElementById("txtAppairage").textContent = "…";
+  let installation = false; // aucun compte : 1re installation
+  function afficherEcranConnexion(message) {
+    document.getElementById("ecranConnexion").style.display = "flex";
+    document.getElementById("formConnexion").style.display = "";
+    document.getElementById("blocCodeAPart").style.display = "none";
+    document.getElementById("msgConnexion").textContent = message || "";
+    document.getElementById("txtConnexion").textContent = "…";
+    document.getElementById("btnConnexion").disabled = false;
     google.script.run
       .withSuccessHandler(function (etat) {
-        pinDefiniAppairage = etat.pinDefini;
-        document.getElementById("txtAppairage").textContent = pinDefiniAppairage
-          ? "Pour utiliser l'application sur cet appareil, un responsable doit l'autoriser une fois avec son code, sous un nom qui lui est propre."
-          : "Aucun code responsable n'existe : saisissez le code d'activation affiché dans le Google Sheets (menu 🚀 APPLICATION → 🔑 Code d'activation), puis choisissez le code responsable (6 chiffres). Il servira à autoriser les appareils et à ouvrir l'espace responsable.";
-        document.getElementById("lblPinApp").textContent = pinDefiniAppairage
-          ? "Code responsable (6 chiffres)"
-          : "Nouveau code responsable (6 chiffres)";
-        document.getElementById("blocPinApp2").style.display = pinDefiniAppairage ? "none" : "block";
-        document.getElementById("blocActivationApp").style.display = pinDefiniAppairage ? "none" : "block";
+        installation = !etat.comptes;
+        pinDefini = etat.pinDefini;
+        document.getElementById("titreConnexion").textContent = installation
+          ? "Première installation"
+          : "Connexion";
+        document.getElementById("txtConnexion").textContent = installation
+          ? "Saisissez le code d'activation affiché dans le Google Sheets (menu 🚀 APPLICATION → 🔑 Code d'activation), puis créez le compte de la caisse centrale. Les autres comptes se créent ensuite dans l'espace responsable."
+          : "Connectez-vous avec le compte de la caisse centrale. Le navigateur peut retenir le mot de passe.";
+        document.getElementById("blocActivation").style.display = installation ? "block" : "none";
+        document.getElementById("blocMotDePasse2").style.display = installation ? "block" : "none";
+        document
+          .getElementById("motDePasse")
+          .setAttribute("autocomplete", installation ? "new-password" : "current-password");
+        document.getElementById("btnConnexion").textContent = installation ? "Créer le compte" : "Connexion";
         if (!STOCKAGE_OK)
-          document.getElementById("msgAppairage").textContent =
-            "Ce navigateur ne peut pas mémoriser l'autorisation : elle sera redemandée à chaque ouverture.";
+          document.getElementById("msgConnexion").textContent =
+            "Ce navigateur ne peut pas garder la connexion : elle sera redemandée à chaque ouverture.";
       })
       .withFailureHandler(function () {
-        document.getElementById("txtAppairage").textContent =
+        document.getElementById("txtConnexion").textContent =
           "Serveur injoignable : vérifiez le Wi-Fi puis rechargez la page.";
       })
       .etatAdmin();
   }
 
-  // Nom changé : le remplacement proposé ne vaut plus
-  document.getElementById("nomTablette").addEventListener("input", function () {
-    document.getElementById("btnRemplacerAppareil").style.display = "none";
-  });
-  // remplacer = true : bouton « Remplacer », proposé quand le nom est déjà pris (cet
-  // appareil a perdu son autorisation) ; l'ancienne autorisation ne servira plus.
-  function appairerCetteTablette(remplacer) {
-    const pin = document.getElementById("pinApp").value.trim();
-    const nom = document.getElementById("nomTablette").value.trim();
-    const msg = document.getElementById("msgAppairage");
-    const btnRemplacer = document.getElementById("btnRemplacerAppareil");
+  // Envoi du formulaire (bouton ou touche Entrée). Formulaire correct : envoi RÉEL vers
+  // le cadre caché (le navigateur propose alors d'enregistrer le mot de passe) et, en
+  // même temps, vérification par le serveur.
+  document.getElementById("formConnexion").addEventListener("submit", function (e) {
+    const id = document.getElementById("identifiant").value.trim();
+    const mdp = document.getElementById("motDePasse").value;
+    const msg = document.getElementById("msgConnexion");
+    const refuser = function (texte, champ) {
+      e.preventDefault();
+      msg.textContent = texte;
+      if (champ) document.getElementById(champ).focus();
+    };
     msg.textContent = "";
-    btnRemplacer.style.display = "none";
+    let activation = "";
+    if (installation) {
+      activation = document.getElementById("activationConnexion").value.trim();
+      if (activation.replace(/\D/g, "").length !== 8)
+        return refuser(
+          "Saisissez le code d'activation (8 chiffres) affiché dans le Google Sheets.",
+          "activationConnexion"
+        );
+    }
+    if (normIdJS(id) === "")
+      return refuser("Saisissez l'identifiant (ex. Caisse centrale 1).", "identifiant");
+    if (installation && mdp.length < 8)
+      return refuser("Le mot de passe doit contenir au moins 8 caractères.", "motDePasse");
+    if (!mdp) return refuser("Saisissez le mot de passe.", "motDePasse");
+    if (installation && mdp !== document.getElementById("motDePasse2").value)
+      return refuser("Les deux mots de passe ne correspondent pas.", "motDePasse2");
+    if (URL_APPLI) this.action = URL_APPLI;
+    else e.preventDefault(); // pas d'adresse (essais hors Apps Script) : vérification seule
+    const btn = document.getElementById("btnConnexion");
+    btn.disabled = true;
+    const runner = google.script.run
+      .withSuccessHandler(function (r) {
+        btn.disabled = false;
+        if (!r || !r.ok) {
+          msg.textContent = (r && r.message) || "Refusé.";
+          return;
+        }
+        connecte(r, installation);
+      })
+      .withFailureHandler(function (err) {
+        btn.disabled = false;
+        msg.textContent = "Erreur : " + (err && err.message ? err.message : err);
+      });
+    if (installation) runner.premierCompte(activation, id, mdp);
+    else runner.connexion(id, mdp);
+  });
+
+  function connecte(r, premier) {
+    SESSION = r.session;
+    COMPTE = r.compte.identifiant;
+    ecrireStockage("cdSession", SESSION);
+    ecrireStockage("cdCompte", COMPTE);
+    // Champs vidés APRÈS l'envoi (le navigateur a déjà lu l'identifiant et le mot de passe)
+    setTimeout(function () {
+      ["motDePasse", "motDePasse2", "activationConnexion"].forEach(function (id) {
+        document.getElementById(id).value = "";
+      });
+    }, 500);
+    if (premier && !pinDefini) {
+      // 1er compte : code responsable à part ?
+      document.getElementById("formConnexion").style.display = "none";
+      document.getElementById("msgConnexion").textContent = "";
+      document.getElementById("titreConnexion").textContent = "Compte créé";
+      document.getElementById("txtConnexion").textContent =
+        "« " + COMPTE + " » est connecté sur cet appareil.";
+      document.getElementById("blocCodeAPart").style.display = "block";
+      return;
+    }
+    fermerEcranConnexion();
+  }
+  function fermerEcranConnexion() {
+    document.getElementById("ecranConnexion").style.display = "none";
+    demarrerApplication();
+    const a = saisiesARenvoyer;
+    saisiesARenvoyer = [];
+    a.forEach(envoyerEnArrierePlan);
+  }
+
+  // Après le 1er compte : oui = choisir le code (2 fois) ; non = pas de code à part.
+  function choisirCodeAPart(oui) {
+    const msg = document.getElementById("msgCodeAPart");
+    msg.textContent = "";
+    if (!oui) {
+      fermerEcranConnexion();
+      return;
+    }
+    const champs = document.getElementById("champsCodeAPart");
+    if (champs.style.display === "none") {
+      champs.style.display = "block";
+      document.getElementById("btnCodeAPartOui").textContent = "Enregistrer le code";
+      document.getElementById("pinAPart").focus();
+      return;
+    }
+    const pin = document.getElementById("pinAPart").value.trim();
     if (!/^\d{6}$/.test(pin)) {
       msg.textContent = "Le code doit contenir exactement 6 chiffres.";
       return;
     }
-    if (normIdJS(nom) === "") {
-      msg.textContent = "Donnez un nom à cet appareil (ex. Caisse 3, Accueil).";
-      document.getElementById("nomTablette").focus();
-      return;
-    }
-    const btn = document.getElementById("btnAppairer");
-    const fin = function (texte) {
-      btn.disabled = false;
-      if (texte) msg.textContent = texte;
-    };
-    const autoriser = function () {
-      google.script.run
-        .withSuccessHandler(function (r) {
-          if (r && r.nomPris) {
-            // code juste, nom déjà pris : le code reste saisi pour confirmer d'un appui
-            btnRemplacer.textContent = "Remplacer « " + nom + " »";
-            btnRemplacer.style.display = "";
-            fin(r.message);
-            return;
-          }
-          document.getElementById("pinApp").value = "";
-          document.getElementById("pinApp2").value = "";
-          if (!r || !r.ok) {
-            fin((r && r.message) || "Refusé.");
-            return;
-          }
-          CLE_TABLETTE = r.cle;
-          ID_TABLETTE = r.id;
-          ecrireStockage("cdTabletteCle", r.cle);
-          ecrireStockage("cdTabletteId", r.id);
-          fin();
-          document.getElementById("ecranAppairage").style.display = "none";
-          demarrerApplication();
-        })
-        .withFailureHandler(function (err) {
-          fin("Erreur : " + (err && err.message ? err.message : err));
-        })
-        .appairerTablette(pin, nom, remplacer === true);
-    };
-    btn.disabled = true;
-    if (pinDefiniAppairage) {
-      autoriser();
-      return;
-    }
-    // Aucun code : création (code d'activation exigé), puis autorisation de cette tablette
-    if (pin !== document.getElementById("pinApp2").value.trim()) {
-      fin("Les deux codes ne correspondent pas.");
-      return;
-    }
-    const activation = document.getElementById("activationApp").value.trim();
-    if (activation.replace(/\D/g, "").length !== 8) {
-      fin("Saisissez le code d'activation (8 chiffres) affiché dans le Google Sheets.");
+    if (pin !== document.getElementById("pinAPart2").value.trim()) {
+      msg.textContent = "Les deux codes ne correspondent pas.";
       return;
     }
     google.script.run
       .withSuccessHandler(function (r) {
         if (!r || !r.ok) {
-          fin((r && r.message) || "Refusé.");
+          msg.textContent = (r && r.message) || "Refusé.";
           return;
         }
-        // le code existe désormais : en cas d'échec de l'autorisation, un nouvel essai
-        // ne doit plus chercher à le créer
-        pinDefiniAppairage = true;
-        document.getElementById("activationApp").value = "";
-        document.getElementById("blocActivationApp").style.display = "none";
-        document.getElementById("blocPinApp2").style.display = "none";
-        autoriser();
+        pinDefini = true;
+        document.getElementById("pinAPart").value = "";
+        document.getElementById("pinAPart2").value = "";
+        fermerEcranConnexion();
       })
       .withFailureHandler(function (err) {
-        fin("Erreur : " + (err && err.message ? err.message : String(err)));
+        if (!siNonAutorisee(err)) msg.textContent = "Erreur : " + (err && err.message ? err.message : err);
       })
-      .definirPin(pin, null, CLE_TABLETTE, activation);
+      .definirPin(pin, null, SESSION);
   }
 
-  // Lance l'application (une fois la tablette autorisée)
+  // Se déconnecter : cet appareil oublie la session (un autre compte pourra se connecter)
+  function seDeconnecter() {
+    oublierSession();
+    fermerPanneau();
+    afficherEcranConnexion("Déconnecté.");
+  }
+
+  // Lance l'application (une fois connecté)
   // Un seul appel au serveur : mode, dates à jour et cache de vérification (ce
   // dernier seulement si l'offre est en cours).
   function demarrerApplication() {
@@ -192,10 +253,10 @@
           "error"
         );
         setTimeout(function () {
-          if (CLE_TABLETTE) demarrerApplication();
+          if (SESSION) demarrerApplication();
         }, 20000);
       })
-      .demarrage(CLE_TABLETTE);
+      .demarrage(SESSION);
   }
 
   window.onload = function () {
@@ -204,8 +265,8 @@
     const mois = ("0" + (auj.getMonth() + 1)).slice(-2);
     const jour = ("0" + auj.getDate()).slice(-2);
     document.getElementById("dateImpression").value = annee + "-" + mois + "-" + jour;
-    if (CLE_TABLETTE) demarrerApplication();
-    else afficherEcranAppairage();
+    if (SESSION) demarrerApplication();
+    else afficherEcranConnexion();
   };
 
   // --- Tablette tenue en hauteur : invitation à la tourner (jamais bloquante) ---

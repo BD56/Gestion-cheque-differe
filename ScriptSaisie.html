@@ -1,5 +1,5 @@
 <!-- Envoi d'une saisie, encadré de doublon, contrôle A/B/C local, saisies en attente. -->
-<script data-version="2026.10.15-1612">
+<script data-version="2026.10.15-1639">
   let memNom = "",
     memPrenom = "",
     memPiece = "",
@@ -74,7 +74,7 @@
               "error"
             );
         })
-        .traiterSaisie(saisie.nom, saisie.prenom, saisie.piece, saisie.montant, saisie.notes, CLE_TABLETTE);
+        .traiterSaisie(saisie.nom, saisie.prenom, saisie.piece, saisie.montant, saisie.notes, SESSION);
       return;
     }
 
@@ -102,7 +102,7 @@
       .withFailureHandler(function (err) {
         echecEnregistrement(err, saisie);
       })
-      .traiterSaisie(saisie.nom, saisie.prenom, saisie.piece, saisie.montant, saisie.notes, CLE_TABLETTE);
+      .traiterSaisie(saisie.nom, saisie.prenom, saisie.piece, saisie.montant, saisie.notes, SESSION);
   }
 
   let saisieEncadre = null; // la saisie affichée dans l'encadré de doublon
@@ -185,7 +185,7 @@
         "",
         false,
         false,
-        CLE_TABLETTE
+        SESSION
       );
   }
 
@@ -388,7 +388,7 @@
     z.style.display = n ? "block" : "none";
   }
   window.addEventListener("beforeunload", function (ev) {
-    if (nbEnvoisEnCours() > 0) {
+    if (nbEnvoisEnCours() > 0 || saisiesARenvoyer.length > 0) {
       ev.preventDefault();
       ev.returnValue = "";
       return "";
@@ -445,13 +445,10 @@
   }
   function echecEnregistrement(err, saisie) {
     retirerEnAttente(saisie);
-    if (siNonAutorisee(err)) {
-      alerterServeur(saisie, {
-        status: "BLOQUE",
-        titre: "🔒 APPAREIL NON AUTORISÉ",
-        message: "Faites autoriser cet appareil, puis ressaisissez.",
-        details: [],
-      });
+    if (estRefusSession(err)) {
+      // session terminée : la saisie part (et est recontrôlée) dès la reconnexion
+      saisiesARenvoyer.push(saisie);
+      siNonAutorisee(err);
       return;
     }
     alerterServeur(saisie, null);

@@ -1,5 +1,5 @@
 <!-- Journal du jour : saisies d'aujourd'hui (toutes tablettes), colonne repliable. -->
-<script data-version="2026.10.15-1612">
+<script data-version="2026.10.15-1639">
   // Lu dans la copie locale de l'offre (cacheVerif.offre, rechargée à chaque nouveau
   // client) + les saisies de cette tablette pas encore confirmées. Rien de plus n'est
   // demandé au serveur : les saisies d'une autre tablette apparaissent au prochain
@@ -20,7 +20,7 @@
     ecrireStockage("cdJournal", "ouvert");
     appliquerJournal();
     dessinerJournal(false);
-    if (CLE_TABLETTE) rechargerCacheVerif(); // à jour des autres tablettes
+    if (SESSION) rechargerCacheVerif(); // à jour des autres tablettes
     document.querySelector("#journal .basculer").focus();
   }
   function fermerJournal() {

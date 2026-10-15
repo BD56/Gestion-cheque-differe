@@ -75,7 +75,7 @@ function controler() {
   // Le calque du dessus (fenêtre, alerte, espace responsable) est seul contrôlé
   const calques = [
     "#ecranTourner",
-    "#ecranAppairage",
+    "#ecranConnexion",
     "#modalAlerteServeur",
     "#boxConfirmation",
     "#modalParametres",
@@ -354,6 +354,32 @@ const ETATS = [
     async (p) => {
       await p.click("#modalParametres .btn-close-modal");
       await p.evaluate("appliquerDates({debut:'2099-01-01', fin:'2099-01-03'}, true)");
+    },
+  ],
+  [
+    "27-premiere-installation",
+    async (p) => {
+      await p.evaluate("afficherEcranConnexion()");
+    },
+  ],
+  [
+    "28-code-a-part",
+    async (p) => {
+      await p.evaluate(
+        "document.getElementById('formConnexion').style.display='none';" +
+          "document.getElementById('titreConnexion').textContent='Compte créé';" +
+          "document.getElementById('txtConnexion').textContent='« Caisse centrale 1 » est connecté sur cet appareil.';" +
+          "document.getElementById('blocCodeAPart').style.display='block'; choisirCodeAPart(true)"
+      );
+    },
+  ],
+  [
+    "29-connexion",
+    async (p, env) => {
+      env.props.setProperty("COMPTES", JSON.stringify([{ id: "c1", identifiant: "Caisse centrale 1" }]));
+      await p.evaluate(
+        "afficherEcranConnexion('Session terminée : reconnectez-vous. La saisie sera envoyée ensuite.')"
+      );
     },
   ],
 ];

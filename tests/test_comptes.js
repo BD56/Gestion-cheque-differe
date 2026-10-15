@@ -180,4 +180,16 @@ assert.match(
   "un appareil sans compte ne peut pas retirer le code"
 );
 
+// --- Menu du Sheet « 🔑 Code d'activation » : selon les COMPTES (pas le code responsable) ---
+env.activeEmail = "editeur@example.com";
+env.alertes.length = 0;
+c.afficherCodeActivation();
+assert.match(env.alertes[0], /Un compte existe déjà/);
+const env2 = makeEnv({ repo: process.argv[2], tabletteReelle: true });
+env2.activeEmail = "editeur@example.com";
+assert.ok(J(env2.creerCode("135790")).ok, "ancien Sheet : code responsable déjà là, aucun compte");
+env2.ctx.afficherCodeActivation();
+assert.match(env2.alertes[0], /Code d'activation : \d{4}-\d{4}[\s\S]*créer le compte de la caisse centrale/);
+env.activeEmail = "";
+
 console.log("✅ test_comptes : OK");

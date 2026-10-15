@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr" data-version="2026.10.15-1612">
+<html lang="fr" data-version="2026.10.15-1639">
   <head>
     <base target="_top">
     <?!= include_('Style') ?>
@@ -267,7 +267,8 @@
           <button data-ecran-lien="archives" data-action="ouvrirArchives"><svg class="ico"><use href="#i-archive"/></svg>Archives</button>
           <button data-ecran-lien="reglages" data-action="allerEcran" data-args='["reglages"]'><svg class="ico"><use href="#i-etiquette"/></svg>Réglages</button>
           <button data-ecran-lien="code" data-action="ouvrirCodeTablettes"><svg class="ico"><use href="#i-tablette"/></svg>Code &amp; appareils<span class="val" id="railNbTablettes"></span></button>
-          <button class="bas" data-action="verrouillerAdmin"><svg class="ico"><use href="#i-cadenas"/></svg>Verrouiller</button>
+          <button class="bas" id="btnVerrouiller" data-action="verrouillerAdmin"><svg class="ico"><use href="#i-cadenas"/></svg>Verrouiller</button>
+          <button id="btnDeconnexionRail" data-action="seDeconnecter"><svg class="ico"><use href="#i-sortie"/></svg>Se déconnecter</button>
         </nav>
         <div class="contenu" id="contenuAdmin">
 
@@ -282,6 +283,7 @@
               <input style="display: none" class="champ-code" type="password" id="pinConfirme" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="Confirmer le code">
               <button class="plein" id="btnDeverrouiller" data-action="deverrouillerAdmin">Déverrouiller</button>
               <div class="message-erreur" id="msgVerrou"></div>
+              <p class="compte-connecte"><span id="compteVerrou"></span> <button class="lien" data-action="seDeconnecter">Se déconnecter</button></p>
             </div>
           </div>
 
@@ -498,30 +500,52 @@
       </div>
     </div>
 
-    <div id="ecranAppairage" class="modal-overlay ecran-appairage">
+    <!-- Connexion (compte de la caisse centrale) ou 1re installation. Le formulaire est
+         RÉELLEMENT envoyé vers un cadre caché (doPost) : sans cela, Safari ne propose pas
+         d'enregistrer le mot de passe (essai du 15/10). -->
+    <div id="ecranConnexion" class="modal-overlay ecran-appairage" style="display: none">
       <div class="modal-content largeur-420">
-        <svg class="ico grande"><use href="#i-tablette"/></svg>
-        <h2 class="titre-haut-centre">Autoriser cet appareil</h2>
-        <p class="texte-appairage" id="txtAppairage"></p>
-        <div class="input-group" id="blocActivationApp" style="display: none">
-          <label class="etiquette" for="activationApp">Code d'activation (affiché dans le Google Sheets)</label>
-          <input type="text" id="activationApp" inputmode="numeric" maxlength="9" autocomplete="off" placeholder="1234-5678">
+        <svg class="ico grande"><use href="#i-cadenas"/></svg>
+        <h2 class="titre-haut-centre" id="titreConnexion">Connexion</h2>
+        <p class="texte-appairage" id="txtConnexion"></p>
+        <form id="formConnexion" method="post" target="cibleConnexion" autocomplete="on" novalidate>
+          <div class="input-group" id="blocActivation" style="display: none">
+            <label class="etiquette" for="activationConnexion">Code d'activation (affiché dans le Google Sheets)</label>
+            <input type="text" id="activationConnexion" inputmode="numeric" maxlength="9" autocomplete="off" placeholder="1234-5678">
+          </div>
+          <div class="input-group">
+            <label class="etiquette" for="identifiant">Identifiant</label>
+            <input type="text" id="identifiant" name="username" maxlength="40" autocomplete="username" autocapitalize="off" spellcheck="false" placeholder="Ex. : Caisse centrale 1">
+          </div>
+          <div class="input-group">
+            <label class="etiquette" for="motDePasse">Mot de passe</label>
+            <input type="password" id="motDePasse" name="password" maxlength="100" autocomplete="current-password">
+          </div>
+          <div class="input-group" id="blocMotDePasse2" style="display: none">
+            <label class="etiquette" for="motDePasse2">Confirmer le mot de passe</label>
+            <input type="password" id="motDePasse2" maxlength="100" autocomplete="new-password">
+          </div>
+          <button class="plein" type="submit" id="btnConnexion">Connexion</button>
+        </form>
+        <iframe name="cibleConnexion" class="cible-envoi" title="Envoi du formulaire de connexion" tabindex="-1" aria-hidden="true"></iframe>
+        <div class="message-erreur" id="msgConnexion" role="status"></div>
+        <!-- Après le 1er compte : protéger l'espace responsable par un code à part ? -->
+        <div id="blocCodeAPart" style="display: none">
+          <p class="texte-appairage">Protéger l'espace responsable par un code à part (6 chiffres) ? Sans code, tout compte connecté l'ouvre directement. Modifiable ensuite dans l'espace responsable.</p>
+          <div id="champsCodeAPart" style="display: none">
+            <div class="input-group">
+              <label class="etiquette" for="pinAPart">Code responsable (6 chiffres)</label>
+              <input type="password" id="pinAPart" inputmode="numeric" maxlength="6" autocomplete="off">
+            </div>
+            <div class="input-group">
+              <label class="etiquette" for="pinAPart2">Confirmer le code</label>
+              <input type="password" id="pinAPart2" inputmode="numeric" maxlength="6" autocomplete="off">
+            </div>
+          </div>
+          <button class="plein" id="btnCodeAPartOui" data-action="choisirCodeAPart" data-args="[true]">Oui, choisir un code</button>
+          <button class="sec" id="btnCodeAPartNon" data-action="choisirCodeAPart" data-args="[false]">Non, pas de code</button>
+          <div class="message-erreur" id="msgCodeAPart"></div>
         </div>
-        <div class="input-group">
-          <label class="etiquette" id="lblPinApp" for="pinApp">Code responsable (6 chiffres)</label>
-          <input type="password" id="pinApp" inputmode="numeric" maxlength="6" autocomplete="off">
-        </div>
-        <div class="input-group" id="blocPinApp2" style="display: none">
-          <label class="etiquette" for="pinApp2">Confirmer le code</label>
-          <input type="password" id="pinApp2" inputmode="numeric" maxlength="6" autocomplete="off">
-        </div>
-        <div class="input-group">
-          <label class="etiquette" for="nomTablette">Nom de cet appareil</label>
-          <input type="text" id="nomTablette" maxlength="40" placeholder="Ex. : Caisse 3, Accueil" autocomplete="off">
-        </div>
-        <button class="plein" id="btnAppairer" data-action="appairerCetteTablette">Autoriser cet appareil</button>
-        <div class="message-erreur" id="msgAppairage"></div>
-        <button class="sec danger remplacer" id="btnRemplacerAppareil" data-action="appairerCetteTablette" data-args="[true]" style="display: none"></button>
       </div>
     </div>
 
@@ -621,6 +645,8 @@
       let MONTANT_OBLIGATOIRE = (CONFIG.MONTANT_OBLIGATOIRE !== "NON");
       // Dates de l'offre au moment de l'ouverture (injectées par doGet) : bon écran d'emblée
       const DATES_INITIALES = <?!= JSON.stringify(dates).replace(/</g, '\\u003c') ?>;
+      // Adresse /exec (doGet) : cible de l'envoi réel du formulaire de connexion
+      const URL_APPLI = <?!= JSON.stringify(urlAppli || "").replace(/</g, '\\u003c') ?>;
     </script>
     <!-- Scripts de la page, insérés ici par le serveur (Application.gs::include_).
          Une seule portée globale : l'ordre compte pour ce qui s'exécute au chargement. -->

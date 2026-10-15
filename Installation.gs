@@ -2,7 +2,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Installation_() {
-  return "2026.10.15-1612";
+  return "2026.10.15-1639";
 }
 
 // =================================================================
@@ -71,12 +71,11 @@ function etatRobots_() {
 }
 
 // Depuis le menu du Sheet : installe puis affiche le compte rendu + la suite
-// (et le code d'activation si le code responsable n'existe pas encore).
+// (et le code d'activation si aucun compte n'existe encore).
 function installerDepuisMenu() {
   const ui = SpreadsheetApp.getUi(); // échoue hors du Google Sheets : rien n'est fait
   let rapport = installer();
-  const props = PropertiesService.getDocumentProperties();
-  if (!props.getProperty("ADMIN_PIN_HASH")) rapport += "\n\n" + texteActivation_(genererCodeActivation_());
+  if (lireComptes_().length === 0) rapport += "\n\n" + texteActivation_(genererCodeActivation_());
   ui.alert(
     "🧰 Installation",
     rapport +
@@ -86,16 +85,16 @@ function installerDepuisMenu() {
   );
 }
 
-// Menu du Sheet « 🔑 Code d'activation » : pour créer le code responsable depuis
-// l'application (1re installation, ou après « Réinitialiser le code »).
+// Menu du Sheet « 🔑 Code d'activation » : pour créer le compte de la caisse centrale
+// depuis l'application (1re installation, ou après « Réinitialiser les comptes »).
 function afficherCodeActivation() {
   const ui = SpreadsheetApp.getUi();
   exigerEditeur_();
-  if (PropertiesService.getDocumentProperties().getProperty("ADMIN_PIN_HASH")) {
+  if (lireComptes_().length > 0) {
     ui.alert(
       "🔑 Code d'activation",
-      "Un code responsable existe déjà : il sert à autoriser les appareils (tablettes, ordinateurs…).\n\n" +
-        "Code oublié ? Panneau ⚙️ (à droite) → « Réinitialiser le code responsable » : un code d'activation sera alors affiché.",
+      "Un compte existe déjà : connectez-vous dans l'application avec l'identifiant et le mot de passe " +
+        "de la caisse centrale. D'autres comptes se créent dans l'espace responsable.",
       ui.ButtonSet.OK
     );
     return;

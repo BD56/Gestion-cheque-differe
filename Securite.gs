@@ -4,7 +4,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Securite_() {
-  return "2026.10.15-1612";
+  return "2026.10.15-1639";
 }
 
 // =================================================================
@@ -237,8 +237,8 @@ function texteActivation_(code) {
     "\n(valable " +
     ACTIVATION_DUREE_H +
     " h, une seule fois)\n\n" +
-    "Sur l'appareil (tablette, ordinateur…), ouvrez l'application : elle demande ce code, puis de choisir le code " +
-    "responsable (6 chiffres). Ne le communiquez qu'au responsable."
+    "Sur l'appareil de la caisse centrale, ouvrez l'application : à la première installation, elle demande ce " +
+    "code, puis de créer le compte de la caisse centrale (identifiant et mot de passe). Ne le communiquez qu'à elle."
   );
 }
 

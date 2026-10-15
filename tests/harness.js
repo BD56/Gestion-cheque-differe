@@ -57,7 +57,10 @@ function makeProps(init) {
 function rendrePage(repo, vars) {
   return renderTemplate(
     fs.readFileSync(repo + "/Index.html", "utf8"),
-    Object.assign({ include_: (nom) => fs.readFileSync(repo + "/" + nom + ".html", "utf8") }, vars)
+    Object.assign(
+      { include_: (nom) => fs.readFileSync(repo + "/" + nom + ".html", "utf8"), urlAppli: "" },
+      vars
+    )
   );
 }
 // Valeur d'une constante du premier niveau (const / let ne sont pas des propriétés

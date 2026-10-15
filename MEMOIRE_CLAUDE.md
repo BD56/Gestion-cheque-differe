@@ -2,7 +2,7 @@
 
 > Fichier de reprise après compactage du contexte. À lire **avec** `AGENTS.md` (référence
 > canonique) et `docs/retours-vibe/decisions/2026-10-11_generalisation.md` (décisions).
-> Dernière mise à jour : 2026-10-15 (version 2026.10.15-1612, comptes étape 1, modèle
+> Dernière mise à jour : 2026-10-15 (version 2026.10.15-1639, comptes étapes 1-2, modèle
 > « code responsable = caisse centrale »).
 
 ## ▶️ ÉTAT ACTUEL — à lire d'abord
@@ -12,7 +12,7 @@
   « Comptoir » (branche de travail actuelle, tout est poussé)**. Aucune fusion faite,
   aucune pull request. Ordre prévu (sur demande de Bryan seulement) : `design` →
   `refonte` → `generalisation` → `main` / migration Vannes.
-- **Version actuelle sur `design`** : 2026.10.15-1612 (41 séries de tests vertes,
+- **Version actuelle sur `design`** : 2026.10.15-1639 (41 séries de tests vertes,
   ESLint et Prettier propres). Numéro renouvelé par Claude à chaque push de code
   (`npm run nouvelle-version`).
 - **Bryan teste** sur le Sheet « Gestion Chèques Différés — REFONTE (test) » depuis
@@ -23,8 +23,9 @@
   navigateur : Safari / Chrome) après mise à jour ; confirmer si « Saisies :
   Chargement… » reste bloqué (sa capture venait d'une version antérieure) ; essai sur
   vraie tablette (rotation, clavier, journal, alertes, espace responsable, panneau).
-- **EN COURS (15/10)** : passage aux COMPTES (identifiant + mot de passe), étape 1
-  (serveur) faite ; étape 2 (page) sur « go » de Bryan — voir §0 ter.
+- **EN COURS (15/10)** : passage aux COMPTES (identifiant + mot de passe), étapes 1
+  (serveur) et 2 (page de connexion) faites ; étape 3 (« Code & comptes », panneau du
+  Sheet, textes de l'aide / mentions) sur « go » de Bryan — voir §0 ter.
 - **Dernier échange (15/10)** : perte d'autorisation des appareils sous SAFARI → voir
   **§0 ter**. DÉCIDÉ par Bryan : **code responsable = code de l'équipe de caisse
   centrale** (elle réautorise elle-même ses Mac / iPad) ; RIEN à coder pour ça
@@ -231,6 +232,19 @@ identique avant/après : `n-ijetbkxwto6cqlhbmed6rj7j4kexnxcgupggffa-0lu-script�
   Test `test_comptes` (41 séries). Reste à adapter à l'étape 2/3 : `texteActivation_`
   (parle encore de « choisir le code responsable »). PROCHAINE : étape 2 (page de
   connexion, vrai envoi + `doPost` pour le trousseau, 1re installation) — sur « go ».
+  **✅ ÉTAPE 2 FAITE (page, version 2026.10.15-1639, « go » de Bryan)** : voir AGENTS.md
+  « Comptes » (Page). test_ui_tablettes remplacé par `test_ui_connexion` ; audit
+  d'affichage : états 27-29 (1re installation, code à part, connexion), rien à
+  signaler. Intérim jusqu'aux étapes 3-4 : « Code & appareils » liste encore les
+  anciens appareils (retrait = liste rechargée, plus d'écran d'autorisation) ; le
+  verrou garde la création du code avec activation pour un appelant SANS compte
+  (n'arrive plus en vrai, sert aux tests UI qui ont une session factice) ; aide et
+  mentions parlent encore d'« autoriser l'appareil ». Non vérifiable ici : Safari
+  (proposition d'enregistrer dans la vraie page), temps de MDP_TOURS.
+  Corrigé au passage : le menu « 🔑 Code d'activation » (et « Installer ») donnait un
+  code seulement s'il n'y avait PAS de code responsable ⇒ sur le Sheet de test de
+  Bryan (code déjà créé) impossible de créer le 1er compte. Désormais : code donné
+  tant qu'AUCUN COMPTE n'existe (test_comptes).
 - **Corrections déjà faites à cette occasion (14/10)** : erreur passagère de lecture
   de la liste ≠ « non autorisé » ; clé jamais effacée sur un refus ; remplacement
   sous le même nom (voir historique §0).

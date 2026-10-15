@@ -1,5 +1,5 @@
 <!-- Formulaire : montant, touche Entrée, vérification du N°, copie locale, annuaire. -->
-<script data-version="2026.10.15-1612">
+<script data-version="2026.10.15-1639">
   // --- FORMATAGE AUTOMATIQUE DU MONTANT ---
   // Montant lisible -> reformaté « 1234,50 € » ; illisible -> laissé tel quel, encadré en rouge
   ["montant", "corMontant"].forEach(function (idMontant) {
@@ -87,30 +87,30 @@
         fusionnerEnAttente();
       })
       .withFailureHandler(siNonAutorisee)
-      .chargerCacheVerif(CLE_TABLETTE, sansAnnuaire);
+      .chargerCacheVerif(SESSION, sansAnnuaire);
   }
   // Rafraîchir au retour sur la page (réveil tablette, retour d'une autre app)
   document.addEventListener("visibilitychange", function () {
-    if (document.hidden || !CLE_TABLETTE) return;
+    if (document.hidden || !SESSION) return;
     if (dansPeriode()) rechargerCacheVerif();
     chargerDatesAffichage(); // la tablette a pu rester ouverte après la fin de l'offre
   });
   setInterval(
     function () {
-      if (CLE_TABLETTE) chargerDatesAffichage();
+      if (SESSION) chargerDatesAffichage();
     },
     10 * 60 * 1000
   ); // et sans quitter la page
   // Re-synchroniser au DÉBUT de chaque saisie (focus du N°) : l'appel chevauche la
   // frappe du numéro -> cache frais au moment du blur, sans latence perçue.
   document.getElementById("piece").addEventListener("focus", function () {
-    if (CLE_TABLETTE) rechargerCacheVerif();
+    if (SESSION) rechargerCacheVerif();
   });
   // Le curseur peut attendre longtemps dans « N° » entre deux clients : on rafraîchit
   // aussi dès la 1re frappe si la copie a plus de 20 s (fraîche à la validation).
   let dernierRechargementDemande = 0;
   document.getElementById("piece").addEventListener("input", function () {
-    if (!CLE_TABLETTE || !dansPeriode()) return;
+    if (!SESSION || !dansPeriode()) return;
     const t = Date.now();
     if (t - cacheRecuA > 20000 && t - dernierRechargementDemande > 5000) rechargerCacheVerif();
   });
@@ -168,7 +168,7 @@
           if (champ.value.trim() === val) afficherVerifPiece(res); // pas pour un N° déjà retapé
         })
         .withFailureHandler(siNonAutorisee)
-        .verifierPiece(val, CLE_TABLETTE);
+        .verifierPiece(val, SESSION);
       return;
     }
     // Vérif 100% locale (instantanée)

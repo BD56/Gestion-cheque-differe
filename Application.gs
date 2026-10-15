@@ -3,7 +3,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Application_() {
-  return "2026.10.15-1612";
+  return "2026.10.15-1639";
 }
 
 // Fuseau horaire de référence (réglage du projet Apps Script : Europe/Paris par défaut).
@@ -43,10 +43,26 @@ function doGet(e) {
   // Dates de l'offre glissées dans la page : la tablette affiche tout de suite le bon
   // écran (saisie ou « aucune opération »), sans attendre un appel au serveur.
   page.dates = lireDates_();
+  // Adresse /exec : le formulaire de connexion y est réellement envoyé (doPost), seule
+  // façon pour que le gestionnaire de mots de passe de Safari propose de l'enregistrer.
+  let url = "";
+  try {
+    url = ScriptApp.getService().getUrl() || "";
+  } catch (e) {
+    url = "";
+  }
+  page.urlAppli = url;
   return page
     .evaluate()
     .setTitle(cfg.TITRE_APP)
     .addMetaTag("viewport", "width=device-width, initial-scale=1");
+}
+
+// Reçoit l'envoi du formulaire de connexion (cadre caché de la page) : ne fait RIEN et ne
+// lit rien (identifiant et mot de passe sont vérifiés par connexion()). Il n'existe que
+// pour que le navigateur voie un vrai envoi et propose d'enregistrer le mot de passe.
+function doPost() {
+  return HtmlService.createHtmlOutput("");
 }
 
 // Morceaux de la page (Style.html, Script*.html), insérés tels quels dans Index.html

@@ -248,8 +248,9 @@ Décision : `docs/retours-vibe/decisions/2026-10-11_generalisation.md`.
   empreinte côté serveur (`TABLETTES` en propriétés). `exigerTablette_(cle)` en tête
   de toutes les fonctions utilisées par la tablette (le panneau du Sheet passe via
   `estEditeurDuClasseur_`). Accès du déploiement : **Tout le monde** (`ANYONE_ANONYMOUS`).
-- **Comptes (identifiant + mot de passe)** — branche `design`, ÉTAPE 1 FAITE (serveur
-  seulement ; la page utilise encore les tablettes autorisées jusqu'à l'étape 2) : ils
+- **Comptes (identifiant + mot de passe)** — branche `design`, ÉTAPES 1 (serveur) et 2
+  (page) FAITES ; restent 3 (« Code & comptes », panneau du Sheet, textes) et 4 (retrait
+  des tablettes autorisées, encore acceptées par le serveur) : ils
   remplaceront les tablettes autorisées (Safari oublie la clé : voir MEMOIRE_CLAUDE §0
   ter). Comptes des caisses centrales (`COMPTES` en propriétés : id, identifiant, sel,
   empreinte répétée `MDP_TOURS` fois, version `v`). `connexion(identifiant, mdp)` →
@@ -266,6 +267,19 @@ Décision : `docs/retours-vibe/decisions/2026-10-11_generalisation.md`.
   `retirerCodeResponsable` (compte connecté, espace ouvert). Secours :
   `reinitialiserComptesPanneau` (éditeurs ; tout effacé, nouveau secret, code
   d'activation). Tests : `test_comptes`.
+  **Page (étape 2)** : `#ecranConnexion` (ScriptTablette.html) = « Première
+  installation » (aucun compte : code d'activation + identifiant + mot de passe × 2,
+  puis question « code responsable à part ? » → `definirPin` ou rien) ou
+  « Connexion ». Le formulaire est RÉELLEMENT envoyé vers le cadre caché
+  `cibleConnexion` (action = `URL_APPLI`, adresse /exec injectée par doGet ; `doPost`
+  ne fait rien) : seule façon pour que Safari propose d'enregistrer le mot de passe
+  (essai `docs/essais/trousseau`). Session en localStorage `cdSession` (+ `cdCompte`),
+  variable `SESSION` envoyée à chaque appel (ancienne `CLE_TABLETTE`). Refus
+  `CONNEXION_REQUISE` → session oubliée, écran de connexion, page laissée telle quelle
+  (saisie en cours gardée) ; saisie en arrière-plan refusée → `saisiesARenvoyer`,
+  renvoyée (et recontrôlée) après la reconnexion. Sans code à part, ⚙️ ouvre l'espace
+  directement (`ouvrirSansCode`), « Verrouiller » masqué ; « Se déconnecter » dans le
+  menu et sous la carte du code. Test `test_ui_connexion` (remplace test_ui_tablettes).
 - **Code d'activation** (lot 1 de l'audit) : créer le code responsable (aucun code :
   1re installation ou après « Réinitialiser ») exige un code à 8 chiffres affiché
   **uniquement dans le Google Sheets** (menu « 🧰 Installer », « 🔑 Code d'activation »,

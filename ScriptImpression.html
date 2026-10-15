@@ -1,5 +1,5 @@
 <!-- Impression et lecture des montants. -->
-<script data-version="2026.10.15-1612">
+<script data-version="2026.10.15-1639">
   function preparerImpressionAncien() {
     const d = document.getElementById("dateImpression").value;
     if (!d) {
@@ -62,7 +62,7 @@
         document.body.style.cursor = "default";
         if (!siNonAutorisee(err)) afficherToast("Impression impossible : " + err.message, "error");
       })
-      .genererDonneesImpression(type, dateStr, CLE_TABLETTE);
+      .genererDonneesImpression(type, dateStr, SESSION);
   }
 
   // Met en page un tableau [en-tête, lignes...] + ligne TOTAL, puis imprime

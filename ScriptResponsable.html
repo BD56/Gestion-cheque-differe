@@ -1,5 +1,5 @@
 <!-- Espace responsable : code, corrections, archives, réglages, tablettes. -->
-<script data-version="2026.10.15-1612">
+<script data-version="2026.10.15-1639">
   // =================================================================
   // --- ESPACE RESPONSABLE (code PIN) ---
   // Le jeton n'est gardé qu'en mémoire : il disparaît à la fermeture du
@@ -22,7 +22,7 @@
       }
     });
     // jeton lié à cette tablette : il est envoyé avec sa clé
-    runner[nomFonction].apply(runner, args.concat([{ j: jetonAdmin, c: CLE_TABLETTE }]));
+    runner[nomFonction].apply(runner, args.concat([{ j: jetonAdmin, c: SESSION }]));
   }
 
   // --- Listes de l'espace responsable (saisies, archives, appareils) ---
@@ -91,7 +91,7 @@
         if (seq === seqApercu && !jetonAdmin) apercuAdmin = a; // arrivé après le code : inutile
       })
       .withFailureHandler(function () {})
-      .apercuResponsable(CLE_TABLETTE);
+      .apercuResponsable(SESSION);
   }
   function oublierApercuAdmin() {
     apercuAdmin = null;
@@ -122,9 +122,15 @@
     preparerApercuAdmin();
     document.getElementById("msgVerrou").textContent = message || "";
     document.getElementById("txtVerrou").textContent = "…";
+    document.getElementById("compteVerrou").textContent = COMPTE ? "Connecté : " + COMPTE + " ·" : "";
     google.script.run
       .withSuccessHandler(function (etat) {
         pinDefini = etat.pinDefini;
+        // Pas de code à part : un compte connecté ouvre l'espace directement
+        if (!pinDefini && etat.comptes) {
+          ouvrirSansCode();
+          return;
+        }
         document.getElementById("txtVerrou").textContent = pinDefini
           ? "Saisissez le code responsable."
           : "Aucun code n'existe : saisissez le code d'activation affiché dans le Google Sheets (menu 🚀 APPLICATION → 🔑 Code d'activation), puis choisissez le code responsable (6 chiffres).";
@@ -138,6 +144,23 @@
         document.getElementById("txtVerrou").textContent = "Serveur injoignable : vérifiez le Wi-Fi.";
       })
       .etatAdmin();
+  }
+
+  function ouvrirSansCode() {
+    document.getElementById("txtVerrou").textContent = "Ouverture…";
+    google.script.run
+      .withSuccessHandler(function (r) {
+        if (r && r.ok) {
+          jetonAdmin = r.jeton;
+          afficherZoneAdmin();
+        } else document.getElementById("msgVerrou").textContent = (r && r.message) || "Refusé.";
+      })
+      .withFailureHandler(function (err) {
+        if (!siNonAutorisee(err))
+          document.getElementById("msgVerrou").textContent =
+            "Erreur : " + (err && err.message ? err.message : err);
+      })
+      .ouvrirSessionAdmin("", SESSION);
   }
 
   function deverrouillerAdmin() {
@@ -175,12 +198,12 @@
           surReponse(r);
         })
         .withFailureHandler(surErreur)
-        .definirPin(pin, null, CLE_TABLETTE, activation);
+        .definirPin(pin, null, SESSION, activation);
     } else {
       google.script.run
         .withSuccessHandler(surReponse)
         .withFailureHandler(surErreur)
-        .ouvrirSessionAdmin(pin, CLE_TABLETTE);
+        .ouvrirSessionAdmin(pin, SESSION);
     }
   }
 
@@ -214,8 +237,12 @@
     document.getElementById("zoneAdmin").style.display = "block";
     document.getElementById("railAdmin").style.display = "flex";
     document.getElementById("contenuAdmin").classList.remove("verrouille");
-    document.getElementById("adminSous").textContent =
-      "Déverrouillé · se reverrouille après 10 min sans action";
+    // Sans code à part, « Verrouiller » n'a pas de sens : seul « Se déconnecter » reste
+    document.getElementById("btnVerrouiller").style.display = pinDefini ? "" : "none";
+    document.getElementById("btnDeconnexionRail").classList.toggle("bas", !pinDefini);
+    document.getElementById("adminSous").textContent = pinDefini
+      ? "Déverrouillé · se reverrouille après 10 min sans action"
+      : "Connecté" + (COMPTE ? " : " + COMPTE : "");
     allerEcran("ensemble");
     utiliserApercuAdmin();
     rafraichirEnsemble(true);
@@ -702,7 +729,7 @@
         ligne.className = "ligne-tablette";
         const texte = document.createElement("div");
         const nom = document.createElement("b");
-        nom.textContent = t.nom + (t.id === ID_TABLETTE ? " (cet appareil)" : "");
+        nom.textContent = t.nom;
         const quand = document.createElement("small");
         quand.textContent = "Autorisé le " + t.creeLe + (t.vueLe ? " · utilisé le " + t.vueLe : "");
         texte.appendChild(nom);
@@ -725,12 +752,6 @@
   }
   function retirerUneTablette(t) {
     appelAdmin("retirerTablette", [t.id], function () {
-      if (t.id === ID_TABLETTE) {
-        oublierTablette();
-        fermerPanneau();
-        afficherEcranAppairage("Cet appareil n'est plus autorisé.");
-        return;
-      }
       chargerTablettes(true);
     });
   }
@@ -744,9 +765,8 @@
   }
   function retirerToutesMaintenant() {
     appelAdmin("retirerToutesTablettes", [], function (message) {
-      oublierTablette();
-      fermerPanneau();
-      afficherEcranAppairage(message);
+      afficherToast(message);
+      chargerTablettes(true);
     });
   }
 
@@ -783,11 +803,11 @@
       }
     });
   });
-  ["pinApp", "pinApp2", "activationApp", "nomTablette"].forEach(function (id) {
+  ["pinAPart", "pinAPart2"].forEach(function (id) {
     document.getElementById(id).addEventListener("keydown", function (e) {
       if (e.key === "Enter") {
         e.preventDefault();
-        appairerCetteTablette();
+        choisirCodeAPart(true);
       }
     });
   });

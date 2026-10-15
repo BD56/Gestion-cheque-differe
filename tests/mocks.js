@@ -120,6 +120,10 @@ function makeEnv(opts = {}) {
       computeDigest: (alg, s) =>
         [...crypto.createHash("sha256").update(s, "utf8").digest()].map((b) => (b > 127 ? b - 256 : b)),
       base64Encode: (arr) => Buffer.from(arr.map((b) => b & 255)).toString("base64"),
+      computeHmacSha256Signature: (valeur, cle) =>
+        [...crypto.createHmac("sha256", cle).update(valeur, "utf8").digest()].map((b) =>
+          b > 127 ? b - 256 : b
+        ),
       getUuid: () => crypto.randomUUID(),
       formatDate: opts.formatDate || require("./fmt").fmt,
     },

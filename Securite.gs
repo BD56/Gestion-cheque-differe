@@ -1,9 +1,10 @@
 // Sécurité : code responsable (PIN), code d'activation, sessions (jetons),
-// tablettes autorisées.
+// comptes (identifiant + mot de passe) et tablettes autorisées (ancienne méthode,
+// retirée quand la page utilisera les comptes).
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Securite_() {
-  return "2026.10.14-1653";
+  return "2026.10.15-1612";
 }
 
 // =================================================================
@@ -26,16 +27,20 @@ function empreintePin_(sel, pin) {
   return Utilities.base64Encode(octets);
 }
 
+// Sans clé ni session : ce que l'écran d'accueil doit proposer (1re installation ou
+// connexion). Ne dévoile aucun identifiant.
 function etatAdmin() {
-  return { pinDefini: !!PropertiesService.getDocumentProperties().getProperty("ADMIN_PIN_HASH") };
+  const props = PropertiesService.getDocumentProperties();
+  return { pinDefini: !!props.getProperty("ADMIN_PIN_HASH"), comptes: lireComptes_().length > 0 };
 }
 
-// Le jeton est LIÉ à la tablette qui a saisi le code : il ne sert à rien depuis un
-// autre appareil. La tablette l'envoie avec sa clé : { j: jeton, c: clé }.
-// (« E » = jeton sans tablette : panneau du Sheet ou code d'activation.)
-function creerJetonAdmin_(tablette) {
+// Le jeton est LIÉ à l'appelant qui a saisi le code (tablette « T:<id> » ou compte
+// « C:<id> ») : il ne sert à rien sans sa clé / sa session. La page l'envoie avec :
+// { j: jeton, c: clé ou session }. (« E » = jeton sans appelant : panneau du Sheet ou
+// code d'activation.)
+function creerJetonAdmin_(appelant) {
   const jeton = Utilities.getUuid();
-  CacheService.getScriptCache().put("ADM_" + jeton, tablette ? "T:" + tablette.id : "E", ADMIN_SESSION_SEC);
+  CacheService.getScriptCache().put("ADM_" + jeton, appelant ? appelant.lien : "E", ADMIN_SESSION_SEC);
   return jeton;
 }
 
@@ -51,8 +56,8 @@ function jetonValide_(jeton) {
   const lien = cache.get("ADM_" + j);
   if (!lien) return false;
   if (lien !== "E") {
-    const t = tabletteDeCle_(cle);
-    if (!t || lien !== "T:" + t.id) return false;
+    const a = appelantDeCle_(cle);
+    if (!a || lien !== a.lien) return false;
   }
   cache.put("ADM_" + j, lien, ADMIN_SESSION_SEC); // prolonge (10 min d'inactivité)
   return true;
@@ -175,15 +180,20 @@ function effacerEssais_(props, groupe) {
   }
 }
 
-// Code juste -> { ok:true, jeton } ; sinon { ok:false, message }. Tablette autorisée requise.
+// Code juste -> { ok:true, jeton } ; sinon { ok:false, message }. Appareil autorisé ou
+// compte connecté requis. Sans code responsable « à part » (choix fait à l'installation),
+// un compte connecté ouvre l'espace responsable sans code.
 function ouvrirSessionAdmin(pin, cle) {
   exigerTablette_(cle);
-  const t = tabletteDeCle_(cle);
+  const a = appelantDeCle_(cle);
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
-    const v = verifierPin_(PropertiesService.getDocumentProperties(), pin, t ? "T_" + t.id : "EDITEUR");
-    return v.ok ? { ok: true, jeton: creerJetonAdmin_(t) } : v;
+    const props = PropertiesService.getDocumentProperties();
+    if (a && a.compte && !props.getProperty("ADMIN_PIN_HASH"))
+      return { ok: true, jeton: creerJetonAdmin_(a) };
+    const v = verifierPin_(props, pin, a ? a.groupe : "EDITEUR");
+    return v.ok ? { ok: true, jeton: creerJetonAdmin_(a) } : v;
   } finally {
     lock.releaseLock();
   }
@@ -259,8 +269,9 @@ function verifierActivation_(props, code) {
   return { ok: false, message: "Code d'activation incorrect." };
 }
 
-// Création (si aucun code : code d'activation exigé, sauf panneau du Sheet) ou
-// changement (session responsable requise).
+// Création (si aucun code : code d'activation exigé, sauf panneau du Sheet ou compte
+// connecté — un compte a déjà tous les droits sans code) ou changement (session
+// responsable requise).
 function definirPin(nouveauPin, jeton, cle, activation) {
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
@@ -271,7 +282,8 @@ function definirPin(nouveauPin, jeton, cle, activation) {
     nouveauPin = (nouveauPin || "").toString();
     if (!ADMIN_PIN_REGEX.test(nouveauPin))
       return { ok: false, message: "Le code doit contenir exactement 6 chiffres." };
-    if (creation && !estEditeurDuClasseur_()) {
+    const appelant = appelantDeCle_(cle);
+    if (creation && !estEditeurDuClasseur_() && !(appelant && appelant.compte)) {
       const a = verifierActivation_(props, activation);
       if (!a.ok) return a;
     }
@@ -283,7 +295,7 @@ function definirPin(nouveauPin, jeton, cle, activation) {
     const garde = !creation && jetonValide_(jeton);
     return {
       ok: true,
-      jeton: garde ? (typeof jeton === "object" ? jeton.j : jeton) : creerJetonAdmin_(tabletteDeCle_(cle)),
+      jeton: garde ? (typeof jeton === "object" ? jeton.j : jeton) : creerJetonAdmin_(appelant),
     };
   } finally {
     lock.releaseLock();
@@ -346,10 +358,21 @@ function tabletteDeCle_(cle) {
   return null;
 }
 
-// Refuse l'appel si la clé ne correspond à aucune tablette autorisée (sauf
-// panneau du Sheet). Note la date de dernière utilisation (une fois par jour,
-// propriété séparée : pas de réécriture de la liste, donc pas de conflit).
+// Refuse l'appel si la clé ne correspond à aucune tablette autorisée, ni à une session
+// de compte valable (sauf panneau du Sheet). Note la date de dernière utilisation (une
+// fois par jour, propriété séparée : pas de réécriture de la liste, donc pas de conflit).
 function exigerTablette_(cle) {
+  if (estSession_(cle)) {
+    const compte = compteDeSession_(cle);
+    if (compte) {
+      noterVue_("COMPTE_VUE_" + compte.id);
+      return;
+    }
+    if (estEditeurDuClasseur_()) return;
+    throw new Error(
+      "CONNEXION_REQUISE : session terminée (3 h du matin), mot de passe changé ou compte retiré."
+    );
+  }
   const t = tabletteDeCle_(cle);
   if (t) {
     const props = PropertiesService.getDocumentProperties();
@@ -359,6 +382,23 @@ function exigerTablette_(cle) {
   }
   if (estEditeurDuClasseur_()) return;
   throw new Error("TABLETTE_NON_AUTORISEE : cet appareil n'est pas (ou plus) autorisé.");
+}
+
+function noterVue_(cle) {
+  const props = PropertiesService.getDocumentProperties();
+  const auj = Utilities.formatDate(new Date(), fuseau_(), "dd/MM/yyyy");
+  if (props.getProperty(cle) !== auj) props.setProperty(cle, auj);
+}
+
+// Qui appelle ? Tablette autorisée ou compte connecté (null sinon). lien = attache du
+// jeton responsable ; groupe = compteur d'essais du code responsable.
+function appelantDeCle_(cle) {
+  if (estSession_(cle)) {
+    const c = compteDeSession_(cle);
+    return c ? { compte: true, id: c.id, nom: c.identifiant, lien: "C:" + c.id, groupe: "C_" + c.id } : null;
+  }
+  const t = tabletteDeCle_(cle);
+  return t ? { compte: false, id: t.id, nom: t.nom, lien: "T:" + t.id, groupe: "T_" + t.id } : null;
 }
 
 // Autorise la tablette qui appelle (code responsable requis). Renvoie la clé à garder.
@@ -486,6 +526,371 @@ function retirerToutesTablettesPanneau() {
     });
     ecrireTablettes_([]);
     return "✅ Tous les appareils ont été retirés : autorisez à nouveau ceux du magasin (avec le code responsable).";
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// =================================================================
+// --- COMPTES (identifiant + mot de passe) ---
+//     Les comptes sont ceux de la (des) caisse(s) centrale(s). Se connecter donne une
+//     SESSION valable jusqu'à 3 h du matin, que la page envoie à chaque appel à la place
+//     de la clé de tablette (le gestionnaire de mots de passe du navigateur retient le
+//     mot de passe : utile sous Safari, qui oublie le stockage de la page).
+//     - Mot de passe jamais stocké : empreinte salée, répétée MDP_TOURS fois.
+//     - Session = « S1.<compte>.<version>.<fin>.<signature> » : rien n'est stocké par
+//       session ; la signature (HMAC, secret du document) empêche de la fabriquer.
+//       Changer le mot de passe (version + 1) ou retirer le compte la rend caduque.
+//     - Essais faux comptés PAR COMPTE : pause de 10 s, blocage 15 min après 5 (un
+//       inconnu ne bloque pas les autres comptes).
+//     - 1er compte : code d'activation du Google Sheets (comme le code responsable).
+//       Les suivants : depuis l'espace responsable. Jamais d'inscription libre.
+//     - Secours : le panneau du Sheet retire tous les comptes (retour à la 1re
+//       installation, nouveau code d'activation).
+// =================================================================
+// Erreur passagère de Google : remontée telle quelle, jamais lue comme « aucun compte »
+// (sinon l'écran de 1re installation s'afficherait, et une écriture perdrait les comptes).
+function lireComptes_() {
+  const brut = PropertiesService.getDocumentProperties().getProperty("COMPTES");
+  try {
+    return JSON.parse(brut || "[]");
+  } catch (e) {
+    return [];
+  }
+}
+function ecrireComptes_(liste) {
+  PropertiesService.getDocumentProperties().setProperty("COMPTES", JSON.stringify(liste));
+}
+
+function empreinteMdp_(sel, mdp) {
+  let h = sel + ":" + mdp;
+  for (let i = 0; i < MDP_TOURS; i++)
+    h = Utilities.base64Encode(
+      Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, sel + ":" + h, Utilities.Charset.UTF_8)
+    );
+  return h;
+}
+
+function compteParIdentifiant_(liste, identifiant) {
+  const n = _normId_(identifiant || "");
+  return n === ""
+    ? null
+    : liste.filter(function (c) {
+        return _normId_(c.identifiant) === n;
+      })[0] || null;
+}
+
+// Identifiant obligatoire (40 caractères au plus) ; mot de passe de MDP_MIN caractères
+// au moins. Renvoie un message d'erreur, ou "" si tout va bien.
+function controlerIdentifiant_(identifiant) {
+  return _normId_(identifiant) === "" ? "Choisissez un identifiant (ex. Caisse centrale 1)." : "";
+}
+function controlerMdp_(mdp) {
+  if (mdp.length < MDP_MIN) return "Le mot de passe doit contenir au moins " + MDP_MIN + " caractères.";
+  if (mdp.length > 100) return "Mot de passe trop long (100 caractères au plus).";
+  return "";
+}
+
+function nouveauCompte_(identifiant, mdp) {
+  const sel = Utilities.getUuid();
+  return {
+    id: Utilities.getUuid().replace(/-/g, "").slice(0, 10),
+    identifiant: identifiant,
+    sel: sel,
+    hash: empreinteMdp_(sel, mdp),
+    v: 1,
+    creeLe: Utilities.formatDate(new Date(), fuseau_(), "dd/MM/yyyy HH:mm"),
+  };
+}
+
+// --- Sessions ---
+function estSession_(cle) {
+  return typeof cle === "string" && cle.indexOf("S1.") === 0;
+}
+// Secret de signature : créé au premier besoin, SOUS VERROU (appelants : connexion,
+// 1re installation, changement de mot de passe).
+function secretSessions_(creer) {
+  const props = PropertiesService.getDocumentProperties();
+  let secret = props.getProperty("SESSION_SECRET");
+  if (!secret && creer) {
+    secret = Utilities.getUuid() + Utilities.getUuid();
+    props.setProperty("SESSION_SECRET", secret);
+  }
+  return secret;
+}
+function signatureSession_(secret, corps) {
+  return Utilities.base64Encode(Utilities.computeHmacSha256Signature(corps, secret));
+}
+// Prochain SESSION_HEURE_FIN h (heure du fuseau du script), en millisecondes.
+function finDeSession_(maintenant) {
+  const tz = fuseau_();
+  // décalage du fuseau à l'instant t (ms) : heure locale lue comme si elle était UTC, moins t
+  const decalage = function (t) {
+    const p = Utilities.formatDate(new Date(t), tz, "yyyy-MM-dd-HH-mm").split("-").map(Number);
+    return Date.UTC(p[0], p[1] - 1, p[2], p[3], p[4]) - Math.floor(t / 60000) * 60000;
+  };
+  const p = Utilities.formatDate(maintenant, tz, "yyyy-MM-dd-HH").split("-").map(Number);
+  const local = Date.UTC(p[0], p[1] - 1, p[2] + (p[3] >= SESSION_HEURE_FIN ? 1 : 0), SESSION_HEURE_FIN, 0);
+  const essai = local - decalage(local);
+  return local - decalage(essai); // 2e passage : changement d'heure entre-temps
+}
+function creerSession_(compte) {
+  const corps = ["S1", compte.id, compte.v, finDeSession_(new Date())].join(".");
+  return corps + "." + signatureSession_(secretSessions_(true), corps);
+}
+// Compte de la session si elle est valable (signature, échéance, version), null sinon.
+function compteDeSession_(session) {
+  if (!estSession_(session)) return null;
+  const morceaux = session.split(".");
+  if (morceaux.length !== 5) return null;
+  const secret = secretSessions_(false);
+  if (!secret) return null;
+  const corps = morceaux.slice(0, 4).join(".");
+  if (signatureSession_(secret, corps) !== morceaux[4]) return null;
+  if (Date.now() >= Number(morceaux[3])) return null;
+  const compte = lireComptes_().filter(function (c) {
+    return c.id === morceaux[1];
+  })[0];
+  return compte && String(compte.v) === morceaux[2] ? compte : null;
+}
+
+// Mot de passe d'un compte, avec pause et blocage PAR COMPTE. À appeler sous verrou.
+function verifierMdp_(props, compte, mdp) {
+  const cleEtat = "CPT_ESSAIS_" + compte.id;
+  let etat = {};
+  try {
+    etat = JSON.parse(props.getProperty(cleEtat) || "{}");
+  } catch (e) {
+    etat = {};
+  }
+  const maintenant = Date.now();
+  if ((etat.bloque || 0) > maintenant)
+    return {
+      ok: false,
+      message:
+        "Trop d'essais pour ce compte. Réessayez dans " +
+        Math.ceil((etat.bloque - maintenant) / 60000) +
+        " min.",
+    };
+  if (maintenant - (etat.dernier || 0) < ADMIN_PAUSE_MS)
+    return {
+      ok: false,
+      message:
+        "Patientez " +
+        Math.ceil((ADMIN_PAUSE_MS - (maintenant - etat.dernier)) / 1000) +
+        " s avant un nouvel essai.",
+    };
+  if (empreinteMdp_(compte.sel, mdp) === compte.hash) {
+    props.deleteProperty(cleEtat);
+    return { ok: true };
+  }
+  const echecs = (etat.echecs || 0) + 1;
+  if (echecs >= ADMIN_ESSAIS_MAX) {
+    props.setProperty(
+      cleEtat,
+      JSON.stringify({ echecs: 0, dernier: maintenant, bloque: maintenant + ADMIN_BLOCAGE_MIN * 60000 })
+    );
+    return {
+      ok: false,
+      message: "Mot de passe incorrect. Trop d'essais : compte bloqué " + ADMIN_BLOCAGE_MIN + " min.",
+    };
+  }
+  props.setProperty(cleEtat, JSON.stringify({ echecs: echecs, dernier: maintenant, bloque: 0 }));
+  return {
+    ok: false,
+    message:
+      "Mot de passe incorrect (" + (ADMIN_ESSAIS_MAX - echecs) + " essai(s) restant(s)). Patientez 10 s.",
+  };
+}
+
+function reponseConnexion_(compte) {
+  return {
+    ok: true,
+    session: creerSession_(compte),
+    compte: { id: compte.id, identifiant: compte.identifiant },
+  };
+}
+
+// Connexion : { ok, session, compte } ou { ok:false, message }.
+function connexion(identifiant, mdp) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const compte = compteParIdentifiant_(lireComptes_(), (identifiant || "").toString());
+    if (!compte) return { ok: false, message: "Identifiant inconnu." };
+    const v = verifierMdp_(PropertiesService.getDocumentProperties(), compte, (mdp || "").toString());
+    return v.ok ? reponseConnexion_(compte) : v;
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// 1re installation : AUCUN compte. Code d'activation exigé (affiché seulement dans le
+// Google Sheets), sinon la première personne qui ouvre le lien créerait le compte.
+function premierCompte(activation, identifiant, mdp) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const props = PropertiesService.getDocumentProperties();
+    if (lireComptes_().length > 0)
+      return { ok: false, message: "Un compte existe déjà : connectez-vous avec un identifiant existant." };
+    identifiant = (identifiant || "").toString().trim().slice(0, 40);
+    mdp = (mdp || "").toString();
+    const erreur = controlerIdentifiant_(identifiant) || controlerMdp_(mdp);
+    if (erreur) return { ok: false, message: erreur };
+    if (!estEditeurDuClasseur_()) {
+      const a = verifierActivation_(props, activation);
+      if (!a.ok) return a;
+    }
+    const compte = nouveauCompte_(identifiant, mdp);
+    ecrireComptes_([compte]);
+    effacerActivation_(props);
+    return reponseConnexion_(compte);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function listerComptes(jeton) {
+  exigerAdmin_(jeton);
+  return listeComptes_();
+}
+// Ni empreinte ni sel : identifiant, dates et id (tiré au hasard)
+function listeComptes_() {
+  const props = PropertiesService.getDocumentProperties();
+  return lireComptes_().map(function (c) {
+    return {
+      id: c.id,
+      identifiant: c.identifiant,
+      creeLe: c.creeLe,
+      vueLe: props.getProperty("COMPTE_VUE_" + c.id) || "",
+    };
+  });
+}
+
+function creerCompte(identifiant, mdp, jeton) {
+  exigerAdmin_(jeton);
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    identifiant = (identifiant || "").toString().trim().slice(0, 40);
+    mdp = (mdp || "").toString();
+    const erreur = controlerIdentifiant_(identifiant) || controlerMdp_(mdp);
+    if (erreur) return { ok: false, message: erreur };
+    const liste = lireComptes_();
+    const pris = compteParIdentifiant_(liste, identifiant);
+    if (pris)
+      return {
+        ok: false,
+        message: "« " + pris.identifiant + " » existe déjà : choisissez un autre identifiant.",
+      };
+    if (liste.length >= COMPTES_MAX)
+      return { ok: false, message: COMPTES_MAX + " comptes au plus : retirez-en un d'abord." };
+    const compte = nouveauCompte_(identifiant, mdp);
+    liste.push(compte);
+    ecrireComptes_(liste);
+    return { ok: true, compte: { id: compte.id, identifiant: compte.identifiant } };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// Nouveau mot de passe : les sessions ouvertes avec l'ancien ne servent plus (version + 1).
+// Si c'est le compte de l'appelant (cle = sa session), une nouvelle session est renvoyée.
+function changerMotDePasse(id, mdp, jeton, cle) {
+  exigerAdmin_(jeton);
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    mdp = (mdp || "").toString();
+    const erreur = controlerMdp_(mdp);
+    if (erreur) return { ok: false, message: erreur };
+    const appelant = appelantDeCle_(cle);
+    const liste = lireComptes_();
+    const compte = liste.filter(function (c) {
+      return c.id === id;
+    })[0];
+    if (!compte) return { ok: false, message: "Ce compte n'existe plus." };
+    compte.sel = Utilities.getUuid();
+    compte.hash = empreinteMdp_(compte.sel, mdp);
+    compte.v = (Number(compte.v) || 1) + 1;
+    ecrireComptes_(liste);
+    PropertiesService.getDocumentProperties().deleteProperty("CPT_ESSAIS_" + id);
+    const r = { ok: true, message: "Mot de passe de « " + compte.identifiant + " » changé." };
+    if (appelant && appelant.compte && appelant.id === id) r.session = creerSession_(compte);
+    return r;
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// Retire un compte (ses sessions ne servent plus). Le dernier compte reste : sans lui,
+// plus personne ne pourrait se connecter (secours : panneau du Sheet).
+function retirerCompte(id, jeton) {
+  exigerAdmin_(jeton);
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const liste = lireComptes_();
+    const reste = liste.filter(function (c) {
+      return c.id !== id;
+    });
+    if (reste.length === liste.length) return { ok: false, message: "Ce compte n'existe plus." };
+    if (reste.length === 0) return { ok: false, message: "Impossible de retirer le dernier compte." };
+    ecrireComptes_(reste);
+    const props = PropertiesService.getDocumentProperties();
+    ["COMPTE_VUE_", "CPT_ESSAIS_", "PIN_ESSAIS_C_"].forEach(function (k) {
+      props.deleteProperty(k + id);
+    });
+    return { ok: true, message: "Compte retiré." };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// Ne plus protéger l'espace responsable par un code à part : un compte connecté l'ouvre
+// alors directement. Réservé à un COMPTE connecté qui a ouvert l'espace (avec le code).
+// Pour le remettre : definirPin (un compte connecté peut le créer sans activation).
+function retirerCodeResponsable(jeton, cle) {
+  exigerAdmin_(jeton);
+  const a = appelantDeCle_(cle);
+  if (!a || !a.compte) return { ok: false, message: "Connectez-vous avec un compte pour retirer le code." };
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const props = PropertiesService.getDocumentProperties();
+    ["ADMIN_PIN_HASH", "ADMIN_PIN_SEL", "PIN_INCONNUS"].forEach(function (k) {
+      props.deleteProperty(k);
+    });
+    effacerEssais_(props);
+    return { ok: true, message: "Code responsable retiré : un compte connecté ouvre l'espace responsable." };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// Secours (panneau du Sheet, éditeurs) : plus personne ne peut se connecter (mots de
+// passe oubliés, comptes bloqués…). Retire tous les comptes (toutes les sessions
+// tombent : nouveau secret) et le code responsable ; l'application revient à la 1re
+// installation, avec le code d'activation affiché ici.
+function reinitialiserComptesPanneau() {
+  exigerEditeur_();
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const props = PropertiesService.getDocumentProperties();
+    const tout = props.getProperties();
+    for (const k in tout)
+      if (/^(COMPTE_VUE_|CPT_ESSAIS_)/.test(k) || k === "SESSION_SECRET" || k === "COMPTES")
+        props.deleteProperty(k);
+    ["ADMIN_PIN_HASH", "ADMIN_PIN_SEL", "PIN_INCONNUS"].forEach(function (k) {
+      props.deleteProperty(k);
+    });
+    effacerEssais_(props);
+    return (
+      "✅ Comptes et code responsable effacés : l'application revient à la première installation.\n\n" +
+      texteActivation_(genererCodeActivation_())
+    );
   } finally {
     lock.releaseLock();
   }

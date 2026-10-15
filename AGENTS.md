@@ -248,6 +248,24 @@ Décision : `docs/retours-vibe/decisions/2026-10-11_generalisation.md`.
   empreinte côté serveur (`TABLETTES` en propriétés). `exigerTablette_(cle)` en tête
   de toutes les fonctions utilisées par la tablette (le panneau du Sheet passe via
   `estEditeurDuClasseur_`). Accès du déploiement : **Tout le monde** (`ANYONE_ANONYMOUS`).
+- **Comptes (identifiant + mot de passe)** — branche `design`, ÉTAPE 1 FAITE (serveur
+  seulement ; la page utilise encore les tablettes autorisées jusqu'à l'étape 2) : ils
+  remplaceront les tablettes autorisées (Safari oublie la clé : voir MEMOIRE_CLAUDE §0
+  ter). Comptes des caisses centrales (`COMPTES` en propriétés : id, identifiant, sel,
+  empreinte répétée `MDP_TOURS` fois, version `v`). `connexion(identifiant, mdp)` →
+  session « S1.<id>.<v>.<fin>.<HMAC> » (secret `SESSION_SECRET`, rien de stocké par
+  session) valable jusqu'à **3 h du matin** (`finDeSession_`, fuseau du script) ;
+  `exigerTablette_` accepte une session (sinon `CONNEXION_REQUISE`) ou une clé de
+  tablette. Essais faux PAR COMPTE (`CPT_ESSAIS_<id>` : pause 10 s, blocage 15 min
+  après 5). 1er compte : `premierCompte(activation, …)` (code d'activation, aucun
+  compte). Ensuite (espace responsable) : `creerCompte`, `listerComptes`,
+  `changerMotDePasse` (version + 1 ⇒ sessions caduques ; nouvelle session si c'est
+  l'appelant), `retirerCompte` (jamais le dernier). **Code responsable « à part »**
+  facultatif : sans code (`ADMIN_PIN_HASH` absent), un compte connecté ouvre l'espace
+  (`ouvrirSessionAdmin`) ; un compte crée le code sans activation (`definirPin`) ;
+  `retirerCodeResponsable` (compte connecté, espace ouvert). Secours :
+  `reinitialiserComptesPanneau` (éditeurs ; tout effacé, nouveau secret, code
+  d'activation). Tests : `test_comptes`.
 - **Code d'activation** (lot 1 de l'audit) : créer le code responsable (aucun code :
   1re installation ou après « Réinitialiser ») exige un code à 8 chiffres affiché
   **uniquement dans le Google Sheets** (menu « 🧰 Installer », « 🔑 Code d'activation »,

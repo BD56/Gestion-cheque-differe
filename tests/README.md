@@ -14,7 +14,8 @@ faux `google.script.run` branché sur le serveur simulé.
   « 0123 » devient le nombre 123, une apostrophe initiale force le texte).
 - Par défaut le contrôle « tablette autorisée » est neutralisé (`exigerTablette_`) et la
   fausse tablette a déjà une clé ; `test_tablettes.js` / `test_ui_tablettes.js` le testent
-  pour de vrai (`tabletteReelle`, `sansCle`).
+  pour de vrai (`tabletteReelle`, `sansCle`). `test_comptes.js` teste les comptes et les sessions
+  (connexion, fin à 3 h, blocage par compte, changement / retrait).
 - Limites : ce sont des **simulations**. Les comportements réels de Google (conversion
   des valeurs, e-mail du visiteur, stockage du navigateur dans l'iframe Apps Script) sont
   à vérifier sur une copie du Sheet.

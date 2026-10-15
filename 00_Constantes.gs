@@ -3,7 +3,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_00_Constantes_() {
-  return "2026.10.14-1653";
+  return "2026.10.15-1612";
 }
 
 // =================================================================
@@ -41,6 +41,12 @@ const ACTIVATION_ESSAIS_MAX = 10;
 
 // Tablettes autorisées (voir Securite.gs)
 const TABLETTES_MAX = 20;
+
+// Comptes (identifiant + mot de passe, voir Securite.gs)
+const COMPTES_MAX = 20;
+const MDP_MIN = 8; // longueur minimale du mot de passe
+const MDP_TOURS = 500; // empreinte répétée : ralentit les essais si les propriétés fuitent
+const SESSION_HEURE_FIN = 3; // toutes les sessions se terminent à 3 h du matin (fuseau du script)
 
 // Annuaire inter-offres (voir Annuaire.gs). ANNUAIRE_ACTIF = false coupe tout.
 const ANNUAIRE_ACTIF = true;

@@ -2,7 +2,7 @@
 
 > Fichier de reprise après compactage du contexte. À lire **avec** `AGENTS.md` (référence
 > canonique) et `docs/retours-vibe/decisions/2026-10-11_generalisation.md` (décisions).
-> Dernière mise à jour : 2026-10-15 (version 2026.10.14-1653, dossier Safari, modèle
+> Dernière mise à jour : 2026-10-15 (version 2026.10.15-1612, comptes étape 1, modèle
 > « code responsable = caisse centrale »).
 
 ## ▶️ ÉTAT ACTUEL — à lire d'abord
@@ -12,7 +12,7 @@
   « Comptoir » (branche de travail actuelle, tout est poussé)**. Aucune fusion faite,
   aucune pull request. Ordre prévu (sur demande de Bryan seulement) : `design` →
   `refonte` → `generalisation` → `main` / migration Vannes.
-- **Version actuelle sur `design`** : 2026.10.14-1653 (40 séries de tests vertes,
+- **Version actuelle sur `design`** : 2026.10.15-1612 (41 séries de tests vertes,
   ESLint et Prettier propres). Numéro renouvelé par Claude à chaque push de code
   (`npm run nouvelle-version`).
 - **Bryan teste** sur le Sheet « Gestion Chèques Différés — REFONTE (test) » depuis
@@ -23,6 +23,8 @@
   navigateur : Safari / Chrome) après mise à jour ; confirmer si « Saisies :
   Chargement… » reste bloqué (sa capture venait d'une version antérieure) ; essai sur
   vraie tablette (rotation, clavier, journal, alertes, espace responsable, panneau).
+- **EN COURS (15/10)** : passage aux COMPTES (identifiant + mot de passe), étape 1
+  (serveur) faite ; étape 2 (page) sur « go » de Bryan — voir §0 ter.
 - **Dernier échange (15/10)** : perte d'autorisation des appareils sous SAFARI → voir
   **§0 ter**. DÉCIDÉ par Bryan : **code responsable = code de l'équipe de caisse
   centrale** (elle réautorise elle-même ses Mac / iPad) ; RIEN à coder pour ça
@@ -216,7 +218,19 @@ identique avant/après : `n-ijetbkxwto6cqlhbmed6rj7j4kexnxcgupggffa-0lu-script�
   (le navigateur peut retenir le mot de passe ⇒ comme un appareil autorisé).
   Découpage en 4 étapes proposé (serveur comptes + sessions ; page connexion +
   1re installation ; espace « Code & comptes » + panneau du Sheet + textes ;
-  retrait de l'autorisation des appareils + docs). En attente du « go ».
+  retrait de l'autorisation des appareils + docs). Création des comptes validée par
+  Bryan : 1er compte = code d'activation du Sheet (usage unique) ; suivants = espace
+  responsable « Code & comptes » ; secours = panneau du Sheet « Réinitialiser les
+  comptes » (retour à la 1re installation).
+  **✅ ÉTAPE 1 FAITE (serveur, version 2026.10.15-1612, « go » de Bryan)** : voir AGENTS.md
+  « Comptes ». Choix techniques de Claude : session SIGNÉE (HMAC) sans stockage par
+  session (révocation = version du compte / retrait / nouveau secret) ; clés de
+  tablette toujours acceptées jusqu'à l'étape 4 (l'app reste utilisable entre les
+  étapes) ; « Identifiant inconnu » dit tel quel (identifiants non secrets) ; dernier
+  compte non retirable ; MDP_TOURS = 500 (temps réel à mesurer sur un vrai Sheet).
+  Test `test_comptes` (41 séries). Reste à adapter à l'étape 2/3 : `texteActivation_`
+  (parle encore de « choisir le code responsable »). PROCHAINE : étape 2 (page de
+  connexion, vrai envoi + `doPost` pour le trousseau, 1re installation) — sur « go ».
 - **Corrections déjà faites à cette occasion (14/10)** : erreur passagère de lecture
   de la liste ≠ « non autorisé » ; clé jamais effacée sur un refus ; remplacement
   sous le même nom (voir historique §0).

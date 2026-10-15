@@ -2,7 +2,7 @@
 
 > Fichier de reprise après compactage du contexte. À lire **avec** `AGENTS.md` (référence
 > canonique) et `docs/retours-vibe/decisions/2026-10-11_generalisation.md` (décisions).
-> Dernière mise à jour : 2026-10-14 (soir, version 2026.10.14-1653).
+> Dernière mise à jour : 2026-10-15 (version 2026.10.14-1653, dossier Safari).
 
 ## ▶️ ÉTAT ACTUEL — à lire d'abord
 - **Branches** : `main` = prod Vannes (non touchée) ; `generalisation` = version
@@ -22,55 +22,12 @@
   navigateur : Safari / Chrome) après mise à jour ; confirmer si « Saisies :
   Chargement… » reste bloqué (sa capture venait d'une version antérieure) ; essai sur
   vraie tablette (rotation, clavier, journal, alertes, espace responsable, panneau).
-- **Dernier échange** : (1) Mac de Bryan « plus reconnu » parfois après une mise à
-  jour : cause la plus probable = défaut CORRIGÉ en 2026.10.14-1459 (incident passager
-  de Google ⇒ refus ⇒ clé effacée par la page ; l'appareil restait dans la liste du
-  serveur, d'où « nom déjà pris »). Hypothèse « l'adresse technique du cadre change à
-  chaque version » NON confirmée (Bryan : « ça a l'air bon » après une nouvelle
-  version). Diagnostic affiché puis RETIRÉ du site à la demande de Bryan
-  (2026.10.14-1653) ; s'il revient : demander raison (message affiché ?) + navigateur.
-  (2) Remplacement sous le même nom fait (2026.10.14-1645). (3) Phrase « Noms abrégés
-  et N° masqués… » retirée du pied du journal (demande de Bryan ; la règle d'affichage
-  reste). Rien en cours de codage.
-- **⚠️ 15/10 — le Mac (« Mac Bryan », autorisé le 14/10 15:08, « utilisé le
-  15/10 ») n'est plus reconnu le 15/10 ; réautorisé sous « mac » à 11:08.** Capture
-  de Bryan : adresse technique IDENTIQUE à celle du 14/10 ⇒ le déploiement n'a PAS
-  changé l'adresse (hypothèse écartée). NOUVELLE PISTE, la plus probable : SAFARI.
-  L'application tourne dans un cadre `googleusercontent.com` dans `script.google.com`
-  = stockage « tiers » ; selon WebKit, le stockage local des cadres tiers est
-  partitionné ET ÉPHÉMÈRE (non persistant, voulu) ⇒ la clé disparaît quand Safari est
-  quitté / l'onglet fermé / l'iPad tue Safari. Chrome (ordinateur, Android) : stockage
-  partitionné mais persistant. ENJEU : sur iPad, TOUS les navigateurs utilisent WebKit
-  ⇒ les iPads du magasin perdraient leur autorisation régulièrement. TEST demandé à
-  Bryan : autoriser dans Safari, quitter Safari (Cmd+Q), rouvrir ; idem dans Chrome.
-  Parades à DISCUTER (rien codé) : clé dans l'adresse (signet / écran d'accueil),
-  de préférence dans le `#` lu par `google.script.url.getLocation` (pas envoyé au
-  serveur) et posé par `google.script.history.replace` ; autres pistes écartées
-  (cookies tiers bloqués, Storage Access API peu praticable, identification sans
-  stockage impossible). Demander quels appareils / navigateurs à Vannes.
-  ✅ CONFIRMÉ par Bryan (15/10) : Safari Mac, Cmd+Q puis réouverture ⇒ « Autoriser
-  cet appareil ». Parade proposée (clé dans le `#` de l'adresse, favori / écran
-  d'accueil) EN DISCUSSION, non codée. Chrome (Mac) : ✅ garde l'autorisation après
-  Cmd+Q (Bryan, 15/10). Vannes = PC Windows + tablettes Android (Bryan, 15/10) ⇒ pas
-  bloquant pour Vannes (Chrome / Edge / navigateurs Android à moteur Chrome) ; reste
-  un problème pour Mac / iPad / Safari (autres magasins). Bryan : « attends, on
-  réfléchit » ⇒ NE RIEN CODER sur ce sujet sans son « go ». À vérifier sur place : le
-  navigateur réel des tablettes Android (Chrome ? Samsung Internet ?).
-  Pistes discutées (15/10, RIEN codé) : clé dans l'adresse (déconseillée : adresse
-  qui fuit = accès, dont impression « Toute l'offre ») ; site hébergé à part
-  (écarté par Bryan : centralisation) ; code d'équipe quand la clé a disparu (B,
-  simple et sûr, en réserve) ; réglage Safari « Empêcher le suivi intersites » (non
-  testé) ; app web « Ajouter au Dock » : ❌ testée par Bryan, ne garde PAS
-  l'autorisation. Bryan envisage l'authentification par COMPTE GOOGLE : limites
-  Apps Script (comptes gmail + « exécuter en tant que moi » ⇒ e-mail vide ;
-  « exécuter en tant qu'utilisateur » ⇒ chaque compte doit avoir accès au Sheet ;
-  Workspace même domaine ⇒ propre). En discussion. Bryan : Carrefour a Google
-  Workspace « pour l'instant » (durée incertaine). Avis de Claude : ne pas LIER
-  l'application à Workspace (dépendance à un choix du groupe, réglages imposés par
-  ses administrateurs, Sheet à placer dans le domaine Carrefour ⇒ question de
-  propriété de l'outil, autres structures sans Workspace) ; garder la clé d'appareil
-  (OK sur Chrome) + code d'équipe en réserve pour Apple ; Workspace = mode facultatif
-  éventuel plus tard.
+- **Dernier échange (15/10)** : discussion sur la perte d'autorisation des appareils
+  sous SAFARI → voir **§0 ter** (cause trouvée et confirmée, pistes, décisions). RIEN
+  n'est codé sur ce sujet : Bryan a dit « attends, on réfléchit » ⇒ ne rien coder
+  sans son « go ». Avant (14/10) : remplacement sous le même nom fait (1645) ; phrase
+  « Noms abrégés et N° masqués… » et diagnostic d'autorisation retirés du site
+  (1653). Rien en cours de codage.
 - **Ensuite (sur demande)** : fusions, documentation (`docs/A_REDIGER.md`, captures via
   `outils/captures.js`), migration de Vannes (`DEPLOIEMENT.md`).
 - **Leçons de cette période** : (1) ne pas réorganiser des écrans sans validation (la
@@ -80,6 +37,64 @@
   petits écrans sont faux ; (4) proposer une maquette cliquable quand Bryan hésite ;
   (5) le compactage du contexte arrive sans prévenir : tenir CE fichier à jour à
   chaque commit poussé (pas seulement quand Bryan le demande).
+  (6) ne pas conclure trop vite sur une cause : « nom déjà pris » semblait innocenter
+  le serveur, puis le défaut corrigé semblait tout expliquer ; la vraie cause
+  (Safari) n'est apparue qu'avec un test simple et reproductible (Cmd+Q). Proposer
+  ce genre de test TÔT.
+
+## 0 ter. Clé d'appareil et Safari (14-15/10) — dossier, RIEN codé
+**Constat** : le Mac de Bryan (Safari) redemandait « Autoriser cet appareil » après
+une mise à jour / le lendemain. **Cause CONFIRMÉE** : la page Apps Script tourne dans
+un cadre `…-script.googleusercontent.com` à l'intérieur de `script.google.com` ⇒
+contenu « tiers » ; Safari (WebKit, anti-pistage ITP) rend le stockage des cadres
+tiers partitionné ET temporaire ⇒ la clé (`localStorage` `cdTabletteCle`) disparaît
+quand Safari est quitté. Ni notre code, ni le déploiement (adresse technique
+identique avant/après : `n-ijetbkxwto6cqlhbmed6rj7j4kexnxcgupggffa-0lu-script…`).
+- **Tests de Bryan (15/10)** : Safari Mac, Cmd+Q puis réouverture ⇒ autorisation
+  redemandée ❌ ; Chrome Mac ⇒ gardée ✅ ; « Ajouter au Dock » (app web Safari) ⇒
+  perdue ❌. Réglage Safari « Empêcher le suivi intersites » décoché : NON testé.
+- **Qui est concerné** : iPad / iPhone avec TOUT navigateur (moteur WebKit imposé) ;
+  Mac avec Safari. Pas concernés en réglage normal : Chrome / Edge / Firefox sur
+  ordinateur, navigateurs Android à moteur Chrome. Exceptions : Brave (stockage
+  tiers temporaire), navigation privée, effacement des données, anti-pistage
+  renforcé (Edge strict, Samsung Internet : non vérifié), et futur durcissement
+  possible de Chrome.
+- **Vannes = PC Windows + tablettes Android** (Bryan) ⇒ NON bloquant pour Vannes. À
+  vérifier sur place : navigateur réel des tablettes (Chrome ? Samsung Internet ?)
+  par le test autoriser → fermer complètement → rouvrir. Version `main` de Vannes :
+  pas d'autorisation d'appareil, donc pas de souci aujourd'hui.
+- **Pistes et avis** (aucune choisie) :
+  - clé dans l'adresse (`#`, favori / écran d'accueil, `google.script.url.
+    getLocation` / `google.script.history.replace`) : fiable mais DÉCONSEILLÉE —
+    une adresse qui fuit (copie, iCloud, capture) donne l'accès, dont l'impression
+    libre de « Toute l'offre » ;
+  - site hébergé à part (page hors cadre Google, Apps Script en API) : stockage
+    fiable, sans bandeau Google ; ÉCARTÉ (Bryan : un site par magasin ; même un
+    site unique = centralisation : panne commune, confiance, compatibilité des
+    versions, contraire au « modèle à copier ») ;
+  - **B, code d'équipe** quand la clé a disparu (code partagé, anti-essais comme le
+    code responsable) : simple, sûr, indépendant du navigateur ; à retaper sous
+    Safari après fermeture. **Piste gardée en réserve** (avis de Claude) ;
+  - réglage Safari sur appareils dédiés à la caisse : sans code, à tester ;
+  - compte Google : avec des comptes gmail, Apps Script ne donne pas l'e-mail en
+    « exécuter en tant que moi » ; « exécuter en tant qu'utilisateur » ou compte
+    dédié ⇒ accès direct au Sheet (contourne l'anti-fraude) ; propre seulement avec
+    Google Workspace (même domaine). Carrefour a Workspace « pour l'instant » ;
+    avis de Claude : ne PAS lier l'outil à Workspace (dépendance au groupe, règles
+    de ses administrateurs, Sheet à placer dans le domaine Carrefour ⇒ propriété de
+    l'outil, franchisés, autres structures) ; au mieux un mode facultatif plus tard ;
+  - écartés : autres stockages du navigateur (cookies tiers bloqués, IndexedDB /
+    cache même règle), passkeys (non permises par le cadre Google), fichier local,
+    trousseau (incertain dans un cadre tiers), app iPad native (autre projet),
+    identification sans stockage.
+- **Sources** (recherche du 15/10 ; pages WebKit non ouvrables depuis
+  l'environnement, extraits de moteurs seulement) : Apple Developer Forums 109909,
+  765342, 9757, 125041, 725074 ; WebKit « Tracking Prevention » ; WebKit Bugzilla
+  247565, 231879, 225297 ; Google « migration iframe » Apps Script. Aucun
+  signalement trouvé spécifique à Apps Script.
+- **Corrections déjà faites à cette occasion (14/10)** : erreur passagère de lecture
+  de la liste ≠ « non autorisé » ; clé jamais effacée sur un refus ; remplacement
+  sous le même nom (voir historique §0).
 
 ## 0. Refonte graphique « Comptoir » : FAITE sur `design` (historique et décisions)
 **Décidé avec Bryan (13/10)**, à partir du prototype interactif :
@@ -533,8 +548,13 @@ quand Bryan le demande.
    préchargées au déverrouillage arrivent bien (3 appels serveur en parallèle) et
    « Saisies : Chargement… » ne reste plus bloqué. Nom d'appareil en double refusé.
    Aperçu : après le code, vue d'ensemble / saisies / réglages visibles sans attente.
+11. (Design) À Vannes, sur chaque type d'appareil (PC Windows, tablette Android) et
+   avec son navigateur réel : autoriser → fermer complètement le navigateur →
+   rouvrir ⇒ l'autorisation doit être gardée (voir §0 ter, problème Safari).
 
 ## 4. Points ouverts / idées non faites
+- **Appareils Apple / Safari perdent l'autorisation** (§0 ter) : non bloquant pour
+  Vannes ; piste en réserve = code d'équipe (B) ; rien codé, décision de Bryan.
 - Pull request `generalisation` → `main` : à ouvrir **après** le test de Bryan (il n'a pas
   encore demandé).
 - **Nom de l'application** (en pause, à la demande de Bryan) : acronymes retenus CLÉO

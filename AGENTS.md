@@ -178,6 +178,11 @@ Décision : `docs/retours-vibe/decisions/2026-10-11_generalisation.md`.
   Clé d'appareil : une erreur passagère en lisant la liste n'est JAMAIS lue comme
   « non autorisé » (`lireTablettes_` la remonte) ; la page ne l'efface plus sur un
   refus (seulement sur un retrait volontaire).
+  ⚠️ Limite connue (15/10) : sous **Safari** (Mac) et sur **iPad / iPhone** (tout
+  navigateur), la clé est effacée à la fermeture du navigateur (stockage des cadres
+  tiers temporaire chez WebKit ; la page Apps Script est dans un cadre
+  googleusercontent.com) ⇒ autorisation redemandée. Chrome / Edge / Android : OK.
+  Pistes et décisions : `MEMOIRE_CLAUDE.md` §0 ter.
   Nom déjà pris à l'autorisation (code juste) : `appairerTablette` répond `nomPris`
   (date d'autorisation, dernière utilisation) ; la personne confirme « Remplacer »
   (`remplacer = true`) → l'ancienne entrée est retirée, jamais sans confirmation.

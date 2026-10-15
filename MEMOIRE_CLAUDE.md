@@ -186,6 +186,13 @@ identique avant/après : `n-ijetbkxwto6cqlhbmed6rj7j4kexnxcgupggffa-0lu-script�
   vérifiée) : l'envoi réel n'a pas trouvé le cadre caché ⇒ ouvert dans un nouvel
   onglet ⇒ POST vers /exec hors cadre ⇒ erreur Google. Question posée à Bryan : à
   quelle étape ? nouvel onglet ? Chrome pas encore essayé.
+  → Réponse de Bryan : erreur dès l'OUVERTURE (rien fait d'autre) ⇒ hypothèse du
+  cadre caché ÉCARTÉE. Cause probable : l'iPad a ouvert directement l'adresse
+  technique `…googleusercontent.com` (page interne, inutilisable seule) au lieu de
+  `script.google.com/macros/s/…/exec` — venue de l'historique / des suggestions
+  synchronisés par iCloud, ou du lien « Site web » de l'entrée « Mots de passe »
+  (synchronisée depuis le Mac). À confirmer. PIÈGE à documenter pour l'app : ouvrir
+  toujours l'adresse /exec (signet / écran d'accueil), jamais googleusercontent.
 - **Corrections déjà faites à cette occasion (14/10)** : erreur passagère de lecture
   de la liste ≠ « non autorisé » ; clé jamais effacée sur un refus ; remplacement
   sous le même nom (voir historique §0).

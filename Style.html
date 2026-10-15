@@ -1,5 +1,5 @@
 <!-- Styles de la page (Index.html). -->
-<style data-version="2026.10.15-1639">
+<style data-version="2026.10.15-1659">
   /* Palette « Comptoir » (clair uniquement). Les couleurs d'alerte (danger rouge,
      orange) ne sont jamais adoucies. Police du système : rien à télécharger. */
   :root {
@@ -1395,7 +1395,7 @@
     display: flex;
     gap: 6px;
   }
-  .ligne-tablette {
+  .ligne-compte {
     display: flex;
     gap: 10px;
     align-items: center;
@@ -1403,10 +1403,33 @@
     padding: 10px 0;
     border-bottom: 1px solid var(--trait);
   }
-  .ligne-tablette small {
+  .ligne-compte small {
     display: block;
     color: var(--doux);
     font-size: 12.5px;
+  }
+  .actions-compte {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .mdp-compte,
+  .nouveau-compte {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 0 12px;
+  }
+  .nouveau-compte {
+    margin-top: 10px;
+  }
+  .nouveau-compte h4 {
+    margin: 4px 0 0;
+    font-size: 14px;
+  }
+  .mdp-compte input,
+  .nouveau-compte input {
+    width: 100%;
   }
   .formulaire-correction .deux {
     gap: 10px 12px;
@@ -1923,8 +1946,15 @@
     .ligne-saisie .actions > * + * {
       margin-left: 6px;
     }
-    .ligne-tablette > * + * {
+    .ligne-compte > * + * {
       margin-left: 10px;
+    }
+    .actions-compte > * + * {
+      margin-left: 8px;
+    }
+    .mdp-compte > * + *,
+    .nouveau-compte > * + * {
+      margin-top: 8px;
     }
     .comparer .tete > * + * {
       margin-left: 14px;

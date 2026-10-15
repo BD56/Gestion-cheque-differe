@@ -48,7 +48,7 @@ const { ouvrir } = require("./navigateur");
     assert.strictEqual(await page.getAttribute('[data-ecran-lien="ensemble"]', "aria-current"), "true");
     assert.ok(!(await vis(".btn-print-jour")), "impression : dans son propre écran");
     assert.strictEqual(await txt("#kpiSaisies"), "0");
-    assert.strictEqual(await txt("#kpiTablettes"), "0"); // contrôle des tablettes neutralisé ici
+    assert.strictEqual(await txt("#kpiComptes"), "0"); // session factice, aucun compte créé ici
     assert.match(await txt("#resumeOperation"), /^Du \d\d\/\d\d au \d\d\/\d\d$/);
     assert.match(await txt("#noteOffre"), /^Jour \d sur 3 · clôture automatique dans la nuit du/);
     assert.ok(!(await page.isVisible("text=OUVRIR GOOGLE SHEETS")));

@@ -1,5 +1,5 @@
 <!doctype html>
-<html data-version="2026.10.15-1639">
+<html data-version="2026.10.15-1659">
   <head>
     <base target="_top" />
     <style>
@@ -185,14 +185,18 @@
     </div>
 
     <div class="boite">
-      <h2>Code et appareils</h2>
+      <h2>Code et comptes</h2>
       <button class="btn" id="btnReinitPin" data-action="reinitialiserPin">
         Réinitialiser le code responsable
       </button>
-      <button class="btn danger" id="btnRetirerTablettes" data-action="retirerTablettes">
-        Retirer tous les appareils
+      <button class="btn danger" id="btnReinitComptes" data-action="reinitialiserComptes">
+        Réinitialiser les comptes
       </button>
-      <p class="note">Une confirmation est demandée par un second appui (5 s).</p>
+      <p class="note">
+        Plus personne ne peut se connecter (mots de passe oubliés) ? « Réinitialiser les comptes » retire tous
+        les comptes et le code : l'application revient à la première installation, avec le code d'activation
+        affiché ici. Une confirmation est demandée par un second appui (5 s).
+      </p>
     </div>
 
     <script>
@@ -255,15 +259,15 @@
         );
       }
 
-      function retirerTablettes() {
+      function reinitialiserComptes() {
         confirmerEnDeuxTemps(
-          document.getElementById("btnRetirerTablettes"),
-          "Confirmer : retirer TOUS les appareils",
+          document.getElementById("btnReinitComptes"),
+          "Confirmer : retirer TOUS les comptes",
           function () {
             google.script.run
               .withSuccessHandler(message)
               .withFailureHandler(echec)
-              .retirerToutesTablettesPanneau();
+              .reinitialiserComptesPanneau();
           }
         );
       }
@@ -359,8 +363,8 @@
         cloturer,
         imprimerAncien,
         imprimerAuj,
+        reinitialiserComptes,
         reinitialiserPin,
-        retirerTablettes,
         sauvegarderDatesPC,
         voirOffre,
       };

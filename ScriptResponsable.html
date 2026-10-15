@@ -1,5 +1,5 @@
-<!-- Espace responsable : code, corrections, archives, réglages, tablettes. -->
-<script data-version="2026.10.15-1639">
+<!-- Espace responsable : code, corrections, archives, réglages, comptes. -->
+<script data-version="2026.10.15-1659">
   // =================================================================
   // --- ESPACE RESPONSABLE (code PIN) ---
   // Le jeton n'est gardé qu'en mémoire : il disparaît à la fermeture du
@@ -72,7 +72,7 @@
     });
   }
   function prechargerListesAdmin() {
-    ["listerSaisies", "listerArchives", "listerTablettes"].forEach(function (f) {
+    ["listerSaisies", "listerArchives", "listerComptes"].forEach(function (f) {
       lireListeAdmin(f);
     });
   }
@@ -105,7 +105,7 @@
     [
       ["listerSaisies", a.saisies],
       ["listerArchives", a.archives],
-      ["listerTablettes", a.tablettes],
+      ["listerComptes", a.comptes],
     ].forEach(function (p) {
       listesAdmin[p[0]] = { donnees: p[1] || [], enCours: false, attente: [], seq: 0 };
     });
@@ -215,7 +215,7 @@
     oublierApercuAdmin();
     listeSaisies = [];
     document.getElementById("listeSaisies").textContent = "";
-    document.getElementById("listeTablettes").textContent = "";
+    document.getElementById("listeComptes").textContent = "";
     document.getElementById("selArchive").textContent = "";
     // rien d'une session ne survit à la suivante : réglages rechargés, dates relues
     reglagesCharges = false;
@@ -237,12 +237,7 @@
     document.getElementById("zoneAdmin").style.display = "block";
     document.getElementById("railAdmin").style.display = "flex";
     document.getElementById("contenuAdmin").classList.remove("verrouille");
-    // Sans code à part, « Verrouiller » n'a pas de sens : seul « Se déconnecter » reste
-    document.getElementById("btnVerrouiller").style.display = pinDefini ? "" : "none";
-    document.getElementById("btnDeconnexionRail").classList.toggle("bas", !pinDefini);
-    document.getElementById("adminSous").textContent = pinDefini
-      ? "Déverrouillé · se reverrouille après 10 min sans action"
-      : "Connecté" + (COMPTE ? " : " + COMPTE : "");
+    majCodeAPart();
     allerEcran("ensemble");
     utiliserApercuAdmin();
     rafraichirEnsemble(true);
@@ -280,9 +275,9 @@
     document.getElementById("kpiTotal").textContent = formaterTotal(c.total);
     document.getElementById("kpiForcees").textContent = c.forcees;
     document.getElementById("kpiForcees").parentNode.classList.toggle("non-nul", c.forcees > 0);
-    document.getElementById("kpiTablettes").textContent = c.tablettes;
+    document.getElementById("kpiComptes").textContent = c.comptes;
     document.getElementById("railNbSaisies").textContent = c.saisies;
-    document.getElementById("railNbTablettes").textContent = c.tablettes;
+    document.getElementById("railNbComptes").textContent = c.comptes;
   }
 
   // Points d'attention en tête de l'espace responsable : robot de nuit absent ou
@@ -710,66 +705,220 @@
     document.getElementById("txtNomStructure").textContent = cfg.NOM_STRUCTURE;
   }
 
-  // --- Tablettes autorisées (liste, retrait) ---
-  function ouvrirCodeTablettes() {
-    allerEcran("code");
-    chargerTablettes();
-  }
-  // frais = true après un retrait : liste relue sur le serveur sans montrer l'ancienne
-  function chargerTablettes(frais) {
-    const msg = document.getElementById("msgTablettes");
-    msg.textContent = "Chargement…";
-    const dessiner = function (liste, provisoire) {
-      msg.textContent = liste.length + " appareil(s) autorisé(s)." + (provisoire ? " Mise à jour…" : "");
-      const zone = document.getElementById("listeTablettes");
-      zone.textContent = "";
-      document.getElementById("railNbTablettes").textContent = liste.length;
-      liste.forEach(function (t) {
-        const ligne = document.createElement("div");
-        ligne.className = "ligne-tablette";
-        const texte = document.createElement("div");
-        const nom = document.createElement("b");
-        nom.textContent = t.nom;
-        const quand = document.createElement("small");
-        quand.textContent = "Autorisé le " + t.creeLe + (t.vueLe ? " · utilisé le " + t.vueLe : "");
-        texte.appendChild(nom);
-        texte.appendChild(quand);
-        const b = document.createElement("button");
-        b.className = "sec danger";
-        b.textContent = "Retirer";
-        b.addEventListener("click", function () {
-          confirmerEnDeuxTemps(b, "Confirmer le retrait", function () {
-            retirerUneTablette(t);
-          });
-        });
-        ligne.appendChild(texte);
-        ligne.appendChild(b);
-        zone.appendChild(ligne);
-      });
-    };
-    if (frais) lireListeAdmin("listerTablettes", dessiner, true);
-    else afficherListeAdmin("listerTablettes", dessiner);
-  }
-  function retirerUneTablette(t) {
-    appelAdmin("retirerTablette", [t.id], function () {
-      chargerTablettes(true);
-    });
-  }
-  // Chaque tablette (y compris celle-ci) devra être autorisée à nouveau avec le code
-  function retirerToutesLesTablettes() {
-    confirmerEnDeuxTemps(
-      document.getElementById("btnRetirerTout"),
-      "Confirmer : retirer TOUS les appareils",
-      retirerToutesMaintenant
-    );
-  }
-  function retirerToutesMaintenant() {
-    appelAdmin("retirerToutesTablettes", [], function (message) {
-      afficherToast(message);
-      chargerTablettes(true);
-    });
+  // Avec ou sans code responsable à part : menu, sous-titre et écran « Code & comptes »
+  function majCodeAPart() {
+    // Sans code à part, « Verrouiller » n'a pas de sens : seul « Se déconnecter » reste
+    document.getElementById("btnVerrouiller").style.display = pinDefini ? "" : "none";
+    document.getElementById("btnDeconnexionRail").classList.toggle("bas", !pinDefini);
+    document.getElementById("adminSous").textContent = pinDefini
+      ? "Déverrouillé · se reverrouille après 10 min sans action"
+      : "Connecté" + (COMPTE ? " : " + COMPTE : "");
+    document.getElementById("etatCodeAPart").textContent = pinDefini
+      ? "L'espace responsable est protégé par un code à part (6 chiffres)."
+      : "Pas de code à part : tout compte connecté ouvre l'espace responsable. Choisissez un code pour le protéger.";
+    document.getElementById("btnEnregistrerPin").textContent = pinDefini
+      ? "Changer le code"
+      : "Protéger par ce code";
+    document.getElementById("btnRetirerCode").style.display = pinDefini ? "" : "none";
   }
 
+  // --- Comptes (liste, création, mot de passe, retrait) ---
+  function ouvrirCodeComptes() {
+    allerEcran("code");
+    majCodeAPart();
+    chargerComptes();
+  }
+  // frais = true après une modification : liste relue sur le serveur sans montrer l'ancienne
+  function chargerComptes(frais) {
+    const msg = document.getElementById("msgComptes");
+    msg.textContent = "Chargement…";
+    const dessiner = function (liste, provisoire) {
+      msg.textContent = liste.length + " compte(s)." + (provisoire ? " Mise à jour…" : "");
+      const zone = document.getElementById("listeComptes");
+      zone.textContent = "";
+      document.getElementById("railNbComptes").textContent = liste.length;
+      liste.forEach(function (c) {
+        zone.appendChild(ligneCompte(c, liste.length > 1));
+      });
+    };
+    if (frais) lireListeAdmin("listerComptes", dessiner, true);
+    else afficherListeAdmin("listerComptes", dessiner);
+  }
+  function estMonCompte(c) {
+    return normIdJS(c.identifiant) === normIdJS(COMPTE);
+  }
+  function ligneCompte(c, retirable) {
+    const bloc = document.createElement("div");
+    const ligne = document.createElement("div");
+    ligne.className = "ligne-compte";
+    const texte = document.createElement("div");
+    const nom = document.createElement("b");
+    nom.textContent = c.identifiant + (estMonCompte(c) ? " (vous)" : "");
+    const quand = document.createElement("small");
+    quand.textContent = "Créé le " + c.creeLe + (c.vueLe ? " · utilisé le " + c.vueLe : "");
+    texte.appendChild(nom);
+    texte.appendChild(quand);
+    const actions = document.createElement("div");
+    actions.className = "actions-compte";
+    const bMdp = document.createElement("button");
+    bMdp.className = "sec";
+    bMdp.textContent = "Mot de passe";
+    actions.appendChild(bMdp);
+    if (retirable) {
+      // le dernier compte ne se retire pas (plus personne ne pourrait se connecter)
+      const bRetirer = document.createElement("button");
+      bRetirer.className = "sec danger";
+      bRetirer.textContent = "Retirer";
+      bRetirer.addEventListener("click", function () {
+        confirmerEnDeuxTemps(bRetirer, "Confirmer le retrait", function () {
+          retirerUnCompte(c);
+        });
+      });
+      actions.appendChild(bRetirer);
+    }
+    ligne.appendChild(texte);
+    ligne.appendChild(actions);
+    bloc.appendChild(ligne);
+    const form = formulaireMdp(c);
+    bloc.appendChild(form);
+    bMdp.addEventListener("click", function () {
+      form.style.display = form.style.display === "none" ? "" : "none";
+      if (form.style.display === "") form.querySelector("input[type=password]").focus();
+    });
+    return bloc;
+  }
+  // Nouveau mot de passe. Pour SON compte, le formulaire est réellement envoyé (cadre
+  // caché) : le navigateur propose de mettre à jour le mot de passe qu'il a retenu.
+  function formulaireMdp(c) {
+    const moi = estMonCompte(c);
+    const form = document.createElement("form");
+    form.className = "mdp-compte";
+    form.style.display = "none";
+    form.method = "post";
+    form.target = "cibleConnexion";
+    form.noValidate = true;
+    form.setAttribute("autocomplete", moi ? "on" : "off");
+    const champ = function (type, nom, auto, texte) {
+      const i = document.createElement("input");
+      i.type = type;
+      if (nom) i.name = nom;
+      i.setAttribute("autocomplete", auto);
+      i.maxLength = 100;
+      if (texte) {
+        i.placeholder = texte;
+        i.setAttribute("aria-label", texte);
+      }
+      form.appendChild(i);
+      return i;
+    };
+    const id = champ("text", "username", moi ? "username" : "off");
+    id.value = c.identifiant;
+    id.readOnly = true;
+    id.hidden = true;
+    const m1 = champ(
+      "password",
+      "password",
+      moi ? "new-password" : "off",
+      "Nouveau mot de passe (8 car. min.)"
+    );
+    const m2 = champ("password", "", moi ? "new-password" : "off", "Confirmer le mot de passe");
+    const rangee = document.createElement("div");
+    rangee.className = "rangee-btn";
+    const ok = document.createElement("button");
+    ok.className = "sec accent";
+    ok.type = "submit";
+    ok.textContent = "Enregistrer le mot de passe";
+    rangee.appendChild(ok);
+    form.appendChild(rangee);
+    const msg = document.createElement("div");
+    msg.className = "message";
+    form.appendChild(msg);
+    form.addEventListener("submit", function (e) {
+      msg.style.color = "var(--danger)";
+      if (m1.value.length < 8) {
+        e.preventDefault();
+        msg.textContent = "Le mot de passe doit contenir au moins 8 caractères.";
+        return;
+      }
+      if (m1.value !== m2.value) {
+        e.preventDefault();
+        msg.textContent = "Les deux mots de passe ne correspondent pas.";
+        return;
+      }
+      if (moi && URL_APPLI) form.action = URL_APPLI;
+      else e.preventDefault();
+      const mdp = m1.value;
+      appelAdmin("changerMotDePasse", [c.id, mdp], function (r) {
+        if (!r || !r.ok) {
+          msg.textContent = (r && r.message) || "Refusé.";
+          return;
+        }
+        if (r.session) {
+          // son propre compte : nouvelle session (l'ancienne ne sert plus)
+          SESSION = r.session;
+          ecrireStockage("cdSession", SESSION);
+        }
+        setTimeout(function () {
+          m1.value = "";
+          m2.value = "";
+        }, 500);
+        msg.style.color = "var(--ok)";
+        msg.textContent = r.message + (moi ? "" : " Ses connexions ouvertes sont terminées.");
+      });
+    });
+    return form;
+  }
+  function retirerUnCompte(c) {
+    appelAdmin("retirerCompte", [c.id], function (r) {
+      if (!r || !r.ok) {
+        afficherToast((r && r.message) || "Refusé.", "error");
+        return;
+      }
+      if (estMonCompte(c)) {
+        seDeconnecter(); // son propre compte : cette session ne sert plus
+        return;
+      }
+      afficherToast(r.message);
+      chargerComptes(true);
+    });
+  }
+  document.getElementById("formNouveauCompte").addEventListener("submit", function (e) {
+    e.preventDefault();
+    const id = document.getElementById("nouveauCompteId").value.trim();
+    const m1 = document.getElementById("nouveauCompteMdp").value;
+    const m2 = document.getElementById("nouveauCompteMdp2").value;
+    const msg = document.getElementById("msgNouveauCompte");
+    msg.style.color = "var(--danger)";
+    if (normIdJS(id) === "") {
+      msg.textContent = "Choisissez un identifiant (ex. Caisse centrale 2).";
+      return;
+    }
+    if (m1.length < 8) {
+      msg.textContent = "Le mot de passe doit contenir au moins 8 caractères.";
+      return;
+    }
+    if (m1 !== m2) {
+      msg.textContent = "Les deux mots de passe ne correspondent pas.";
+      return;
+    }
+    appelAdmin("creerCompte", [id, m1], function (r) {
+      if (!r || !r.ok) {
+        msg.textContent = (r && r.message) || "Refusé.";
+        return;
+      }
+      ["nouveauCompteId", "nouveauCompteMdp", "nouveauCompteMdp2"].forEach(function (k) {
+        document.getElementById(k).value = "";
+      });
+      msg.style.color = "var(--ok)";
+      msg.textContent =
+        "Compte « " +
+        r.compte.identifiant +
+        " » créé : connectez-vous avec sur l'appareil de cette caisse centrale.";
+      chargerComptes(true);
+    });
+  });
+
+  // Code responsable à part : le choisir (aucun code), le changer, ou le retirer
   function changerPin() {
     const p1 = document.getElementById("pinNouveau").value.trim();
     const p2 = document.getElementById("pinNouveau2").value.trim();
@@ -783,15 +932,37 @@
       msg.textContent = "Les deux codes ne correspondent pas.";
       return;
     }
+    const creation = !pinDefini;
     appelAdmin("definirPin", [p1], function (r) {
       document.getElementById("pinNouveau").value = "";
       document.getElementById("pinNouveau2").value = "";
       if (r && r.ok) {
         jetonAdmin = r.jeton;
+        pinDefini = true;
+        majCodeAPart();
         msg.style.color = "var(--ok)";
-        msg.textContent = "Code modifié.";
+        msg.textContent = creation
+          ? "Code enregistré : il sera demandé pour ouvrir l'espace responsable."
+          : "Code modifié.";
       } else msg.textContent = (r && r.message) || "Refusé.";
     });
+  }
+  function retirerCodeAPart() {
+    confirmerEnDeuxTemps(
+      document.getElementById("btnRetirerCode"),
+      "Confirmer : ne plus demander de code",
+      function () {
+        const msg = document.getElementById("msgPin");
+        appelAdmin("retirerCodeResponsable", [], function (r) {
+          msg.style.color = r && r.ok ? "var(--ok)" : "var(--danger)";
+          msg.textContent = (r && r.message) || "Refusé.";
+          if (r && r.ok) {
+            pinDefini = false;
+            majCodeAPart();
+          }
+        });
+      }
+    );
   }
 
   // Entrée dans les champs de code = valider

@@ -337,16 +337,22 @@ const ETATS = [
     },
   ],
   [
-    "25-responsable-code-tablettes",
+    "25-responsable-code-comptes",
     async (p, env) => {
       env.props.setProperty(
-        "TABLETTES",
+        "COMPTES",
         JSON.stringify([
-          { id: "tab-test", nom: "Caisse centrale 1", creeLe: "13/10/2026 09:12" },
-          { id: "t2", nom: "Accueil", creeLe: "13/10/2026 09:30" },
+          { id: "c1", identifiant: "Caisse test", creeLe: "13/10/2026 09:12" },
+          {
+            id: "c2",
+            identifiant: "Caisse centrale 2 — accueil et service client",
+            creeLe: "13/10/2026 09:30",
+          },
         ])
       );
       await p.click('[data-ecran-lien="code"]');
+      await p.waitForTimeout(200);
+      await p.click("#listeComptes > div:first-child button");
     },
   ],
   [

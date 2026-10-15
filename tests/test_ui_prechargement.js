@@ -14,7 +14,7 @@ const { FakeSheet } = require("./fakesheet");
   sheets.Saisies.getRange("Z1").setValue("SIGNALER");
   const { env, page, browser, erreursPage } = await ouvrir(process.argv[2], { sheets });
   try {
-    const appels = { listerSaisies: 0, listerArchives: 0, listerTablettes: 0 };
+    const appels = { listerSaisies: 0, listerArchives: 0, listerComptes: 0 };
     for (const f of Object.keys(appels)) {
       const vraie = env.ctx[f];
       env.ctx[f] = function () {
@@ -26,11 +26,7 @@ const { FakeSheet } = require("./fakesheet");
     await page.evaluate("jetonAdmin = " + JSON.stringify(jeton));
     await page.click('button[title="Panneau de contrôle"]');
     await page.waitForTimeout(300);
-    assert.deepStrictEqual(
-      appels,
-      { listerSaisies: 1, listerArchives: 1, listerTablettes: 1 },
-      "préchargées"
-    );
+    assert.deepStrictEqual(appels, { listerSaisies: 1, listerArchives: 1, listerComptes: 1 }, "préchargées");
     // Une saisie arrive entre-temps (autre tablette)
     sheets.Saisies.appendRow([new Date(), "DURAND", "PAUL", "'880412", 20, ""]);
     // Ouverture : la liste préchargée s'affiche immédiatement, puis la liste à jour
@@ -43,10 +39,10 @@ const { FakeSheet } = require("./fakesheet");
     assert.strictEqual(await page.$$eval("#listeSaisies .ligne-saisie", (x) => x.length), 2, "puis à jour");
     assert.strictEqual((await page.textContent("#msgSaisies")).trim(), "2 saisie(s)");
     assert.strictEqual(appels.listerSaisies, 2, "un seul rechargement");
-    // Appareils et archives : déjà là
+    // Comptes et archives : déjà là
     await page.click('[data-ecran-lien="code"]');
     await page.waitForTimeout(150);
-    assert.match(await page.textContent("#msgTablettes"), /appareil\(s\) autorisé\(s\)\.$/);
+    assert.match(await page.textContent("#msgComptes"), /compte\(s\)\.$/);
     // Verrouillage : listes effacées de la page
     await page.click("#railAdmin .bas");
     await page.waitForTimeout(150);

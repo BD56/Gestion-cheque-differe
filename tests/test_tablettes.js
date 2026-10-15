@@ -84,10 +84,7 @@ const ap = J(c.apercuResponsable(cle));
 assert.strictEqual(ap.saisies.length, 1);
 assert.strictEqual(ap.saisies[0].nom, "DUPONT");
 assert.strictEqual(ap.chiffres.saisies, 1);
-assert.deepStrictEqual(
-  ap.tablettes.map((t) => t.nom),
-  ["Caisse centrale 1"]
-);
+assert.deepStrictEqual(ap.comptes, [], "comptes (sans empreinte) : aucun ici");
 assert.ok(Array.isArray(ap.archives) && ap.config && ap.dates);
 assert.ok(!("essaisInconnus" in ap) && !("robots" in ap), "rien de la sécurité avant le code");
 assert.ok(!JSON.stringify(ap).includes(cle) && !JSON.stringify(ap).includes("hash"), "ni clé ni empreinte");

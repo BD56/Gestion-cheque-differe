@@ -248,8 +248,8 @@ Décision : `docs/retours-vibe/decisions/2026-10-11_generalisation.md`.
   empreinte côté serveur (`TABLETTES` en propriétés). `exigerTablette_(cle)` en tête
   de toutes les fonctions utilisées par la tablette (le panneau du Sheet passe via
   `estEditeurDuClasseur_`). Accès du déploiement : **Tout le monde** (`ANYONE_ANONYMOUS`).
-- **Comptes (identifiant + mot de passe)** — branche `design`, ÉTAPES 1 (serveur) et 2
-  (page) FAITES ; restent 3 (« Code & comptes », panneau du Sheet, textes) et 4 (retrait
+- **Comptes (identifiant + mot de passe)** — branche `design`, ÉTAPES 1 (serveur), 2
+  (page) et 3 (« Code & comptes », panneau du Sheet, textes) FAITES ; reste 4 (retrait
   des tablettes autorisées, encore acceptées par le serveur) : ils
   remplaceront les tablettes autorisées (Safari oublie la clé : voir MEMOIRE_CLAUDE §0
   ter). Comptes des caisses centrales (`COMPTES` en propriétés : id, identifiant, sel,
@@ -280,6 +280,18 @@ Décision : `docs/retours-vibe/decisions/2026-10-11_generalisation.md`.
   renvoyée (et recontrôlée) après la reconnexion. Sans code à part, ⚙️ ouvre l'espace
   directement (`ouvrirSansCode`), « Verrouiller » masqué ; « Se déconnecter » dans le
   menu et sous la carte du code. Test `test_ui_connexion` (remplace test_ui_tablettes).
+  **Étape 3** : écran « Code & comptes » (`ouvrirCodeComptes`) : liste (« (vous) »,
+  créé / utilisé le), « Mot de passe » (formulaire par compte ; pour SON compte, envoi
+  réel vers le cadre caché pour que le navigateur mette à jour le mot de passe retenu,
+  et nouvelle session gardée), « Retirer » (second appui ; jamais le dernier ; son
+  propre compte ⇒ déconnexion), « Créer un compte » (sans envoi réel : rien retenu sur
+  CET appareil) ; code responsable : le choisir (aucun code ⇒ `definirPin` par le
+  compte), le changer, « Ne plus demander de code » (`retirerCodeResponsable`). Le
+  serveur reprend la session de l'appelant dans le jeton { j, c } (`cleAppelant_`).
+  KPI et menu : nombre de COMPTES (`chiffresOffre_().comptes`) ; aperçu : `comptes`.
+  Panneau du Sheet : « Réinitialiser les comptes » (remplace « Retirer tous les
+  appareils ») ; « Réinitialiser le code » ne donne plus de code d'activation s'il
+  existe un compte. Aide « Code & comptes » et mentions légales réécrites.
 - **Code d'activation** (lot 1 de l'audit) : créer le code responsable (aucun code :
   1re installation ou après « Réinitialiser ») exige un code à 8 chiffres affiché
   **uniquement dans le Google Sheets** (menu « 🧰 Installer », « 🔑 Code d'activation »,

@@ -1,7 +1,7 @@
 // Écran de connexion : 1re installation, code à part, session gardée, déconnexion,
 // fin de session pendant la saisie (rien de perdu), envoi réel du formulaire.
 const assert = require("assert");
-const { ouvrir } = require("./navigateur");
+const { ouvrir, J } = require("./navigateur");
 (async () => {
   const { env, page, browser, erreursPage } = await ouvrir(process.argv[2], {
     sansCle: true,
@@ -167,6 +167,85 @@ const { ouvrir } = require("./navigateur");
     await attendre(300);
     assert.ok(await vis("#zoneAdmin"));
     assert.ok(await vis("#btnVerrouiller"), "« Verrouiller » avec un code à part");
+
+    // --- Code & comptes ---
+    await page.click('[data-ecran-lien="code"]');
+    await attendre();
+    const lignes = () => page.$$eval("#listeComptes .ligne-compte b", (x) => x.map((b) => b.textContent));
+    assert.deepStrictEqual(await lignes(), ["Caisse centrale 1 (vous)"]);
+    assert.strictEqual(
+      await page.$$eval("#listeComptes .danger", (x) => x.length),
+      0,
+      "dernier compte : pas de retrait"
+    );
+    assert.match(await txt("#etatCodeAPart"), /protégé par un code/);
+    assert.ok(await vis("#btnRetirerCode"));
+    // créer un compte
+    await page.fill("#nouveauCompteId", "Caisse centrale 2");
+    await page.fill("#nouveauCompteMdp", "motdepasse2");
+    await page.fill("#nouveauCompteMdp2", "autre-chose");
+    await page.click("#formNouveauCompte button");
+    assert.match(await txt("#msgNouveauCompte"), /ne correspondent pas/);
+    await page.fill("#nouveauCompteMdp2", "motdepasse2");
+    const envoisAvant = envois.length;
+    await page.click("#formNouveauCompte button");
+    await attendre(300);
+    assert.match(await txt("#msgNouveauCompte"), /« Caisse centrale 2 » créé/);
+    assert.strictEqual(envois.length, envoisAvant, "pas retenu par le navigateur de CET appareil");
+    assert.deepStrictEqual(await lignes(), ["Caisse centrale 1 (vous)", "Caisse centrale 2"]);
+    assert.ok(J(env.ctx.connexion("Caisse centrale 2", "motdepasse2")).ok);
+    // mot de passe d'un autre compte
+    const blocs = await page.$$("#listeComptes > div");
+    await (await blocs[1].$("button:text('Mot de passe')")).click();
+    const f2 = await blocs[1].$("form.mdp-compte");
+    const [n1, n2] = await f2.$$("input[type=password]");
+    await n1.fill("nouveau-mdp2");
+    await n2.fill("nouveau-mdp2");
+    await (await f2.$("button[type=submit]")).click();
+    await attendre(300);
+    assert.match(
+      await f2.textContent(),
+      /Mot de passe de « Caisse centrale 2 » changé\. Ses connexions ouvertes sont terminées/
+    );
+    assert.strictEqual(envois.length, envoisAvant, "autre compte : pas d'envoi au navigateur");
+    assert.ok(J(env.ctx.connexion("Caisse centrale 2", "nouveau-mdp2")).ok);
+    // son propre mot de passe : envoi réel (le navigateur met à jour) et nouvelle session
+    const sessionAvant = await stock("cdSession");
+    await (await blocs[0].$("button:text('Mot de passe')")).click();
+    const f1 = await blocs[0].$("form.mdp-compte");
+    const [m1, m2] = await f1.$$("input[type=password]");
+    await m1.fill("nouveau-mdp1");
+    await m2.fill("nouveau-mdp1");
+    await (await f1.$("button[type=submit]")).click();
+    await attendre(300);
+    assert.ok(envois.length > envoisAvant && /username=Caisse\+centrale\+1/.test(envois[envois.length - 1]));
+    assert.notStrictEqual(await stock("cdSession"), sessionAvant, "nouvelle session gardée");
+    await page.evaluate(() => rechargerCacheVerif());
+    await attendre();
+    assert.ok(!(await vis("#ecranConnexion")), "toujours connecté");
+    // ne plus demander de code, puis en remettre un
+    await page.click("#btnRetirerCode");
+    assert.ok(P.ADMIN_PIN_HASH, "rien au premier appui");
+    await page.click("#btnRetirerCode");
+    await attendre();
+    assert.ok(!P.ADMIN_PIN_HASH);
+    assert.ok(!(await vis("#btnVerrouiller")) && !(await vis("#btnRetirerCode")));
+    assert.match(await txt("#etatCodeAPart"), /Pas de code à part/);
+    assert.strictEqual(await txt("#btnEnregistrerPin"), "Protéger par ce code");
+    await page.fill("#pinNouveau", "246802");
+    await page.fill("#pinNouveau2", "246802");
+    await page.click("#btnEnregistrerPin");
+    await attendre();
+    assert.ok(P.ADMIN_PIN_HASH, "code recréé par le compte connecté");
+    assert.match(await txt("#msgPin"), /Code enregistré/);
+    assert.ok(await vis("#btnVerrouiller"));
+    // retirer l'autre compte (second appui)
+    const bRetirer = await (await page.$$("#listeComptes > div"))[1].$(".danger");
+    await bRetirer.click();
+    await bRetirer.click();
+    await attendre(300);
+    assert.deepStrictEqual(await lignes(), ["Caisse centrale 1 (vous)"]);
+    assert.match(J(env.ctx.connexion("Caisse centrale 2", "nouveau-mdp2")).message, /Identifiant inconnu/);
     assert.deepStrictEqual(erreursPage, []);
     console.log("test_ui_connexion : OK");
   } finally {

@@ -2,7 +2,7 @@
 
 > Fichier de reprise après compactage du contexte. À lire **avec** `AGENTS.md` (référence
 > canonique) et `docs/retours-vibe/decisions/2026-10-11_generalisation.md` (décisions).
-> Dernière mise à jour : 2026-10-15 (version 2026.10.15-1639, comptes étapes 1-2, modèle
+> Dernière mise à jour : 2026-10-15 (version 2026.10.15-1659, comptes étapes 1-3, modèle
 > « code responsable = caisse centrale »).
 
 ## ▶️ ÉTAT ACTUEL — à lire d'abord
@@ -12,7 +12,7 @@
   « Comptoir » (branche de travail actuelle, tout est poussé)**. Aucune fusion faite,
   aucune pull request. Ordre prévu (sur demande de Bryan seulement) : `design` →
   `refonte` → `generalisation` → `main` / migration Vannes.
-- **Version actuelle sur `design`** : 2026.10.15-1639 (41 séries de tests vertes,
+- **Version actuelle sur `design`** : 2026.10.15-1659 (41 séries de tests vertes,
   ESLint et Prettier propres). Numéro renouvelé par Claude à chaque push de code
   (`npm run nouvelle-version`).
 - **Bryan teste** sur le Sheet « Gestion Chèques Différés — REFONTE (test) » depuis
@@ -24,8 +24,10 @@
   Chargement… » reste bloqué (sa capture venait d'une version antérieure) ; essai sur
   vraie tablette (rotation, clavier, journal, alertes, espace responsable, panneau).
 - **EN COURS (15/10)** : passage aux COMPTES (identifiant + mot de passe), étapes 1
-  (serveur) et 2 (page de connexion) faites ; étape 3 (« Code & comptes », panneau du
-  Sheet, textes de l'aide / mentions) sur « go » de Bryan — voir §0 ter.
+  (serveur), 2 (page de connexion) et 3 (« Code & comptes », panneau du Sheet, textes)
+  faites ; étape 4 (retrait de l'autorisation des appareils côté serveur, création du
+  code avec activation dans le verrou, docs INSTALLATION / DEPLOIEMENT / README) sur
+  « go » de Bryan — voir §0 ter.
 - **Dernier échange (15/10)** : perte d'autorisation des appareils sous SAFARI → voir
   **§0 ter**. DÉCIDÉ par Bryan : **code responsable = code de l'équipe de caisse
   centrale** (elle réautorise elle-même ses Mac / iPad) ; RIEN à coder pour ça
@@ -245,6 +247,13 @@ identique avant/après : `n-ijetbkxwto6cqlhbmed6rj7j4kexnxcgupggffa-0lu-script�
   code seulement s'il n'y avait PAS de code responsable ⇒ sur le Sheet de test de
   Bryan (code déjà créé) impossible de créer le 1er compte. Désormais : code donné
   tant qu'AUCUN COMPTE n'existe (test_comptes).
+  **✅ ÉTAPE 3 FAITE (version 2026.10.15-1659, « go » de Bryan)** : voir AGENTS.md
+  « Comptes » (Étape 3). test_ui_connexion étendu (créer, mot de passe d'un autre /
+  le sien avec envoi réel, retirer / remettre le code, retirer un compte) ; audit :
+  état 25 « Code & comptes », rien à signaler. Restes pour l'étape 4 : fonctions
+  serveur des tablettes (appairerTablette, listerTablettes, retirer…, TABLETTES),
+  `exigerTablette_` à renommer, création du code avec activation dans le verrou
+  (appelant sans compte), test_tablettes / test_lot2 (parties tablettes), docs.
 - **Corrections déjà faites à cette occasion (14/10)** : erreur passagère de lecture
   de la liste ≠ « non autorisé » ; clé jamais effacée sur un refus ; remplacement
   sous le même nom (voir historique §0).

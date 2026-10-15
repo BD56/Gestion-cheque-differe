@@ -4,7 +4,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Securite_() {
-  return "2026.10.15-1639";
+  return "2026.10.15-1659";
 }
 
 // =================================================================
@@ -38,6 +38,12 @@ function etatAdmin() {
 // « C:<id> ») : il ne sert à rien sans sa clé / sa session. La page l'envoie avec :
 // { j: jeton, c: clé ou session }. (« E » = jeton sans appelant : panneau du Sheet ou
 // code d'activation.)
+// Session / clé de l'appelant : passée à part, ou reprise du jeton { j, c } (appels de
+// l'espace responsable, qui ajoutent le jeton en dernier argument).
+function cleAppelant_(cle, jeton) {
+  return cle || (jeton && typeof jeton === "object" ? jeton.c : null);
+}
+
 function creerJetonAdmin_(appelant) {
   const jeton = Utilities.getUuid();
   CacheService.getScriptCache().put("ADM_" + jeton, appelant ? appelant.lien : "E", ADMIN_SESSION_SEC);
@@ -282,7 +288,7 @@ function definirPin(nouveauPin, jeton, cle, activation) {
     nouveauPin = (nouveauPin || "").toString();
     if (!ADMIN_PIN_REGEX.test(nouveauPin))
       return { ok: false, message: "Le code doit contenir exactement 6 chiffres." };
-    const appelant = appelantDeCle_(cle);
+    const appelant = appelantDeCle_(cleAppelant_(cle, jeton));
     if (creation && !estEditeurDuClasseur_() && !(appelant && appelant.compte)) {
       const a = verifierActivation_(props, activation);
       if (!a.ok) return a;
@@ -318,6 +324,11 @@ function reinitialiserPinPanneau() {
     }
   );
   effacerEssais_(props);
+  if (lireComptes_().length > 0)
+    return (
+      "✅ Code responsable effacé : tout compte connecté ouvre maintenant l'espace responsable. " +
+      "Un nouveau code peut être choisi dans l'application (espace responsable → Code & comptes)."
+    );
   return "✅ Code responsable effacé.\n\n" + texteActivation_(genererCodeActivation_());
 }
 
@@ -805,7 +816,7 @@ function changerMotDePasse(id, mdp, jeton, cle) {
     mdp = (mdp || "").toString();
     const erreur = controlerMdp_(mdp);
     if (erreur) return { ok: false, message: erreur };
-    const appelant = appelantDeCle_(cle);
+    const appelant = appelantDeCle_(cleAppelant_(cle, jeton));
     const liste = lireComptes_();
     const compte = liste.filter(function (c) {
       return c.id === id;
@@ -853,7 +864,7 @@ function retirerCompte(id, jeton) {
 // Pour le remettre : definirPin (un compte connecté peut le créer sans activation).
 function retirerCodeResponsable(jeton, cle) {
   exigerAdmin_(jeton);
-  const a = appelantDeCle_(cle);
+  const a = appelantDeCle_(cleAppelant_(cle, jeton));
   if (!a || !a.compte) return { ok: false, message: "Connectez-vous avec un compte pour retirer le code." };
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
@@ -897,8 +908,8 @@ function reinitialiserComptesPanneau() {
 }
 
 // Espace responsable, AVANT le code (appui sur ⚙️) : lectures préparées pendant que le
-// code est tapé, affichées seulement une fois le code accepté. Réservé aux appareils
-// autorisés, qui obtiennent déjà tout cela sans code (copie de détection, impression
+// code est tapé, affichées seulement une fois le code accepté. Réservé aux comptes
+// connectés (et anciens appareils autorisés), qui obtiennent déjà tout cela sans code (copie de détection, impression
 // libre de toute l'offre). Restent derrière le code : contenu des archives, codes faux
 // tapés (information de sécurité), recréation des robots de nuit, toutes les actions.
 function apercuResponsable(cle) {
@@ -913,7 +924,7 @@ function apercuResponsable(cle) {
     chiffres: chiffresOffre_(f),
     saisies: listeSaisies_(),
     archives: listeArchives_(),
-    tablettes: listeTablettes_(),
+    comptes: listeComptes_(),
   };
 }
 

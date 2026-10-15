@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr" data-version="2026.10.15-1639">
+<html lang="fr" data-version="2026.10.15-1659">
   <head>
     <base target="_top">
     <?!= include_('Style') ?>
@@ -131,7 +131,7 @@
             <div class="groupe-aide resp"><svg class="ico"><use href="#i-cadenas"/></svg> Pour le responsable (code)</div>
             <div class="tuiles">
               <button class="tuile resp" data-action="allerAide" data-args='["modes"]'><svg class="ico"><use href="#i-bouclier"/></svg>Modes de sécurité<small>signaler ou bloquer</small></button>
-              <button class="tuile resp" data-action="allerAide" data-args='["code"]'><svg class="ico"><use href="#i-cle"/></svg>Code &amp; appareils<small>code, autorisations</small></button>
+              <button class="tuile resp" data-action="allerAide" data-args='["code"]'><svg class="ico"><use href="#i-cle"/></svg>Code &amp; comptes<small>connexion, code</small></button>
               <button class="tuile resp" data-action="allerAide" data-args='["dates"]'><svg class="ico"><use href="#i-calendrier"/></svg>Dates &amp; clôture<small>lancer, prolonger, finir</small></button>
               <button class="tuile resp" data-action="allerAide" data-args='["corrections"]'><svg class="ico"><use href="#i-liste"/></svg>Corrections &amp; archives<small>modifier, anciennes offres</small></button>
             </div>
@@ -212,13 +212,14 @@
 
           <div class="sous-ecran" data-aide="code">
             <button class="retour" data-action="allerAide" data-args='["accueil"]'><svg class="ico"><use href="#i-chevron"/></svg>Retour</button>
-            <h3 class="titre-ecran"><svg class="ico"><use href="#i-cle"/></svg> Code &amp; appareils</h3>
+            <h3 class="titre-ecran"><svg class="ico"><use href="#i-cle"/></svg> Code &amp; comptes</h3>
             <ul>
-              <li><strong>Code responsable</strong> : 6 chiffres. Il ouvre l'espace responsable (mode, dates, corrections, archives, réglages, clôture). Pour le créer, l'application demande le <strong>code d'activation</strong> affiché dans le Google Sheets (menu 🚀 APPLICATION → 🔑 Code d'activation).</li>
-              <li>L'espace se reverrouille quand on le ferme, avec <strong>Verrouiller</strong>, ou après 10 min sans action.</li>
-              <li>Après un code faux, patientez 10 s ; 5 codes faux bloquent 15 min.</li>
-              <li><strong>Appareils</strong> (tablette, ordinateur, téléphone) : chacun est autorisé une fois avec le code, sous un nom qui lui est propre (ex. Caisse 3). Un appareil non autorisé ne voit rien, même avec le lien. Liste et retrait : menu <strong><svg class="ico"><use href="#i-tablette"/></svg> Code &amp; appareils</strong> (un second appui confirme le retrait).</li>
-              <li><strong>Code oublié</strong> : il se réinitialise depuis le panneau <svg class="ico"><use href="#i-reglages"/></svg> du Google Sheets (personnes ayant accès au fichier), qui affiche un code d'activation pour en créer un nouveau.</li>
+              <li><strong>Comptes</strong> : ceux de la (des) caisse(s) centrale(s), avec un identifiant et un mot de passe (8 caractères au moins). Sans connexion, l'application ne montre rien, même avec le lien. Le navigateur peut retenir le mot de passe : sur iPad et Mac (Safari), il le propose à chaque connexion.</li>
+              <li>La connexion se termine chaque nuit à <strong>3 h</strong> ; <strong>Se déconnecter</strong> (espace responsable) la termine tout de suite. Une saisie en cours n'est pas perdue : reconnectez-vous, elle repart.</li>
+              <li><strong>Premier compte</strong> : à la première installation, avec le <strong>code d'activation</strong> affiché dans le Google Sheets (menu 🚀 APPLICATION → 🔑 Code d'activation). Les suivants, le changement de mot de passe et le retrait : menu <strong><svg class="ico"><use href="#i-personne"/></svg> Code &amp; comptes</strong> (un second appui confirme le retrait). Un mot de passe changé ou un compte retiré déconnecte partout.</li>
+              <li>Après un mot de passe faux, patientez 10 s ; 5 erreurs bloquent ce compte 15 min.</li>
+              <li><strong>Code responsable</strong> (facultatif, 6 chiffres) : s'il existe, il est demandé pour ouvrir l'espace responsable, qui se reverrouille quand on le ferme, avec <strong>Verrouiller</strong>, ou après 10 min sans action. Sans code, tout compte connecté ouvre l'espace. Le choisir, le changer ou le retirer : <strong>Code &amp; comptes</strong>.</li>
+              <li><strong>Plus aucun accès</strong> (mots de passe oubliés) : le panneau <svg class="ico"><use href="#i-reglages"/></svg> du Google Sheets (personnes ayant accès au fichier) réinitialise les comptes ou le code.</li>
             </ul>
           </div>
 
@@ -266,7 +267,7 @@
           <button data-ecran-lien="impression" data-action="allerEcran" data-args='["impression"]'><svg class="ico"><use href="#i-imprimer"/></svg>Impression</button>
           <button data-ecran-lien="archives" data-action="ouvrirArchives"><svg class="ico"><use href="#i-archive"/></svg>Archives</button>
           <button data-ecran-lien="reglages" data-action="allerEcran" data-args='["reglages"]'><svg class="ico"><use href="#i-etiquette"/></svg>Réglages</button>
-          <button data-ecran-lien="code" data-action="ouvrirCodeTablettes"><svg class="ico"><use href="#i-tablette"/></svg>Code &amp; appareils<span class="val" id="railNbTablettes"></span></button>
+          <button data-ecran-lien="code" data-action="ouvrirCodeComptes"><svg class="ico"><use href="#i-personne"/></svg>Code &amp; comptes<span class="val" id="railNbComptes"></span></button>
           <button class="bas" id="btnVerrouiller" data-action="verrouillerAdmin"><svg class="ico"><use href="#i-cadenas"/></svg>Verrouiller</button>
           <button id="btnDeconnexionRail" data-action="seDeconnecter"><svg class="ico"><use href="#i-sortie"/></svg>Se déconnecter</button>
         </nav>
@@ -296,7 +297,7 @@
                 <div class="kpi"><span>Saisies sur l'offre</span><b id="kpiSaisies">—</b></div>
                 <div class="kpi"><span>Montant total</span><b id="kpiTotal">—</b></div>
                 <div class="kpi rouge"><span>Ajouts forcés</span><b id="kpiForcees">—</b></div>
-                <div class="kpi"><span>Appareils autorisés</span><b id="kpiTablettes">—</b></div>
+                <div class="kpi"><span>Comptes</span><b id="kpiComptes">—</b></div>
               </div>
               <div class="deux-blocs">
                 <div class="boite">
@@ -434,24 +435,35 @@
             </div>
 
             <div class="sous-ecran" data-ecran="code">
-              <h2 class="titre-vue">Code &amp; appareils</h2>
+              <h2 class="titre-vue">Code &amp; comptes</h2>
               <div class="deux-blocs">
                 <div class="boite">
-                  <h3>Changer le code responsable</h3>
+                  <h3>Comptes</h3>
+                  <div class="message-tablettes" id="msgComptes"></div>
+                  <div id="listeComptes"></div>
+                  <!-- Pas d'envoi réel ici : le navigateur ne doit pas retenir sur CET appareil le
+                       mot de passe d'un compte créé pour une autre caisse. -->
+                  <form class="nouveau-compte" id="formNouveauCompte" autocomplete="off" novalidate>
+                    <h4>Créer un compte</h4>
+                    <input type="text" id="nouveauCompteId" maxlength="40" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Identifiant (ex. Caisse centrale 2)" aria-label="Identifiant du nouveau compte">
+                    <input type="password" id="nouveauCompteMdp" maxlength="100" autocomplete="off" placeholder="Mot de passe (8 car. min.)" aria-label="Mot de passe du nouveau compte">
+                    <input type="password" id="nouveauCompteMdp2" maxlength="100" autocomplete="off" placeholder="Confirmer le mot de passe" aria-label="Confirmer le mot de passe">
+                    <div class="rangee-btn">
+                      <button class="sec accent" type="submit">Créer le compte</button>
+                    </div>
+                    <div class="message" id="msgNouveauCompte"></div>
+                  </form>
+                </div>
+                <div class="boite">
+                  <h3>Code responsable</h3>
+                  <p class="note-doux" id="etatCodeAPart"></p>
                   <input class="champ-code" type="password" id="pinNouveau" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="Nouveau code (6 chiffres)">
                   <input class="champ-code" type="password" id="pinNouveau2" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="Confirmer le nouveau code">
                   <div class="rangee-btn">
-                    <button class="sec accent" data-action="changerPin">Enregistrer le code</button>
+                    <button class="sec accent" id="btnEnregistrerPin" data-action="changerPin">Enregistrer le code</button>
+                    <button class="sec danger" id="btnRetirerCode" data-action="retirerCodeAPart">Ne plus demander de code</button>
                   </div>
                   <div class="message" id="msgPin"></div>
-                </div>
-                <div class="boite">
-                  <h3>Appareils autorisés</h3>
-                  <div class="message-tablettes" id="msgTablettes"></div>
-                  <div id="listeTablettes"></div>
-                  <div class="rangee-btn">
-                    <button class="sec danger" id="btnRetirerTout" data-action="retirerToutesLesTablettes"><svg class="ico"><use href="#i-alerte"/></svg>Retirer tous les appareils</button>
-                  </div>
                 </div>
               </div>
             </div>
@@ -487,13 +499,13 @@
           <p>© 2026 DESJARDINS Bryan – Tous droits réservés.<br>
           Cette application, son code et sa conception demeurent la propriété exclusive de l'auteur, qui en conserve l'intégralité des droits. L'auteur concède à <span id="txtNomStructure"><?= cfg.NOM_STRUCTURE ?></span> une simple licence d'utilisation non exclusive, non cessible et révocable à tout moment, dans les conditions convenues par écrit avec l'auteur, sans transfert d'aucun droit de propriété. L'auteur reste libre de faire évoluer, suspendre ou retirer cette autorisation quand il le souhaite, ainsi que d'exploiter, céder ou proposer l'outil à toute autre structure de son choix. Toute reproduction, copie, modification ou déploiement de cet outil par un tiers, sans l'accord écrit préalable de l'auteur, est strictement interdit. Les données saisies restent la propriété de l'établissement, qui les conserve en cas de retrait de l'autorisation.</p>
 
-          <p>Confidentialité et Données : Cet outil a été pensé et conçu pour un usage strictement interne, dédié à la prévention des fraudes. Les données saisies (identités, N° de pièces, montants, notes) sont enregistrées dans le classeur Google Sheets de l'établissement (services Google), à des fins de traçabilité de l'offre. Elles ne sont accessibles que depuis les appareils autorisés par un responsable et par les personnes ayant accès à ce classeur, et ne sont en aucun cas prévues pour être cédées ou transmises à des tiers. Les saisies de chaque offre sont archivées à sa clôture, puis supprimées automatiquement 3 ans après.</p>
+          <p>Confidentialité et Données : Cet outil a été pensé et conçu pour un usage strictement interne, dédié à la prévention des fraudes. Les données saisies (identités, N° de pièces, montants, notes) sont enregistrées dans le classeur Google Sheets de l'établissement (services Google), à des fins de traçabilité de l'offre. Elles ne sont accessibles qu'avec un compte de l'application (identifiant et mot de passe) et par les personnes ayant accès à ce classeur, et ne sont en aucun cas prévues pour être cédées ou transmises à des tiers. Les saisies de chaque offre sont archivées à sa clôture, puis supprimées automatiquement 3 ans après.</p>
 
           <p>Historique inter-offres : afin d'accélérer la saisie des clients déjà venus, le nom et le prénom associés à un numéro de pièce peuvent être conservés d'une offre à l'autre et proposés automatiquement lors d'une nouvelle présentation de la pièce. Ces informations sont supprimées après 3 ans sans nouvelle présentation.</p>
 
           <p id="mentionOCR" style="display: none">Lecture assistée des pièces (OCR) : lorsqu'une pièce est scannée, la photographie est analysée localement, dans le navigateur de l'appareil, uniquement pour lire la zone de lecture automatique (MRZ). L'image n'est ni enregistrée ni transmise à aucun serveur ; seules les informations reportées dans le formulaire, après vérification par l'hôtesse, sont conservées.</p>
 
-          <p>Appareils et code responsable : pour reconnaître un appareil autorisé, l'application enregistre dans son navigateur une clé technique d'autorisation, sans autre usage. L'application n'utilise elle-même aucun cookie publicitaire ni outil de mesure d'audience. Le code responsable n'est jamais conservé en clair.</p>
+          <p>Comptes et code responsable : pour garder la connexion jusqu'à la nuit, l'application enregistre dans le navigateur une clé technique de session et le nom du compte, sans autre usage ; le gestionnaire de mots de passe du navigateur peut, si vous l'acceptez, retenir l'identifiant et le mot de passe. L'application n'utilise elle-même aucun cookie publicitaire ni outil de mesure d'audience. Les mots de passe et le code responsable ne sont jamais conservés en clair.</p>
 
           <p>Responsabilité : L'auteur fournit uniquement l'outil logiciel. L'établissement utilisateur est le responsable du traitement des données collectées : utilisation conforme de l'outil, information des clients, durée de conservation et accès aux données (respect du RGPD) lui incombent exclusivement. L'auteur décline toute responsabilité en cas d'usage abusif, détourné ou négligent de ces informations par l'établissement.</p>
         </div>

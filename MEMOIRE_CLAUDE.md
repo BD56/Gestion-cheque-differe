@@ -61,6 +61,12 @@
   Vérification périodique (voir la déconnexion sans rien toucher) : proposée, pas de
   réponse de Bryan. NB : tous les essais de Bryan AVANT ce correctif sur son Mac
   (propriétaire connecté à Google) passaient le serveur sans compte : à refaire.
+  16/10 : capture de Bryan montrant encore « Impression libre » = ANCIENNE version
+  servie par /exec (« Installer » affichait pourtant 0904) ; cause côté déploiement,
+  réglée par Bryan. PIÈGE à rappeler : « Installer » lit le code le plus récent du
+  projet, /exec sert la version FIGÉE du déploiement ⇒ `npm run push` D'ABORD, puis
+  Gérer les déploiements → crayon → Version : « Nouvelle version » ; Tester les
+  déploiements (/dev) sert toujours le dernier code (utile pour comparer).
 - **Fil des échanges sur Safari (14-15/10)** : perte d'autorisation des appareils →
   §0 ter ; code responsable = caisse centrale ; page d'essai du trousseau
   (`docs/essais/trousseau/`) réussie sur Mac (méthode 2 : vrai envoi) ⇒ comptes.

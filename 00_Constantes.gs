@@ -3,7 +3,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_00_Constantes_() {
-  return "2026.10.16-1031";
+  return "2026.10.16-1147";
 }
 
 // =================================================================
@@ -59,6 +59,16 @@ const ARCHIVES_RETENTION_ANS = 3;
 // JOURNAL_RETENTION_MOIS mois (il contient des données de clients : saisies supprimées…)
 const JOURNAL_FEUILLE = "_Journal";
 const JOURNAL_RETENTION_MOIS = 12;
+const JOURNAL_ENTETES = ["Date et heure", "Qui", "Action", "Détail", "Empreinte"];
+// Empreintes chaînées : une ligne modifiée ou effacée à la main se voit (vérifié par le
+// robot de nuit). Tolérance : une ligne peut s'enchaîner à l'une des JOURNAL_TOLERANCE
+// lignes précédentes (deux actions journalisées au même instant, sans verrou commun).
+const JOURNAL_TOLERANCE = 3;
+// Changements de « qui peut faire quoi » (codes, personnes, comptes) : montrés à tous dans
+// l'espace responsable et le panneau du Sheet pendant CHANGEMENTS_DUREE_H heures (non
+// fermable), CHANGEMENTS_AFFICHES au plus (les autres : voir le journal).
+const CHANGEMENTS_DUREE_H = 48;
+const CHANGEMENTS_AFFICHES = 5;
 
 // Fichiers de l'application : tous doivent être présents et porter le même numéro de
 // version (contrôle au démarrage et dans « Installer », cf. Installation.gs).

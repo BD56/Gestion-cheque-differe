@@ -1,5 +1,5 @@
 <!-- Espace responsable : code, corrections, archives, réglages, comptes. -->
-<script data-version="2026.10.16-1031">
+<script data-version="2026.10.16-1147">
   // =================================================================
   // --- ESPACE RESPONSABLE (code PIN) ---
   // Le jeton n'est gardé qu'en mémoire : il disparaît à la fermeture du
@@ -281,6 +281,21 @@
     // formulaire déjà rempli par l'aperçu et modifié depuis : la saisie est gardée
     if (avecReglages && !reglagesModifies) remplirFormulaireReglages(infos.config);
     if (infos.robots) afficherAlertesAdmin(infos); // pas dans l'aperçu (avant le code)
+    if (infos.changements) afficherChangements(infos.changements);
+  }
+  // Changements récents de « qui peut faire quoi » : visibles de tous 2 jours (serveur)
+  function afficherChangements(c) {
+    const ul = document.getElementById("listeChangements");
+    ul.textContent = "";
+    c.lignes.forEach(function (t) {
+      const li = document.createElement("li");
+      li.textContent = t;
+      ul.appendChild(li);
+    });
+    document.getElementById("noteChangements").textContent =
+      (c.autres ? "Et " + c.autres + " autre(s) : voir le journal du Google Sheets. " : "") +
+      "Visibles de toute l'équipe pendant 2 jours ; tout reste dans le journal du Google Sheets.";
+    document.getElementById("changementsRecents").style.display = c.lignes.length ? "" : "none";
   }
   function ouvrirEnsemble() {
     allerEcran("ensemble");
@@ -297,11 +312,19 @@
     document.getElementById("railNbComptes").textContent = c.comptes;
   }
 
-  // Points d'attention en tête de l'espace responsable : robot de nuit absent ou
-  // arrêté.
+  // Points d'attention en tête de l'espace responsable : journal modifié à la main,
+  // robot de nuit absent ou arrêté.
   function afficherAlertesAdmin(infos) {
     const lignes = [],
       r = infos.robots || {};
+    if (infos.alerteJournal)
+      lignes.push(
+        "Journal des actions modifié à la main dans le Google Sheets (" +
+          infos.alerteJournal.texte +
+          " ; constaté le " +
+          infos.alerteJournal.constatee +
+          "). À vérifier par la direction (Google Sheets → Fichier → Historique des versions), puis à marquer comme vu dans le panneau du Sheet."
+      );
     if (!r.cloture || !r.purge) {
       lignes.push(
         "Robot de nuit absent : la clôture automatique et la suppression des données anciennes ne se feront pas. Ouvrez le Google Sheets → menu 🚀 APPLICATION → 🧰 Installer."

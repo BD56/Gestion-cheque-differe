@@ -37,7 +37,7 @@ assert.strictEqual(
   J(c.forcerSaisie("DUPONT", "JEAN", "AB123", "10", "", "", false, false, session)).status,
   "SUCCES"
 );
-assert.deepStrictEqual(derniere().slice(1), [
+assert.deepStrictEqual(derniere().slice(1, 4), [
   "Caisse test",
   "Ajout forcé (cas A)",
   "DUPONT JEAN · pièce AB123 · 10",
@@ -63,7 +63,7 @@ assert.match(derniere()[3], /^MARTIN PIERRE · pièce CD456 · 25 · saisie le /
 
 // Mode, réglages (seulement les changés), dates, pré-remplissage
 c.basculerModeWebApp(jeton);
-assert.deepStrictEqual(derniere().slice(2), ["Mode de sécurité", "Signaler → Bloquant"]);
+assert.deepStrictEqual(derniere().slice(2, 4), ["Mode de sécurité", "Signaler → Bloquant"]);
 const nbAvantReglages = lignes().length;
 c.setConfig({ NOM_OFFRE: c.getConfig().NOM_OFFRE }, jeton);
 assert.strictEqual(lignes().length, nbAvantReglages, "réglage inchangé : rien au journal");
@@ -71,7 +71,7 @@ c.setConfig({ NOM_OFFRE: "Bons cadeaux", PASSAGES_MAX: "2" }, jeton);
 assert.strictEqual(derniere()[2], "Réglages");
 assert.match(derniere()[3], /NOM_OFFRE : « .+ » → « Bons cadeaux » ; PASSAGES_MAX : « 1 » → « 2 »/);
 c.setDatesOperation("2026-12-01", "2026-12-24", jeton);
-assert.deepStrictEqual(derniere().slice(2), [
+assert.deepStrictEqual(derniere().slice(2, 4), [
   "Dates de l'offre",
   "du 01/01/2000 au 31/12/2099 → du 01/12/2026 au 24/12/2026",
 ]);
@@ -80,10 +80,10 @@ assert.strictEqual(derniere()[2], "Pré-remplissage (anciens clients)");
 
 // Comptes et code responsable (jamais le mot de passe ni le code)
 c.creerCompte("Caisse 2", "motdepasse2", jeton);
-assert.deepStrictEqual(derniere().slice(1), ["Caisse test", "Compte créé", "Caisse 2"]);
+assert.deepStrictEqual(derniere().slice(1, 4), ["Caisse test", "Compte créé", "Caisse 2"]);
 const id2 = c.lireComptes_().find((x) => x.identifiant === "Caisse 2").id;
 c.changerMotDePasse(id2, "nouveau-mdp2", jeton);
-assert.deepStrictEqual(derniere().slice(2), ["Mot de passe changé", "Caisse 2"]);
+assert.deepStrictEqual(derniere().slice(2, 4), ["Mot de passe changé", "Caisse 2"]);
 for (let i = 0; i < 5; i++) {
   for (const k in env.props._store)
     if (k.indexOf("CPT_ESSAIS_") === 0) {
@@ -93,13 +93,13 @@ for (let i = 0; i < 5; i++) {
     }
   c.connexion("Caisse 2", "mauvais!!");
 }
-assert.deepStrictEqual(derniere().slice(1), [
+assert.deepStrictEqual(derniere().slice(1, 4), [
   "Écran de connexion",
   "Compte bloqué 15 min (5 mots de passe faux)",
   "Caisse 2",
 ]);
 c.retirerCompte(id2, jeton);
-assert.deepStrictEqual(derniere().slice(2), ["Compte retiré", "Caisse 2"]);
+assert.deepStrictEqual(derniere().slice(2, 4), ["Compte retiré", "Caisse 2"]);
 const j2 = J(c.definirPin("135790", jeton));
 assert.deepStrictEqual(derniere().slice(1, 3), ["Caisse test", "Code responsable changé"]);
 c.retirerCodeResponsable({ j: j2.jeton, c: session });
@@ -111,7 +111,7 @@ assert.deepStrictEqual(derniere().slice(1, 3), [
   "Code responsable réinitialisé",
 ]);
 c.reinitialiserComptesPanneau();
-assert.deepStrictEqual(derniere().slice(2), [
+assert.deepStrictEqual(derniere().slice(2, 4), [
   "Comptes réinitialisés (retour à la première installation)",
   "Caisse test retiré(s)",
 ]);
@@ -137,6 +137,7 @@ vieux.setMonth(vieux.getMonth() - 13);
 const recent = new Date();
 recent.setMonth(recent.getMonth() - 11);
 j.cells.splice(1, 0, [vieux, "X", "Ancienne", ""], [recent, "Y", "Récente", ""]);
+c.rescellerJournal_(j); // lignes anciennes simulées : scellées comme si l'appli les avait écrites
 const nb = lignes().length;
 env.props._store.DATE_FIN = "";
 c.verificationClotureNocturne();

@@ -2,7 +2,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Installation_() {
-  return "2026.10.16-1031";
+  return "2026.10.16-1147";
 }
 
 // =================================================================
@@ -21,7 +21,13 @@ function installer() {
   let rapport = [];
   if (nettoyerSiCopie_())
     rapport.push("Nouvelle copie détectée : comptes, code responsable, dates et réglages hérités effacés.");
-  rapport = rapport.concat(installerFeuilles_(), installerDeclencheurs_(), effacerAnciennesAutorisations_());
+  rapport = rapport.concat(
+    installerFeuilles_(),
+    installerProtections_(),
+    installerJournal_(),
+    installerDeclencheurs_(),
+    effacerAnciennesAutorisations_()
+  );
   let problemes = [];
   try {
     problemes = verifierInstallation_();
@@ -164,6 +170,29 @@ function installerFeuilles_() {
     faits.push("Feuille « " + ANNUAIRE_FEUILLE + " » créée (masquée).");
   }
   return faits;
+}
+
+// « Saisies » : avertissement avant toute modification À LA MAIN (fausse manipulation) ;
+// l'application et le panneau du Sheet n'y sont pas soumis. Posé seulement si la feuille
+// n'a aucune protection (une protection choisie dans le Sheet est respectée).
+function installerProtections_() {
+  const f = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FEUILLE_SAISIES);
+  if (!f || f.getProtections(SpreadsheetApp.ProtectionType.SHEET).length) return [];
+  f.protect()
+    .setDescription("Saisies : modifiées par l'application ; à la main, seulement pour une correction voulue")
+    .setWarningOnly(true);
+  return ["« " + FEUILLE_SAISIES + " » : avertissement avant toute modification à la main."];
+}
+
+// Journal hérité d'une copie (clé des empreintes effacée avec les propriétés) : ses
+// empreintes sont recalculées, sinon le robot de nuit le croirait modifié à la main.
+function installerJournal_() {
+  const props = PropertiesService.getDocumentProperties();
+  const f = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(JOURNAL_FEUILLE);
+  if (!f || props.getProperty("JOURNAL_CLE")) return [];
+  feuilleJournal_(); // en-tête « Empreinte » au besoin
+  rescellerJournal_(f);
+  return ["Journal des actions : empreintes recalculées (nouvelle copie)."];
 }
 
 // =================================================================

@@ -1,5 +1,5 @@
 <!doctype html>
-<html data-version="2026.10.16-1031">
+<html data-version="2026.10.16-1147">
   <head>
     <base target="_top" />
     <style>
@@ -114,6 +114,23 @@
         color: var(--doux);
         line-height: 1.45;
       }
+      .alerte-journal {
+        border-color: var(--danger);
+        background: var(--danger-doux);
+      }
+      .alerte-journal h2 {
+        color: var(--danger);
+      }
+      .liste-changements {
+        margin: 0;
+        padding-left: 18px;
+        font-size: 12.5px;
+        line-height: 1.45;
+        overflow-wrap: anywhere;
+      }
+      .liste-changements li + li {
+        margin-top: 4px;
+      }
       .legende p {
         margin: 0;
         font-size: 12.5px;
@@ -147,6 +164,26 @@
   </head>
   <body>
     <div class="message-panneau" id="msgPanneau" role="status"></div>
+
+    <!-- Journal modifié à la main (robot de nuit) : reste jusqu'à « marquer comme vue » -->
+    <div class="boite alerte-journal" id="boiteAlerteJournal" style="display: none">
+      <h2>Journal modifié à la main</h2>
+      <p class="note" id="txtAlerteJournal"></p>
+      <p class="note">
+        Qui l'a modifié ? Fichier → Historique des versions → Afficher l'historique des versions (onglet «
+        _Journal »).
+      </p>
+      <button class="btn danger" id="btnAlerteJournal" data-action="alerteJournalVue">
+        J'ai vérifié : marquer comme vue
+      </button>
+    </div>
+
+    <!-- Changements de « qui peut faire quoi » : 2 jours, comme dans l'espace responsable -->
+    <div class="boite" id="boiteChangements" style="display: none">
+      <h2>Changements récents des accès</h2>
+      <ul class="liste-changements" id="listeChangementsPanneau"></ul>
+      <p class="note" id="noteChangementsPanneau"></p>
+    </div>
 
     <div class="boite">
       <h2>Consulter les saisies</h2>
@@ -208,7 +245,54 @@
         document.getElementById("dateImpression").value = annee + "-" + mois + "-" + jour;
 
         google.script.run.withSuccessHandler(majMode).withFailureHandler(erreurChargement).getInfosPanneau();
+        chargerSurveillance();
       };
+
+      // Alerte du journal et changements récents des accès (éditeurs du classeur)
+      function chargerSurveillance() {
+        google.script.run
+          .withSuccessHandler(afficherSurveillance)
+          .withFailureHandler(function () {})
+          .getSurveillancePanneau();
+      }
+      function afficherSurveillance(s) {
+        const a = s.alerteJournal;
+        document.getElementById("boiteAlerteJournal").style.display = a ? "" : "none";
+        if (a)
+          document.getElementById("txtAlerteJournal").textContent =
+            "Constaté par le robot de nuit le " + a.constatee + " : " + a.texte + ".";
+        const c = s.changements,
+          ul = document.getElementById("listeChangementsPanneau");
+        ul.textContent = "";
+        c.lignes.forEach(function (t) {
+          const li = document.createElement("li");
+          li.textContent = t;
+          ul.appendChild(li);
+        });
+        document.getElementById("noteChangementsPanneau").textContent =
+          (c.autres ? "Et " + c.autres + " autre(s) : voir l'onglet « _Journal ». " : "") +
+          "Visibles de toute l'équipe pendant 2 jours.";
+        document.getElementById("boiteChangements").style.display = c.lignes.length ? "" : "none";
+      }
+      function alerteJournalVue() {
+        confirmerEnDeuxTemps(
+          document.getElementById("btnAlerteJournal"),
+          "Confirmer : alerte vue",
+          function () {
+            google.script.run
+              .withSuccessHandler(function (m) {
+                message(m);
+                chargerSurveillance();
+              })
+              .withFailureHandler(echec)
+              .prendreEnCompteAlerteJournal();
+          }
+        );
+      }
+      function messageEtSurveillance(m) {
+        message(m);
+        chargerSurveillance();
+      }
 
       // Messages en haut du panneau (plus de fenêtres alert())
       function message(texte, erreur) {
@@ -254,7 +338,10 @@
           document.getElementById("btnReinitPin"),
           "Confirmer : effacer le code",
           function () {
-            google.script.run.withSuccessHandler(message).withFailureHandler(echec).reinitialiserPinPanneau();
+            google.script.run
+              .withSuccessHandler(messageEtSurveillance)
+              .withFailureHandler(echec)
+              .reinitialiserPinPanneau();
           }
         );
       }
@@ -265,7 +352,7 @@
           "Confirmer : retirer TOUS les comptes",
           function () {
             google.script.run
-              .withSuccessHandler(message)
+              .withSuccessHandler(messageEtSurveillance)
               .withFailureHandler(echec)
               .reinitialiserComptesPanneau();
           }
@@ -359,6 +446,7 @@
 
       // Boutons : data-action="nomDeLaFonction" ; un seul écouteur, liste explicite.
       const ACTIONS = {
+        alerteJournalVue,
         changerMode,
         cloturer,
         imprimerAncien,

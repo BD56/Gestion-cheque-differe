@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr" data-version="2026.10.16-1031">
+<html lang="fr" data-version="2026.10.16-1147">
   <head>
     <base target="_top">
     <?!= include_('Style') ?>
@@ -291,6 +291,12 @@
 
             <div class="sous-ecran" data-ecran="ensemble">
               <h2 class="titre-vue">Vue d'ensemble</h2>
+              <!-- Changements de « qui peut faire quoi » (codes, personnes, comptes) : 2 jours, non fermable -->
+              <div class="boite changements-recents" id="changementsRecents" style="display: none">
+                <h3>Changements récents des accès</h3>
+                <ul class="liste-changements" id="listeChangements"></ul>
+                <p class="note-doux" id="noteChangements"></p>
+              </div>
               <div class="kpis">
                 <div class="kpi"><span>Saisies sur l'offre</span><b id="kpiSaisies">—</b></div>
                 <div class="kpi"><span>Montant total</span><b id="kpiTotal">—</b></div>

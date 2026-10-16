@@ -3,7 +3,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Securite_() {
-  return "2026.10.16-1031";
+  return "2026.10.16-1147";
 }
 
 // =================================================================
@@ -355,7 +355,8 @@ function definirPin(nouveauPin, jeton, cle) {
         : depuisPersonnels
           ? "Retour au code commun (codes personnels retirés)"
           : "Code responsable changé",
-      ""
+      "",
+      true
     );
     return { ok: true, jeton: creerJetonAdmin_(appelant) };
   } finally {
@@ -375,7 +376,7 @@ function reinitialiserPinPanneau() {
   exigerEditeur_();
   const props = PropertiesService.getDocumentProperties();
   nouvelleGenerationAdmin_(); // espaces ouverts refermés (ils rouvriront sans code)
-  journaliser_(quiPanneau_(), "Code responsable réinitialisé", "");
+  journaliser_(quiPanneau_(), "Code responsable réinitialisé", "", true);
   ["ADMIN_PIN_HASH", "ADMIN_PIN_SEL", "ADMIN_ECHECS", "ADMIN_BLOQUE_JUSQUA", "ADMIN_DERNIER_ECHEC"].forEach(
     function (k) {
       props.deleteProperty(k);
@@ -652,7 +653,7 @@ function premierCompte(activation, identifiant, mdp) {
     const compte = nouveauCompte_(identifiant, mdp);
     ecrireComptes_([compte]);
     effacerActivation_(props);
-    journaliser_(identifiant, "Premier compte créé (code d'activation)", identifiant);
+    journaliser_(identifiant, "Premier compte créé (code d'activation)", identifiant, true);
     return reponseConnexion_(compte);
   } finally {
     lock.releaseLock();
@@ -697,7 +698,7 @@ function creerCompte(identifiant, mdp, jeton) {
     const compte = nouveauCompte_(identifiant, mdp);
     liste.push(compte);
     ecrireComptes_(liste);
-    journaliser_(quiJeton_(jeton), "Compte créé", identifiant);
+    journaliser_(quiJeton_(jeton), "Compte créé", identifiant, true);
     return { ok: true, compte: { id: compte.id, identifiant: compte.identifiant } };
   } finally {
     lock.releaseLock();
@@ -751,7 +752,7 @@ function retirerCompte(id, jeton) {
       return c.id === id;
     })[0];
     ecrireComptes_(reste);
-    journaliser_(quiJeton_(jeton), "Compte retiré", retire.identifiant);
+    journaliser_(quiJeton_(jeton), "Compte retiré", retire.identifiant, true);
     const props = PropertiesService.getDocumentProperties();
     ["COMPTE_VUE_", "CPT_ESSAIS_", "PIN_ESSAIS_C_"].forEach(function (k) {
       props.deleteProperty(k + id);
@@ -779,7 +780,7 @@ function retirerCodeResponsable(jeton, cle) {
     });
     ecrirePersonnes_([]); // codes personnels aussi
     effacerEssais_(props);
-    journaliser_(qui, "Code responsable retiré", "");
+    journaliser_(qui, "Code responsable retiré", "", true);
     return { ok: true, message: "Code responsable retiré : un compte connecté ouvre l'espace responsable." };
   } finally {
     lock.releaseLock();
@@ -804,7 +805,8 @@ function reinitialiserComptesPanneau() {
         .map(function (c) {
           return c.identifiant;
         })
-        .join(", ") + " retiré(s)"
+        .join(", ") + " retiré(s)",
+      true
     );
     const tout = props.getProperties();
     for (const k in tout)
@@ -865,5 +867,7 @@ function getInfosAdmin(jeton) {
     robots: etatRobots_(),
     robotsCrees: robotsCrees.length,
     chiffres: chiffresOffre_(f),
+    changements: changementsRecents_(),
+    alerteJournal: lireAlerteJournal_(),
   };
 }

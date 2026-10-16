@@ -44,7 +44,7 @@ const { ouvrir } = require("./navigateur");
     await attendre(300);
     assert.match(await txt("#msgPersonne"), /« Paul » peut ouvrir l'espace responsable/);
     assert.match(await txt("#listePersonnes"), /Marie \(vous\)[\s\S]*Paul/);
-    assert.deepStrictEqual(journal().slice(1), [
+    assert.deepStrictEqual(journal().slice(1, 4), [
       "Caisse test · Marie",
       "Personne ajoutée (code personnel)",
       "Paul",

@@ -2,7 +2,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Archives_() {
-  return "2026.10.16-1031";
+  return "2026.10.16-1147";
 }
 
 // =================================================================

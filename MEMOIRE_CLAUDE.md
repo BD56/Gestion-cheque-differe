@@ -2,9 +2,10 @@
 
 > Fichier de reprise après compactage du contexte. À lire **avec** `AGENTS.md` (référence
 > canonique) et `docs/retours-vibe/decisions/2026-10-11_generalisation.md` (décisions).
-> Dernière mise à jour : 2026-10-16 (version 2026.10.16-1031 : comptes, codes personnels,
-> journal des actions, impression réservée, passe-droit propriétaire corrigé ; mémoire
-> nettoyée). Rien en cours de codage ; attendu : essais de Bryan.
+> Dernière mise à jour : 2026-10-16 (version 2026.10.16-1147 : journal à empreintes,
+> changements récents des accès, avertissement sur « Saisies » ; avant : comptes, codes
+> personnels, journal, impression réservée). Rien en cours de codage ; attendu : essais
+> de Bryan.
 
 ## ▶️ ÉTAT ACTUEL — à lire d'abord
 - **Branches** : `main` = prod Vannes (non touchée) ; `generalisation` = version
@@ -13,7 +14,7 @@
   « Comptoir » (branche de travail actuelle, tout est poussé)**. Aucune fusion faite,
   aucune pull request. Ordre prévu (sur demande de Bryan seulement) : `design` →
   `refonte` → `generalisation` → `main` / migration Vannes.
-- **Version actuelle sur `design`** : 2026.10.16-1031 (43 séries de tests vertes,
+- **Version actuelle sur `design`** : 2026.10.16-1147 (45 séries de tests vertes,
   ESLint et Prettier propres). Numéro renouvelé par Claude à chaque push de code
   (`npm run nouvelle-version`).
 - **Bryan teste** sur le Sheet « Gestion Chèques Différés — REFONTE (test) » depuis
@@ -65,7 +66,12 @@
   4. temps de connexion (MDP_TOURS = 500) ;
   5. captures en précisant le navigateur (Safari / Chrome) si un affichage cloche ;
      « Saisies : Chargement… » ne doit plus rester bloqué ;
-  6. vraie tablette (rotation, clavier, journal, alertes, espace responsable).
+  6. vraie tablette (rotation, clavier, journal, alertes, espace responsable) ;
+  7. (1147) bandeau « Changements récents des accès » (espace + panneau du Sheet) ;
+     modifier une cellule de `_Journal` à la main, lancer le robot de nuit à la main
+     (`verificationClotureNocturne` depuis l'éditeur Apps Script) ⇒ alerte, puis
+     « J'ai vérifié : marquer comme vue » dans le panneau ; avertissement en modifiant
+     « Saisies » à la main (après « Installer »).
 - **Fil des échanges sur Safari (14-15/10)** : perte d'autorisation des appareils →
   §0 ter ; code responsable = caisse centrale ; page d'essai du trousseau
   (`docs/essais/trousseau/`) réussie sur Mac (méthode 2 : vrai envoi) ⇒ comptes.
@@ -775,25 +781,24 @@ quand Bryan le demande.
   actions~~ : FAIT (16/10). ~~Code par personne~~ : FAIT (codes personnels, 16/10).
 - ~~À valider~~ : jeton 3 min en codes personnels et ajouts forcés tracés au niveau
   du compte — VALIDÉS par Bryan (16/10).
-- **Décision finale (Bryan, 16/10) : A+ avec l'empreinte** (C abandonnée : elle ne
+- **FAIT (1147) : A+ avec l'empreinte** (décision Bryan 16/10 ; C abandonnée : elle ne
   fermait qu'une porte — ajouter une personne fictive « Paul 2 » donne le même
-  anonymat ; la protection est la TRACE nominative, à rendre FIABLE et VISIBLE).
-  Le retour au code commun reste possible dans l'appli. À coder :
-  1. Journal à empreintes chaînées (5e colonne ; dernière empreinte + nombre de lignes
-     gardés à part ; ancre après la purge des 12 mois ; vérifié par le robot de nuit ;
-     alerte « journal modifié à la main »). Limite dite : un éditeur qui programme
-     peut refaire les empreintes (historique des versions Google reste).
-  2. Bandeau des changements sensibles (« Codes personnels retirés le … par Marie »),
-     visible de tous pendant **2 jours** (Bryan : 7 « disproportionné »), non fermable ;
-     seulement « qui peut faire quoi » (codes perso / commun / plus de code, personne
-     ou compte ajouté / retiré) ; espace responsable (vue d'ensemble) + panneau du
-     Sheet, pas l'écran de saisie ; 5 lignes max. Alerte « journal modifié » : reste
-     jusqu'à prise en compte depuis le panneau du Sheet (journalisée).
-  3. Avertissement posé sur « Saisies » par « Installer » (généralisation : chaque
-     magasin a son Sheet ⇒ protections automatiques ; INSTALLATION.md : conseiller
-     qu'un compte de la direction copie le modèle = propriétaire).
+  anonymat ; la protection est la TRACE nominative, rendue FIABLE et VISIBLE). Le
+  retour au code commun reste possible dans l'appli. Détails : AGENTS.md « Journal à
+  empreintes + changements récents ».
+  1. Journal à empreintes chaînées (5e colonne, vérifié par le robot de nuit, alerte
+     jusqu'à « marquer comme vue » dans le panneau du Sheet, rescellement journalisé).
+     Limite dite à Bryan : un éditeur qui programme peut refaire les empreintes
+     (l'historique des versions Google garde son nom).
+  2. Bandeau « Changements récents des accès » : **2 jours** (Bryan : 7
+     « disproportionné »), non fermable, 5 lignes ; vue d'ensemble de l'espace +
+     panneau du Sheet ; pas l'écran de saisie.
+  3. « Installer » : avertissement sur « Saisies » ; INSTALLATION.md : qui peut
+     modifier le Sheet peut tout faire ⇒ direction / manager seulement
+     (généralisation : chaque magasin a SON Sheet, protections posées par le code).
   Plus tard (non décidé) : `_Journal` réservé au propriétaire (lignes du panneau mises
-  de côté puis écrites par l'appli, sinon perdues en silence).
+  de côté puis écrites par l'appli, sinon perdues en silence) ; avertissement aussi
+  sur `_Journal` (idée, non proposée encore).
 - Pull request `generalisation` → `main` : à ouvrir **après** le test de Bryan (il n'a pas
   encore demandé).
 - **Nom de l'application** (en pause, à la demande de Bryan) : acronymes retenus CLÉO

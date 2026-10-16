@@ -41,7 +41,7 @@ assert.ok(r.ok && r.jeton);
 assert.deepStrictEqual(J(c.etatAdmin()), { pinDefini: true, codePersonnel: true, comptes: true });
 assert.ok(!P.ADMIN_PIN_HASH, "pas de code commun en même temps");
 assert.ok(!JSON.stringify(P).includes("111111"), "code jamais en clair");
-assert.deepStrictEqual(derniere().slice(1), [
+assert.deepStrictEqual(derniere().slice(1, 4), [
   "Caisse test",
   "Codes personnels activés",
   "première personne : Marie",
@@ -76,7 +76,7 @@ assert.deepStrictEqual(derniere().slice(1, 3), ["Caisse 2 · Marie", "Mode de s�
 assert.match(J(c.ajouterPersonne("marie", "333333", jm)).message, /existe déjà/);
 assert.match(J(c.ajouterPersonne("Paul", "12", jm)).message, /6 chiffres/);
 assert.ok(J(c.ajouterPersonne("Paul", "222222", jm)).ok);
-assert.deepStrictEqual(derniere().slice(1), [
+assert.deepStrictEqual(derniere().slice(1, 4), [
   "Caisse 2 · Marie",
   "Personne ajoutée (code personnel)",
   "Paul",
@@ -98,7 +98,7 @@ assert.match(J(c.ouvrirSessionAdmin("111111", sa, idPaul)).message, /Réessayez|
 
 // --- Changer son code ---
 assert.ok(J(c.changerMonCode("444444", jm)).ok);
-assert.deepStrictEqual(derniere().slice(1), ["Caisse 2 · Marie", "Code personnel changé", "Marie"]);
+assert.deepStrictEqual(derniere().slice(1, 4), ["Caisse 2 · Marie", "Code personnel changé", "Marie"]);
 sansPause();
 assert.match(J(c.ouvrirSessionAdmin("111111", sa, idMarie)).message, /Code faux/);
 sansPause();

@@ -334,6 +334,31 @@ Décision : `docs/retours-vibe/decisions/2026-10-11_generalisation.md`.
   `journaliser_` n'empêche jamais l'action (panne seulement notée). Lignes de plus de
   `JOURNAL_RETENTION_MOIS` (12) effacées chaque nuit (`purgerJournal_` dans le robot).
   Lecture : dans le Sheet seulement (afficher l'onglet masqué). Test : `test_journal`.
+- **Journal à empreintes + changements récents** (option « A+ », décision Bryan 16/10 :
+  la protection est la TRACE nominative, à rendre FIABLE et VISIBLE ; le retour au code
+  commun reste possible dans l'appli). 5e colonne « Empreinte » = HMAC (clé
+  `JOURNAL_CLE`, propriétés du document) de [empreinte précédente, heure murale du
+  fuseau du classeur, qui, action, détail], 22 caractères. Précédente lue dans
+  `JOURNAL_DERNIERE` (pas dans la feuille : des lignes effacées à la fin se voient) ;
+  purge des 12 mois : empreintes des lignes effacées gardées (`JOURNAL_ANCRES`) ; pas
+  de verrou dans `journaliser_` (appelants sous verrou ou non) ⇒ tolérance : une ligne
+  peut s'enchaîner à l'une des `JOURNAL_TOLERANCE` (3) précédentes.
+  `verifierJournalNuit_` (robot, AVANT la purge) → `JOURNAL_ALERTE` {texte, constatee},
+  journalisée une fois, affichée en tête de l'espace responsable (`#alerteAdmin`) et
+  dans le panneau du Sheet jusqu'à `prendreEnCompteAlerteJournal()` (éditeurs, second
+  appui) qui rescelle (`rescellerJournal_`) et journalise. Journal d'avant les
+  empreintes (4 colonnes) : scellé au 1er ajout ; copie d'un Sheet (clé effacée) :
+  rescellé par « Installer » (`installerJournal_`). Limite : un éditeur qui programme
+  peut lire la clé ; l'historique des versions Google garde son nom.
+  Changements de « qui peut faire quoi » (`journaliser_(…, true)` : codes commun /
+  personnels / retiré / réinitialisé, personne ajoutée / retirée, compte créé / retiré,
+  comptes réinitialisés) gardés à part (`CHANGEMENTS_RECENTS`, 20 au plus) : bandeau
+  « Changements récents des accès » (vue d'ensemble de l'espace + panneau du Sheet,
+  `getSurveillancePanneau`), `CHANGEMENTS_DUREE_H` = 48 h, non fermable,
+  `CHANGEMENTS_AFFICHES` = 5 lignes (+ « Et N autre(s) »). « Installer » pose aussi un
+  avertissement (protection `setWarningOnly`) sur « Saisies » s'il n'y a aucune
+  protection (`installerProtections_`). Tests : `test_empreintes`,
+  `test_ui_surveillance`.
 - **Saisies validées après la fin de la session** (décision Bryan, 16/10) : refusées
   par le serveur, gardées dans `saisiesARenvoyer` et JAMAIS envoyées seules : après la
   reconnexion, écran « Saisies en attente » (heure, nom abrégé, N° masqué, montant) →

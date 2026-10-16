@@ -27,9 +27,14 @@ assert.strictEqual(env.sheets.Saisies.getRange("Z1").getValue(), "SIGNALER");
 assert.ok(env.sheets._Annuaire.hidden);
 assert.ok(env.sheets["Feuille 1"], "rien supprimé");
 assert.deepStrictEqual(env.triggers.sort(), ["purgerAnnuaire", "verificationClotureNocturne"]);
+// « Saisies » : avertissement avant une modification à la main (une seule protection)
+assert.match(rap, /avertissement avant toute modification à la main/);
+assert.strictEqual(env.sheets.Saisies.getProtections().length, 1);
+assert.ok(env.sheets.Saisies.getProtections()[0].warningOnly, "avertissement seulement, pas de blocage");
 // 2) Relancer = rien à faire, pas de doublon de déclencheur
 assert.match(env.ctx.installer(), /Rien à faire/);
 assert.strictEqual(env.triggers.length, 2);
+assert.strictEqual(env.sheets.Saisies.getProtections().length, 1, "pas de seconde protection");
 // 3) Existant (Vannes) : données intactes, seul le déclencheur manquant est ajouté
 const t = new Date();
 const saisies = new FakeSheet("Saisies", [
@@ -50,7 +55,8 @@ rap = env.ctx.installer();
 // (le rapport finit par le numéro de version installé)
 assert.strictEqual(
   rap.replace(/\nVersion .*$/, ""),
-  "Déclencheur créé : purge de l'annuaire (chaque nuit vers 3h)."
+  "« Saisies » : avertissement avant toute modification à la main.\n" +
+    "Déclencheur créé : purge de l'annuaire (chaque nuit vers 3h)."
 );
 assert.strictEqual(saisies.getRange(1, 6).getValue(), "CODE ");
 assert.strictEqual(saisies.getRange("Z1").getValue(), "BLOQUANT");

@@ -72,6 +72,26 @@ class FakeSheet {
     this.hidden = true;
   }
   setFrozenRows() {}
+  // Protections (« Installer » : avertissement sur « Saisies »)
+  getProtections() {
+    return this.protections || [];
+  }
+  protect() {
+    const p = {
+      description: "",
+      warningOnly: false,
+      setDescription(d) {
+        this.description = d;
+        return this;
+      },
+      setWarningOnly(w) {
+        this.warningOnly = w;
+        return this;
+      },
+    };
+    this.protections = (this.protections || []).concat([p]);
+    return p;
+  }
   clearContents() {
     this.cells = [];
   }

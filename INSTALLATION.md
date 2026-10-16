@@ -64,6 +64,15 @@ Aucun copier-coller de code.
 - Le manager **ne se connecte jamais avec ce compte Google sur une tablette de
   caisse** : sinon, depuis la tablette, on pourrait ouvrir le Sheet et se passer de
   l'application.
+- **Qui peut modifier le Google Sheets peut tout faire** (et le propriétaire, celui qui
+  a créé la copie, n'est arrêté par aucune protection) : ne donner ce droit qu'à la
+  direction / au manager, **jamais** à l'équipe de la caisse centrale. Garde-fous posés
+  par « Installer » : un **avertissement** avant toute modification à la main de
+  « Saisies » (fausse manipulation) ; le **journal des actions** (onglet masqué
+  `_Journal`) est à **empreintes** : une ligne modifiée ou effacée à la main est
+  signalée chaque nuit dans l'espace responsable et le panneau du Sheet, jusqu'à ce
+  que la direction la marque comme vue (après avoir regardé Fichier → Historique des
+  versions, qui nomme l'auteur).
 - L'application se protège par des **comptes** (identifiant + mot de passe) : ceux de
   la (des) **caisse(s) centrale(s)**, qui a la confiance de la direction. Les
   caissiers n'ont pas de compte : la caisse centrale connecte leur appareil quand il

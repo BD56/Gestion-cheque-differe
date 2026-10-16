@@ -2,7 +2,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Robots_() {
-  return "2026.10.16-1031";
+  return "2026.10.16-1147";
 }
 
 // =================================================================
@@ -18,8 +18,13 @@ function verificationClotureNocturne(e) {
     DERNIERE_NUIT_MS: String(Date.now()),
   });
 
-  // Archives de plus de 3 ans, journal de plus de 12 mois : supprimés (n'empêche
-  // jamais la clôture)
+  // Journal vérifié (empreintes) AVANT sa purge ; archives de plus de 3 ans, journal de
+  // plus de 12 mois : supprimés (n'empêche jamais la clôture)
+  try {
+    verifierJournalNuit_();
+  } catch (e) {
+    Logger.log("Vérification du journal : " + e);
+  }
   try {
     purgerArchives_();
   } catch (e) {

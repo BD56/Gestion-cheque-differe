@@ -64,6 +64,7 @@ function makeEnv(opts = {}) {
     },
     SpreadsheetApp: {
       getActiveSpreadsheet: () => ss,
+      ProtectionType: { SHEET: "SHEET", RANGE: "RANGE" },
       flush() {},
       getUi: () => ({
         createMenu: (t) => {

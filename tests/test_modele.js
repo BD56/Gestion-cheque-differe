@@ -26,7 +26,7 @@ assert.strictEqual(env.sidebars, 1, "Vannes : panneau ouvert comme avant");
 assert.deepStrictEqual(env.menus, ["afficherPanneau", "installerDepuisMenu", "afficherCodeActivation"]);
 assert.strictEqual(
   env.ctx.installer().replace(/\nVersion .*$/, ""),
-  "Rien à faire : tout est déjà en place."
+  "« Saisies » : avertissement avant toute modification à la main."
 );
 assert.strictEqual(env.props._store.ID_CLASSEUR, "VANNES");
 assert.strictEqual(env.props._store.DATE_FIN, "2026-10-20");

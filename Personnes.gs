@@ -10,7 +10,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Personnes_() {
-  return "2026.10.16-1031";
+  return "2026.10.16-1147";
 }
 
 // Erreur passagère de Google : remontée telle quelle (jamais lue comme « aucune personne »,
@@ -92,7 +92,7 @@ function passerCodesPersonnels(nom, code, jeton, cle) {
     });
     effacerEssais_(props);
     if (protege) nouvelleGenerationAdmin_(); // espaces ouverts avec l'ancien code : refermés
-    journaliser_(qui, "Codes personnels activés", "première personne : " + nom);
+    journaliser_(qui, "Codes personnels activés", "première personne : " + nom, true);
     return { ok: true, jeton: creerJetonAdmin_(appelant, p) };
   } finally {
     lock.releaseLock();
@@ -113,7 +113,7 @@ function ajouterPersonne(nom, code, jeton) {
     if (erreur) return { ok: false, message: erreur };
     liste.push(nouvellePersonne_(nom, code));
     ecrirePersonnes_(liste);
-    journaliser_(quiJeton_(jeton), "Personne ajoutée (code personnel)", nom);
+    journaliser_(quiJeton_(jeton), "Personne ajoutée (code personnel)", nom, true);
     return { ok: true, message: "« " + nom + " » peut ouvrir l'espace responsable avec son code." };
   } finally {
     lock.releaseLock();
@@ -144,7 +144,7 @@ function retirerPersonne(id, jeton) {
       })
     );
     PropertiesService.getDocumentProperties().deleteProperty("PIN_ESSAIS_P_" + id);
-    journaliser_(qui, "Personne retirée (code personnel)", p.nom);
+    journaliser_(qui, "Personne retirée (code personnel)", p.nom, true);
     return { ok: true, message: "« " + p.nom + " » retiré(e)." };
   } finally {
     lock.releaseLock();

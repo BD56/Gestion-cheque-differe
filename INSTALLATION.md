@@ -135,6 +135,11 @@ Ce nettoyage a lieu à l'installation ou à la première ouverture de l'applicat
   5 erreurs bloquent CE compte 15 min (les autres comptes ne sont pas touchés).
 - **Code responsable** (facultatif) : 6 chiffres, mêmes protections ; le choisir, le
   changer ou le retirer dans ⚙️ → Code & comptes.
+- **Codes personnels** (au lieu d'un code commun, pour savoir QUI a fait quoi) : ⚙️ →
+  Code & comptes → « Codes personnels ». Chaque membre de la caisse centrale choisit
+  son nom puis tape SON code, quel que soit le compte connecté ; le journal note son
+  nom. Ajouter quelqu'un : son nom, puis la personne tape elle-même son code devant
+  vous. Départ ou code oublié : la retirer (et la rajouter).
 - **Plus aucun accès** (mots de passe oubliés) : ouvrir le Google Sheets → panneau ⚙️
   (à droite) → **Réinitialiser les comptes** (réservé aux personnes ayant accès au
   fichier) : tous les comptes et le code sont retirés, un **code d'activation**

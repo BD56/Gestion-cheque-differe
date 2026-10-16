@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr" data-version="2026.10.16-1018">
+<html lang="fr" data-version="2026.10.16-1031">
   <head>
     <base target="_top">
     <?!= include_('Style') ?>
@@ -217,6 +217,7 @@
               <li><strong>Premier compte</strong> : à la première installation, avec le <strong>code d'activation</strong> affiché dans le Google Sheets (menu 🚀 APPLICATION → 🔑 Code d'activation). Les suivants, le changement de mot de passe et le retrait : menu <strong><svg class="ico"><use href="#i-personne"/></svg> Code &amp; comptes</strong> (un second appui confirme le retrait). Un mot de passe changé ou un compte retiré déconnecte partout.</li>
               <li>Après un mot de passe faux, patientez 10 s ; 5 erreurs bloquent ce compte 15 min.</li>
               <li><strong>Code responsable</strong> (facultatif, 6 chiffres) : s'il existe, il est demandé pour ouvrir l'espace responsable, qui se reverrouille quand on le ferme, avec <strong>Verrouiller</strong>, ou après 10 min sans action. Sans code, tout compte connecté ouvre l'espace. Le choisir, le changer ou le retirer : <strong>Code &amp; comptes</strong>.</li>
+              <li><strong>Codes personnels</strong> (au lieu d'un code commun) : chacun choisit son nom puis tape SON code, quel que soit le compte connecté ; le journal du Google Sheets note qui a fait quoi. L'espace se reverrouille après 3 min sans action. Ajouter une personne : <strong>Code &amp; comptes</strong> → son nom, puis elle tape elle-même son code. Code oublié : un autre responsable la retire et la rajoute.</li>
               <li><strong>Plus aucun accès</strong> (mots de passe oubliés) : le panneau <svg class="ico"><use href="#i-reglages"/></svg> du Google Sheets (personnes ayant accès au fichier) réinitialise les comptes ou le code.</li>
             </ul>
           </div>
@@ -277,6 +278,7 @@
               <svg class="ico grande"><use href="#i-cadenas"/></svg>
               <h2>Code responsable</h2>
               <p class="texte-verrou" id="txtVerrou"></p>
+              <select class="champ-code" id="personneVerrou" aria-label="Qui êtes-vous ?" style="display: none"></select>
               <input class="champ-code" type="password" id="pinSaisi" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="Code (6 chiffres)" aria-label="Code responsable">
               <button class="plein" id="btnDeverrouiller" data-action="deverrouillerAdmin">Déverrouiller</button>
               <div class="message-erreur" id="msgVerrou"></div>
@@ -453,10 +455,43 @@
                 <div class="boite">
                   <h3>Code responsable</h3>
                   <p class="note-doux" id="etatCodeAPart"></p>
-                  <input class="champ-code" type="password" id="pinNouveau" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="Nouveau code (6 chiffres)">
-                  <input class="champ-code" type="password" id="pinNouveau2" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="Confirmer le nouveau code">
+                  <!-- Codes personnels : une personne par ligne, ajout (code tapé par la personne), mon code -->
+                  <div id="blocPersonnes" style="display: none">
+                    <div id="listePersonnes"></div>
+                    <form class="nouveau-compte" id="formAjoutPersonne" autocomplete="off" novalidate>
+                      <h4>Ajouter une personne</h4>
+                      <p class="note-doux">Son code est tapé par la personne elle-même, devant vous.</p>
+                      <input type="text" id="nomPersonne" maxlength="40" autocomplete="off" placeholder="Nom (ex. Paul)" aria-label="Nom de la personne">
+                      <input class="champ-code" type="password" id="codePersonne" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="Son code (6 chiffres)">
+                      <input class="champ-code" type="password" id="codePersonne2" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="Confirmer son code">
+                      <div class="rangee-btn"><button class="sec accent" type="submit">Ajouter</button></div>
+                      <div class="message" id="msgPersonne"></div>
+                    </form>
+                    <form class="nouveau-compte" id="formMonCode" autocomplete="off" novalidate>
+                      <h4 id="titreMonCode">Changer mon code</h4>
+                      <input class="champ-code" type="password" id="monCode" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="Nouveau code (6 chiffres)">
+                      <input class="champ-code" type="password" id="monCode2" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="Confirmer">
+                      <div class="rangee-btn"><button class="sec accent" type="submit">Changer mon code</button></div>
+                      <div class="message" id="msgMonCode"></div>
+                    </form>
+                  </div>
+                  <!-- Code commun : le choisir, le changer, ou y revenir (depuis les codes personnels) -->
+                  <div class="nouveau-compte" id="blocCodeCommun">
+                    <h4 id="titreCodeCommun">Code commun</h4>
+                    <input class="champ-code" type="password" id="pinNouveau" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="Nouveau code (6 chiffres)">
+                    <input class="champ-code" type="password" id="pinNouveau2" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="Confirmer le nouveau code">
+                    <div class="rangee-btn"><button class="sec accent" id="btnEnregistrerPin" data-action="changerPin">Enregistrer le code</button></div>
+                  </div>
+                  <!-- Passer aux codes personnels (sans code ou depuis le code commun) -->
+                  <form class="nouveau-compte" id="formPasserPersonnels" autocomplete="off" novalidate>
+                    <h4>Codes personnels</h4>
+                    <p class="note-doux">Chaque membre de la caisse centrale ouvre l'espace avec SON code, quel que soit le compte connecté ; le journal note son nom. Le code commun est retiré. Commencez par vous.</p>
+                    <input type="text" id="nomPasser" maxlength="40" autocomplete="off" placeholder="Votre nom (ex. Marie)" aria-label="Votre nom">
+                    <input class="champ-code" type="password" id="codePasser" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="Votre code (6 chiffres)">
+                    <input class="champ-code" type="password" id="codePasser2" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="Confirmer votre code">
+                    <div class="rangee-btn"><button class="sec accent" type="submit">Passer aux codes personnels</button></div>
+                  </form>
                   <div class="rangee-btn">
-                    <button class="sec accent" id="btnEnregistrerPin" data-action="changerPin">Enregistrer le code</button>
                     <button class="sec danger" id="btnRetirerCode" data-action="retirerCodeAPart">Ne plus demander de code</button>
                   </div>
                   <div class="message" id="msgPin"></div>
@@ -542,8 +577,12 @@
         <div id="blocCodeAPart" style="display: none">
           <p class="texte-connexion" id="txtCodeAPart"></p>
           <div id="champsCodeAPart" style="display: none">
+            <div class="input-group" id="blocNomAPart" style="display: none">
+              <label class="etiquette" for="nomAPart">Votre nom (ex. Marie)</label>
+              <input type="text" id="nomAPart" maxlength="40" autocomplete="off">
+            </div>
             <div class="input-group">
-              <label class="etiquette" for="pinAPart">Code responsable (6 chiffres)</label>
+              <label class="etiquette" for="pinAPart" id="lblPinAPart">Code responsable (6 chiffres)</label>
               <input type="password" id="pinAPart" inputmode="numeric" maxlength="6" autocomplete="off">
             </div>
             <div class="input-group">
@@ -552,6 +591,7 @@
             </div>
           </div>
           <button class="plein" id="btnCodeAPartOui" data-action="choisirCodeAPart" data-args='["choisir"]'></button>
+          <button class="sec" id="btnCodeAPartPerso" data-action="choisirCodeAPart" data-args='["personnels"]'>Oui, des codes personnels</button>
           <button class="plein" id="btnCodeAPartGarder" data-action="choisirCodeAPart" data-args='["garder"]' style="display: none">Continuer</button>
           <button class="sec" id="btnCodeAPartNon" data-action="choisirCodeAPart" data-args='["aucun"]'></button>
           <div class="message-erreur" id="msgCodeAPart"></div>

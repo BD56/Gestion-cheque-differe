@@ -1,5 +1,5 @@
 <!-- Connexion (comptes), démarrage, aide, panneau, mentions légales. -->
-<script data-version="2026.10.16-1018">
+<script data-version="2026.10.16-1031">
   // =================================================================
   // --- CONNEXION (compte de la caisse centrale) ---
   // La session reçue à la connexion est gardée dans le navigateur et envoyée à
@@ -189,13 +189,16 @@
         "« " + COMPTE + " » est connecté sur cet appareil.";
       document.getElementById("txtCodeAPart").textContent = pinDefini
         ? "Un code responsable existe déjà (choisi avant) : il sera demandé pour ouvrir l'espace responsable. Pour le changer ou ne plus en demander : espace responsable → Code & comptes, avec ce code. Vous ne le connaissez pas ? Le panneau ⚙️ du Google Sheets le réinitialise."
-        : "Protéger l'espace responsable par un code à part (6 chiffres) ? Sans code, tout compte connecté l'ouvre directement. Modifiable ensuite dans l'espace responsable.";
-      document.getElementById("btnCodeAPartOui").style.display = pinDefini ? "none" : "";
-      document.getElementById("btnCodeAPartNon").style.display = pinDefini ? "none" : "";
+        : "Protéger l'espace responsable ? Un code commun (6 chiffres, connu de l'équipe), ou des codes personnels (un par personne : le journal note qui a fait quoi). Sans code, tout compte connecté l'ouvre directement. Modifiable ensuite dans l'espace responsable.";
+      ["btnCodeAPartOui", "btnCodeAPartPerso", "btnCodeAPartNon"].forEach(function (id) {
+        document.getElementById(id).style.display = pinDefini ? "none" : "";
+      });
       document.getElementById("btnCodeAPartGarder").style.display = pinDefini ? "" : "none";
-      document.getElementById("btnCodeAPartOui").textContent = "Oui, choisir un code";
+      document.getElementById("btnCodeAPartOui").textContent = "Oui, un code commun";
+      document.getElementById("btnCodeAPartPerso").textContent = "Oui, des codes personnels";
       document.getElementById("btnCodeAPartNon").textContent = "Non, pas de code";
       document.getElementById("champsCodeAPart").style.display = "none";
+      choixCodeAPart = "";
       document.getElementById("blocCodeAPart").style.display = "block";
       return;
     }
@@ -257,18 +260,35 @@
 
   // Après le 1er compte, sans code d'avant : « choisir » le code (2 fois) ou « aucun ».
   // Avec un code d'avant : « garder » (seul choix ici).
+  // « personnels » : codes personnels (votre nom + votre code ; les autres s'ajoutent
+  // ensuite dans l'espace responsable).
+  let choixCodeAPart = "";
   function choisirCodeAPart(choix) {
     const msg = document.getElementById("msgCodeAPart");
     msg.textContent = "";
-    if (choix !== "choisir") {
+    if (choix !== "choisir" && choix !== "personnels") {
       fermerEcranConnexion();
       return;
     }
-    const champs = document.getElementById("champsCodeAPart");
-    if (champs.style.display === "none") {
-      champs.style.display = "block";
-      document.getElementById("btnCodeAPartOui").textContent = "Enregistrer le code";
-      document.getElementById("pinAPart").focus();
+    const perso = choix === "personnels";
+    if (choixCodeAPart !== choix) {
+      // 1er appui : les champs du choix ; l'autre « Oui » disparaît
+      choixCodeAPart = choix;
+      document.getElementById("champsCodeAPart").style.display = "block";
+      document.getElementById("blocNomAPart").style.display = perso ? "block" : "none";
+      document.getElementById("lblPinAPart").textContent = perso
+        ? "Votre code personnel (6 chiffres)"
+        : "Code responsable (6 chiffres)";
+      document.getElementById(perso ? "btnCodeAPartOui" : "btnCodeAPartPerso").style.display = "none";
+      document.getElementById(perso ? "btnCodeAPartPerso" : "btnCodeAPartOui").textContent = perso
+        ? "Enregistrer mon code"
+        : "Enregistrer le code";
+      document.getElementById(perso ? "nomAPart" : "pinAPart").focus();
+      return;
+    }
+    const nom = document.getElementById("nomAPart").value.trim();
+    if (perso && normIdJS(nom) === "") {
+      msg.textContent = "Saisissez votre nom.";
       return;
     }
     const pin = document.getElementById("pinAPart").value.trim();
@@ -280,21 +300,23 @@
       msg.textContent = "Les deux codes ne correspondent pas.";
       return;
     }
-    google.script.run
+    const runner = google.script.run
       .withSuccessHandler(function (r) {
         if (!r || !r.ok) {
           msg.textContent = (r && r.message) || "Refusé.";
           return;
         }
         pinDefini = true;
+        codePersonnel = perso;
         document.getElementById("pinAPart").value = "";
         document.getElementById("pinAPart2").value = "";
         fermerEcranConnexion();
       })
       .withFailureHandler(function (err) {
         if (!siNonAutorisee(err)) msg.textContent = "Erreur : " + (err && err.message ? err.message : err);
-      })
-      .definirPin(pin, null, SESSION);
+      });
+    if (perso) runner.passerCodesPersonnels(nom, pin, null, SESSION);
+    else runner.definirPin(pin, null, SESSION);
   }
 
   // Se déconnecter : cet appareil oublie la session (un autre compte pourra se connecter)

@@ -1,5 +1,5 @@
 <!-- Espace responsable : code, corrections, archives, réglages, comptes. -->
-<script data-version="2026.10.16-1018">
+<script data-version="2026.10.16-1031">
   // =================================================================
   // --- ESPACE RESPONSABLE (code PIN) ---
   // Le jeton n'est gardé qu'en mémoire : il disparaît à la fermeture du
@@ -8,6 +8,8 @@
   // =================================================================
   let jetonAdmin = null;
   let pinDefini = true;
+  let codePersonnel = false; // codes personnels : un code par personne (Personnes.gs)
+  let personneAdmin = ""; // qui a ouvert l'espace (codes personnels)
 
   // Appel d'une fonction serveur protégée (le jeton est ajouté en dernier argument)
   function appelAdmin(nomFonction, args, onOk, onErr) {
@@ -126,12 +128,18 @@
     google.script.run
       .withSuccessHandler(function (etat) {
         pinDefini = etat.pinDefini;
+        codePersonnel = !!etat.codePersonnel;
         // Pas de code à part : le compte connecté ouvre l'espace directement
         if (!pinDefini) {
           ouvrirSansCode();
           return;
         }
-        document.getElementById("txtVerrou").textContent = "Saisissez le code responsable.";
+        document.getElementById("txtVerrou").textContent = codePersonnel
+          ? "Choisissez votre nom, puis tapez votre code."
+          : "Saisissez le code responsable.";
+        const choix = document.getElementById("personneVerrou");
+        choix.style.display = codePersonnel ? "" : "none";
+        if (codePersonnel) chargerPersonnesVerrou();
       })
       .withFailureHandler(function () {
         document.getElementById("txtVerrou").textContent = "Serveur injoignable : vérifiez le Wi-Fi.";
@@ -139,7 +147,37 @@
       .etatAdmin();
   }
 
+  // « Qui êtes-vous ? » : noms des personnes (le dernier choisi sur cet appareil d'abord)
+  function chargerPersonnesVerrou() {
+    const choix = document.getElementById("personneVerrou");
+    google.script.run
+      .withSuccessHandler(function (liste) {
+        const dernier = lireStockage("cdPersonne");
+        choix.textContent = "";
+        const vide = document.createElement("option");
+        vide.value = "";
+        vide.textContent = "Qui êtes-vous ?";
+        choix.appendChild(vide);
+        (liste || []).forEach(function (p) {
+          const o = document.createElement("option");
+          o.value = p.id;
+          o.textContent = p.nom;
+          choix.appendChild(o);
+        });
+        if (
+          dernier &&
+          (liste || []).some(function (p) {
+            return p.id === dernier;
+          })
+        )
+          choix.value = dernier;
+      })
+      .withFailureHandler(siNonAutorisee)
+      .personnesResponsables(SESSION);
+  }
+
   function ouvrirSansCode() {
+    personneAdmin = "";
     document.getElementById("txtVerrou").textContent = "Ouverture…";
     google.script.run
       .withSuccessHandler(function (r) {
@@ -160,6 +198,11 @@
     const pin = document.getElementById("pinSaisi").value.trim();
     const msg = document.getElementById("msgVerrou");
     msg.textContent = "";
+    const idPersonne = codePersonnel ? document.getElementById("personneVerrou").value : "";
+    if (codePersonnel && !idPersonne) {
+      msg.textContent = "Choisissez votre nom.";
+      return;
+    }
     if (!/^\d{6}$/.test(pin)) {
       msg.textContent = "Le code doit contenir exactement 6 chiffres.";
       return;
@@ -169,18 +212,21 @@
         document.getElementById("pinSaisi").value = "";
         if (r && r.ok) {
           jetonAdmin = r.jeton;
+          personneAdmin = r.personne || "";
+          if (idPersonne) ecrireStockage("cdPersonne", idPersonne);
           afficherZoneAdmin();
         } else msg.textContent = (r && r.message) || "Refusé.";
       })
       .withFailureHandler(function (err) {
         if (!siNonAutorisee(err)) msg.textContent = "Erreur : " + (err && err.message ? err.message : err);
       })
-      .ouvrirSessionAdmin(pin, SESSION);
+      .ouvrirSessionAdmin(pin, SESSION, idPersonne);
   }
 
   function verrouillerAdmin() {
     if (jetonAdmin) google.script.run.withFailureHandler(function () {}).fermerSessionAdmin(jetonAdmin);
     jetonAdmin = null;
+    personneAdmin = "";
     saisieEnCours = null;
     listesAdmin = {};
     oublierApercuAdmin();
@@ -668,28 +714,159 @@
     document.getElementById("txtNomStructure").textContent = cfg.NOM_STRUCTURE;
   }
 
-  // Avec ou sans code responsable à part : menu, sous-titre et écran « Code & comptes »
+  // Aucun code / code commun / codes personnels : menu, sous-titre, écran « Code & comptes »
   function majCodeAPart() {
     // Sans code à part, « Verrouiller » n'a pas de sens : seul « Se déconnecter » reste
     document.getElementById("btnVerrouiller").style.display = pinDefini ? "" : "none";
     document.getElementById("btnDeconnexionRail").classList.toggle("bas", !pinDefini);
-    document.getElementById("adminSous").textContent = pinDefini
-      ? "Déverrouillé · se reverrouille après 10 min sans action"
-      : "Connecté" + (COMPTE ? " : " + COMPTE : "");
-    document.getElementById("etatCodeAPart").textContent = pinDefini
-      ? "L'espace responsable est protégé par un code à part (6 chiffres)."
-      : "Pas de code à part : tout compte connecté ouvre l'espace responsable. Choisissez un code pour le protéger.";
-    document.getElementById("btnEnregistrerPin").textContent = pinDefini
-      ? "Changer le code"
-      : "Protéger par ce code";
+    document.getElementById("adminSous").textContent = !pinDefini
+      ? "Connecté" + (COMPTE ? " : " + COMPTE : "")
+      : codePersonnel
+        ? "Déverrouillé par " + (personneAdmin || "?") + " · se reverrouille après 3 min sans action"
+        : "Déverrouillé · se reverrouille après 10 min sans action";
+    document.getElementById("etatCodeAPart").textContent = !pinDefini
+      ? "Pas de code : tout compte connecté ouvre l'espace responsable. Protégez-le par un code commun ou par des codes personnels."
+      : codePersonnel
+        ? "Codes personnels : chacun ouvre l'espace avec SON code, quel que soit le compte connecté ; le journal note son nom."
+        : "Code commun : l'espace responsable est protégé par un code (6 chiffres) connu de l'équipe.";
+    document.getElementById("blocPersonnes").style.display = codePersonnel ? "" : "none";
+    document.getElementById("formMonCode").style.display = codePersonnel && personneAdmin ? "" : "none";
+    document.getElementById("titreMonCode").textContent = "Changer mon code (" + personneAdmin + ")";
+    document.getElementById("titreCodeCommun").textContent = !pinDefini
+      ? "Code commun (un code pour l'équipe)"
+      : codePersonnel
+        ? "Revenir à un code commun (les codes personnels seront retirés)"
+        : "Changer le code commun";
+    document.getElementById("btnEnregistrerPin").textContent = !pinDefini
+      ? "Protéger par ce code"
+      : codePersonnel
+        ? "Revenir au code commun"
+        : "Changer le code";
+    document.getElementById("formPasserPersonnels").style.display = codePersonnel ? "none" : "";
     document.getElementById("btnRetirerCode").style.display = pinDefini ? "" : "none";
   }
+
+  // --- Codes personnels (liste, ajout, retrait, mon code) ---
+  function chargerPersonnes() {
+    appelAdmin("listerPersonnes", [], function (liste) {
+      const zone = document.getElementById("listePersonnes");
+      zone.textContent = "";
+      (liste || []).forEach(function (p) {
+        const ligne = document.createElement("div");
+        ligne.className = "ligne-compte";
+        const texte = document.createElement("div");
+        const nom = document.createElement("b");
+        nom.textContent = p.nom + (p.nom === personneAdmin ? " (vous)" : "");
+        const quand = document.createElement("small");
+        quand.textContent = "Ajouté(e) le " + p.creeLe;
+        texte.appendChild(nom);
+        texte.appendChild(quand);
+        ligne.appendChild(texte);
+        if (liste.length > 1) {
+          // la dernière personne ne se retire pas (sinon : « Ne plus demander de code »)
+          const b = document.createElement("button");
+          b.className = "sec danger";
+          b.textContent = "Retirer";
+          b.addEventListener("click", function () {
+            confirmerEnDeuxTemps(b, "Confirmer le retrait", function () {
+              appelAdmin("retirerPersonne", [p.id], function (r) {
+                afficherToast((r && r.message) || "Refusé.", r && r.ok ? "" : "error");
+                chargerPersonnes();
+              });
+            });
+          });
+          ligne.appendChild(b);
+        }
+        zone.appendChild(ligne);
+      });
+    });
+  }
+  // Champs d'un formulaire de code : 6 chiffres, deux fois. Renvoie le code ou "" (message).
+  function lireCodeDouble(id1, id2, msg) {
+    const c1 = document.getElementById(id1).value.trim();
+    msg.style.color = "var(--danger)";
+    if (!/^\d{6}$/.test(c1)) {
+      msg.textContent = "Le code doit contenir exactement 6 chiffres.";
+      return "";
+    }
+    if (c1 !== document.getElementById(id2).value.trim()) {
+      msg.textContent = "Les deux codes ne correspondent pas.";
+      return "";
+    }
+    return c1;
+  }
+  function viderChamps(ids) {
+    ids.forEach(function (id) {
+      document.getElementById(id).value = "";
+    });
+  }
+  document.getElementById("formAjoutPersonne").addEventListener("submit", function (e) {
+    e.preventDefault();
+    const msg = document.getElementById("msgPersonne");
+    const nom = document.getElementById("nomPersonne").value.trim();
+    if (normIdJS(nom) === "") {
+      msg.style.color = "var(--danger)";
+      msg.textContent = "Saisissez le nom de la personne.";
+      return;
+    }
+    const code = lireCodeDouble("codePersonne", "codePersonne2", msg);
+    if (!code) return;
+    appelAdmin("ajouterPersonne", [nom, code], function (r) {
+      viderChamps(["codePersonne", "codePersonne2"]);
+      msg.style.color = r && r.ok ? "var(--ok)" : "var(--danger)";
+      msg.textContent = (r && r.message) || "Refusé.";
+      if (r && r.ok) {
+        viderChamps(["nomPersonne"]);
+        chargerPersonnes();
+      }
+    });
+  });
+  document.getElementById("formMonCode").addEventListener("submit", function (e) {
+    e.preventDefault();
+    const msg = document.getElementById("msgMonCode");
+    const code = lireCodeDouble("monCode", "monCode2", msg);
+    if (!code) return;
+    appelAdmin("changerMonCode", [code], function (r) {
+      viderChamps(["monCode", "monCode2"]);
+      msg.style.color = r && r.ok ? "var(--ok)" : "var(--danger)";
+      msg.textContent = (r && r.message) || "Refusé.";
+    });
+  });
+  document.getElementById("formPasserPersonnels").addEventListener("submit", function (e) {
+    e.preventDefault();
+    const msg = document.getElementById("msgPin");
+    const nom = document.getElementById("nomPasser").value.trim();
+    if (normIdJS(nom) === "") {
+      msg.style.color = "var(--danger)";
+      msg.textContent = "Saisissez votre nom.";
+      return;
+    }
+    const code = lireCodeDouble("codePasser", "codePasser2", msg);
+    if (!code) return;
+    appelAdmin("passerCodesPersonnels", [nom, code], function (r) {
+      viderChamps(["codePasser", "codePasser2"]);
+      msg.style.color = r && r.ok ? "var(--ok)" : "var(--danger)";
+      if (!r || !r.ok) {
+        msg.textContent = (r && r.message) || "Refusé.";
+        return;
+      }
+      viderChamps(["nomPasser"]);
+      jetonAdmin = r.jeton;
+      pinDefini = true;
+      codePersonnel = true;
+      personneAdmin = nom;
+      msg.textContent = "Codes personnels en place : ajoutez les autres membres de la caisse centrale.";
+      majCodeAPart();
+      chargerPersonnes();
+    });
+  });
 
   // --- Comptes (liste, création, mot de passe, retrait) ---
   function ouvrirCodeComptes() {
     allerEcran("code");
     majCodeAPart();
     chargerComptes();
+    if (codePersonnel) chargerPersonnes();
   }
   // frais = true après une modification : liste relue sur le serveur sans montrer l'ancienne
   function chargerComptes(frais) {
@@ -881,34 +1058,36 @@
     });
   });
 
-  // Code responsable à part : le choisir (aucun code), le changer, ou le retirer
+  // Code COMMUN : le choisir (aucun code), le changer, ou y revenir depuis les codes
+  // personnels (second appui : ils seront retirés) ; ou ne plus demander de code.
   function changerPin() {
-    const p1 = document.getElementById("pinNouveau").value.trim();
-    const p2 = document.getElementById("pinNouveau2").value.trim();
     const msg = document.getElementById("msgPin");
-    msg.style.color = "var(--danger)";
-    if (!/^\d{6}$/.test(p1)) {
-      msg.textContent = "Le code doit contenir exactement 6 chiffres.";
-      return;
-    }
-    if (p1 !== p2) {
-      msg.textContent = "Les deux codes ne correspondent pas.";
-      return;
-    }
-    const creation = !pinDefini;
-    appelAdmin("definirPin", [p1], function (r) {
-      document.getElementById("pinNouveau").value = "";
-      document.getElementById("pinNouveau2").value = "";
-      if (r && r.ok) {
-        jetonAdmin = r.jeton;
-        pinDefini = true;
-        majCodeAPart();
-        msg.style.color = "var(--ok)";
-        msg.textContent = creation
-          ? "Code enregistré : il sera demandé pour ouvrir l'espace responsable."
-          : "Code modifié.";
-      } else msg.textContent = (r && r.message) || "Refusé.";
-    });
+    const p1 = lireCodeDouble("pinNouveau", "pinNouveau2", msg);
+    if (!p1) return;
+    const enregistrer = function () {
+      const creation = !pinDefini;
+      appelAdmin("definirPin", [p1], function (r) {
+        viderChamps(["pinNouveau", "pinNouveau2"]);
+        if (r && r.ok) {
+          jetonAdmin = r.jeton;
+          pinDefini = true;
+          codePersonnel = false;
+          personneAdmin = "";
+          majCodeAPart();
+          msg.style.color = "var(--ok)";
+          msg.textContent = creation
+            ? "Code enregistré : il sera demandé pour ouvrir l'espace responsable."
+            : "Code commun enregistré.";
+        } else msg.textContent = (r && r.message) || "Refusé.";
+      });
+    };
+    if (codePersonnel)
+      confirmerEnDeuxTemps(
+        document.getElementById("btnEnregistrerPin"),
+        "Confirmer : codes personnels retirés",
+        enregistrer
+      );
+    else enregistrer();
   }
   function retirerCodeAPart() {
     confirmerEnDeuxTemps(
@@ -921,6 +1100,8 @@
           msg.textContent = (r && r.message) || "Refusé.";
           if (r && r.ok) {
             pinDefini = false;
+            codePersonnel = false;
+            personneAdmin = "";
             majCodeAPart();
           }
         });

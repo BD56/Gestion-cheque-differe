@@ -307,6 +307,21 @@ Décision : `docs/retours-vibe/decisions/2026-10-11_generalisation.md`.
   « Réinitialiser le code » ou « Réinitialiser les comptes » la fait avancer ⇒ les
   espaces ouverts se referment. Réinitialiser les comptes ⇒ toutes les sessions
   tombent (nouveau secret) ; le code seul ⇒ comptes toujours connectés.
+- **Codes responsables personnels** (`Personnes.gs`, idée de Bryan 16/10) : au lieu du
+  code commun, chaque membre de la caisse centrale ouvre l'espace avec SON code, quel
+  que soit le compte connecté (comptes partagés par poste) ; le journal note « compte ·
+  personne ». Propriété `RESPONSABLES` (id, nom, sel, empreinte). `codeExige_()` =
+  code commun OU personnels (jamais les deux). Verrou : « Qui êtes-vous ? »
+  (`personnesResponsables`, compte connecté ; dernier nom choisi gardé : `cdPersonne`)
+  + code ; `ouvrirSessionAdmin(pin, cle, idPersonne)` ; essais faux PAR PERSONNE
+  (`PIN_ESSAIS_P_<id>`) ; jeton « lien|génération|idPersonne », 3 min
+  (`ADMIN_SESSION_PERSONNEL_SEC`), caduc si la personne est retirée. Code & comptes :
+  passer aux codes personnels (nom + code de celui qui le fait), ajouter une personne
+  (nom ; code tapé PAR LA PERSONNE devant le responsable), retirer (jamais la
+  dernière), changer mon code, revenir au code commun (second appui), ne plus demander
+  de code. 1re installation : Non / code commun / codes personnels. Panneau du Sheet
+  « Réinitialiser le code » efface aussi les codes personnels. Ajouts forcés : au
+  niveau du compte (hors espace). Tests : `test_personnes`, `test_ui_personnes`.
 - **Journal des actions sensibles** (`Journal.gs`, décision Bryan 16/10) : onglet masqué
   `_Journal` (date et heure à la seconde, qui, action, détail) — ajout forcé (compte),
   correction (champs changés avant → après), suppression (contenu), mode, réglages

@@ -2,7 +2,7 @@
 
 > Fichier de reprise après compactage du contexte. À lire **avec** `AGENTS.md` (référence
 > canonique) et `docs/retours-vibe/decisions/2026-10-11_generalisation.md` (décisions).
-> Dernière mise à jour : 2026-10-16 (version 2026.10.16-1018, COMPTES faits, journal des actions, option A, impression réservée, passe-droit corrigé ;
+> Dernière mise à jour : 2026-10-16 (version 2026.10.16-1031, COMPTES faits, codes personnels, journal des actions, option A, impression réservée, passe-droit corrigé ;
 > questions ouvertes : bouton de remise à zéro, impression réservée).
 
 ## ▶️ ÉTAT ACTUEL — à lire d'abord
@@ -12,7 +12,7 @@
   « Comptoir » (branche de travail actuelle, tout est poussé)**. Aucune fusion faite,
   aucune pull request. Ordre prévu (sur demande de Bryan seulement) : `design` →
   `refonte` → `generalisation` → `main` / migration Vannes.
-- **Version actuelle sur `design`** : 2026.10.16-1018 (42 séries de tests vertes,
+- **Version actuelle sur `design`** : 2026.10.16-1031 (43 séries de tests vertes,
   ESLint et Prettier propres). Numéro renouvelé par Claude à chaque push de code
   (`npm run nouvelle-version`).
 - **Bryan teste** sur le Sheet « Gestion Chèques Différés — REFONTE (test) » depuis
@@ -65,7 +65,10 @@
   personnesResponsables, listerPersonnes), `codeExige_()` (commun OU personnels),
   jeton « lien|génération|idPersonne », `personneDuJeton_`, journal « compte ·
   personne », `definirPin` depuis personnels = retour au code commun. Test
-  `test_personnes`. ÉTAPE 2 (écrans) en cours.
+  `test_personnes`. ✅ ÉTAPE 2 (écrans) FAITE, version 2026.10.16-1031 : verrou « Qui êtes-vous ? »,
+  Code & comptes (passer aux codes personnels, ajouter, retirer, mon code, revenir au
+  commun), 1re installation (Non / commun / personnels), aide, INSTALLATION.md. Test
+  `test_ui_personnes` (43 séries) ; audit : état 31, rien à signaler.
   (3) PROBLÈME signalé par Bryan (16/10) : après « Réinitialiser le code » ET
   « Réinitialiser les comptes » (panneau du Sheet), le site reste connecté. Cause
   PROBABLE (à confirmer) : `exigerSession_` / `exigerAdmin_` laissent passer un

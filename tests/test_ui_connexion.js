@@ -259,7 +259,7 @@ const { ouvrir, J } = require("./navigateur");
     await attendre();
     assert.ok(!P.ADMIN_PIN_HASH);
     assert.ok(!(await vis("#btnVerrouiller")) && !(await vis("#btnRetirerCode")));
-    assert.match(await txt("#etatCodeAPart"), /Pas de code à part/);
+    assert.match(await txt("#etatCodeAPart"), /Pas de code :/);
     assert.strictEqual(await txt("#btnEnregistrerPin"), "Protéger par ce code");
     await page.fill("#pinNouveau", "246802");
     await page.fill("#pinNouveau2", "246802");

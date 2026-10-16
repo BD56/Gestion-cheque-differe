@@ -396,6 +396,17 @@ const ETATS = [
       );
     },
   ],
+  [
+    "31-verrou-codes-personnels",
+    async (p, env) => {
+      // l'état 29 a remplacé les comptes : on repart d'un compte réel
+      ["ADMIN_PIN_HASH", "ADMIN_PIN_SEL", "COMPTES"].forEach((k) => env.props.deleteProperty(k));
+      env.session = null;
+      const r = env.ctx.passerCodesPersonnels("Marie", "111111", null, env.connecter());
+      env.ctx.ajouterPersonne("Paul-Henri Delacroix-Martin", "222222", { j: r.jeton, c: env.session });
+      await p.evaluate("saisiesARenvoyer = []; fermerEcranConnexion(); ouvrirPanneau()");
+    },
+  ],
 ];
 
 async function auditer(nomTaille) {

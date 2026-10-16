@@ -3,7 +3,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Securite_() {
-  return "2026.10.16-0955";
+  return "2026.10.16-1018";
 }
 
 // =================================================================
@@ -29,8 +29,19 @@ function empreintePin_(sel, pin) {
 // Sans clé ni session : ce que l'écran d'accueil doit proposer (1re installation ou
 // connexion). Ne dévoile aucun identifiant.
 function etatAdmin() {
-  const props = PropertiesService.getDocumentProperties();
-  return { pinDefini: !!props.getProperty("ADMIN_PIN_HASH"), comptes: lireComptes_().length > 0 };
+  return {
+    pinDefini: codeExige_(),
+    codePersonnel: lirePersonnes_().length > 0,
+    comptes: lireComptes_().length > 0,
+  };
+}
+
+// L'espace responsable est-il protégé ? Code commun (ADMIN_PIN_HASH) ou codes personnels
+// (Personnes.gs) — jamais les deux à la fois.
+function codeExige_() {
+  return (
+    !!PropertiesService.getDocumentProperties().getProperty("ADMIN_PIN_HASH") || lirePersonnes_().length > 0
+  );
 }
 
 // Le jeton est LIÉ au compte qui l'a obtenu (« C:<id> ») : il ne sert à rien sans sa
@@ -54,14 +65,28 @@ function nouvelleGenerationAdmin_() {
   );
 }
 
-function creerJetonAdmin_(appelant) {
+// personne : codes personnels — le jeton porte aussi la personne (journal) et dure moins
+// longtemps (ADMIN_SESSION_PERSONNEL_SEC).
+function creerJetonAdmin_(appelant, personne) {
   const jeton = Utilities.getUuid();
   CacheService.getScriptCache().put(
     "ADM_" + jeton,
-    (appelant ? appelant.lien : "E") + "|" + generationAdmin_(),
-    ADMIN_SESSION_SEC
+    (appelant ? appelant.lien : "E") + "|" + generationAdmin_() + "|" + (personne ? personne.id : ""),
+    personne ? ADMIN_SESSION_PERSONNEL_SEC : ADMIN_SESSION_SEC
   );
   return jeton;
+}
+// Personne (codes personnels) qui a ouvert l'espace avec ce jeton : { id, nom } ou null.
+function personneDuJeton_(jeton) {
+  const j = jeton && typeof jeton === "object" ? jeton.j : jeton;
+  if (!j || typeof j !== "string") return null;
+  const valeur = CacheService.getScriptCache().get("ADM_" + j);
+  const id = valeur ? valeur.split("|")[2] : "";
+  return id
+    ? lirePersonnes_().filter(function (p) {
+        return p.id === id;
+      })[0] || null
+    : null;
 }
 
 function jetonValide_(jeton) {
@@ -82,7 +107,16 @@ function jetonValide_(jeton) {
     const a = appelantDeCle_(cle);
     if (!a || lien !== a.lien) return false;
   }
-  cache.put("ADM_" + j, valeur, ADMIN_SESSION_SEC); // prolonge (10 min d'inactivité)
+  const idPersonne = morceaux[2] || "";
+  if (
+    idPersonne &&
+    !lirePersonnes_().some(function (p) {
+      return p.id === idPersonne;
+    })
+  )
+    return false; // personne retirée depuis
+  // prolonge (10 min d'inactivité ; 3 min avec un code personnel)
+  cache.put("ADM_" + j, valeur, idPersonne ? ADMIN_SESSION_PERSONNEL_SEC : ADMIN_SESSION_SEC);
   return true;
 }
 
@@ -135,11 +169,14 @@ function exigerDeclencheurOuEditeur_(e) {
 // Sheet : les codes faux tapés depuis un compte ne bloquent pas les autres.
 //  - après chaque code faux : 10 s de pause pendant lesquelles tout essai est refusé ;
 //  - après 5 codes faux : blocage 15 min (jamais plus long).
+// personne (codes personnels) : son code à elle, et SON compteur d'essais (quel que soit
+// le compte ou l'appareil).
 // À appeler sous verrou. Renvoie { ok:true } ou { ok:false, message }.
-function verifierPin_(props, pin, groupe) {
-  const hash = props.getProperty("ADMIN_PIN_HASH");
+function verifierPin_(props, pin, groupe, personne) {
+  const hash = personne ? personne.hash : props.getProperty("ADMIN_PIN_HASH");
+  const selCode = personne ? personne.sel : props.getProperty("ADMIN_PIN_SEL");
   if (!hash) return { ok: false, message: "Aucun code défini : créez-le d'abord." };
-  const cleEtat = "PIN_ESSAIS_" + (groupe || "EDITEUR");
+  const cleEtat = "PIN_ESSAIS_" + (personne ? "P_" + personne.id : groupe || "EDITEUR");
   let etat = {};
   try {
     etat = JSON.parse(props.getProperty(cleEtat) || "{}");
@@ -162,7 +199,7 @@ function verifierPin_(props, pin, groupe) {
         " s avant un nouvel essai.",
     };
   }
-  if (empreintePin_(props.getProperty("ADMIN_PIN_SEL"), (pin || "").toString()) === hash) {
+  if (empreintePin_(selCode, (pin || "").toString()) === hash) {
     props.deleteProperty(cleEtat);
     return { ok: true };
   }
@@ -191,16 +228,24 @@ function effacerEssais_(props, groupe) {
 
 // Code juste -> { ok:true, jeton } ; sinon { ok:false, message }. Compte connecté requis.
 // Sans code responsable « à part » (choix fait à l'installation), un compte connecté
-// ouvre l'espace responsable sans code.
-function ouvrirSessionAdmin(pin, cle) {
+// ouvre l'espace responsable sans code. Codes personnels : idPersonne = qui tape le code.
+function ouvrirSessionAdmin(pin, cle, idPersonne) {
   exigerSession_(cle);
   const a = appelantDeCle_(cle);
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
     const props = PropertiesService.getDocumentProperties();
-    if (a && a.compte && !props.getProperty("ADMIN_PIN_HASH"))
-      return { ok: true, jeton: creerJetonAdmin_(a) };
+    if (a && a.compte && !codeExige_()) return { ok: true, jeton: creerJetonAdmin_(a) };
+    const personnes = lirePersonnes_();
+    if (personnes.length) {
+      const p = personnes.filter(function (x) {
+        return x.id === idPersonne;
+      })[0];
+      if (!p) return { ok: false, message: "Choisissez votre nom." };
+      const vp = verifierPin_(props, pin, null, p);
+      return vp.ok ? { ok: true, jeton: creerJetonAdmin_(a, p), personne: p.nom } : vp;
+    }
     const v = verifierPin_(props, pin, a ? a.groupe : "EDITEUR");
     return v.ok ? { ok: true, jeton: creerJetonAdmin_(a) } : v;
   } finally {
@@ -278,15 +323,18 @@ function verifierActivation_(props, code) {
   return { ok: false, message: "Code d'activation incorrect." };
 }
 
-// Création (aucun code : compte connecté — qui a déjà tous les droits sans code — ou
-// panneau du Sheet) ou changement (session responsable requise).
+// Code COMMUN : création (aucun code : compte connecté — qui a déjà tous les droits sans
+// code — ou panneau du Sheet) ou changement (session responsable requise). Depuis les
+// codes personnels : retour au code commun (les codes personnels sont retirés).
 function definirPin(nouveauPin, jeton, cle) {
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
     const props = PropertiesService.getDocumentProperties();
-    const creation = !props.getProperty("ADMIN_PIN_HASH");
+    const creation = !codeExige_();
+    const depuisPersonnels = lirePersonnes_().length > 0;
     if (!creation) exigerAdmin_(jeton);
+    const qui = quiJeton_(jeton);
     nouveauPin = (nouveauPin || "").toString();
     if (!ADMIN_PIN_REGEX.test(nouveauPin))
       return { ok: false, message: "Le code doit contenir exactement 6 chiffres." };
@@ -296,12 +344,17 @@ function definirPin(nouveauPin, jeton, cle) {
       return { ok: false, message: "Connectez-vous avec un compte pour créer le code." };
     const sel = Utilities.getUuid();
     props.setProperties({ ADMIN_PIN_SEL: sel, ADMIN_PIN_HASH: empreintePin_(sel, nouveauPin) });
+    if (depuisPersonnels) ecrirePersonnes_([]);
     effacerEssais_(props);
     // code changé : les autres espaces ouverts se referment ; l'appelant reçoit un jeton neuf
     if (!creation) nouvelleGenerationAdmin_();
     journaliser_(
-      appelant ? appelant.nom : quiPanneau_(),
-      creation ? "Code responsable créé" : "Code responsable changé",
+      creation ? (appelant ? appelant.nom : quiPanneau_()) : qui,
+      creation
+        ? "Code responsable créé"
+        : depuisPersonnels
+          ? "Retour au code commun (codes personnels retirés)"
+          : "Code responsable changé",
       ""
     );
     return { ok: true, jeton: creerJetonAdmin_(appelant) };
@@ -328,6 +381,7 @@ function reinitialiserPinPanneau() {
       props.deleteProperty(k);
     }
   );
+  ecrirePersonnes_([]); // codes personnels aussi
   effacerEssais_(props);
   if (lireComptes_().length > 0)
     return (
@@ -713,6 +767,7 @@ function retirerCompte(id, jeton) {
 // Pour le remettre : definirPin (un compte connecté peut le créer sans activation).
 function retirerCodeResponsable(jeton, cle) {
   exigerAdmin_(jeton);
+  const qui = quiJeton_(jeton);
   const a = appelantDeCle_(cleAppelant_(cle, jeton));
   if (!a || !a.compte) return { ok: false, message: "Connectez-vous avec un compte pour retirer le code." };
   const lock = LockService.getScriptLock();
@@ -722,8 +777,9 @@ function retirerCodeResponsable(jeton, cle) {
     ["ADMIN_PIN_HASH", "ADMIN_PIN_SEL"].forEach(function (k) {
       props.deleteProperty(k);
     });
+    ecrirePersonnes_([]); // codes personnels aussi
     effacerEssais_(props);
-    journaliser_(a.nom, "Code responsable retiré", "");
+    journaliser_(qui, "Code responsable retiré", "");
     return { ok: true, message: "Code responsable retiré : un compte connecté ouvre l'espace responsable." };
   } finally {
     lock.releaseLock();
@@ -757,6 +813,7 @@ function reinitialiserComptesPanneau() {
     ["ADMIN_PIN_HASH", "ADMIN_PIN_SEL"].forEach(function (k) {
       props.deleteProperty(k);
     });
+    ecrirePersonnes_([]);
     effacerEssais_(props);
     return (
       "✅ Comptes et code responsable effacés : l'application revient à la première installation.\n\n" +

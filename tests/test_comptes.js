@@ -41,7 +41,7 @@ assert.strictEqual(
 assert.strictEqual(finDe("2026-12-31T22:30:00Z"), "2027-01-01T02:00:00.000Z", "changement d'année");
 
 // --- 1re installation : aucun compte, code d'activation exigé ---
-assert.deepStrictEqual(J(c.etatAdmin()), { pinDefini: false, comptes: false });
+assert.deepStrictEqual(J(c.etatAdmin()), { pinDefini: false, codePersonnel: false, comptes: false });
 // Sans session : tout ce que la page utilise est refusé (un lien qui fuite ne donne rien)
 for (const f of [
   () => c.traiterSaisie("A", "B", "P1", "1", ""),
@@ -71,7 +71,7 @@ assert.match(s1, /^S1\./);
 assert.ok(!JSON.stringify(P).includes("motdepasse1"), "mot de passe jamais stocké en clair");
 assert.ok(!JSON.stringify(P).includes(s1), "session jamais stockée");
 assert.ok(!P.ACTIVATION_HASH, "code d'activation à usage unique");
-assert.deepStrictEqual(J(c.etatAdmin()), { pinDefini: false, comptes: true });
+assert.deepStrictEqual(J(c.etatAdmin()), { pinDefini: false, codePersonnel: false, comptes: true });
 assert.match(J(c.premierCompte(env.activation(), "Autre", "motdepasse2")).message, /Un compte existe déjà/);
 assert.ok(!r.jeton, "le code d'activation ne donne que le compte, pas l'espace responsable");
 
@@ -191,7 +191,7 @@ env.activeEmail = "editeur@example.com";
 assert.match(c.reinitialiserComptesPanneau(), /première installation[\s\S]*Code d'activation : \d{4}-\d{4}/);
 env.activeEmail = "";
 refuse(() => c.chargerCacheVerif(s1b));
-assert.deepStrictEqual(J(c.etatAdmin()), { pinDefini: false, comptes: false });
+assert.deepStrictEqual(J(c.etatAdmin()), { pinDefini: false, codePersonnel: false, comptes: false });
 assert.ok(!Object.keys(P).some((k) => /^(COMPTE|CPT_|SESSION_)/.test(k)));
 // une ancienne session, même rejouée après un nouveau 1er compte, ne sert plus (nouveau secret)
 assert.ok(J(c.premierCompte(env.activation(), "Caisse centrale 1", "motdepasse1")).ok);

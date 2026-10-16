@@ -7,7 +7,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Journal_() {
-  return "2026.10.16-0955";
+  return "2026.10.16-1018";
 }
 
 function feuilleJournal_() {
@@ -48,10 +48,12 @@ function quiSession_(cle) {
   const c = compteDeSession_(cle);
   return c ? c.identifiant : quiPanneau_();
 }
-// Appel de l'espace responsable (jeton { j, c }) ou du panneau du Sheet (sans jeton)
+// Appel de l'espace responsable (jeton { j, c }) ou du panneau du Sheet (sans jeton).
+// Codes personnels : « compte · personne » (la personne qui a tapé SON code).
 function quiJeton_(jeton) {
   const a = appelantDeCle_(cleAppelant_(undefined, jeton));
-  return a ? a.nom : quiPanneau_();
+  const p = personneDuJeton_(jeton);
+  return (a ? a.nom : quiPanneau_()) + (p ? " · " + p.nom : "");
 }
 
 // --- Mise en forme du détail ---

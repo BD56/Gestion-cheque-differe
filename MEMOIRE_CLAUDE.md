@@ -2,7 +2,7 @@
 
 > Fichier de reprise après compactage du contexte. À lire **avec** `AGENTS.md` (référence
 > canonique) et `docs/retours-vibe/decisions/2026-10-11_generalisation.md` (décisions).
-> Dernière mise à jour : 2026-10-16 (version 2026.10.16-0955, COMPTES faits, journal des actions, option A, impression réservée, passe-droit corrigé ;
+> Dernière mise à jour : 2026-10-16 (version 2026.10.16-1018, COMPTES faits, journal des actions, option A, impression réservée, passe-droit corrigé ;
 > questions ouvertes : bouton de remise à zéro, impression réservée).
 
 ## ▶️ ÉTAT ACTUEL — à lire d'abord
@@ -12,7 +12,7 @@
   « Comptoir » (branche de travail actuelle, tout est poussé)**. Aucune fusion faite,
   aucune pull request. Ordre prévu (sur demande de Bryan seulement) : `design` →
   `refonte` → `generalisation` → `main` / migration Vannes.
-- **Version actuelle sur `design`** : 2026.10.16-0955 (41 séries de tests vertes,
+- **Version actuelle sur `design`** : 2026.10.16-1018 (42 séries de tests vertes,
   ESLint et Prettier propres). Numéro renouvelé par Claude à chaque push de code
   (`npm run nouvelle-version`).
 - **Bryan teste** sur le Sheet « Gestion Chèques Différés — REFONTE (test) » depuis
@@ -53,8 +53,19 @@
   (4 bis) ✅ JOURNAL DES ACTIONS FAIT (version 2026.10.16-0955, « go » de Bryan : 12 mois, Sheet
   seul, SANS les connexions réussies) — voir AGENTS.md « Journal des actions ». Nouveau
   fichier `Journal.gs` (FICHIERS_SERVEUR), test `test_journal` (41 séries).
-  (6) Question de Bryan (à DISCUTER seulement) : plusieurs codes responsables / un
-  code par compte ? — réponse donnée le 16/10.
+  (6) CODES RESPONSABLES PERSONNELS (idée de Bryan : un code PAR PERSONNE, quel que soit
+  le compte connecté ⇒ traçabilité par personne avec des comptes partagés par poste).
+  « go » le 16/10. Conception : réglage commun / personnel ; « Qui êtes-vous ? » + code ;
+  ajout depuis l'espace, code tapé PAR LA PERSONNE devant le responsable (jamais « à
+  choisir plus tard ») ; 1re installation : Non / commun / personnels ; jamais la
+  dernière personne retirée ; panneau du Sheet efface tout ; jeton 3 min (10 en
+  commun) ; ajouts forcés restent au niveau du compte (hors espace).
+  ÉTAPE 1 (serveur) FAITE, version 2026.10.16-1018 : `Personnes.gs` (RESPONSABLES : id, nom,
+  sel, hash ; passerCodesPersonnels, ajouterPersonne, retirerPersonne, changerMonCode,
+  personnesResponsables, listerPersonnes), `codeExige_()` (commun OU personnels),
+  jeton « lien|génération|idPersonne », `personneDuJeton_`, journal « compte ·
+  personne », `definirPin` depuis personnels = retour au code commun. Test
+  `test_personnes`. ÉTAPE 2 (écrans) en cours.
   (3) PROBLÈME signalé par Bryan (16/10) : après « Réinitialiser le code » ET
   « Réinitialiser les comptes » (panneau du Sheet), le site reste connecté. Cause
   PROBABLE (à confirmer) : `exigerSession_` / `exigerAdmin_` laissent passer un

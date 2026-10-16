@@ -3,7 +3,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_00_Constantes_() {
-  return "2026.10.16-0955";
+  return "2026.10.16-1018";
 }
 
 // =================================================================
@@ -34,6 +34,8 @@ const ADMIN_ESSAIS_MAX = 5; // 5 codes faux -> blocage
 const ADMIN_BLOCAGE_MIN = 15; // durée du blocage (minutes)
 const ADMIN_PAUSE_MS = 10000; // pause imposée par le SERVEUR après chaque code faux
 const ADMIN_SESSION_SEC = 600; // session responsable : 10 min d'inactivité
+const ADMIN_SESSION_PERSONNEL_SEC = 180; // codes personnels : 3 min (le journal nomme la personne)
+const PERSONNES_MAX = 30; // codes personnels (voir Personnes.gs)
 
 // Code d'activation (voir Securite.gs) : durée de validité, essais
 const ACTIVATION_DUREE_H = 24;
@@ -68,6 +70,7 @@ const FICHIERS_SERVEUR = [
   "Detection",
   "Installation",
   "Journal",
+  "Personnes",
   "Reglages",
   "Robots",
   "Saisie",

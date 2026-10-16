@@ -3,7 +3,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Application_() {
-  return "2026.10.16-0955";
+  return "2026.10.16-1018";
 }
 
 // Fuseau horaire de référence (réglage du projet Apps Script : Europe/Paris par défaut).
@@ -194,7 +194,7 @@ function genererDonneesImpression(type, dateChoisieStr, cle, jeton) {
   const tz = ss.getSpreadsheetTimeZone(); // même référence que INT()/TODAY() dans A_IMPRIMER
   const aujourdhui = Utilities.formatDate(new Date(), tz, "yyyy-MM-dd");
   const reserve = type !== "jour" || (dateChoisieStr !== "aujourdhui" && dateChoisieStr !== aujourdhui);
-  if (reserve && PropertiesService.getDocumentProperties().getProperty("ADMIN_PIN_HASH")) exigerAdmin_(jeton);
+  if (reserve && codeExige_()) exigerAdmin_(jeton);
   const feuille = ss.getSheetByName(FEUILLE_SAISIES);
   if (!feuille) return [];
   let jour = null;

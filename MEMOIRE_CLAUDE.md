@@ -3,8 +3,8 @@
 > Fichier de reprise après compactage du contexte. À lire **avec** `AGENTS.md` (référence
 > canonique) et `docs/retours-vibe/decisions/2026-10-11_generalisation.md` (décisions).
 > Dernière mise à jour : 2026-10-16 (version 2026.10.16-1031 : comptes, codes personnels,
-> journal des actions, impression réservée, passe-droit propriétaire corrigé). Rien en
-> cours de codage ; attendu : essais de Bryan.
+> journal des actions, impression réservée, passe-droit propriétaire corrigé ; mémoire
+> nettoyée). Rien en cours de codage ; attendu : essais de Bryan.
 
 ## ▶️ ÉTAT ACTUEL — à lire d'abord
 - **Branches** : `main` = prod Vannes (non touchée) ; `generalisation` = version
@@ -18,19 +18,12 @@
   (`npm run nouvelle-version`).
 - **Bryan teste** sur le Sheet « Gestion Chèques Différés — REFONTE (test) » depuis
   son Mac (clasp : `git pull`, `npm run push`, « Installer », puis « Nouvelle version »
-  dans Gérer les déploiements pour `/exec`). Il a signalé « beaucoup de bugs
-  d'affichage » ; corrigés à ce jour : mises en page petits écrans (audit), carte du
-  code collée à gauche sous Safari. **Attendu de Bryan** : nouvelles captures (avec le
-  navigateur : Safari / Chrome) après mise à jour ; confirmer si « Saisies :
-  Chargement… » reste bloqué (sa capture venait d'une version antérieure) ; essai sur
-  vraie tablette (rotation, clavier, journal, alertes, espace responsable, panneau).
-- **FAIT (15/10)** : passage aux COMPTES (identifiant + mot de passe) en 4 étapes, puis
-  option A (code d'avant seulement signalé à la 1re installation) — voir §0 ter et
-  AGENTS.md « Comptes ». Les « tablettes autorisées » n'existent plus. Modèle validé :
-  comptes = caisse(s) centrale(s) ; code responsable facultatif ; direction = Sheet.
-  ATTENDU de Bryan : essai sur le Sheet de test (1re installation avec le code
-  d'activation, connexion Safari + trousseau, Cmd+Q, Code & comptes, iPad, Chrome) ;
-  temps de connexion (MDP_TOURS = 500).
+  dans Gérer les déploiements pour `/exec`). Bugs d'affichage signalés et corrigés :
+  petits écrans (audit), carte du code collée à gauche sous Safari.
+- **FAIT (15/10)** : passage aux COMPTES (identifiant + mot de passe) en 4 étapes — voir
+  §0 ter et AGENTS.md « Comptes ». Les « tablettes autorisées » (clé d'appareil)
+  n'existent plus. Modèle validé : comptes = caisse(s) centrale(s) ; code responsable
+  facultatif ; direction = Sheet.
 - **FAIT le 16/10** (détails dans AGENTS.md, sections du même nom) :
   1. **Option A** : à la 1re installation, un code responsable d'avant est seulement
      SIGNALÉ ; le code d'activation ne donne que le 1er compte (Bryan : « est-ce sûr ? »).
@@ -56,15 +49,24 @@
      PERSONNE quel que soit le compte ⇒ traçabilité par personne avec des comptes
      partagés) : `Personnes.gs`, « Qui êtes-vous ? » + code, journal « compte ·
      personne ». Choix de Claude À VALIDER : jeton 3 min en mode personnel ; ajouts
-     forcés tracés au niveau du compte (hors espace).
+     forcés tracés au niveau du compte (hors espace). Noms en double REFUSÉS
+     (« « Marie » existe déjà. ») avec la comparaison des noms clients (`_normId_` :
+     sans casse, accents, espaces, tirets, apostrophes, points) ⇒ « marie », « Marié »,
+     « Ma-rie » = Marie ; pour deux Marie, les distinguer (« Marie D. », « Marie L. »).
   Abandonné : bouton de remise à zéro (« pas besoin »). Leçon : piège du déploiement
   (« Installer » lit le dernier code ; /exec sert la version figée ⇒ `npm run push`
   puis « Nouvelle version »).
-- **ATTENDU de Bryan** : essais sur le Sheet de test avec la version en ligne 1031 —
-  réinitialiser les comptes puis rafraîchir (écran de connexion attendu, même
-  connecté à Google) ; Safari + trousseau (Mac, iPad), Chrome ; Code & comptes ;
-  codes personnels ; journal (onglet `_Journal`) ; temps de connexion (MDP_TOURS =
-  500) ; validation des 2 choix ci-dessus (3 min, ajouts forcés).
+- **ATTENDU de Bryan** (une seule liste) : essais sur le Sheet de test avec la version
+  en ligne 1031 —
+  1. réinitialiser les comptes puis rafraîchir (écran de connexion attendu, même
+     connecté à Google) ; 1re installation avec le code d'activation ;
+  2. Safari + trousseau (Mac, puis Cmd+Q et retour ; iPad), Chrome ;
+  3. Code & comptes ; codes personnels ; journal (onglet `_Journal`) ;
+  4. temps de connexion (MDP_TOURS = 500) ;
+  5. captures en précisant le navigateur (Safari / Chrome) si un affichage cloche ;
+     « Saisies : Chargement… » ne doit plus rester bloqué ;
+  6. vraie tablette (rotation, clavier, journal, alertes, espace responsable) ;
+  7. validation des 2 choix ci-dessus (3 min, ajouts forcés).
 - **Fil des échanges sur Safari (14-15/10)** : perte d'autorisation des appareils →
   §0 ter ; code responsable = caisse centrale ; page d'essai du trousseau
   (`docs/essais/trousseau/`) réussie sur Mac (méthode 2 : vrai envoi) ⇒ comptes.
@@ -737,7 +739,9 @@ quand Bryan le demande.
     suppression d'une ligne, nom par défaut des tablettes.
 
 ## 3. À vérifier sur un vrai Google Sheet (la simulation ne peut pas le garantir)
-1. La tablette **garde sa clé** d'un jour à l'autre (localStorage dans l'iframe Apps Script).
+1. (Comptes) Le navigateur **propose le compte enregistré** (trousseau / gestionnaire de
+   mots de passe) à l'écran de connexion, y compris après l'avoir complètement fermé ;
+   la session tient jusqu'à 3 h du matin. (Remplace l'ancienne « clé d'appareil ».)
 2. L'accès **« Tout le monde »** fonctionne sans compte Google (et `google.script.run`).
 3. Le **panneau du Sheet** (mode, dates, clôture, réinitialiser le code) marche pour un
    éditeur (`estEditeurDuClasseur_` repose sur `Session.getActiveUser()`).
@@ -758,13 +762,14 @@ quand Bryan le demande.
    commentaires HTML sont retirés par `getContent` (constaté) → marque en attribut
    `data-version` depuis 2026.10.13-2 : ✅ vérifié par Bryan (« Installer » OK, 13/10).
 10. (Design) Affichage sous Safari (Mac, iPad) et dans la vraie page (iframe, bandeau
-   Google) : seul Chromium est testé ici. Espace responsable : les 3 listes
-   préchargées au déverrouillage arrivent bien (3 appels serveur en parallèle) et
-   « Saisies : Chargement… » ne reste plus bloqué. Nom d'appareil en double refusé.
+   Google) : seul Chromium est testé ici. Espace responsable : les listes
+   préchargées au déverrouillage arrivent bien (appels serveur en parallèle) et
+   « Saisies : Chargement… » ne reste plus bloqué.
    Aperçu : après le code, vue d'ensemble / saisies / réglages visibles sans attente.
-11. (Design) À Vannes, sur chaque type d'appareil (PC Windows, tablette Android) et
-   avec son navigateur réel : autoriser → fermer complètement le navigateur →
-   rouvrir ⇒ l'autorisation doit être gardée (voir §0 ter, problème Safari).
+11. (Comptes) À Vannes, sur chaque type d'appareil (PC Windows, tablette Android) et
+   avec son navigateur réel : se connecter et enregistrer le mot de passe → fermer
+   complètement le navigateur → rouvrir ⇒ le navigateur doit proposer le compte
+   (voir §0 ter, problème Safari).
 
 ## 4. Points ouverts / idées non faites
 - ~~Safari perd l'autorisation~~ : RÉGLÉ par les comptes (15/10). ~~Journal des

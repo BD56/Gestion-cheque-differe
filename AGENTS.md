@@ -317,7 +317,8 @@ Décision : `docs/retours-vibe/decisions/2026-10-11_generalisation.md`.
   (`PIN_ESSAIS_P_<id>`) ; jeton « lien|génération|idPersonne », 3 min
   (`ADMIN_SESSION_PERSONNEL_SEC`), caduc si la personne est retirée. Code & comptes :
   passer aux codes personnels (nom + code de celui qui le fait), ajouter une personne
-  (nom ; code tapé PAR LA PERSONNE devant le responsable), retirer (jamais la
+  (nom ; code tapé PAR LA PERSONNE devant le responsable ; nom en double refusé,
+  comparé comme les noms clients avec `_normId_` : « Marié » = « marie »), retirer (jamais la
   dernière), changer mon code, revenir au code commun (second appui), ne plus demander
   de code. 1re installation : Non / code commun / codes personnels. Panneau du Sheet
   « Réinitialiser le code » efface aussi les codes personnels. Ajouts forcés : au

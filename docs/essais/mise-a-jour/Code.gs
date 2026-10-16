@@ -110,7 +110,8 @@ function explication_(code, texte, methode, chemin) {
       "https://script.google.com/home/usersettings → « API Google Apps Script » : Activé, " +
       "puis réessayer (quelques minutes peuvent être nécessaires). [" +
       code +
-      "]"
+      "]\n\nMessage de Google : " +
+      texte.slice(0, 400)
     );
   if (code === 404 && chemin.indexOf(SOURCE_ID.trim()) === 0)
     return "Projet SOURCE introuvable ou non partagé avec ce compte (SOURCE_ID correct ?). [404]";

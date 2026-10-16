@@ -784,7 +784,11 @@ quand Bryan le demande.
      alerte « journal modifié à la main »). Limite dite : un éditeur qui programme
      peut refaire les empreintes (historique des versions Google reste).
   2. Bandeau des changements sensibles (« Codes personnels retirés le … par Marie »),
-     visible de tous pendant une durée À DÉFINIR avec Bryan (proposé : 7 jours).
+     visible de tous pendant **2 jours** (Bryan : 7 « disproportionné »), non fermable ;
+     seulement « qui peut faire quoi » (codes perso / commun / plus de code, personne
+     ou compte ajouté / retiré) ; espace responsable (vue d'ensemble) + panneau du
+     Sheet, pas l'écran de saisie ; 5 lignes max. Alerte « journal modifié » : reste
+     jusqu'à prise en compte depuis le panneau du Sheet (journalisée).
   3. Avertissement posé sur « Saisies » par « Installer » (généralisation : chaque
      magasin a son Sheet ⇒ protections automatiques ; INSTALLATION.md : conseiller
      qu'un compte de la direction copie le modèle = propriétaire).

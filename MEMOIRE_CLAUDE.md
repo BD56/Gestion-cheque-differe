@@ -797,7 +797,13 @@ quand Bryan le demande.
   deployments.update, adresse inchangée contrôlée), déclencheur ponctuel qui prouve
   que le nouveau code tourne seul, retour arrière, refus si Code/Page de versions
   différentes ; étape 7 : 2e compte lecteur du modèle. Logique vérifiée en
-  simulation seulement (script jetable, non versionné). ATTENDU : essai de Bryan. Documentation utilisateurs : aide intégrée + onglet
+  simulation seulement (script jetable, non versionné). ESSAI DE BRYAN (16/10) :
+  SOURCE reconnue après menu « Diagnostic » ; MAGASIN → 403 « Apps Script API has
+  not been used in project 70457900746 before or it is disabled » MALGRÉ le réglage
+  usersettings activé ⇒ l'API doit aussi être activée dans le projet Google Cloud
+  (caché, par défaut) du script. En cours : le lien console.developers.google.com du
+  message est-il accessible au propriétaire ? Si non ⇒ projet Google Cloud standard
+  par magasin = trop technique ⇒ piste « un clic » remise en cause. Documentation utilisateurs : aide intégrée + onglet
   « Mode d'emploi » dans le modèle + guide illustré, Markdown = source (à décider).
 - ~~Safari perd l'autorisation~~ : RÉGLÉ par les comptes (15/10). ~~Journal des
   actions~~ : FAIT (16/10). ~~Code par personne~~ : FAIT (codes personnels, 16/10).

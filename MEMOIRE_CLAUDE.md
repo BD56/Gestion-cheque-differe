@@ -777,6 +777,22 @@ quand Bryan le demande.
    (voir §0 ter, problème Safari).
 
 ## 4. Points ouverts / idées non faites
+- **Mises à jour des magasins autonomes** (Bryan, 16/10 : « chaque magasin se
+  débrouille », tout doit être expliqué dans les docs ou l'aide) : chaque copie a son
+  code figé ; seule voie aujourd'hui = copier-coller (DEPLOIEMENT.md), impossible pour
+  un non-technicien. Étude « bibliothèque Apps Script » (16/10) : DÉCONSEILLÉE —
+  avertissement officiel (lenteur avec beaucoup d'appels google.script.run = notre
+  cas), dépendance au compte de Bryan (bibliothèque supprimée/inaccessible = TOUS les
+  magasins en panne), propriétés du document / verrou / cache à faire passer par le
+  script du Sheet (portée floue, à tester), aiguilleur pour google.script.run (58
+  fonctions publiques), enveloppes pour doGet/doPost/menus/robots, version épinglée
+  (mise à jour = changer le numéro + nouvelle version du déploiement). Piste
+  proposée à la place : « mise à jour en un clic » par l'API Apps Script
+  (projects.getContent/updateContent, versions, deployments.update ; réglage « API
+  Google Apps Script » à activer une fois ; autorisations plus larges ; retour
+  arrière = redéployer la version précédente) — NON vérifiée, essai à proposer
+  (comme docs/essais/trousseau). Documentation utilisateurs : aide intégrée + onglet
+  « Mode d'emploi » dans le modèle + guide illustré, Markdown = source (à décider).
 - ~~Safari perd l'autorisation~~ : RÉGLÉ par les comptes (15/10). ~~Journal des
   actions~~ : FAIT (16/10). ~~Code par personne~~ : FAIT (codes personnels, 16/10).
 - ~~À valider~~ : jeton 3 min en codes personnels et ajouts forcés tracés au niveau

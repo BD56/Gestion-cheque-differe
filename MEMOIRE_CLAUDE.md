@@ -48,8 +48,8 @@
   6. **Codes personnels** (1018 serveur, 1031 écrans ; idée de Bryan : un code PAR
      PERSONNE quel que soit le compte ⇒ traçabilité par personne avec des comptes
      partagés) : `Personnes.gs`, « Qui êtes-vous ? » + code, journal « compte ·
-     personne ». Choix de Claude À VALIDER : jeton 3 min en mode personnel ; ajouts
-     forcés tracés au niveau du compte (hors espace). Noms en double REFUSÉS
+     personne ». Choix VALIDÉS par Bryan (16/10) : jeton 3 min en mode personnel ;
+     ajouts forcés tracés au niveau du compte (hors espace). Noms en double REFUSÉS
      (« « Marie » existe déjà. ») avec la comparaison des noms clients (`_normId_` :
      sans casse, accents, espaces, tirets, apostrophes, points) ⇒ « marie », « Marié »,
      « Ma-rie » = Marie ; pour deux Marie, les distinguer (« Marie D. », « Marie L. »).
@@ -65,8 +65,7 @@
   4. temps de connexion (MDP_TOURS = 500) ;
   5. captures en précisant le navigateur (Safari / Chrome) si un affichage cloche ;
      « Saisies : Chargement… » ne doit plus rester bloqué ;
-  6. vraie tablette (rotation, clavier, journal, alertes, espace responsable) ;
-  7. validation des 2 choix ci-dessus (3 min, ajouts forcés).
+  6. vraie tablette (rotation, clavier, journal, alertes, espace responsable).
 - **Fil des échanges sur Safari (14-15/10)** : perte d'autorisation des appareils →
   §0 ter ; code responsable = caisse centrale ; page d'essai du trousseau
   (`docs/essais/trousseau/`) réussie sur Mac (méthode 2 : vrai envoi) ⇒ comptes.
@@ -774,8 +773,8 @@ quand Bryan le demande.
 ## 4. Points ouverts / idées non faites
 - ~~Safari perd l'autorisation~~ : RÉGLÉ par les comptes (15/10). ~~Journal des
   actions~~ : FAIT (16/10). ~~Code par personne~~ : FAIT (codes personnels, 16/10).
-- À valider par Bryan : jeton 3 min en codes personnels ; ajouts forcés tracés au
-  niveau du compte (un code personnel pour forcer : possible mais lourd en caisse).
+- ~~À valider~~ : jeton 3 min en codes personnels et ajouts forcés tracés au niveau
+  du compte — VALIDÉS par Bryan (16/10).
 - Pull request `generalisation` → `main` : à ouvrir **après** le test de Bryan (il n'a pas
   encore demandé).
 - **Nom de l'application** (en pause, à la demande de Bryan) : acronymes retenus CLÉO

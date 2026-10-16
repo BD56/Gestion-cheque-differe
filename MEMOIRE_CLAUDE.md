@@ -41,7 +41,12 @@
   Claude (« gain limité ») : la barrière est réelle pour les vrais utilisateurs
   (pas d'outils de développeur sur tablette), le papier échappe à tout contrôle
   (3 h, retrait, mot de passe), geste d'extraction volontaire, moindre accès / RGPD.
-  (1 bis) Remise à zéro : « on verra après ».
+  (1 bis) Remise à zéro : ABANDONNÉE (Bryan, 16/10 : « pas besoin »).
+  (4) JOURNAL DES ACTIONS SENSIBLES : accord de principe de Bryan (16/10) « avec une
+  date de péremption pour ne pas alourdir ». Proposition de Claude en attente de
+  validation (durée, où le voir, liste des actions) — rien codé.
+  (5) VÉRIFICATION PÉRIODIQUE de la session (déconnexion visible sans rien toucher) :
+  Bryan avait oublié, rappel fait le 16/10 ; en attente de sa décision.
   (3) PROBLÈME signalé par Bryan (16/10) : après « Réinitialiser le code » ET
   « Réinitialiser les comptes » (panneau du Sheet), le site reste connecté. Cause
   PROBABLE (à confirmer) : `exigerSession_` / `exigerAdmin_` laissent passer un

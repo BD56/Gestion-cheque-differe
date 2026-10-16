@@ -2,8 +2,9 @@
 
 > Fichier de reprise après compactage du contexte. À lire **avec** `AGENTS.md` (référence
 > canonique) et `docs/retours-vibe/decisions/2026-10-11_generalisation.md` (décisions).
-> Dernière mise à jour : 2026-10-16 (version 2026.10.16-1031, COMPTES faits, codes personnels, journal des actions, option A, impression réservée, passe-droit corrigé ;
-> questions ouvertes : bouton de remise à zéro, impression réservée).
+> Dernière mise à jour : 2026-10-16 (version 2026.10.16-1031 : comptes, codes personnels,
+> journal des actions, impression réservée, passe-droit propriétaire corrigé). Rien en
+> cours de codage ; attendu : essais de Bryan.
 
 ## ▶️ ÉTAT ACTUEL — à lire d'abord
 - **Branches** : `main` = prod Vannes (non touchée) ; `generalisation` = version
@@ -30,74 +31,43 @@
   ATTENDU de Bryan : essai sur le Sheet de test (1re installation avec le code
   d'activation, connexion Safari + trousseau, Cmd+Q, Code & comptes, iPad, Chrome) ;
   temps de connexion (MDP_TOURS = 500).
-- **Dernier échange (16/10) — EN DISCUSSION, rien codé** :
-  (1) bouton de REMISE À ZÉRO pour le développement (dans le Sheet) : proposé par
-  Claude = menu du Sheet réservé à un classeur de test (nom contenant « test »),
-  double confirmation, effacer propriétés + données (Saisies, archives, annuaire) ;
-  en attente du « go » / des choix de Bryan ;
-  (2) IMPRESSION — ✅ FAIT (version 2026.10.16-0853, décision Bryan) : avec un code, rien sous
-  le code ; hors espace, seul « Imprimer la journée » (journal) ; offre entière et jour
-  précédent dans l'espace, imposé par le serveur (jeton). Bryan a corrigé l'avis de
-  Claude (« gain limité ») : la barrière est réelle pour les vrais utilisateurs
-  (pas d'outils de développeur sur tablette), le papier échappe à tout contrôle
-  (3 h, retrait, mot de passe), geste d'extraction volontaire, moindre accès / RGPD.
-  (1 bis) Remise à zéro : ABANDONNÉE (Bryan, 16/10 : « pas besoin »).
-  (4) JOURNAL DES ACTIONS SENSIBLES : accord de principe de Bryan (16/10) « avec une
-  date de péremption pour ne pas alourdir ». Proposition de Claude en attente de
-  validation (durée, où le voir, liste des actions) — rien codé.
-  (5) ✅ FAIT (version 2026.10.16-0943, « go » de Bryan) : vérification de la session toutes
-  les 5 min ; et (gêne de Bryan) une saisie validée après la fin de session n'est plus
-  envoyée seule à la reconnexion : écran « Saisies en attente » → Enregistrer / Ne pas
-  enregistrer (second appui). Ne pas la jeter d'office : saisie perdue = doublon futur
-  manqué (pire échec). Tests : test_ui_connexion ; audit : état 30.
-  (4 bis) ✅ JOURNAL DES ACTIONS FAIT (version 2026.10.16-0955, « go » de Bryan : 12 mois, Sheet
-  seul, SANS les connexions réussies) — voir AGENTS.md « Journal des actions ». Nouveau
-  fichier `Journal.gs` (FICHIERS_SERVEUR), test `test_journal` (41 séries).
-  (6) CODES RESPONSABLES PERSONNELS (idée de Bryan : un code PAR PERSONNE, quel que soit
-  le compte connecté ⇒ traçabilité par personne avec des comptes partagés par poste).
-  « go » le 16/10. Conception : réglage commun / personnel ; « Qui êtes-vous ? » + code ;
-  ajout depuis l'espace, code tapé PAR LA PERSONNE devant le responsable (jamais « à
-  choisir plus tard ») ; 1re installation : Non / commun / personnels ; jamais la
-  dernière personne retirée ; panneau du Sheet efface tout ; jeton 3 min (10 en
-  commun) ; ajouts forcés restent au niveau du compte (hors espace).
-  ÉTAPE 1 (serveur) FAITE, version 2026.10.16-1018 : `Personnes.gs` (RESPONSABLES : id, nom,
-  sel, hash ; passerCodesPersonnels, ajouterPersonne, retirerPersonne, changerMonCode,
-  personnesResponsables, listerPersonnes), `codeExige_()` (commun OU personnels),
-  jeton « lien|génération|idPersonne », `personneDuJeton_`, journal « compte ·
-  personne », `definirPin` depuis personnels = retour au code commun. Test
-  `test_personnes`. ✅ ÉTAPE 2 (écrans) FAITE, version 2026.10.16-1031 : verrou « Qui êtes-vous ? »,
-  Code & comptes (passer aux codes personnels, ajouter, retirer, mon code, revenir au
-  commun), 1re installation (Non / commun / personnels), aide, INSTALLATION.md. Test
-  `test_ui_personnes` (43 séries) ; audit : état 31, rien à signaler.
-  (3) PROBLÈME signalé par Bryan (16/10) : après « Réinitialiser le code » ET
-  « Réinitialiser les comptes » (panneau du Sheet), le site reste connecté. Cause
-  PROBABLE (à confirmer) : `exigerSession_` / `exigerAdmin_` laissent passer un
-  ÉDITEUR du classeur (`estEditeurDuClasseur_`, prévu pour le panneau du Sheet) ;
-  dans la web app « exécuter en tant que moi », l'e-mail du visiteur est connu quand
-  c'est le PROPRIÉTAIRE (Bryan, connecté à Google dans Safari) ⇒ tout passe sans
-  session. Risque réel aussi en magasin si un compte Google éditeur du Sheet est
-  ouvert sur un appareil de caisse (Workspace). Correctif proposé : ne laisser passer
-  l'éditeur que si l'appel ne fournit AUCUNE session (panneau du Sheet : argument
-  absent) ; la page envoie toujours sa session. Comportement proposé : comptes
-  réinitialisés ⇒ déconnecté partout (au prochain échange avec le serveur) ; code
-  réinitialisé seul ⇒ comptes restent connectés, espace responsable refermé (jetons
-  ouverts annulés via un compteur de génération). → CONFIRMÉ par Bryan (rafraîchir :
-  toujours connecté ; navigation privée : connexion demandée) ; « go » ⇒ FAIT (version
-  2026.10.16-0904) : passe-droit seulement sans session (argument absent), SESSION jamais
-  null côté page, génération des jetons (`ADMIN_GENERATION`). Tests : test_comptes.
-  Vérification périodique (voir la déconnexion sans rien toucher) : proposée, pas de
-  réponse de Bryan. NB : tous les essais de Bryan AVANT ce correctif sur son Mac
-  (propriétaire connecté à Google) passaient le serveur sans compte : à refaire.
-  16/10 : capture de Bryan montrant encore « Impression libre » = ANCIENNE version
-  servie par /exec (« Installer » affichait pourtant 0904) ; cause côté déploiement,
-  réglée par Bryan. PIÈGE à rappeler : « Installer » lit le code le plus récent du
-  projet, /exec sert la version FIGÉE du déploiement ⇒ `npm run push` D'ABORD, puis
-  Gérer les déploiements → crayon → Version : « Nouvelle version » ; Tester les
-  déploiements (/dev) sert toujours le dernier code (utile pour comparer).
+- **FAIT le 16/10** (détails dans AGENTS.md, sections du même nom) :
+  1. **Option A** : à la 1re installation, un code responsable d'avant est seulement
+     SIGNALÉ ; le code d'activation ne donne que le 1er compte (Bryan : « est-ce sûr ? »).
+  2. **Impression réservée** (0853) : avec un code, rien sous le code ; hors espace,
+     seul « Imprimer la journée » (journal) ; offre entière / jour précédent dans
+     l'espace, imposé par le serveur. Bryan a corrigé l'avis « gain limité » de Claude
+     (barrière réelle sur tablette, papier hors contrôle, moindre accès / RGPD).
+  3. **Passe-droit propriétaire corrigé** (0904) : `estEditeurDuClasseur_` est VRAI dans
+     la web app pour le propriétaire connecté à Google ⇒ il passait sans compte (vu
+     par Bryan : rien ne se déconnectait après les réinitialisations). Passe-droit
+     seulement SANS session ni jeton (panneau du Sheet) ; page : SESSION jamais null.
+     Génération des jetons (`ADMIN_GENERATION`) : changer / réinitialiser le code ou
+     les comptes referme les espaces ouverts. Comportements validés par Bryan :
+     comptes réinitialisés ⇒ déconnecté partout ; code seul ⇒ comptes connectés,
+     espace refermé.
+  4. **Saisies en attente + vérification toutes les 5 min** (0943) : une saisie validée
+     après la fin de session est PROPOSÉE à la reconnexion (Enregistrer / Ne pas
+     enregistrer, second appui) — jamais jetée d'office (doublon futur manqué), jamais
+     envoyée seule (gêne de Bryan).
+  5. **Journal des actions** (0955) : onglet masqué `_Journal`, 12 mois, Sheet seul, sans
+     les connexions réussies (`Journal.gs`).
+  6. **Codes personnels** (1018 serveur, 1031 écrans ; idée de Bryan : un code PAR
+     PERSONNE quel que soit le compte ⇒ traçabilité par personne avec des comptes
+     partagés) : `Personnes.gs`, « Qui êtes-vous ? » + code, journal « compte ·
+     personne ». Choix de Claude À VALIDER : jeton 3 min en mode personnel ; ajouts
+     forcés tracés au niveau du compte (hors espace).
+  Abandonné : bouton de remise à zéro (« pas besoin »). Leçon : piège du déploiement
+  (« Installer » lit le dernier code ; /exec sert la version figée ⇒ `npm run push`
+  puis « Nouvelle version »).
+- **ATTENDU de Bryan** : essais sur le Sheet de test avec la version en ligne 1031 —
+  réinitialiser les comptes puis rafraîchir (écran de connexion attendu, même
+  connecté à Google) ; Safari + trousseau (Mac, iPad), Chrome ; Code & comptes ;
+  codes personnels ; journal (onglet `_Journal`) ; temps de connexion (MDP_TOURS =
+  500) ; validation des 2 choix ci-dessus (3 min, ajouts forcés).
 - **Fil des échanges sur Safari (14-15/10)** : perte d'autorisation des appareils →
   §0 ter ; code responsable = caisse centrale ; page d'essai du trousseau
   (`docs/essais/trousseau/`) réussie sur Mac (méthode 2 : vrai envoi) ⇒ comptes.
-  Journal des actions sensibles : proposé, NON décidé.
 - **Ensuite (sur demande)** : fusions, documentation (`docs/A_REDIGER.md`, captures via
   `outils/captures.js`), migration de Vannes (`DEPLOIEMENT.md`).
 - **Leçons de cette période** : (1) ne pas réorganiser des écrans sans validation (la
@@ -797,12 +767,10 @@ quand Bryan le demande.
    rouvrir ⇒ l'autorisation doit être gardée (voir §0 ter, problème Safari).
 
 ## 4. Points ouverts / idées non faites
-- **Appareils Apple / Safari perdent l'autorisation** (§0 ter) : non bloquant pour
-  Vannes ; DÉCIDÉ : code responsable = caisse centrale, qui réautorise (rien à coder,
-  à documenter). Code d'équipe / modes d'accès : en réserve.
-- **Journal des actions sensibles** (suppression, correction, mode, clôture,
-  réglages, appareils, code) dans un onglet vu par la direction : proposé le 15/10
-  (traçabilité nécessaire avec un code partagé par la caisse centrale), NON décidé.
+- ~~Safari perd l'autorisation~~ : RÉGLÉ par les comptes (15/10). ~~Journal des
+  actions~~ : FAIT (16/10). ~~Code par personne~~ : FAIT (codes personnels, 16/10).
+- À valider par Bryan : jeton 3 min en codes personnels ; ajouts forcés tracés au
+  niveau du compte (un code personnel pour forcer : possible mais lourd en caisse).
 - Pull request `generalisation` → `main` : à ouvrir **après** le test de Bryan (il n'a pas
   encore demandé).
 - **Nom de l'application** (en pause, à la demande de Bryan) : acronymes retenus CLÉO
@@ -821,8 +789,8 @@ quand Bryan le demande.
 - **Annuaire à la demande** (nom demandé au serveur au N° tapé au lieu de l'annuaire
   entier dans chaque tablette) : intéressant pour le RGPD ; pré-remplissage ~1 s plus
   tard et impossible hors réseau. À discuter après la refonte.
-- Renommer un appareil depuis « Code & appareils » : non fait (on retire puis on
-  réautorise sous un autre nom).
+- Renommer un compte depuis « Code & comptes » : non fait (on en crée un autre puis on
+  retire l'ancien).
 - Couleur réglable par structure (maquette C) : idée en réserve.
 - Dette assumée : logique A/B/C à **3 endroits** (`detecterDoublons_` pour tout le
   serveur, `recalculerMarquages_`, `analyserDoublonLocal`) — à garder synchro.

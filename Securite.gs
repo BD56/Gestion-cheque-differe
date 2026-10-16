@@ -1,9 +1,10 @@
-// Sécurité : comptes (identifiant + mot de passe) et leurs sessions, code responsable
-// (PIN, facultatif), code d'activation, jetons de l'espace responsable.
+// Sécurité : compte du magasin (identifiant + mot de passe, un seul) et ses sessions, code
+// responsable (OBLIGATOIRE : commun ou personnels), code d'activation, jetons de l'espace
+// responsable.
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Securite_() {
-  return "2026.10.16-1243";
+  return "2026.10.16-1512";
 }
 
 // =================================================================
@@ -227,8 +228,11 @@ function effacerEssais_(props, groupe) {
 }
 
 // Code juste -> { ok:true, jeton } ; sinon { ok:false, message }. Compte connecté requis.
-// Sans code responsable « à part » (choix fait à l'installation), un compte connecté
-// ouvre l'espace responsable sans code. Codes personnels : idPersonne = qui tape le code.
+// Le code est OBLIGATOIRE (décision de Bryan, 16/10 : un seul compte pour tous les
+// appareils, tablettes des hôtesses comprises) : sans code (1re installation inachevée,
+// code réinitialisé dans le Sheet), l'espace ne s'ouvre pas — { codeACreer: true } : la
+// page fait d'abord choisir le code (definirPin / passerCodesPersonnels).
+// Codes personnels : idPersonne = qui tape le code.
 function ouvrirSessionAdmin(pin, cle, idPersonne) {
   exigerSession_(cle);
   const a = appelantDeCle_(cle);
@@ -236,7 +240,8 @@ function ouvrirSessionAdmin(pin, cle, idPersonne) {
   lock.waitLock(10000);
   try {
     const props = PropertiesService.getDocumentProperties();
-    if (a && a.compte && !codeExige_()) return { ok: true, jeton: creerJetonAdmin_(a) };
+    if (!codeExige_())
+      return { ok: false, codeACreer: true, message: "Choisissez d'abord le code responsable." };
     const personnes = lirePersonnes_();
     if (personnes.length) {
       const p = personnes.filter(function (x) {
@@ -291,8 +296,9 @@ function texteActivation_(code) {
     "\n(valable " +
     ACTIVATION_DUREE_H +
     " h, une seule fois)\n\n" +
-    "Sur l'appareil de la caisse centrale, ouvrez l'application : à la première installation, elle demande ce " +
-    "code, puis de créer le compte de la caisse centrale (identifiant et mot de passe). Ne le communiquez qu'à elle."
+    "Sur un appareil de la caisse centrale, ouvrez l'application : à la première installation, elle demande ce " +
+    "code, puis de créer le compte du magasin (identifiant et mot de passe, le même pour tous les appareils) " +
+    "et de choisir le code responsable. Ne le communiquez qu'à elle."
   );
 }
 
@@ -323,9 +329,10 @@ function verifierActivation_(props, code) {
   return { ok: false, message: "Code d'activation incorrect." };
 }
 
-// Code COMMUN : création (aucun code : compte connecté — qui a déjà tous les droits sans
-// code — ou panneau du Sheet) ou changement (session responsable requise). Depuis les
-// codes personnels : retour au code commun (les codes personnels sont retirés).
+// Code COMMUN : création (aucun code : compte connecté — 1re installation, ou après
+// « Réinitialiser le code » dans le Sheet — ou panneau du Sheet) ou changement (session
+// responsable requise). Depuis les codes personnels : retour au code commun (les codes
+// personnels sont retirés).
 function definirPin(nouveauPin, jeton, cle) {
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
@@ -386,8 +393,9 @@ function reinitialiserPinPanneau() {
   effacerEssais_(props);
   if (lireComptes_().length > 0)
     return (
-      "✅ Code responsable effacé : tout compte connecté ouvre maintenant l'espace responsable. " +
-      "Un nouveau code peut être choisi dans l'application (espace responsable → Code & comptes)."
+      "✅ Code responsable effacé. À la prochaine ouverture de l'espace responsable (⚙️), " +
+      "l'application fera choisir un nouveau code (commun ou personnels) avant d'entrer : " +
+      "faites-le tout de suite sur un appareil de la caisse centrale."
     );
   return "✅ Code responsable effacé.\n\n" + texteActivation_(genererCodeActivation_());
 }
@@ -434,20 +442,24 @@ function appelantDeCle_(cle) {
 
 // =================================================================
 // --- COMPTES (identifiant + mot de passe) ---
-//     Les comptes sont ceux de la (des) caisse(s) centrale(s). Se connecter donne une
-//     SESSION valable jusqu'à 3 h du matin, que la page envoie à chaque appel (le
-//     gestionnaire de mots de passe du navigateur retient le mot de passe : utile sous
-//     Safari, qui oublie le stockage de la page quand on le quitte).
+//     UN SEUL compte : celui du magasin, avec lequel la caisse centrale connecte tous
+//     les appareils (décision de Bryan, 16/10 : la traçabilité par personne vient des
+//     codes personnels de l'espace responsable). Une liste est gardée : un Sheet d'une
+//     version précédente peut en avoir plusieurs (à réduire : retirerCompte). Se
+//     connecter donne une SESSION valable jusqu'à 3 h du matin, que la page envoie à
+//     chaque appel (le gestionnaire de mots de passe du navigateur retient le mot de
+//     passe : utile sous Safari, qui oublie le stockage de la page quand on le quitte).
 //     - Mot de passe jamais stocké : empreinte salée, répétée MDP_TOURS fois.
 //     - Session = « S1.<compte>.<version>.<fin>.<signature> » : rien n'est stocké par
 //       session ; la signature (HMAC, secret du document) empêche de la fabriquer.
 //       Changer le mot de passe (version + 1) ou retirer le compte la rend caduque.
-//     - Essais faux comptés PAR COMPTE : pause de 10 s, blocage 15 min après 5 (un
-//       inconnu ne bloque pas les autres comptes).
-//     - 1er compte : code d'activation du Google Sheets (comme le code responsable).
-//       Les suivants : depuis l'espace responsable. Jamais d'inscription libre.
-//     - Secours : le panneau du Sheet retire tous les comptes (retour à la 1re
-//       installation, nouveau code d'activation).
+//     - Mots de passe faux : pause de 10 s après chacun ; à partir du 10e, connexion
+//       bloquée 5, 10, puis 15 min (jamais plus) ; les appareils déjà connectés
+//       continuent (le blocage ne vise que les nouvelles connexions).
+//     - Le compte : créé à la 1re installation avec le code d'activation du Google
+//       Sheets. Jamais d'inscription libre, jamais d'autre compte.
+//     - Secours : le panneau du Sheet retire le compte (retour à la 1re installation,
+//       nouveau code d'activation).
 // =================================================================
 // Erreur passagère de Google : remontée telle quelle, jamais lue comme « aucun compte »
 // (sinon l'écran de 1re installation s'afficherait, et une écriture perdrait les comptes).
@@ -555,7 +567,7 @@ function compteDeSession_(session) {
   return compte && String(compte.v) === morceaux[2] ? compte : null;
 }
 
-// Mot de passe d'un compte, avec pause et blocage PAR COMPTE. À appeler sous verrou.
+// Mot de passe du compte, avec pause et blocage progressif. À appeler sous verrou.
 function verifierMdp_(props, compte, mdp) {
   const cleEtat = "CPT_ESSAIS_" + compte.id;
   let etat = {};
@@ -565,13 +577,14 @@ function verifierMdp_(props, compte, mdp) {
     etat = {};
   }
   const maintenant = Date.now();
+  if (etat.dernier && maintenant - etat.dernier > CPT_OUBLI_H * 3600000) etat = {}; // erreurs anciennes oubliées
   if ((etat.bloque || 0) > maintenant)
     return {
       ok: false,
       message:
-        "Trop d'essais pour ce compte. Réessayez dans " +
+        "Trop d'essais : connexion bloquée. Réessayez dans " +
         Math.ceil((etat.bloque - maintenant) / 60000) +
-        " min.",
+        " min (les appareils déjà connectés continuent).",
     };
   if (maintenant - (etat.dernier || 0) < ADMIN_PAUSE_MS)
     return {
@@ -586,26 +599,36 @@ function verifierMdp_(props, compte, mdp) {
     return { ok: true };
   }
   const echecs = (etat.echecs || 0) + 1;
-  if (echecs >= ADMIN_ESSAIS_MAX) {
+  if (echecs >= CPT_ESSAIS_LIBRES) {
+    const blocages = etat.blocages || 0;
+    const minutes = CPT_BLOCAGES_MIN[Math.min(blocages, CPT_BLOCAGES_MIN.length - 1)];
     props.setProperty(
       cleEtat,
-      JSON.stringify({ echecs: 0, dernier: maintenant, bloque: maintenant + ADMIN_BLOCAGE_MIN * 60000 })
+      JSON.stringify({
+        echecs: echecs,
+        dernier: maintenant,
+        bloque: maintenant + minutes * 60000,
+        blocages: blocages + 1,
+      })
     );
     journaliser_(
       "Écran de connexion",
-      "Compte bloqué " + ADMIN_BLOCAGE_MIN + " min (" + ADMIN_ESSAIS_MAX + " mots de passe faux)",
-      compte.identifiant
+      "Connexion bloquée " + minutes + " min (" + echecs + " mots de passe faux)",
+      compte.identifiant,
+      true
     );
     return {
       ok: false,
-      message: "Mot de passe incorrect. Trop d'essais : compte bloqué " + ADMIN_BLOCAGE_MIN + " min.",
+      message: "Mot de passe incorrect. Trop d'essais : connexion bloquée " + minutes + " min.",
     };
   }
   props.setProperty(cleEtat, JSON.stringify({ echecs: echecs, dernier: maintenant, bloque: 0 }));
   return {
     ok: false,
     message:
-      "Mot de passe incorrect (" + (ADMIN_ESSAIS_MAX - echecs) + " essai(s) restant(s)). Patientez 10 s.",
+      "Mot de passe incorrect (" +
+      (CPT_ESSAIS_LIBRES - echecs) +
+      " essai(s) avant un blocage). Patientez 10 s.",
   };
 }
 
@@ -677,34 +700,6 @@ function listeComptes_() {
   });
 }
 
-function creerCompte(identifiant, mdp, jeton) {
-  exigerAdmin_(jeton);
-  const lock = LockService.getScriptLock();
-  lock.waitLock(10000);
-  try {
-    identifiant = (identifiant || "").toString().trim().slice(0, 40);
-    mdp = (mdp || "").toString();
-    const erreur = controlerIdentifiant_(identifiant) || controlerMdp_(mdp);
-    if (erreur) return { ok: false, message: erreur };
-    const liste = lireComptes_();
-    const pris = compteParIdentifiant_(liste, identifiant);
-    if (pris)
-      return {
-        ok: false,
-        message: "« " + pris.identifiant + " » existe déjà : choisissez un autre identifiant.",
-      };
-    if (liste.length >= COMPTES_MAX)
-      return { ok: false, message: COMPTES_MAX + " comptes au plus : retirez-en un d'abord." };
-    const compte = nouveauCompte_(identifiant, mdp);
-    liste.push(compte);
-    ecrireComptes_(liste);
-    journaliser_(quiJeton_(jeton), "Compte créé", identifiant, true);
-    return { ok: true, compte: { id: compte.id, identifiant: compte.identifiant } };
-  } finally {
-    lock.releaseLock();
-  }
-}
-
 // Nouveau mot de passe : les sessions ouvertes avec l'ancien ne servent plus (version + 1).
 // Si c'est le compte de l'appelant (cle = sa session), une nouvelle session est renvoyée.
 function changerMotDePasse(id, mdp, jeton, cle) {
@@ -735,8 +730,9 @@ function changerMotDePasse(id, mdp, jeton, cle) {
   }
 }
 
-// Retire un compte (ses sessions ne servent plus). Le dernier compte reste : sans lui,
-// plus personne ne pourrait se connecter (secours : panneau du Sheet).
+// Retire un compte (ses sessions ne servent plus) : Sheet d'une version précédente qui en
+// a plusieurs (un seul désormais). Le dernier reste : sans lui, plus personne ne pourrait
+// se connecter (secours : panneau du Sheet).
 function retirerCompte(id, jeton) {
   exigerAdmin_(jeton);
   const lock = LockService.getScriptLock();
@@ -763,34 +759,10 @@ function retirerCompte(id, jeton) {
   }
 }
 
-// Ne plus protéger l'espace responsable par un code à part : un compte connecté l'ouvre
-// alors directement. Réservé à un COMPTE connecté qui a ouvert l'espace (avec le code).
-// Pour le remettre : definirPin (un compte connecté peut le créer sans activation).
-function retirerCodeResponsable(jeton, cle) {
-  exigerAdmin_(jeton);
-  const qui = quiJeton_(jeton);
-  const a = appelantDeCle_(cleAppelant_(cle, jeton));
-  if (!a || !a.compte) return { ok: false, message: "Connectez-vous avec un compte pour retirer le code." };
-  const lock = LockService.getScriptLock();
-  lock.waitLock(10000);
-  try {
-    const props = PropertiesService.getDocumentProperties();
-    ["ADMIN_PIN_HASH", "ADMIN_PIN_SEL"].forEach(function (k) {
-      props.deleteProperty(k);
-    });
-    ecrirePersonnes_([]); // codes personnels aussi
-    effacerEssais_(props);
-    journaliser_(qui, "Code responsable retiré", "", true);
-    return { ok: true, message: "Code responsable retiré : un compte connecté ouvre l'espace responsable." };
-  } finally {
-    lock.releaseLock();
-  }
-}
-
-// Secours (panneau du Sheet, éditeurs) : plus personne ne peut se connecter (mots de
-// passe oubliés, comptes bloqués…). Retire tous les comptes (toutes les sessions
-// tombent : nouveau secret) et le code responsable ; l'application revient à la 1re
-// installation, avec le code d'activation affiché ici.
+// Secours (panneau du Sheet, éditeurs) : plus personne ne peut se connecter (mot de
+// passe oublié…). Retire le compte (toutes les sessions tombent : nouveau secret) et le
+// code responsable ; l'application revient à la 1re installation, avec le code
+// d'activation affiché ici.
 function reinitialiserComptesPanneau() {
   exigerEditeur_();
   const lock = LockService.getScriptLock();
@@ -800,7 +772,7 @@ function reinitialiserComptesPanneau() {
     nouvelleGenerationAdmin_(); // espaces ouverts refermés
     journaliser_(
       quiPanneau_(),
-      "Comptes réinitialisés (retour à la première installation)",
+      "Compte réinitialisé (retour à la première installation)",
       lireComptes_()
         .map(function (c) {
           return c.identifiant;
@@ -818,7 +790,7 @@ function reinitialiserComptesPanneau() {
     ecrirePersonnes_([]);
     effacerEssais_(props);
     return (
-      "✅ Comptes et code responsable effacés : l'application revient à la première installation.\n\n" +
+      "✅ Compte et code responsable effacés : l'application revient à la première installation.\n\n" +
       texteActivation_(genererCodeActivation_())
     );
   } finally {

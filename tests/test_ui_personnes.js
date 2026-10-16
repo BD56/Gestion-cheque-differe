@@ -1,4 +1,4 @@
-// Écrans des codes personnels : passer aux codes personnels, ajouter une personne,
+// Écrans des codes personnels : les choisir (code obligatoire), ajouter une personne,
 // « Qui êtes-vous ? » + code, journal « compte · personne », retour au code commun,
 // choix à la 1re installation.
 const assert = require("assert");
@@ -14,27 +14,30 @@ const { ouvrir } = require("./navigateur");
     return l[l.length - 1];
   };
   try {
-    // Sans code : ⚙️ ouvre l'espace ; Code & comptes propose les codes personnels
+    // Sans code (obligatoire) : ⚙️ fait choisir — « Des codes personnels » : nom + code
     await page.click('button[title="Panneau de contrôle"]');
     await attendre(300);
+    assert.ok((await vis("#blocCodeAPart")) && !(await vis("#zoneAdmin")));
+    await page.click("#btnCodeAPartPerso");
+    assert.ok((await vis("#nomAPart")) && !(await vis("#btnCodeAPartOui")));
+    await page.fill("#nomAPart", "Marie");
+    await page.fill("#pinAPart", "111111");
+    await page.fill("#pinAPart2", "111112");
+    await page.click("#btnCodeAPartPerso");
+    assert.match(await txt("#msgCodeAPart"), /ne correspondent pas/);
+    await page.fill("#pinAPart2", "111111");
+    await page.click("#btnCodeAPartPerso");
+    await attendre(300);
+    assert.ok(!(await vis("#ecranConnexion")) && (await vis("#zoneAdmin")), "espace ouvert aussitôt");
+    assert.match(await txt("#adminSous"), /Déverrouillé par Marie · se reverrouille après 3 min/);
     await page.click('[data-ecran-lien="code"]');
     await attendre();
-    assert.ok(await vis("#formPasserPersonnels"));
-    assert.ok(!(await vis("#blocPersonnes")));
-    await page.fill("#nomPasser", "Marie");
-    await page.fill("#codePasser", "111111");
-    await page.fill("#codePasser2", "111112");
-    await page.click("#formPasserPersonnels button");
-    assert.match(await txt("#msgPin"), /ne correspondent pas/);
-    await page.fill("#codePasser2", "111111");
-    await page.click("#formPasserPersonnels button");
-    await attendre(300);
     assert.match(await txt("#etatCodeAPart"), /^Codes personnels/);
     assert.ok((await vis("#blocPersonnes")) && !(await vis("#formPasserPersonnels")));
-    assert.match(await txt("#adminSous"), /Déverrouillé par Marie · se reverrouille après 3 min/);
     assert.match(await txt("#listePersonnes"), /Marie \(vous\)/);
     assert.ok(await vis("#formMonCode"));
     assert.ok(!P.ADMIN_PIN_HASH && P.RESPONSABLES);
+    assert.strictEqual(await txt("#kpiResponsables"), "1");
 
     // Ajouter Paul (son code tapé par lui)
     await page.fill("#nomPersonne", "Paul");

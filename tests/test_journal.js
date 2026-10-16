@@ -78,13 +78,15 @@ assert.deepStrictEqual(derniere().slice(2, 4), [
 c.basculerModeAnnuaire(jeton);
 assert.strictEqual(derniere()[2], "Pré-remplissage (anciens clients)");
 
-// Comptes et code responsable (jamais le mot de passe ni le code)
-c.creerCompte("Caisse 2", "motdepasse2", jeton);
-assert.deepStrictEqual(derniere().slice(1, 4), ["Caisse test", "Compte créé", "Caisse 2"]);
+// Compte et code responsable (jamais le mot de passe ni le code). « Caisse 2 » : compte
+// d'une version précédente (un seul compte désormais).
+env.props._store.COMPTES = JSON.stringify(
+  c.lireComptes_().concat([c.nouveauCompte_("Caisse 2", "motdepasse2")])
+);
 const id2 = c.lireComptes_().find((x) => x.identifiant === "Caisse 2").id;
 c.changerMotDePasse(id2, "nouveau-mdp2", jeton);
 assert.deepStrictEqual(derniere().slice(2, 4), ["Mot de passe changé", "Caisse 2"]);
-for (let i = 0; i < 5; i++) {
+for (let i = 0; i < 10; i++) {
   for (const k in env.props._store)
     if (k.indexOf("CPT_ESSAIS_") === 0) {
       const e = JSON.parse(env.props._store[k]);
@@ -95,15 +97,13 @@ for (let i = 0; i < 5; i++) {
 }
 assert.deepStrictEqual(derniere().slice(1, 4), [
   "Écran de connexion",
-  "Compte bloqué 15 min (5 mots de passe faux)",
+  "Connexion bloquée 5 min (10 mots de passe faux)",
   "Caisse 2",
 ]);
 c.retirerCompte(id2, jeton);
 assert.deepStrictEqual(derniere().slice(2, 4), ["Compte retiré", "Caisse 2"]);
-const j2 = J(c.definirPin("135790", jeton));
+c.definirPin("135790", jeton);
 assert.deepStrictEqual(derniere().slice(1, 3), ["Caisse test", "Code responsable changé"]);
-c.retirerCodeResponsable({ j: j2.jeton, c: session });
-assert.deepStrictEqual(derniere().slice(1, 3), ["Caisse test", "Code responsable retiré"]);
 env.activeEmail = "editeur@example.com";
 c.reinitialiserPinPanneau();
 assert.deepStrictEqual(derniere().slice(1, 3), [
@@ -112,7 +112,7 @@ assert.deepStrictEqual(derniere().slice(1, 3), [
 ]);
 c.reinitialiserComptesPanneau();
 assert.deepStrictEqual(derniere().slice(2, 4), [
-  "Comptes réinitialisés (retour à la première installation)",
+  "Compte réinitialisé (retour à la première installation)",
   "Caisse test retiré(s)",
 ]);
 env.activeEmail = "";

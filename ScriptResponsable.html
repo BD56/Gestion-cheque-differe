@@ -1,5 +1,5 @@
 <!-- Espace responsable : code, corrections, archives, réglages, comptes. -->
-<script data-version="2026.10.16-1243">
+<script data-version="2026.10.16-1512">
   // =================================================================
   // --- ESPACE RESPONSABLE (code PIN) ---
   // Le jeton n'est gardé qu'en mémoire : il disparaît à la fermeture du
@@ -129,9 +129,9 @@
       .withSuccessHandler(function (etat) {
         pinDefini = etat.pinDefini;
         codePersonnel = !!etat.codePersonnel;
-        // Pas de code à part : le compte connecté ouvre l'espace directement
+        // Pas encore de code (obligatoire) : le choisir d'abord, puis l'espace s'ouvre
         if (!pinDefini) {
-          ouvrirSansCode();
+          afficherChoixCode(true);
           return;
         }
         document.getElementById("txtVerrou").textContent = codePersonnel
@@ -176,24 +176,6 @@
       .personnesResponsables(SESSION);
   }
 
-  function ouvrirSansCode() {
-    personneAdmin = "";
-    document.getElementById("txtVerrou").textContent = "Ouverture…";
-    google.script.run
-      .withSuccessHandler(function (r) {
-        if (r && r.ok) {
-          jetonAdmin = r.jeton;
-          afficherZoneAdmin();
-        } else document.getElementById("msgVerrou").textContent = (r && r.message) || "Refusé.";
-      })
-      .withFailureHandler(function (err) {
-        if (!siNonAutorisee(err))
-          document.getElementById("msgVerrou").textContent =
-            "Erreur : " + (err && err.message ? err.message : err);
-      })
-      .ouvrirSessionAdmin("", SESSION);
-  }
-
   function deverrouillerAdmin() {
     const pin = document.getElementById("pinSaisi").value.trim();
     const msg = document.getElementById("msgVerrou");
@@ -215,6 +197,9 @@
           personneAdmin = r.personne || "";
           if (idPersonne) ecrireStockage("cdPersonne", idPersonne);
           afficherZoneAdmin();
+        } else if (r && r.codeACreer) {
+          pinDefini = false; // code réinitialisé entre-temps dans le Sheet
+          afficherChoixCode(true);
         } else msg.textContent = (r && r.message) || "Refusé.";
       })
       .withFailureHandler(function (err) {
@@ -307,9 +292,9 @@
     document.getElementById("kpiTotal").textContent = formaterTotal(c.total);
     document.getElementById("kpiForcees").textContent = c.forcees;
     document.getElementById("kpiForcees").parentNode.classList.toggle("non-nul", c.forcees > 0);
-    document.getElementById("kpiComptes").textContent = c.comptes;
+    // codes personnels : nombre de personnes ; code commun : « commun »
+    document.getElementById("kpiResponsables").textContent = c.responsables || "commun";
     document.getElementById("railNbSaisies").textContent = c.saisies;
-    document.getElementById("railNbComptes").textContent = c.comptes;
   }
 
   // Points d'attention en tête de l'espace responsable : journal modifié à la main,
@@ -737,36 +722,26 @@
     document.getElementById("txtNomStructure").textContent = cfg.NOM_STRUCTURE;
   }
 
-  // Aucun code / code commun / codes personnels : menu, sous-titre, écran « Code & comptes »
+  // Code commun / codes personnels : sous-titre, écran « Code & compte » (sans code,
+  // l'espace ne s'ouvre pas : le code se choisit d'abord, voir afficherChoixCode)
   function majCodeAPart() {
-    // Sans code à part, « Verrouiller » n'a pas de sens : seul « Se déconnecter » reste
-    document.getElementById("btnVerrouiller").style.display = pinDefini ? "" : "none";
-    document.getElementById("btnDeconnexionRail").classList.toggle("bas", !pinDefini);
-    document.getElementById("adminSous").textContent = !pinDefini
-      ? "Connecté" + (COMPTE ? " : " + COMPTE : "")
-      : codePersonnel
-        ? "Déverrouillé par " + (personneAdmin || "?") + " · se reverrouille après 3 min sans action"
-        : "Déverrouillé · se reverrouille après 10 min sans action";
-    document.getElementById("etatCodeAPart").textContent = !pinDefini
-      ? "Pas de code : tout compte connecté ouvre l'espace responsable. Protégez-le par un code commun ou par des codes personnels."
-      : codePersonnel
-        ? "Codes personnels : chacun ouvre l'espace avec SON code, quel que soit le compte connecté ; le journal note son nom."
-        : "Code commun : l'espace responsable est protégé par un code (6 chiffres) connu de l'équipe.";
+    document.getElementById("btnVerrouiller").style.display = "";
+    document.getElementById("adminSous").textContent = codePersonnel
+      ? "Déverrouillé par " + (personneAdmin || "?") + " · se reverrouille après 3 min sans action"
+      : "Déverrouillé · se reverrouille après 10 min sans action";
+    document.getElementById("etatCodeAPart").textContent = codePersonnel
+      ? "Codes personnels : chacun ouvre l'espace avec SON code, sur n'importe quel appareil ; le journal note son nom."
+      : "Code commun : l'espace responsable est protégé par un code (6 chiffres) connu de l'équipe.";
     document.getElementById("blocPersonnes").style.display = codePersonnel ? "" : "none";
     document.getElementById("formMonCode").style.display = codePersonnel && personneAdmin ? "" : "none";
     document.getElementById("titreMonCode").textContent = "Changer mon code (" + personneAdmin + ")";
-    document.getElementById("titreCodeCommun").textContent = !pinDefini
-      ? "Code commun (un code pour l'équipe)"
-      : codePersonnel
-        ? "Revenir à un code commun (les codes personnels seront retirés)"
-        : "Changer le code commun";
-    document.getElementById("btnEnregistrerPin").textContent = !pinDefini
-      ? "Protéger par ce code"
-      : codePersonnel
-        ? "Revenir au code commun"
-        : "Changer le code";
+    document.getElementById("titreCodeCommun").textContent = codePersonnel
+      ? "Revenir à un code commun (les codes personnels seront retirés)"
+      : "Changer le code commun";
+    document.getElementById("btnEnregistrerPin").textContent = codePersonnel
+      ? "Revenir au code commun"
+      : "Changer le code";
     document.getElementById("formPasserPersonnels").style.display = codePersonnel ? "none" : "";
-    document.getElementById("btnRetirerCode").style.display = pinDefini ? "" : "none";
   }
 
   // --- Codes personnels (liste, ajout, retrait, mon code) ---
@@ -884,7 +859,7 @@
     });
   });
 
-  // --- Comptes (liste, création, mot de passe, retrait) ---
+  // --- Compte du magasin (un seul ; plusieurs : Sheet d'une version précédente, à réduire) ---
   function ouvrirCodeComptes() {
     allerEcran("code");
     majCodeAPart();
@@ -896,10 +871,14 @@
     const msg = document.getElementById("msgComptes");
     msg.textContent = "Chargement…";
     const dessiner = function (liste, provisoire) {
-      msg.textContent = liste.length + " compte(s)." + (provisoire ? " Mise à jour…" : "");
+      msg.textContent =
+        (liste.length > 1
+          ? liste.length +
+            " comptes (version précédente) : l'application n'en utilise plus qu'un, celui du magasin. Retirez les autres."
+          : "Le même compte sur tous les appareils. Changer son mot de passe déconnecte tous les appareils.") +
+        (provisoire ? " Mise à jour…" : "");
       const zone = document.getElementById("listeComptes");
       zone.textContent = "";
-      document.getElementById("railNbComptes").textContent = liste.length;
       liste.forEach(function (c) {
         zone.appendChild(ligneCompte(c, liste.length > 1));
       });
@@ -1026,7 +1005,9 @@
           m2.value = "";
         }, 500);
         msg.style.color = "var(--ok)";
-        msg.textContent = r.message + (moi ? "" : " Ses connexions ouvertes sont terminées.");
+        msg.textContent =
+          r.message +
+          " Les autres appareils sont déconnectés : reconnectez-les avec le nouveau mot de passe.";
       });
     });
     return form;
@@ -1045,44 +1026,8 @@
       chargerComptes(true);
     });
   }
-  document.getElementById("formNouveauCompte").addEventListener("submit", function (e) {
-    e.preventDefault();
-    const id = document.getElementById("nouveauCompteId").value.trim();
-    const m1 = document.getElementById("nouveauCompteMdp").value;
-    const m2 = document.getElementById("nouveauCompteMdp2").value;
-    const msg = document.getElementById("msgNouveauCompte");
-    msg.style.color = "var(--danger)";
-    if (normIdJS(id) === "") {
-      msg.textContent = "Choisissez un identifiant (ex. Caisse centrale 2).";
-      return;
-    }
-    if (m1.length < 8) {
-      msg.textContent = "Le mot de passe doit contenir au moins 8 caractères.";
-      return;
-    }
-    if (m1 !== m2) {
-      msg.textContent = "Les deux mots de passe ne correspondent pas.";
-      return;
-    }
-    appelAdmin("creerCompte", [id, m1], function (r) {
-      if (!r || !r.ok) {
-        msg.textContent = (r && r.message) || "Refusé.";
-        return;
-      }
-      ["nouveauCompteId", "nouveauCompteMdp", "nouveauCompteMdp2"].forEach(function (k) {
-        document.getElementById(k).value = "";
-      });
-      msg.style.color = "var(--ok)";
-      msg.textContent =
-        "Compte « " +
-        r.compte.identifiant +
-        " » créé : connectez-vous avec sur l'appareil de cette caisse centrale.";
-      chargerComptes(true);
-    });
-  });
-
-  // Code COMMUN : le choisir (aucun code), le changer, ou y revenir depuis les codes
-  // personnels (second appui : ils seront retirés) ; ou ne plus demander de code.
+  // Code COMMUN : le changer, ou y revenir depuis les codes personnels (second appui :
+  // ils seront retirés).
   function changerPin() {
     const msg = document.getElementById("msgPin");
     const p1 = lireCodeDouble("pinNouveau", "pinNouveau2", msg);
@@ -1112,26 +1057,6 @@
       );
     else enregistrer();
   }
-  function retirerCodeAPart() {
-    confirmerEnDeuxTemps(
-      document.getElementById("btnRetirerCode"),
-      "Confirmer : ne plus demander de code",
-      function () {
-        const msg = document.getElementById("msgPin");
-        appelAdmin("retirerCodeResponsable", [], function (r) {
-          msg.style.color = r && r.ok ? "var(--ok)" : "var(--danger)";
-          msg.textContent = (r && r.message) || "Refusé.";
-          if (r && r.ok) {
-            pinDefini = false;
-            codePersonnel = false;
-            personneAdmin = "";
-            majCodeAPart();
-          }
-        });
-      }
-    );
-  }
-
   // Entrée dans les champs de code = valider
   ["pinSaisi"].forEach(function (id) {
     document.getElementById(id).addEventListener("keydown", function (e) {

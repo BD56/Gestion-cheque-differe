@@ -2,7 +2,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Installation_() {
-  return "2026.10.16-1243";
+  return "2026.10.16-1512";
 }
 
 // =================================================================
@@ -34,6 +34,14 @@ function installer() {
   } catch (e) {
     rapport.push("Contrôle des fichiers impossible : " + e.message);
   }
+  const nbComptes = lireComptes_().length;
+  if (nbComptes > 1)
+    rapport.push(
+      "⚠️ " +
+        nbComptes +
+        " comptes (version précédente) : l'application n'en utilise plus qu'un, celui du magasin. " +
+        "Retirez les autres : espace responsable → Code & compte."
+    );
   if (problemes.length) {
     rapport.unshift("⚠️ INSTALLATION INCOMPLÈTE (l'application est bloquée) :\n- " + problemes.join("\n- "));
   }

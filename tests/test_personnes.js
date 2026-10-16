@@ -1,5 +1,5 @@
-// Codes responsables PERSONNELS : chaque personne ouvre l'espace avec SON code, quel que
-// soit le compte ; le journal la nomme ; essais faux par personne ; jeton de 3 min.
+// Codes responsables PERSONNELS : chaque personne ouvre l'espace avec SON code, sur
+// n'importe quel appareil ; le journal la nomme ; essais faux par personne ; jeton de 3 min.
 const assert = require("assert");
 const { makeEnv } = require("./mocks");
 const { FakeSheet } = require("./fakesheet");
@@ -28,11 +28,9 @@ const sansPause = () => {
     }
 };
 
-// Deux comptes de caisse centrale (partagés par poste)
+// Le compte du magasin, connecté sur deux appareils (deux sessions)
 const sa = env.connecter(); // « Caisse test »
-const ja0 = { j: J(c.ouvrirSessionAdmin("", sa)).jeton, c: sa }; // sans code : ouvert
-assert.ok(J(c.creerCompte("Caisse 2", "motdepasse2", ja0)).ok);
-const sb = J(c.connexion("Caisse 2", "motdepasse2")).session;
+const sb = J(c.connexion("Caisse test", "motdepasse-test")).session;
 
 // --- Passer aux codes personnels (sans code : le compte connecté suffit) ---
 assert.match(J(c.passerCodesPersonnels("Marie", "12a456", null, sa)).message, /6 chiffres/);
@@ -70,14 +68,14 @@ const jm = { j: r.jeton, c: sb };
 assert.ok(env.cacheStore["ADM_" + r.jeton].exp - Date.now() <= 180000, "jeton personnel : 3 min");
 // le journal nomme la personne
 c.basculerModeWebApp(jm);
-assert.deepStrictEqual(derniere().slice(1, 3), ["Caisse 2 · Marie", "Mode de sécurité"]);
+assert.deepStrictEqual(derniere().slice(1, 3), ["Caisse test · Marie", "Mode de sécurité"]);
 
 // --- Ajouter une personne (son code tapé par elle) ---
 assert.match(J(c.ajouterPersonne("marie", "333333", jm)).message, /existe déjà/);
 assert.match(J(c.ajouterPersonne("Paul", "12", jm)).message, /6 chiffres/);
 assert.ok(J(c.ajouterPersonne("Paul", "222222", jm)).ok);
 assert.deepStrictEqual(derniere().slice(1, 4), [
-  "Caisse 2 · Marie",
+  "Caisse test · Marie",
   "Personne ajoutée (code personnel)",
   "Paul",
 ]);
@@ -98,12 +96,14 @@ assert.match(J(c.ouvrirSessionAdmin("111111", sa, idPaul)).message, /Réessayez|
 
 // --- Changer son code ---
 assert.ok(J(c.changerMonCode("444444", jm)).ok);
-assert.deepStrictEqual(derniere().slice(1, 4), ["Caisse 2 · Marie", "Code personnel changé", "Marie"]);
+assert.deepStrictEqual(derniere().slice(1, 4), ["Caisse test · Marie", "Code personnel changé", "Marie"]);
 sansPause();
 assert.match(J(c.ouvrirSessionAdmin("111111", sa, idMarie)).message, /Code faux/);
 sansPause();
 const jm2 = { j: J(c.ouvrirSessionAdmin("444444", sa, idMarie)).jeton, c: sa };
-assert.match(J(c.changerMonCode("555555", ja0)).message, /Ouvrez l'espace avec votre code personnel/);
+env.activeEmail = "editeur@example.com"; // panneau du Sheet : espace sans personne
+assert.match(J(c.changerMonCode("555555")).message, /Ouvrez l'espace avec votre code personnel/);
+env.activeEmail = "";
 
 // --- Retirer une personne : ses espaces ouverts se referment ; jamais la dernière ---
 for (const k in P) if (k === "PIN_ESSAIS_P_" + idPaul) delete P[k];
@@ -134,17 +134,15 @@ assert.ok(J(c.passerCodesPersonnels("Marie", "111111", jc)).ok);
 assert.ok(!P.ADMIN_PIN_HASH);
 assert.throws(() => c.getInfosAdmin(jc), /ADMIN_REQUIS/, "espace ouvert avec le code commun : refermé");
 
-// --- « Ne plus demander de code » / panneau du Sheet : codes personnels retirés aussi ---
-const idM = J(c.personnesResponsables(sa))[0].id;
-sansPause();
-const jm3 = { j: J(c.ouvrirSessionAdmin("111111", sa, idM)).jeton, c: sa };
-assert.ok(J(c.retirerCodeResponsable(jm3)).ok);
-assert.deepStrictEqual(J(c.etatAdmin()), { pinDefini: false, codePersonnel: false, comptes: true });
-assert.ok(J(c.passerCodesPersonnels("Marie", "111111", null, sa)).ok);
+// --- Panneau du Sheet : « Réinitialiser le code » retire aussi les codes personnels ;
+// l'espace ne s'ouvre plus sans en choisir un nouveau (code obligatoire) ---
+assert.strictEqual(typeof c.retirerCodeResponsable, "undefined", "plus de « ne plus demander de code »");
 env.activeEmail = "editeur@example.com";
 c.reinitialiserPinPanneau();
 env.activeEmail = "";
 assert.deepStrictEqual(J(c.etatAdmin()), { pinDefini: false, codePersonnel: false, comptes: true });
-assert.ok(J(c.ouvrirSessionAdmin("", sa)).ok, "sans code : ouvert directement");
+assert.ok(J(c.ouvrirSessionAdmin("", sa)).codeACreer, "sans code : en choisir un d'abord");
+assert.ok(J(c.passerCodesPersonnels("Marie", "111111", null, sa)).ok, "rechoisi par un compte connecté");
+assert.match(J(c.ouvrirSessionAdmin("111111", sa)).message, /Choisissez votre nom/);
 
 console.log("test_personnes : OK");

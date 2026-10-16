@@ -1,5 +1,5 @@
 <!-- Connexion (comptes), démarrage, aide, panneau, mentions légales. -->
-<script data-version="2026.10.16-1243">
+<script data-version="2026.10.16-1512">
   // =================================================================
   // --- CONNEXION (compte de la caisse centrale) ---
   // La session reçue à la connexion est gardée dans le navigateur et envoyée à
@@ -99,8 +99,8 @@
           ? "Première installation"
           : "Connexion";
         document.getElementById("txtConnexion").textContent = installation
-          ? "Saisissez le code d'activation affiché dans le Google Sheets (menu 🚀 APPLICATION → 🔑 Code d'activation), puis créez le compte de la caisse centrale. Les autres comptes se créent ensuite dans l'espace responsable."
-          : "Connectez-vous avec le compte de la caisse centrale. Le navigateur peut retenir le mot de passe.";
+          ? "Saisissez le code d'activation affiché dans le Google Sheets (menu 🚀 APPLICATION → 🔑 Code d'activation), puis créez le compte du magasin : le même identifiant et le même mot de passe serviront sur tous les appareils."
+          : "Connectez-vous avec le compte du magasin. Le navigateur peut retenir le mot de passe.";
         document.getElementById("blocActivation").style.display = installation ? "block" : "none";
         document.getElementById("blocMotDePasse2").style.display = installation ? "block" : "none";
         document
@@ -140,8 +140,7 @@
           "activationConnexion"
         );
     }
-    if (normIdJS(id) === "")
-      return refuser("Saisissez l'identifiant (ex. Caisse centrale 1).", "identifiant");
+    if (normIdJS(id) === "") return refuser("Saisissez l'identifiant (ex. Caisse centrale).", "identifiant");
     if (installation && mdp.length < 8)
       return refuser("Le mot de passe doit contenir au moins 8 caractères.", "motDePasse");
     if (!mdp) return refuser("Saisissez le mot de passe.", "motDePasse");
@@ -180,29 +179,41 @@
       });
     }, 500);
     if (premier) {
-      // 1er compte : code responsable à part ? S'il en existe un d'avant, on le dit
-      // seulement : le changer demande ce code (le code d'activation n'en tient pas lieu).
-      document.getElementById("formConnexion").style.display = "none";
-      document.getElementById("msgConnexion").textContent = "";
-      document.getElementById("titreConnexion").textContent = "Compte créé";
-      document.getElementById("txtConnexion").textContent =
-        "« " + COMPTE + " » est connecté sur cet appareil.";
-      document.getElementById("txtCodeAPart").textContent = pinDefini
-        ? "Un code responsable existe déjà (choisi avant) : il sera demandé pour ouvrir l'espace responsable. Pour le changer ou ne plus en demander : espace responsable → Code & comptes, avec ce code. Vous ne le connaissez pas ? Le panneau ⚙️ du Google Sheets le réinitialise."
-        : "Protéger l'espace responsable ? Un code commun (6 chiffres, connu de l'équipe), ou des codes personnels (un par personne : le journal note qui a fait quoi). Sans code, tout compte connecté l'ouvre directement. Modifiable ensuite dans l'espace responsable.";
-      ["btnCodeAPartOui", "btnCodeAPartPerso", "btnCodeAPartNon"].forEach(function (id) {
-        document.getElementById(id).style.display = pinDefini ? "none" : "";
-      });
-      document.getElementById("btnCodeAPartGarder").style.display = pinDefini ? "" : "none";
-      document.getElementById("btnCodeAPartOui").textContent = "Oui, un code commun";
-      document.getElementById("btnCodeAPartPerso").textContent = "Oui, des codes personnels";
-      document.getElementById("btnCodeAPartNon").textContent = "Non, pas de code";
-      document.getElementById("champsCodeAPart").style.display = "none";
-      choixCodeAPart = "";
-      document.getElementById("blocCodeAPart").style.display = "block";
+      afficherChoixCode(false);
       return;
     }
     fermerEcranConnexion();
+  }
+  // Code responsable OBLIGATOIRE (commun ou personnels), choisi par l'utilisateur, sans
+  // choix par défaut : après le 1er compte, ou à l'ouverture de l'espace responsable
+  // (⚙️) s'il n'y en a pas (1re installation inachevée, code réinitialisé dans le Sheet).
+  // Un code d'avant (Sheet déjà en service) : seulement signalé — le changer demande ce
+  // code ; le code d'activation n'en tient pas lieu.
+  let choixCodeDepuisEspace = false;
+  function afficherChoixCode(depuisEspace) {
+    choixCodeDepuisEspace = !!depuisEspace;
+    document.getElementById("ecranConnexion").style.display = "flex";
+    document.getElementById("formConnexion").style.display = "none";
+    document.getElementById("blocARenvoyer").style.display = "none";
+    document.getElementById("msgConnexion").textContent = "";
+    document.getElementById("msgCodeAPart").textContent = "";
+    document.getElementById("titreConnexion").textContent = depuisEspace ? "Code responsable" : "Compte créé";
+    document.getElementById("txtConnexion").textContent = depuisEspace
+      ? "Aucun code responsable : choisissez-en un pour ouvrir l'espace responsable."
+      : "« " + COMPTE + " » est connecté sur cet appareil.";
+    document.getElementById("txtCodeAPart").textContent = pinDefini
+      ? "Un code responsable existe déjà (choisi avant) : il sera demandé pour ouvrir l'espace responsable. Pour le changer : espace responsable → Code & compte, avec ce code. Vous ne le connaissez pas ? Le panneau ⚙️ du Google Sheets le réinitialise."
+      : "Comment protéger l'espace responsable (obligatoire : le compte du magasin sert sur toutes les tablettes) ? Un code commun (6 chiffres, connu de l'équipe), ou des codes personnels (un par personne : le journal note qui a fait quoi). Modifiable ensuite dans l'espace responsable.";
+    ["btnCodeAPartOui", "btnCodeAPartPerso"].forEach(function (id) {
+      document.getElementById(id).style.display = pinDefini ? "none" : "";
+    });
+    document.getElementById("btnCodeAPartGarder").style.display = pinDefini ? "" : "none";
+    document.getElementById("btnCodeAPartPlusTard").style.display = depuisEspace ? "" : "none";
+    document.getElementById("btnCodeAPartOui").textContent = "Un code commun";
+    document.getElementById("btnCodeAPartPerso").textContent = "Des codes personnels";
+    document.getElementById("champsCodeAPart").style.display = "none";
+    choixCodeAPart = "";
+    document.getElementById("blocCodeAPart").style.display = "block";
   }
   function fermerEcranConnexion() {
     if (saisiesARenvoyer.length) {
@@ -258,14 +269,19 @@
       );
   }
 
-  // Après le 1er compte, sans code d'avant : « choisir » le code (2 fois) ou « aucun ».
-  // Avec un code d'avant : « garder » (seul choix ici).
-  // « personnels » : codes personnels (votre nom + votre code ; les autres s'ajoutent
-  // ensuite dans l'espace responsable).
+  // Sans code : « choisir » le code commun (2 fois) ou « personnels » (votre nom + votre
+  // code ; les autres s'ajoutent ensuite dans l'espace responsable). Avec un code d'avant :
+  // « garder » (seul choix ici). Depuis l'espace : « plus tard » referme (pas d'espace
+  // sans code).
   let choixCodeAPart = "";
   function choisirCodeAPart(choix) {
     const msg = document.getElementById("msgCodeAPart");
     msg.textContent = "";
+    if (choix === "plusTard") {
+      document.getElementById("ecranConnexion").style.display = "none";
+      fermerPanneau();
+      return;
+    }
     if (choix !== "choisir" && choix !== "personnels") {
       fermerEcranConnexion();
       return;
@@ -310,6 +326,15 @@
         codePersonnel = perso;
         document.getElementById("pinAPart").value = "";
         document.getElementById("pinAPart2").value = "";
+        document.getElementById("nomAPart").value = "";
+        if (choixCodeDepuisEspace) {
+          // choisi depuis ⚙️ : l'espace s'ouvre aussitôt (le serveur a donné le jeton)
+          document.getElementById("ecranConnexion").style.display = "none";
+          jetonAdmin = r.jeton;
+          personneAdmin = perso ? nom : "";
+          afficherZoneAdmin();
+          return;
+        }
         fermerEcranConnexion();
       })
       .withFailureHandler(function (err) {

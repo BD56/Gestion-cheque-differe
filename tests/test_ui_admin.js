@@ -7,15 +7,28 @@ const { ouvrir } = require("./navigateur");
   try {
     assert.strictEqual(await txt("#txtNomOffre"), "Gestion Chèques Reportés");
     assert.ok(await vis("#formulaireSaisie"), "formulaire visible (dates OK)");
-    // ⚙️ sans code à part : l'espace s'ouvre directement pour le compte connecté
+    // ⚙️ sans code (obligatoire) : le choisir d'abord — sans choix par défaut — puis
+    // l'espace s'ouvre aussitôt
     await page.click('button[title="Panneau de contrôle"]');
     await page.waitForTimeout(200);
-    assert.ok((await vis("#zoneAdmin")) && !(await vis("#zoneVerrou")), "ouvert sans code");
-    assert.match(await txt("#adminSous"), /Connecté : Caisse test/);
-    assert.ok(!(await vis("#btnVerrouiller")), "pas de « Verrouiller » sans code");
-    // Code à part (créé par le compte) : impression libre, le reste derrière le code
+    assert.ok(!(await vis("#zoneAdmin")), "pas d'espace sans code");
+    assert.ok(await vis("#blocCodeAPart"));
+    assert.strictEqual(await txt("#titreConnexion"), "Code responsable");
+    assert.match(await txt("#txtCodeAPart"), /obligatoire/);
+    assert.ok(
+      (await vis("#btnCodeAPartOui")) && (await vis("#btnCodeAPartPerso")) && !(await vis("#champsCodeAPart"))
+    );
+    await page.click("#btnCodeAPartOui");
+    await page.fill("#pinAPart", "258025");
+    await page.fill("#pinAPart2", "258025");
+    await page.click("#btnCodeAPartOui");
+    await page.waitForTimeout(200);
+    assert.ok(!(await vis("#ecranConnexion")) && (await vis("#zoneAdmin")), "code choisi : espace ouvert");
+    assert.ok(env.props._store.ADMIN_PIN_HASH);
+    assert.match(await txt("#adminSous"), /Déverrouillé/);
+    assert.ok(await vis("#btnVerrouiller"));
+    // Fermer : le code est désormais demandé ; impression de la journée seulement hors espace
     await page.click("#modalParametres .btn-close-modal");
-    assert.ok(env.creerCode("258025").ok);
     await page.click('button[title="Panneau de contrôle"]');
     await page.waitForTimeout(150);
     assert.ok((await vis("#zoneVerrou")) && !(await vis("#zoneAdmin")));
@@ -44,7 +57,7 @@ const { ouvrir } = require("./navigateur");
     assert.strictEqual(await page.getAttribute('[data-ecran-lien="ensemble"]', "aria-current"), "true");
     assert.ok(!(await vis(".btn-print-jour")), "impression : dans son propre écran");
     assert.strictEqual(await txt("#kpiSaisies"), "0");
-    assert.strictEqual(await txt("#kpiComptes"), "1"); // le compte « Caisse test »
+    assert.strictEqual(await txt("#kpiResponsables"), "commun"); // code commun
     assert.match(await txt("#resumeOperation"), /^Du \d\d\/\d\d au \d\d\/\d\d$/);
     assert.match(await txt("#noteOffre"), /^Jour \d sur 3 · clôture automatique dans la nuit du/);
     assert.ok(!(await page.isVisible("text=OUVRIR GOOGLE SHEETS")));

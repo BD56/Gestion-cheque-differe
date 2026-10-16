@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr" data-version="2026.10.16-1243">
+<html lang="fr" data-version="2026.10.16-1512">
   <head>
     <base target="_top">
     <?!= include_('Style') ?>
@@ -131,7 +131,7 @@
             <div class="groupe-aide resp"><svg class="ico"><use href="#i-cadenas"/></svg> Pour le responsable (code)</div>
             <div class="tuiles">
               <button class="tuile resp" data-action="allerAide" data-args='["modes"]'><svg class="ico"><use href="#i-bouclier"/></svg>Modes de sécurité<small>signaler ou bloquer</small></button>
-              <button class="tuile resp" data-action="allerAide" data-args='["code"]'><svg class="ico"><use href="#i-cle"/></svg>Code &amp; comptes<small>connexion, code</small></button>
+              <button class="tuile resp" data-action="allerAide" data-args='["code"]'><svg class="ico"><use href="#i-cle"/></svg>Code &amp; compte<small>connexion, code</small></button>
               <button class="tuile resp" data-action="allerAide" data-args='["dates"]'><svg class="ico"><use href="#i-calendrier"/></svg>Dates &amp; clôture<small>lancer, prolonger, finir</small></button>
               <button class="tuile resp" data-action="allerAide" data-args='["corrections"]'><svg class="ico"><use href="#i-liste"/></svg>Corrections &amp; archives<small>modifier, anciennes offres</small></button>
             </div>
@@ -210,15 +210,15 @@
 
           <div class="sous-ecran" data-aide="code">
             <button class="retour" data-action="allerAide" data-args='["accueil"]'><svg class="ico"><use href="#i-chevron"/></svg>Retour</button>
-            <h3 class="titre-ecran"><svg class="ico"><use href="#i-cle"/></svg> Code &amp; comptes</h3>
+            <h3 class="titre-ecran"><svg class="ico"><use href="#i-cle"/></svg> Code &amp; compte</h3>
             <ul>
-              <li><strong>Comptes</strong> : ceux de la (des) caisse(s) centrale(s), avec un identifiant et un mot de passe (8 caractères au moins). Sans connexion, l'application ne montre rien, même avec le lien. Le navigateur peut retenir le mot de passe : sur iPad et Mac (Safari), il le propose à chaque connexion.</li>
+              <li><strong>Compte du magasin</strong> : un seul identifiant et un seul mot de passe (8 caractères au moins), les mêmes sur tous les appareils ; la caisse centrale connecte chaque appareil. Sans connexion, l'application ne montre rien, même avec le lien. Le navigateur peut retenir le mot de passe : sur iPad et Mac (Safari), il le propose à chaque connexion.</li>
               <li>La connexion se termine chaque nuit à <strong>3 h</strong> ; <strong>Se déconnecter</strong> (espace responsable) la termine tout de suite. Une saisie en cours n'est pas perdue : reconnectez-vous, elle repart.</li>
-              <li><strong>Premier compte</strong> : à la première installation, avec le <strong>code d'activation</strong> affiché dans le Google Sheets (menu 🚀 APPLICATION → 🔑 Code d'activation). Les suivants, le changement de mot de passe et le retrait : menu <strong><svg class="ico"><use href="#i-personne"/></svg> Code &amp; comptes</strong> (un second appui confirme le retrait). Un mot de passe changé ou un compte retiré déconnecte partout.</li>
-              <li>Après un mot de passe faux, patientez 10 s ; 5 erreurs bloquent ce compte 15 min.</li>
-              <li><strong>Code responsable</strong> (facultatif, 6 chiffres) : s'il existe, il est demandé pour ouvrir l'espace responsable, qui se reverrouille quand on le ferme, avec <strong>Verrouiller</strong>, ou après 10 min sans action. Sans code, tout compte connecté ouvre l'espace. Le choisir, le changer ou le retirer : <strong>Code &amp; comptes</strong>.</li>
-              <li><strong>Codes personnels</strong> (au lieu d'un code commun) : chacun choisit son nom puis tape SON code, quel que soit le compte connecté ; le journal du Google Sheets note qui a fait quoi. L'espace se reverrouille après 3 min sans action. Ajouter une personne : <strong>Code &amp; comptes</strong> → son nom, puis elle tape elle-même son code. Code oublié : un autre responsable la retire et la rajoute.</li>
-              <li><strong>Plus aucun accès</strong> (mots de passe oubliés) : le panneau <svg class="ico"><use href="#i-reglages"/></svg> du Google Sheets (personnes ayant accès au fichier) réinitialise les comptes ou le code.</li>
+              <li><strong>Le compte</strong> se crée à la première installation, avec le <strong>code d'activation</strong> affiché dans le Google Sheets (menu 🚀 APPLICATION → 🔑 Code d'activation). Changer son mot de passe (appareil perdu, départ) : <strong><svg class="ico"><use href="#i-personne"/></svg> Code &amp; compte</strong> ; tous les appareils sont alors déconnectés, reconnectez-les avec le nouveau mot de passe.</li>
+              <li>Après un mot de passe faux, patientez 10 s ; à partir de 10 erreurs, la connexion est bloquée 5, 10 puis 15 min (jamais plus). Les appareils déjà connectés continuent.</li>
+              <li><strong>Code responsable</strong> (obligatoire, 6 chiffres), choisi à l'installation : <strong>code commun</strong> (connu de l'équipe) ou <strong>codes personnels</strong>. Il est demandé pour ouvrir l'espace responsable, qui se reverrouille quand on le ferme, avec <strong>Verrouiller</strong>, ou après 10 min sans action. Le changer : <strong>Code &amp; compte</strong>.</li>
+              <li><strong>Codes personnels</strong> (au lieu d'un code commun) : chacun choisit son nom puis tape SON code, sur n'importe quel appareil ; le journal du Google Sheets note qui a fait quoi. L'espace se reverrouille après 3 min sans action. Ajouter une personne : <strong>Code &amp; compte</strong> → son nom, puis elle tape elle-même son code. Code oublié : un autre responsable la retire et la rajoute.</li>
+              <li><strong>Plus aucun accès</strong> (mot de passe ou code oublié) : le panneau <svg class="ico"><use href="#i-reglages"/></svg> du Google Sheets (personnes ayant accès au fichier) réinitialise le compte ou le code.</li>
             </ul>
           </div>
 
@@ -266,7 +266,7 @@
           <button data-ecran-lien="impression" data-action="allerEcran" data-args='["impression"]'><svg class="ico"><use href="#i-imprimer"/></svg>Impression</button>
           <button data-ecran-lien="archives" data-action="ouvrirArchives"><svg class="ico"><use href="#i-archive"/></svg>Archives</button>
           <button data-ecran-lien="reglages" data-action="allerEcran" data-args='["reglages"]'><svg class="ico"><use href="#i-etiquette"/></svg>Réglages</button>
-          <button data-ecran-lien="code" data-action="ouvrirCodeComptes"><svg class="ico"><use href="#i-personne"/></svg>Code &amp; comptes<span class="val" id="railNbComptes"></span></button>
+          <button data-ecran-lien="code" data-action="ouvrirCodeComptes"><svg class="ico"><use href="#i-personne"/></svg>Code &amp; compte</button>
           <button class="bas" id="btnVerrouiller" data-action="verrouillerAdmin"><svg class="ico"><use href="#i-cadenas"/></svg>Verrouiller</button>
           <button id="btnDeconnexionRail" data-action="seDeconnecter"><svg class="ico"><use href="#i-sortie"/></svg>Se déconnecter</button>
         </nav>
@@ -301,7 +301,7 @@
                 <div class="kpi"><span>Saisies sur l'offre</span><b id="kpiSaisies">—</b></div>
                 <div class="kpi"><span>Montant total</span><b id="kpiTotal">—</b></div>
                 <div class="kpi rouge"><span>Ajouts forcés</span><b id="kpiForcees">—</b></div>
-                <div class="kpi"><span>Comptes</span><b id="kpiComptes">—</b></div>
+                <div class="kpi"><span>Responsables</span><b id="kpiResponsables">—</b></div>
               </div>
               <div class="deux-blocs">
                 <div class="boite">
@@ -439,24 +439,12 @@
             </div>
 
             <div class="sous-ecran" data-ecran="code">
-              <h2 class="titre-vue">Code &amp; comptes</h2>
+              <h2 class="titre-vue">Code &amp; compte</h2>
               <div class="deux-blocs">
                 <div class="boite">
-                  <h3>Comptes</h3>
+                  <h3>Compte du magasin</h3>
                   <div class="message-tablettes" id="msgComptes"></div>
                   <div id="listeComptes"></div>
-                  <!-- Pas d'envoi réel ici : le navigateur ne doit pas retenir sur CET appareil le
-                       mot de passe d'un compte créé pour une autre caisse. -->
-                  <form class="nouveau-compte" id="formNouveauCompte" autocomplete="off" novalidate>
-                    <h4>Créer un compte</h4>
-                    <input type="text" id="nouveauCompteId" maxlength="40" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Identifiant (ex. Caisse centrale 2)" aria-label="Identifiant du nouveau compte">
-                    <input type="password" id="nouveauCompteMdp" maxlength="100" autocomplete="off" placeholder="Mot de passe (8 car. min.)" aria-label="Mot de passe du nouveau compte">
-                    <input type="password" id="nouveauCompteMdp2" maxlength="100" autocomplete="off" placeholder="Confirmer le mot de passe" aria-label="Confirmer le mot de passe">
-                    <div class="rangee-btn">
-                      <button class="sec accent" type="submit">Créer le compte</button>
-                    </div>
-                    <div class="message" id="msgNouveauCompte"></div>
-                  </form>
                 </div>
                 <div class="boite">
                   <h3>Code responsable</h3>
@@ -481,25 +469,22 @@
                       <div class="message" id="msgMonCode"></div>
                     </form>
                   </div>
-                  <!-- Code commun : le choisir, le changer, ou y revenir (depuis les codes personnels) -->
+                  <!-- Code commun : le changer, ou y revenir (depuis les codes personnels) -->
                   <div class="nouveau-compte" id="blocCodeCommun">
                     <h4 id="titreCodeCommun">Code commun</h4>
                     <input class="champ-code" type="password" id="pinNouveau" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="Nouveau code (6 chiffres)">
                     <input class="champ-code" type="password" id="pinNouveau2" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="Confirmer le nouveau code">
                     <div class="rangee-btn"><button class="sec accent" id="btnEnregistrerPin" data-action="changerPin">Enregistrer le code</button></div>
                   </div>
-                  <!-- Passer aux codes personnels (sans code ou depuis le code commun) -->
+                  <!-- Passer aux codes personnels (depuis le code commun) -->
                   <form class="nouveau-compte" id="formPasserPersonnels" autocomplete="off" novalidate>
                     <h4>Codes personnels</h4>
-                    <p class="note-doux">Chaque membre de la caisse centrale ouvre l'espace avec SON code, quel que soit le compte connecté ; le journal note son nom. Le code commun est retiré. Commencez par vous.</p>
+                    <p class="note-doux">Chaque membre de la caisse centrale ouvre l'espace avec SON code, sur n'importe quel appareil ; le journal note son nom. Le code commun est retiré. Commencez par vous.</p>
                     <input type="text" id="nomPasser" maxlength="40" autocomplete="off" placeholder="Votre nom (ex. Marie)" aria-label="Votre nom">
                     <input class="champ-code" type="password" id="codePasser" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="Votre code (6 chiffres)">
                     <input class="champ-code" type="password" id="codePasser2" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="Confirmer votre code">
                     <div class="rangee-btn"><button class="sec accent" type="submit">Passer aux codes personnels</button></div>
                   </form>
-                  <div class="rangee-btn">
-                    <button class="sec danger" id="btnRetirerCode" data-action="retirerCodeAPart">Ne plus demander de code</button>
-                  </div>
                   <div class="message" id="msgPin"></div>
                 </div>
               </div>
@@ -565,7 +550,7 @@
           </div>
           <div class="input-group">
             <label class="etiquette" for="identifiant">Identifiant</label>
-            <input type="text" id="identifiant" name="username" maxlength="40" autocomplete="username" autocapitalize="off" spellcheck="false" placeholder="Ex. : Caisse centrale 1">
+            <input type="text" id="identifiant" name="username" maxlength="40" autocomplete="username" autocapitalize="off" spellcheck="false" placeholder="Ex. : Caisse centrale">
           </div>
           <div class="input-group">
             <label class="etiquette" for="motDePasse">Mot de passe</label>
@@ -599,7 +584,7 @@
           <button class="plein" id="btnCodeAPartOui" data-action="choisirCodeAPart" data-args='["choisir"]'></button>
           <button class="sec" id="btnCodeAPartPerso" data-action="choisirCodeAPart" data-args='["personnels"]'>Oui, des codes personnels</button>
           <button class="plein" id="btnCodeAPartGarder" data-action="choisirCodeAPart" data-args='["garder"]' style="display: none">Continuer</button>
-          <button class="sec" id="btnCodeAPartNon" data-action="choisirCodeAPart" data-args='["aucun"]'></button>
+          <button class="sec" id="btnCodeAPartPlusTard" data-action="choisirCodeAPart" data-args='["plusTard"]' style="display: none">Plus tard</button>
           <div class="message-erreur" id="msgCodeAPart"></div>
         </div>
         <!-- Saisies validées pendant une session déjà terminée : jamais envoyées sans

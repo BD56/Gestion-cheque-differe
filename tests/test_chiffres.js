@@ -1,6 +1,6 @@
 // Vue d'ensemble de l'espace responsable (refonte graphique, étape 5) : chiffres de
 // l'offre en cours relus dans « Saisies » — nombre, total (montant nombre ou texte,
-// illisible = 0), ajouts forcés, comptes.
+// illisible = 0), ajouts forcés, responsables (codes personnels ; 0 = code commun).
 const assert = require("assert");
 const { makeEnv } = require("./mocks");
 const { FakeSheet } = require("./fakesheet");
@@ -9,7 +9,7 @@ try {
   const c = env.ctx;
   assert.deepStrictEqual(
     JSON.parse(JSON.stringify(c.chiffresOffre_(null))),
-    { saisies: 0, total: 0, forcees: 0, comptes: 0 },
+    { saisies: 0, total: 0, forcees: 0, responsables: 0 },
     "pas de feuille"
   );
   const f = new FakeSheet("Saisies", [
@@ -20,9 +20,9 @@ try {
     ["", "", "", "", "", ""],
     [new Date(), "D", "D", "4", 0.1, "ℹ️ Passage 2/3"],
   ]);
-  env.props.setProperty("COMPTES", JSON.stringify([{ id: "c1" }, { id: "c2" }]));
+  env.props.setProperty("RESPONSABLES", JSON.stringify([{ id: "p1" }, { id: "p2" }]));
   const r = JSON.parse(JSON.stringify(c.chiffresOffre_(f)));
-  assert.deepStrictEqual(r, { saisies: 4, total: 1384.6, forcees: 2, comptes: 2 });
+  assert.deepStrictEqual(r, { saisies: 4, total: 1384.6, forcees: 2, responsables: 2 });
   assert.strictEqual(c.nombreMontant_("89.90"), 89.9);
   assert.strictEqual(c.nombreMontant_("1.234,50"), 1234.5);
   assert.strictEqual(c.nombreMontant_("'=1+1"), 0, "formule neutralisée : illisible");

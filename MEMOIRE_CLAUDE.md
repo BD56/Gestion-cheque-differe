@@ -2,7 +2,8 @@
 
 > Fichier de reprise après compactage du contexte. À lire **avec** `AGENTS.md` (référence
 > canonique) et `docs/retours-vibe/decisions/2026-10-11_generalisation.md` (décisions).
-> Dernière mise à jour : 2026-10-16 (version 2026.10.16-1243 : « Passer la main », journal à empreintes,
+> Dernière mise à jour : 2026-10-16 (version 2026.10.16-1512 : UN SEUL compte du magasin,
+> code responsable obligatoire, blocage progressif ; avant : « Passer la main », journal à empreintes,
 > changements récents des accès, avertissement sur « Saisies » ; avant : comptes, codes
 > personnels, journal, impression réservée). Rien en cours de codage ; attendu : essais
 > de Bryan.
@@ -14,7 +15,7 @@
   « Comptoir » (branche de travail actuelle, tout est poussé)**. Aucune fusion faite,
   aucune pull request. Ordre prévu (sur demande de Bryan seulement) : `design` →
   `refonte` → `generalisation` → `main` / migration Vannes.
-- **Version actuelle sur `design`** : 2026.10.16-1243 (46 séries de tests vertes,
+- **Version actuelle sur `design`** : 2026.10.16-1512 (46 séries de tests vertes,
   ESLint et Prettier propres). Numéro renouvelé par Claude à chaque push de code
   (`npm run nouvelle-version`).
 - **Bryan teste** sur le Sheet « Gestion Chèques Différés — REFONTE (test) » depuis
@@ -57,6 +58,22 @@
   Abandonné : bouton de remise à zéro (« pas besoin »). Leçon : piège du déploiement
   (« Installer » lit le dernier code ; /exec sert la version figée ⇒ `npm run push`
   puis « Nouvelle version »).
+- **FAIT (1512) : UN SEUL COMPTE + CODE OBLIGATOIRE** (Bryan, 16/10, après avoir vu
+  qu'un compte pouvait changer le mot de passe d'un autre / le retirer, espace ouvert
+  sans code) : un seul compte du magasin pour tous les appareils (plus de création ;
+  Sheet d'avant à plusieurs comptes : signalé par « Installer », réduit dans Code &
+  compte) ; code responsable OBLIGATOIRE, commun ou personnels, choisi par
+  l'utilisateur SANS choix par défaut (après le 1er compte, ou depuis ⚙️ s'il manque,
+  avec « Plus tard ») ; plus de « Ne plus demander de code » ; mots de passe faux :
+  10 essais libres (pause 10 s), puis blocage 5 / 10 / 15 min max, journalisé +
+  bandeau, compteur remis à zéro (succès ou 24 h) ; pas de refus des mots de passe
+  « évidents » (Bryan : « ils sont grands ») ; ajouts forcés : aucune traçabilité (la
+  trace, c'est l'espace responsable) ; impression offre entière / jour passé :
+  toujours l'espace ; tuile « Responsables » au lieu de « Comptes ». AUDIT
+  D'AFFICHAGE NON PASSÉ (interrompu par Bryan : long) : à faire.
+- **Décision mises à jour (Bryan, 16/10)** : stabilité d'abord (versions rares,
+  éprouvées à Vannes) ; filet de sécurité = nouvelle installation avec reprise des
+  données (à concevoir plus tard avec Bryan).
 - **ATTENDU de Bryan** (une seule liste) : essais sur le Sheet de test avec la version
   en ligne 1031 —
   1. réinitialiser les comptes puis rafraîchir (écran de connexion attendu, même

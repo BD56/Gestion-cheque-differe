@@ -42,7 +42,7 @@ const { FakeSheet } = require("./fakesheet");
     // Comptes et archives : déjà là
     await page.click('[data-ecran-lien="code"]');
     await page.waitForTimeout(150);
-    assert.match(await page.textContent("#msgComptes"), /compte\(s\)\.$/);
+    assert.match(await page.textContent("#msgComptes"), /^Le même compte sur tous les appareils/);
     // Verrouillage : listes effacées de la page
     await page.click("#railAdmin .bas");
     await page.waitForTimeout(150);

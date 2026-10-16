@@ -63,7 +63,17 @@ const { ouvrir, J } = require("./navigateur");
     assert.match(await txt("#txtConnexion"), /« Caisse centrale 1 » est connecté/);
     assert.match(await stock("cdSession"), /^S1\./, "session gardée");
     assert.strictEqual(await stock("cdCompte"), "Caisse centrale 1");
-    await page.click("#btnCodeAPartNon");
+    // code responsable OBLIGATOIRE : ni « pas de code », ni « plus tard » à l'installation
+    assert.strictEqual(await page.$("#btnCodeAPartNon"), null);
+    assert.ok(!(await vis("#btnCodeAPartPlusTard")));
+    assert.ok(
+      (await vis("#btnCodeAPartOui")) && (await vis("#btnCodeAPartPerso")),
+      "deux choix, aucun par défaut"
+    );
+    await page.click("#btnCodeAPartOui");
+    await page.fill("#pinAPart", "135790");
+    await page.fill("#pinAPart2", "135790");
+    await page.click("#btnCodeAPartOui");
     await attendre();
     assert.ok(!(await vis("#ecranConnexion")));
     assert.ok(await page.evaluate(() => cacheVerif !== null), "application démarrée");
@@ -80,13 +90,16 @@ const { ouvrir, J } = require("./navigateur");
     await saisir("AB1", "DUPONT");
     assert.strictEqual(env.sheets.Saisies.getLastRow(), 2);
 
-    // --- Sans code à part : ⚙️ ouvre directement l'espace responsable ---
+    // --- ⚙️ : le code choisi à l'installation est demandé ---
     await page.click('button[title="Panneau de contrôle"]');
     await attendre(300);
-    assert.ok(await vis("#zoneAdmin"), "ouvert sans code");
-    assert.ok(!(await vis("#btnVerrouiller")), "pas de « Verrouiller » sans code");
-    assert.ok(await vis("#btnDeconnexionRail"));
-    assert.match(await txt("#adminSous"), /Connecté : Caisse centrale 1/);
+    assert.ok((await vis("#zoneVerrou")) && !(await vis("#zoneAdmin")));
+    await page.fill("#pinSaisi", "135790");
+    await page.press("#pinSaisi", "Enter");
+    await attendre(300);
+    assert.ok(await vis("#zoneAdmin"));
+    assert.ok((await vis("#btnVerrouiller")) && (await vis("#btnDeconnexionRail")));
+    assert.match(await txt("#adminSous"), /Déverrouillé/);
     // --- Se déconnecter ---
     await page.click("#btnDeconnexionRail");
     await attendre();
@@ -197,7 +210,7 @@ const { ouvrir, J } = require("./navigateur");
     assert.ok(await vis("#zoneAdmin"));
     assert.ok(await vis("#btnVerrouiller"), "« Verrouiller » avec un code à part");
 
-    // --- Code & comptes ---
+    // --- Code & compte : UN seul compte (plus de création, plus de « pas de code ») ---
     await page.click('[data-ecran-lien="code"]');
     await attendre();
     const lignes = () => page.$$eval("#listeComptes .ligne-compte b", (x) => x.map((b) => b.textContent));
@@ -205,41 +218,17 @@ const { ouvrir, J } = require("./navigateur");
     assert.strictEqual(
       await page.$$eval("#listeComptes .danger", (x) => x.length),
       0,
-      "dernier compte : pas de retrait"
+      "le compte ne se retire pas"
     );
+    assert.match(await txt("#msgComptes"), /^Le même compte sur tous les appareils/);
+    assert.strictEqual(await page.$("#formNouveauCompte"), null, "pas de création de compte");
+    assert.strictEqual(await page.$("#btnRetirerCode"), null, "pas de « Ne plus demander de code »");
     assert.match(await txt("#etatCodeAPart"), /protégé par un code/);
-    assert.ok(await vis("#btnRetirerCode"));
-    // créer un compte
-    await page.fill("#nouveauCompteId", "Caisse centrale 2");
-    await page.fill("#nouveauCompteMdp", "motdepasse2");
-    await page.fill("#nouveauCompteMdp2", "autre-chose");
-    await page.click("#formNouveauCompte button");
-    assert.match(await txt("#msgNouveauCompte"), /ne correspondent pas/);
-    await page.fill("#nouveauCompteMdp2", "motdepasse2");
+    // son mot de passe : envoi réel (le navigateur met à jour) et nouvelle session ; les
+    // autres appareils sont déconnectés
     const envoisAvant = envois.length;
-    await page.click("#formNouveauCompte button");
-    await attendre(300);
-    assert.match(await txt("#msgNouveauCompte"), /« Caisse centrale 2 » créé/);
-    assert.strictEqual(envois.length, envoisAvant, "pas retenu par le navigateur de CET appareil");
-    assert.deepStrictEqual(await lignes(), ["Caisse centrale 1 (vous)", "Caisse centrale 2"]);
-    assert.ok(J(env.ctx.connexion("Caisse centrale 2", "motdepasse2")).ok);
-    // mot de passe d'un autre compte
-    const blocs = await page.$$("#listeComptes > div");
-    await (await blocs[1].$("button:text('Mot de passe')")).click();
-    const f2 = await blocs[1].$("form.mdp-compte");
-    const [n1, n2] = await f2.$$("input[type=password]");
-    await n1.fill("nouveau-mdp2");
-    await n2.fill("nouveau-mdp2");
-    await (await f2.$("button[type=submit]")).click();
-    await attendre(300);
-    assert.match(
-      await f2.textContent(),
-      /Mot de passe de « Caisse centrale 2 » changé\. Ses connexions ouvertes sont terminées/
-    );
-    assert.strictEqual(envois.length, envoisAvant, "autre compte : pas d'envoi au navigateur");
-    assert.ok(J(env.ctx.connexion("Caisse centrale 2", "nouveau-mdp2")).ok);
-    // son propre mot de passe : envoi réel (le navigateur met à jour) et nouvelle session
     const sessionAvant = await stock("cdSession");
+    const blocs = await page.$$("#listeComptes > div");
     await (await blocs[0].$("button:text('Mot de passe')")).click();
     const f1 = await blocs[0].$("form.mdp-compte");
     const [m1, m2] = await f1.$$("input[type=password]");
@@ -247,34 +236,32 @@ const { ouvrir, J } = require("./navigateur");
     await m2.fill("nouveau-mdp1");
     await (await f1.$("button[type=submit]")).click();
     await attendre(300);
+    assert.match(await f1.textContent(), /Les autres appareils sont déconnectés/);
     assert.ok(envois.length > envoisAvant && /username=Caisse\+centrale\+1/.test(envois[envois.length - 1]));
     assert.notStrictEqual(await stock("cdSession"), sessionAvant, "nouvelle session gardée");
+    assert.throws(
+      () => env.ctx.chargerCacheVerif(sessionAvant),
+      /CONNEXION_REQUISE/,
+      "ancienne session tombée"
+    );
     await page.evaluate(() => rechargerCacheVerif());
     await attendre();
     assert.ok(!(await vis("#ecranConnexion")), "toujours connecté");
-    // ne plus demander de code, puis en remettre un
-    await page.click("#btnRetirerCode");
-    assert.ok(P.ADMIN_PIN_HASH, "rien au premier appui");
-    await page.click("#btnRetirerCode");
-    await attendre();
-    assert.ok(!P.ADMIN_PIN_HASH);
-    assert.ok(!(await vis("#btnVerrouiller")) && !(await vis("#btnRetirerCode")));
-    assert.match(await txt("#etatCodeAPart"), /Pas de code :/);
-    assert.strictEqual(await txt("#btnEnregistrerPin"), "Protéger par ce code");
-    await page.fill("#pinNouveau", "246802");
-    await page.fill("#pinNouveau2", "246802");
-    await page.click("#btnEnregistrerPin");
-    await attendre();
-    assert.ok(P.ADMIN_PIN_HASH, "code recréé par le compte connecté");
-    assert.match(await txt("#msgPin"), /Code enregistré/);
-    assert.ok(await vis("#btnVerrouiller"));
-    // retirer l'autre compte (second appui)
+    // Sheet d'une version précédente : plusieurs comptes, à réduire (second appui)
+    P.COMPTES = JSON.stringify(
+      env.ctx.lireComptes_().concat([env.ctx.nouveauCompte_("Caisse centrale 2", "motdepasse2")])
+    );
+    await page.click('[data-ecran-lien="ensemble"]');
+    await page.click('[data-ecran-lien="code"]');
+    await attendre(300);
+    assert.deepStrictEqual(await lignes(), ["Caisse centrale 1 (vous)", "Caisse centrale 2"]);
+    assert.match(await txt("#msgComptes"), /^2 comptes \(version précédente\)/);
     const bRetirer = await (await page.$$("#listeComptes > div"))[1].$(".danger");
     await bRetirer.click();
     await bRetirer.click();
     await attendre(300);
     assert.deepStrictEqual(await lignes(), ["Caisse centrale 1 (vous)"]);
-    assert.match(J(env.ctx.connexion("Caisse centrale 2", "nouveau-mdp2")).message, /Identifiant inconnu/);
+    assert.match(J(env.ctx.connexion("Caisse centrale 2", "motdepasse2")).message, /Identifiant inconnu/);
 
     // --- 1re installation sur un Sheet qui a DÉJÀ un code responsable ---
     // On le dit seulement : le code d'activation ne permet PAS de le remplacer.
@@ -299,7 +286,7 @@ const { ouvrir, J } = require("./navigateur");
       /Un code responsable existe déjà[\s\S]*panneau ⚙️ du Google Sheets/
     );
     assert.ok(
-      !(await vis("#btnCodeAPartOui")) && !(await vis("#btnCodeAPartNon")),
+      !(await vis("#btnCodeAPartOui")) && !(await vis("#btnCodeAPartPerso")),
       "ni changer ni retirer ici"
     );
     await page.click("#btnCodeAPartGarder");

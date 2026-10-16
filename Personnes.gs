@@ -1,6 +1,6 @@
 // Codes responsables PERSONNELS (au lieu d'un code commun) : chaque membre de la caisse
-// centrale ouvre l'espace responsable avec SON code, quel que soit le compte connecté
-// (comptes partagés par poste). Le journal nomme alors la personne (« compte ·
+// centrale ouvre l'espace responsable avec SON code, sur n'importe quel appareil (le
+// compte du magasin est le même partout). Le journal nomme alors la personne (« compte ·
 // personne »). Propriété « RESPONSABLES » : { id, nom, sel, hash, creeLe } — jamais le
 // code en clair. Essais faux comptés PAR PERSONNE (PIN_ESSAIS_P_<id>).
 //  - Une personne est ajoutée depuis l'espace (ouvert) : nom saisi par le responsable,
@@ -10,7 +10,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Personnes_() {
-  return "2026.10.16-1243";
+  return "2026.10.16-1512";
 }
 
 // Erreur passagère de Google : remontée telle quelle (jamais lue comme « aucune personne »,
@@ -65,7 +65,8 @@ function listerPersonnes(jeton) {
   });
 }
 
-// Passer aux codes personnels (depuis « aucun code » ou le code commun) : la personne qui
+// Passer aux codes personnels (depuis « aucun code » — 1re installation ou code
+// réinitialisé dans le Sheet — ou depuis le code commun) : la personne qui
 // le fait crée aussitôt SON code (sinon plus personne n'entrerait). Le code commun est
 // retiré. Sans code : compte connecté (comme la création du code commun).
 function passerCodesPersonnels(nom, code, jeton, cle) {
@@ -120,8 +121,8 @@ function ajouterPersonne(nom, code, jeton) {
   }
 }
 
-// Retrait (départ, code oublié) : jamais la dernière personne (sinon l'espace s'ouvrirait
-// sans code : pour cela, « Ne plus demander de code »). Ses espaces ouverts se referment.
+// Retrait (départ, code oublié) : jamais la dernière personne (le code est obligatoire ;
+// revenir au code commun reste possible). Ses espaces ouverts se referment.
 function retirerPersonne(id, jeton) {
   exigerAdmin_(jeton);
   const qui = quiJeton_(jeton);
@@ -136,7 +137,9 @@ function retirerPersonne(id, jeton) {
     if (liste.length === 1)
       return {
         ok: false,
-        message: "Impossible de retirer la dernière personne : choisissez « Ne plus demander de code ».",
+        message:
+          "Impossible de retirer la dernière personne (un code est obligatoire) : ajoutez-en une autre, " +
+          "ou revenez au code commun.",
       };
     ecrirePersonnes_(
       liste.filter(function (x) {

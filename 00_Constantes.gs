@@ -3,7 +3,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_00_Constantes_() {
-  return "2026.10.16-1243";
+  return "2026.10.16-1512";
 }
 
 // =================================================================
@@ -41,8 +41,14 @@ const PERSONNES_MAX = 30; // codes personnels (voir Personnes.gs)
 const ACTIVATION_DUREE_H = 24;
 const ACTIVATION_ESSAIS_MAX = 10;
 
-// Comptes (identifiant + mot de passe, voir Securite.gs)
-const COMPTES_MAX = 20;
+// Compte du magasin (identifiant + mot de passe, UN SEUL pour tous les appareils, voir
+// Securite.gs). Mots de passe faux : pause de 10 s après chacun ; à partir du
+// CPT_ESSAIS_LIBRES-ième, connexion bloquée 5, puis 10, puis 15 min (jamais plus) ;
+// compteur remis à zéro par une connexion réussie ou après CPT_OUBLI_H heures sans erreur.
+// Les appareils déjà connectés ne sont jamais bloqués.
+const CPT_ESSAIS_LIBRES = 10;
+const CPT_BLOCAGES_MIN = [5, 10, 15];
+const CPT_OUBLI_H = 24;
 const MDP_MIN = 8; // longueur minimale du mot de passe
 const MDP_TOURS = 500; // empreinte répétée : ralentit les essais si les propriétés fuitent
 const SESSION_HEURE_FIN = 3; // toutes les sessions se terminent à 3 h du matin (fuseau du script)

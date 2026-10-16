@@ -75,10 +75,12 @@ Aucun copier-coller de code.
   signalée chaque nuit dans l'espace responsable et le panneau du Sheet, jusqu'à ce
   que la direction la marque comme vue (après avoir regardé Fichier → Historique des
   versions, qui nomme l'auteur).
-- L'application se protège par des **comptes** (identifiant + mot de passe) : ceux de
-  la (des) **caisse(s) centrale(s)**, qui a la confiance de la direction. Les
-  caissiers n'ont pas de compte : la caisse centrale connecte leur appareil quand il
-  le faut. Les appareils **n'ont besoin d'aucun compte Google**.
+- L'application se protège par **un seul compte du magasin** (identifiant + mot de
+  passe), le même sur tous les appareils : la **caisse centrale**, qui a la confiance
+  de la direction, connecte chaque appareil. Puis par un **code responsable
+  obligatoire** pour l'espace responsable : **code commun** ou **codes personnels**
+  (un par personne : le journal note qui a fait quoi). Les appareils **n'ont besoin
+  d'aucun compte Google**.
 
 Avec le **compte Google qui détiendra les données** (voir ci-dessus) :
 
@@ -102,18 +104,19 @@ Avec le **compte Google qui détiendra les données** (voir ci-dessus) :
    *(C'est la seule étape que Google ne permet pas d'automatiser simplement.)*
 4. **Sur l'appareil de la caisse centrale**, ouvrir l'URL : l'écran **« Première
    installation »** s'affiche.
-   - saisir le **code d'activation** (étape 2), puis créer le **compte de la caisse
-     centrale** : identifiant (ex. « Caisse centrale 1 ») et mot de passe (8 caractères
-     au moins, deux fois) → **Créer le compte**. Accepter que le navigateur enregistre
-     le mot de passe. Sans le code d'activation, personne ne peut créer ce compte, même
-     avec le lien ;
-   - l'application demande ensuite s'il faut **protéger l'espace responsable par un
-     code à part** (6 chiffres) : sans code, tout compte connecté l'ouvre. Si un code
-     existe déjà (Sheet déjà en service), elle le signale : il reste demandé (le
-     changer : Code & comptes, avec ce code ; inconnu : panneau du Sheet →
-     « Réinitialiser le code responsable ») ;
-   - **chaque autre appareil** : ouvrir le même lien et se connecter (identifiant +
-     mot de passe). D'autres comptes se créent dans **⚙️ → Code & comptes** ;
+   - saisir le **code d'activation** (étape 2), puis créer le **compte du magasin** :
+     identifiant (ex. « Caisse centrale ») et mot de passe (8 caractères au moins,
+     deux fois) → **Créer le compte**. Accepter que le navigateur enregistre le mot de
+     passe. Sans le code d'activation, personne ne peut créer ce compte, même avec le
+     lien ;
+   - l'application fait ensuite **choisir le code responsable** (obligatoire, aucun
+     choix par défaut) : **un code commun** (6 chiffres, connu de l'équipe) ou **des
+     codes personnels** (votre nom + votre code ; les autres personnes s'ajoutent
+     ensuite dans ⚙️ → Code & compte). Si un code existe déjà (Sheet déjà en service),
+     elle le signale : il reste demandé (le changer : Code & compte, avec ce code ;
+     inconnu : panneau du Sheet → « Réinitialiser le code responsable ») ;
+   - **chaque autre appareil** (tablettes des hôtesses comprises) : ouvrir le même lien
+     et se connecter avec **le même compte** (identifiant + mot de passe) ;
    - sans connexion, l'application ne montre **rien**, même avec le lien. La connexion
      se termine chaque nuit à 3 h.
 5. Puis **⚙️ → Espace responsable** :
@@ -225,25 +228,30 @@ l'application, les codes responsables, le journal et les réglages suivent le Sh
 - **Départ du manager** (propriétaire du Sheet) : voir « Changement de manager »
   ci-dessus.
 - **Départ d'un membre de la caisse centrale, appareil perdu ou volé** : ⚙️ → Code &
-  comptes → **Mot de passe** (changer celui du compte : ses connexions ouvertes sont
-  terminées) ou **Retirer** le compte. Changer aussi le code responsable s'il existe.
+  compte → **Mot de passe** du compte du magasin : tous les appareils sont déconnectés,
+  les reconnecter avec le nouveau. Codes personnels : retirer la personne qui part ;
+  code commun : le changer.
 - **Mot de passe** : 8 caractères au moins. Après une erreur il faut patienter 10 s ;
-  5 erreurs bloquent CE compte 15 min (les autres comptes ne sont pas touchés).
-- **Code responsable** (facultatif) : 6 chiffres, mêmes protections ; le choisir, le
-  changer ou le retirer dans ⚙️ → Code & comptes.
+  à partir de 10 erreurs, la connexion est bloquée 5, puis 10, puis 15 min (jamais
+  plus) ; les appareils déjà connectés continuent. Un blocage apparaît dans les
+  « Changements récents » de l'espace responsable.
+- **Code responsable** (obligatoire) : 6 chiffres, pause de 10 s après une erreur,
+  blocage 15 min après 5 ; le changer dans ⚙️ → Code & compte.
 - **Codes personnels** (au lieu d'un code commun, pour savoir QUI a fait quoi) : ⚙️ →
-  Code & comptes → « Codes personnels ». Chaque membre de la caisse centrale choisit
-  son nom puis tape SON code, quel que soit le compte connecté ; le journal note son
-  nom. Ajouter quelqu'un : son nom, puis la personne tape elle-même son code devant
-  vous. Départ ou code oublié : la retirer (et la rajouter).
-- **Plus aucun accès** (mots de passe oubliés) : ouvrir le Google Sheets → panneau ⚙️
-  (à droite) → **Réinitialiser les comptes** (réservé aux personnes ayant accès au
-  fichier) : tous les comptes et le code sont retirés, un **code d'activation**
-  s'affiche et l'application revient à la « Première installation ». **Réinitialiser
-  le code responsable** n'efface que le code (code oublié).
+  Code & compte → « Codes personnels ». Chaque membre de la caisse centrale choisit
+  son nom puis tape SON code, sur n'importe quel appareil ; le journal note son nom.
+  Ajouter quelqu'un : son nom, puis la personne tape elle-même son code devant vous.
+  Départ ou code oublié : la retirer (et la rajouter).
+- **Plus aucun accès** : ouvrir le Google Sheets → panneau ⚙️ (à droite), réservé aux
+  personnes ayant accès au fichier. **Réinitialiser le code responsable** (code
+  oublié) : un nouveau code est choisi à la prochaine ouverture de l'espace
+  responsable — le faire tout de suite sur un appareil de la caisse centrale.
+  **Réinitialiser le compte** (mot de passe oublié) : le compte et le code sont
+  retirés, un **code d'activation** s'affiche et l'application revient à la
+  « Première installation ».
 - **Journal des actions** : onglet masqué « _Journal » du Google Sheets (clic droit sur
   la barre des onglets → afficher). Qui a supprimé, corrigé, forcé une saisie, changé un
-  réglage, les dates, le mode, les comptes ou le code — avec la date à la seconde.
+  réglage, les dates, le mode, le compte ou le code — avec la date à la seconde.
   Gardé 12 mois. Ne pas le modifier : il sert de contrôle.
 - **Mode SIGNALER / BLOQUANT** : il est **conservé** d'une offre à l'autre (la clôture
   ne le change pas).

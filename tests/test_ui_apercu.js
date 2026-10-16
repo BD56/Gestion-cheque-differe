@@ -31,7 +31,7 @@ const { FakeSheet } = require("./fakesheet");
       window.afficherZoneAdmin = function () {
         avant();
         const t = (id) => document.getElementById(id).textContent.trim();
-        window.__instant = { kpi: t("kpiSaisies"), comptes: t("kpiComptes") };
+        window.__instant = { kpi: t("kpiSaisies"), responsables: t("kpiResponsables") };
         document.querySelector('[data-ecran-lien="saisies"]').click();
         window.__instant.lignes = document.querySelectorAll("#listeSaisies .ligne-saisie").length;
         window.__instant.msg = t("msgSaisies");

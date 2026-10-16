@@ -13,23 +13,30 @@ const { ouvrir, J } = require("./navigateur");
   const vis = (s) => page.isVisible(s),
     attendre = (p, ms) => p.waitForTimeout(ms || 300);
   try {
-    // --- Espace responsable : le 1er compte (créé à l'ouverture) figure au bandeau ---
+    // --- Espace responsable : le 1er compte et le code (créés à l'ouverture) au bandeau ---
+    const ja = env.creerCode("258025").jeton;
+    const jm = { j: J(c.passerCodesPersonnels("Marie", "111111", ja)).jeton, c: env.session };
     await page.click('button[title="Panneau de contrôle"]');
+    await attendre(page);
+    await page.selectOption("#personneVerrou", { label: "Marie" });
+    await page.fill("#pinSaisi", "111111");
+    await page.press("#pinSaisi", "Enter");
     await attendre(page);
     assert.ok(await vis("#changementsRecents"));
     let li = await page.$$eval("#listeChangements li", (l) => l.map((x) => x.textContent));
-    assert.strictEqual(li.length, 1);
+    assert.strictEqual(li.length, 3);
+    assert.match(li[0], /^Codes personnels activés : première personne : Marie — le .* par Caisse test$/);
+    assert.match(li[1], /^Code responsable créé — le \d\d\/\d\d à \d\d h \d\d par Caisse test$/);
     assert.match(
-      li[0],
+      li[2],
       /^Premier compte créé \(code d'activation\) : Caisse test — le \d\d\/\d\d à \d\d h \d\d par Caisse test$/
     );
     assert.match(await page.textContent("#noteChangements"), /pendant 2 jours/);
     assert.ok(!(await vis("#alerteAdmin")), "pas d'alerte : journal intact");
 
     // Changements faits ailleurs (autre poste) : le plus récent en premier
-    const ja = { j: J(c.ouvrirSessionAdmin("", env.session)).jeton, c: env.session };
-    c.creerCompte("Caisse 2", "motdepasse2", ja);
-    c.basculerModeWebApp(ja); // pas un changement d'accès
+    c.ajouterPersonne("Paul", "222222", jm);
+    c.basculerModeWebApp(jm); // pas un changement d'accès
     // Journal retouché à la main, vu par le robot de nuit
     env.sheets._Journal.cells[1][3] = "Caisse 9";
     env.activeEmail = env.owner;
@@ -38,8 +45,8 @@ const { ouvrir, J } = require("./navigateur");
     await page.evaluate(() => ouvrirEnsemble());
     await attendre(page);
     li = await page.$$eval("#listeChangements li", (l) => l.map((x) => x.textContent));
-    assert.strictEqual(li.length, 2);
-    assert.match(li[0], /^Compte créé : Caisse 2 — /);
+    assert.strictEqual(li.length, 4);
+    assert.match(li[0], /^Personne ajoutée \(code personnel\) : Paul — .* par Caisse test · Marie$/);
     assert.ok(await vis("#alerteAdmin"));
     assert.match(
       await page.textContent("#alerteAdmin"),
@@ -88,7 +95,7 @@ const { ouvrir, J } = require("./navigateur");
       /^Constaté par le robot de nuit le .* : à partir de la ligne 2/
     );
     assert.ok(await panneau.isVisible("#boiteChangements"));
-    assert.strictEqual(await panneau.$$eval("#listeChangementsPanneau li", (l) => l.length), 2);
+    assert.strictEqual(await panneau.$$eval("#listeChangementsPanneau li", (l) => l.length), 4);
     if (captures) await panneau.screenshot({ path: captures + "/panneau-sheet.png", fullPage: true });
     // marquer comme vue : second appui
     await panneau.click("#btnAlerteJournal");

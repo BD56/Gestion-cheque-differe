@@ -247,27 +247,37 @@ Décision : `docs/retours-vibe/decisions/2026-10-11_generalisation.md`.
     contrôlées (les deux ou aucune, début ≤ fin) ; saisie incomplète refusée côté serveur
     (`controlerChamps_`) ; `reconstruireAnnuaire` réservée aux éditeurs du classeur ;
     `purgerAnnuaire` sous verrou, réécriture en une fois (en texte).
-- **Comptes (identifiant + mot de passe)** — branche `design`, étapes 1 à 4 FAITES
-  (octobre 2026) : ils ont REMPLACÉ les tablettes autorisées (Safari oublie la clé :
-  voir MEMOIRE_CLAUDE §0 ter). Accès déploiement : **Tout le monde**
-  (`ANYONE_ANONYMOUS`) ; `exigerSession_(cle)` en tête de toutes les fonctions de la
-  page (le panneau du Sheet passe via `estEditeurDuClasseur_`). Comptes des caisses centrales (`COMPTES` en propriétés : id, identifiant, sel,
-  empreinte répétée `MDP_TOURS` fois, version `v`). `connexion(identifiant, mdp)` →
-  session « S1.<id>.<v>.<fin>.<HMAC> » (secret `SESSION_SECRET`, rien de stocké par
-  session) valable jusqu'à **3 h du matin** (`finDeSession_`, fuseau du script) ;
-  `exigerSession_` exige une session valable (sinon `CONNEXION_REQUISE`). Essais faux PAR COMPTE (`CPT_ESSAIS_<id>` : pause 10 s, blocage 15 min
-  après 5). 1er compte : `premierCompte(activation, …)` (code d'activation, aucun
-  compte). Ensuite (espace responsable) : `creerCompte`, `listerComptes`,
-  `changerMotDePasse` (version + 1 ⇒ sessions caduques ; nouvelle session si c'est
-  l'appelant), `retirerCompte` (jamais le dernier). **Code responsable « à part »**
-  facultatif : sans code (`ADMIN_PIN_HASH` absent), un compte connecté ouvre l'espace
-  (`ouvrirSessionAdmin`) ; un compte crée le code sans activation (`definirPin`) ;
-  `retirerCodeResponsable` (compte connecté, espace ouvert). Secours :
-  `reinitialiserComptesPanneau` (éditeurs ; tout effacé, nouveau secret, code
-  d'activation). Tests : `test_comptes`.
+- **Compte du magasin (identifiant + mot de passe)** — branche `design` (octobre 2026) :
+  a REMPLACÉ les tablettes autorisées (Safari oublie la clé : voir MEMOIRE_CLAUDE
+  §0 ter). **UN SEUL compte** (décision de Bryan 16/10, version 2026.10.16-1512 : plus de création
+  de comptes ; la traçabilité par personne vient des codes personnels). Accès
+  déploiement : **Tout le monde** (`ANYONE_ANONYMOUS`) ; `exigerSession_(cle)` en tête
+  de toutes les fonctions de la page (le panneau du Sheet passe via
+  `estEditeurDuClasseur_`). `COMPTES` en propriétés (liste : un Sheet d'avant peut en
+  avoir plusieurs ; « Installer » le signale, `retirerCompte` les réduit, jamais le
+  dernier) : id, identifiant, sel, empreinte répétée `MDP_TOURS` fois, version `v`.
+  `connexion(identifiant, mdp)` → session « S1.<id>.<v>.<fin>.<HMAC> » (secret
+  `SESSION_SECRET`, rien de stocké par session) valable jusqu'à **3 h du matin**
+  (`finDeSession_`) ; sinon `CONNEXION_REQUISE`. Mots de passe faux
+  (`CPT_ESSAIS_<id>`) : pause 10 s ; à partir du `CPT_ESSAIS_LIBRES` (10) e, blocage
+  `CPT_BLOCAGES_MIN` 5 / 10 / 15 min (jamais plus), journalisé + bandeau ; remis à
+  zéro par une connexion réussie ou après `CPT_OUBLI_H` (24 h) ; les sessions ouvertes
+  continuent. Compte : `premierCompte(activation, …)` (code d'activation) ;
+  `listerComptes`, `changerMotDePasse` (version + 1 ⇒ tous les appareils déconnectés ;
+  nouvelle session pour l'appelant). **Code responsable OBLIGATOIRE** (commun ou
+  personnels, choisi par l'utilisateur sans choix par défaut) : sans code,
+  `ouvrirSessionAdmin` renvoie `{ codeACreer: true }` et la page fait choisir le code
+  (`afficherChoixCode`, ScriptConnexion.html : après le 1er compte, ou depuis ⚙️ avec
+  « Plus tard » ; l'espace s'ouvre avec le jeton renvoyé par `definirPin` /
+  `passerCodesPersonnels`). Plus de `creerCompte` ni de `retirerCodeResponsable`.
+  Impression de l'offre entière / d'un jour passé : toujours l'espace. Secours :
+  `reinitialiserPinPanneau` (nouveau code à la prochaine ouverture),
+  `reinitialiserComptesPanneau` (« Réinitialiser le compte » : tout effacé, nouveau
+  secret, code d'activation). Tests : `test_comptes`, `test_ui_connexion`.
   **Page (étape 2)** : `#ecranConnexion` (ScriptConnexion.html) = « Première
   installation » (aucun compte : code d'activation + identifiant + mot de passe × 2,
-  puis question « code responsable à part ? » → `definirPin` ou rien) ou
+  puis choix OBLIGATOIRE du code : commun → `definirPin`, personnels →
+  `passerCodesPersonnels`) ou
   « Connexion ». Le formulaire est RÉELLEMENT envoyé vers le cadre caché
   `cibleConnexion` (action = `URL_APPLI`, adresse /exec injectée par doGet ; `doPost`
   ne fait rien) : seule façon pour que Safari propose d'enregistrer le mot de passe
@@ -278,18 +288,18 @@ Décision : `docs/retours-vibe/decisions/2026-10-11_generalisation.md`.
   renvoyée (et recontrôlée) après la reconnexion. Sans code à part, ⚙️ ouvre l'espace
   directement (`ouvrirSansCode`), « Verrouiller » masqué ; « Se déconnecter » dans le
   menu et sous la carte du code. Test `test_ui_connexion` (remplace test_ui_tablettes).
-  **Étape 3** : écran « Code & comptes » (`ouvrirCodeComptes`) : liste (« (vous) »,
+  **Étape 3** : écran « Code & compte » (`ouvrirCodeComptes`) : liste (« (vous) »,
   créé / utilisé le), « Mot de passe » (formulaire par compte ; pour SON compte, envoi
   réel vers le cadre caché pour que le navigateur mette à jour le mot de passe retenu,
   et nouvelle session gardée), « Retirer » (second appui ; jamais le dernier ; son
-  propre compte ⇒ déconnexion), « Créer un compte » (sans envoi réel : rien retenu sur
-  CET appareil) ; code responsable : le choisir (aucun code ⇒ `definirPin` par le
-  compte), le changer, « Ne plus demander de code » (`retirerCodeResponsable`). Le
-  serveur reprend la session de l'appelant dans le jeton { j, c } (`cleAppelant_`).
-  KPI et menu : nombre de COMPTES (`chiffresOffre_().comptes`) ; aperçu : `comptes`.
+  propre compte ⇒ déconnexion ; seulement s'il y a plusieurs comptes, Sheet d'avant) ;
+  code responsable : le changer, ou passer aux codes personnels / revenir au code
+  commun. Le serveur reprend la session de l'appelant dans le jeton { j, c }
+  (`cleAppelant_`). KPI « Responsables » (`chiffresOffre_().responsables` : nombre de
+  personnes, « commun » sinon) ; aperçu : `comptes`.
   Panneau du Sheet : « Réinitialiser les comptes » (remplace « Retirer tous les
   appareils ») ; « Réinitialiser le code » ne donne plus de code d'activation s'il
-  existe un compte. Aide « Code & comptes » et mentions légales réécrites.
+  existe un compte. Aide « Code & compte » et mentions légales réécrites.
   **Étape 4 (nettoyage)** : tablettes autorisées RETIRÉES (fonctions, `TABLETTES_MAX`,
   `PIN_INCONNUS` / `essaisInconnus`, jetons « T: ») ; `exigerTablette_` → `exigerSession_`
   ; `definirPin` : création par un compte connecté (ou le panneau), plus de code
@@ -324,7 +334,7 @@ Décision : `docs/retours-vibe/decisions/2026-10-11_generalisation.md`.
   (`personnesResponsables`, compte connecté ; dernier nom choisi gardé : `cdPersonne`)
   + code ; `ouvrirSessionAdmin(pin, cle, idPersonne)` ; essais faux PAR PERSONNE
   (`PIN_ESSAIS_P_<id>`) ; jeton « lien|génération|idPersonne », 3 min
-  (`ADMIN_SESSION_PERSONNEL_SEC`), caduc si la personne est retirée. Code & comptes :
+  (`ADMIN_SESSION_PERSONNEL_SEC`), caduc si la personne est retirée. Code & compte :
   passer aux codes personnels (nom + code de celui qui le fait), ajouter une personne
   (nom ; code tapé PAR LA PERSONNE devant le responsable ; nom en double refusé,
   comparé comme les noms clients avec `_normId_` : « Marié » = « marie »), retirer (jamais la

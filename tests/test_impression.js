@@ -56,6 +56,7 @@ const ctx = loadCode(process.argv[2], {
   Utilities: { formatDate: fmt },
 });
 ctx.exigerSession_ = function () {}; // contrôle de la session testé à part
+ctx.exigerAdmin_ = function () {}; // offre / jours passés réservés à l'espace : testé dans test_personnes
 
 let r = J(ctx.genererDonneesImpression("jour", "2026-09-26"));
 assert.deepStrictEqual(r[0], ["Date", "Nom", "Prénom", "N° Pièce", "Montant", "Notes ou Infos"]);

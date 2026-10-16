@@ -3,7 +3,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Saisie_() {
-  return "2026.10.16-1243";
+  return "2026.10.16-1512";
 }
 
 // =================================================================
@@ -369,7 +369,7 @@ function listeSaisies_() {
 // Vue d'ensemble de l'espace responsable : chiffres de l'offre en cours, lus dans
 // « Saisies » (source de vérité). Montant illisible : compté pour 0.
 function chiffresOffre_(feuille) {
-  const r = { saisies: 0, total: 0, forcees: 0, comptes: lireComptes_().length };
+  const r = { saisies: 0, total: 0, forcees: 0, responsables: lirePersonnes_().length };
   if (!feuille || feuille.getLastRow() < 2) return r;
   const valeurs = feuille.getRange(2, 1, feuille.getLastRow() - 1, NB_COLONNES).getValues();
   valeurs.forEach(function (v) {

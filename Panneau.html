@@ -1,5 +1,5 @@
 <!doctype html>
-<html data-version="2026.10.16-1243">
+<html data-version="2026.10.16-1512">
   <head>
     <base target="_top" />
     <style>
@@ -222,16 +222,17 @@
     </div>
 
     <div class="boite">
-      <h2>Code et comptes</h2>
+      <h2>Code et compte</h2>
       <button class="btn" id="btnReinitPin" data-action="reinitialiserPin">
         Réinitialiser le code responsable
       </button>
       <button class="btn danger" id="btnReinitComptes" data-action="reinitialiserComptes">
-        Réinitialiser les comptes
+        Réinitialiser le compte
       </button>
       <p class="note">
-        Plus personne ne peut se connecter (mots de passe oubliés) ? « Réinitialiser les comptes » retire tous
-        les comptes et le code : l'application revient à la première installation, avec le code d'activation
+        Code oublié ? « Réinitialiser le code responsable » : un nouveau code est choisi à la prochaine
+        ouverture de l'espace responsable. Mot de passe du magasin oublié ? « Réinitialiser le compte » retire
+        le compte et le code : l'application revient à la première installation, avec le code d'activation
         affiché ici. Une confirmation est demandée par un second appui (5 s).
       </p>
     </div>
@@ -349,7 +350,7 @@
       function reinitialiserComptes() {
         confirmerEnDeuxTemps(
           document.getElementById("btnReinitComptes"),
-          "Confirmer : retirer TOUS les comptes",
+          "Confirmer : retirer le compte",
           function () {
             google.script.run
               .withSuccessHandler(messageEtSurveillance)

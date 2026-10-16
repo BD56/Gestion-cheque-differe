@@ -1,4 +1,5 @@
-// Comptes (identifiant + mot de passe) et sessions jusqu'à 3 h du matin
+// Compte du magasin (identifiant + mot de passe, UN seul) et sessions jusqu'à 3 h du
+// matin ; code responsable obligatoire ; blocage progressif des mots de passe faux.
 const assert = require("assert");
 const { makeEnv } = require("./mocks");
 const { FakeSheet } = require("./fakesheet");
@@ -111,24 +112,42 @@ r = J(c.connexion("caisse CENTRALE-1", "motdepasse1"));
 assert.ok(r.ok, "identifiant sans tenir compte des majuscules, accents, tirets");
 assert.strictEqual(r.compte.id, id1);
 c.chargerCacheVerif(r.session);
-assert.match(J(c.connexion("Caisse centrale 1", "mauvais!!")).message, /4 essai\(s\) restant\(s\)/);
+assert.match(J(c.connexion("Caisse centrale 1", "mauvais!!")).message, /9 essai\(s\) avant un blocage/);
 assert.match(J(c.connexion("Caisse centrale 1", "motdepasse1")).message, /Patientez/, "pause de 10 s");
 sansPause();
 assert.ok(J(c.connexion("Caisse centrale 1", "motdepasse1")).ok, "bon mot de passe : compteur remis à zéro");
 assert.ok(!P["CPT_ESSAIS_" + id1]);
 
-// --- Espace responsable sans code à part : un compte connecté l'ouvre directement ---
+// --- Code responsable OBLIGATOIRE : sans code, l'espace ne s'ouvre pas ---
 r = J(c.ouvrirSessionAdmin("", s1));
+assert.ok(!r.ok && r.codeACreer, "sans code : le choisir d'abord");
+assert.throws(() => c.getInfosAdmin({ j: null, c: s1 }), /ADMIN_REQUIS/);
+assert.throws(
+  () => c.genererDonneesImpression("offre", "", s1, null),
+  /ADMIN_REQUIS/,
+  "offre entière : espace"
+);
+assert.ok(Array.isArray(J(c.genererDonneesImpression("jour", "aujourdhui", s1))), "la journée : connexion");
+// créé par le compte connecté (sans code d'activation), il est aussitôt demandé
+assert.ok(J(c.definirPin("135790", null, s1)).ok, "création du code par un compte connecté");
+assert.strictEqual(c.etatAdmin().pinDefini, true);
+assert.match(J(c.ouvrirSessionAdmin("", s1)).message, /Code faux/, "désormais le code est demandé");
+sansPause();
+r = J(c.ouvrirSessionAdmin("135790", s1));
 assert.ok(r.ok && r.jeton);
 const adm1 = { j: r.jeton, c: s1 };
 assert.ok(J(c.getInfosAdmin(adm1)).chiffres);
-// … et crée d'autres comptes
-assert.match(J(c.creerCompte("caisse centrale 1", "motdepasse2", adm1)).message, /existe déjà/);
-assert.match(J(c.creerCompte("Caisse centrale 2", "court", adm1)).message, /au moins 8/);
-r = J(c.creerCompte("Caisse centrale 2", "motdepasse2", adm1));
-assert.ok(r.ok);
-const id2 = r.compte.id;
-assert.throws(() => c.creerCompte("Pirate", "motdepasse3", null), /ADMIN_REQUIS/);
+assert.strictEqual(
+  typeof c.retirerCodeResponsable,
+  "undefined",
+  "« ne plus demander de code » n'existe plus"
+);
+
+// --- Un seul compte : plus de création ; un Sheet d'avant peut en avoir plusieurs ---
+assert.strictEqual(typeof c.creerCompte, "undefined");
+const ancien = c.nouveauCompte_("Caisse centrale 2", "motdepasse2"); // version précédente
+P.COMPTES = JSON.stringify(c.lireComptes_().concat([ancien]));
+const id2 = ancien.id;
 const s2 = J(c.connexion("Caisse centrale 2", "motdepasse2")).session;
 // jeton lié au compte : inutile avec la session d'un autre
 assert.throws(() => c.getInfosAdmin({ j: adm1.j, c: s2 }), /ADMIN_REQUIS/);
@@ -139,21 +158,64 @@ assert.deepStrictEqual(
 );
 assert.ok(!JSON.stringify(liste).match(/hash|sel/), "ni empreinte ni sel");
 assert.ok(liste[0].vueLe);
+env.activeEmail = "editeur@example.com";
+assert.match(c.installer(), /2 comptes \(version précédente\)[\s\S]*Retirez les autres/);
+env.activeEmail = "";
 
-// --- Blocage PAR COMPTE : les erreurs sur l'un ne bloquent pas l'autre ---
-for (let i = 0; i < 5; i++) {
+// --- Mots de passe faux : 10 essais, puis blocage 5, 10, puis 15 min (jamais plus) ---
+const etatCpt = () => JSON.parse(P["CPT_ESSAIS_" + id2] || "{}");
+const debloquer = () => {
+  const e = etatCpt();
+  e.bloque = 0;
+  e.dernier = 0;
+  P["CPT_ESSAIS_" + id2] = JSON.stringify(e);
+};
+for (let i = 1; i <= 9; i++) {
+  sansPause();
+  r = J(c.connexion("Caisse centrale 2", "mauvais!!"));
+}
+assert.match(r.message, /1 essai\(s\) avant un blocage/);
+sansPause();
+assert.match(J(c.connexion("Caisse centrale 2", "mauvais!!")).message, /connexion bloquée 5 min/);
+sansPause();
+assert.match(
+  J(c.connexion("Caisse centrale 2", "motdepasse2")).message,
+  /Réessayez dans 5 min/,
+  "même le bon"
+);
+c.chargerCacheVerif(s2); // les appareils déjà connectés continuent
+const jl = env.sheets._Journal.getDataRange().getValues();
+assert.deepStrictEqual(jl[jl.length - 1].slice(1, 4), [
+  "Écran de connexion",
+  "Connexion bloquée 5 min (10 mots de passe faux)",
+  "Caisse centrale 2",
+]);
+assert.ok(c.changementsRecents_().lignes[0].indexOf("Connexion bloquée 5 min") === 0, "montré au bandeau");
+debloquer();
+assert.match(J(c.connexion("Caisse centrale 2", "mauvais!!")).message, /bloquée 10 min/);
+debloquer();
+assert.match(J(c.connexion("Caisse centrale 2", "mauvais!!")).message, /bloquée 15 min/);
+debloquer();
+assert.match(J(c.connexion("Caisse centrale 2", "mauvais!!")).message, /bloquée 15 min/, "jamais plus");
+assert.ok(J(c.connexion("Caisse centrale 1", "motdepasse1")).ok, "l'autre compte n'est pas bloqué");
+debloquer();
+assert.ok(J(c.connexion("Caisse centrale 2", "motdepasse2")).ok, "débloqué : le bon mot de passe passe");
+assert.ok(!P["CPT_ESSAIS_" + id2], "compteur remis à zéro");
+// erreurs de plus de 24 h : oubliées
+for (let i = 0; i < 9; i++) {
   sansPause();
   c.connexion("Caisse centrale 2", "mauvais!!");
 }
-assert.match(J(c.connexion("Caisse centrale 2", "motdepasse2")).message, /bloqué|Trop d'essais/);
-assert.ok(J(c.connexion("Caisse centrale 1", "motdepasse1")).ok, "l'autre compte n'est pas bloqué");
-c.chargerCacheVerif(s2); // une session déjà ouverte reste valable
+const vieux = etatCpt();
+vieux.dernier = Date.now() - 25 * 3600000;
+P["CPT_ESSAIS_" + id2] = JSON.stringify(vieux);
+assert.match(J(c.connexion("Caisse centrale 2", "mauvais!!")).message, /9 essai\(s\) avant un blocage/);
+delete P["CPT_ESSAIS_" + id2];
 
 // --- Changer le mot de passe : les sessions ouvertes avec l'ancien tombent ---
 r = J(c.changerMotDePasse(id2, "nouveau-mdp2", adm1, s1));
 assert.ok(r.ok && !r.session, "pas le compte de l'appelant : pas de nouvelle session");
 refuse(() => c.chargerCacheVerif(s2));
-assert.ok(!P["CPT_ESSAIS_" + id2], "blocage levé avec le nouveau mot de passe");
 assert.ok(J(c.connexion("Caisse centrale 2", "nouveau-mdp2")).ok);
 c.chargerCacheVerif(s1); // les autres comptes ne sont pas touchés
 r = J(c.changerMotDePasse(id1, "nouveau-mdp1", adm1, s1));
@@ -161,23 +223,10 @@ assert.ok(r.ok && r.session, "son propre compte : nouvelle session");
 refuse(() => c.chargerCacheVerif(s1));
 const s1b = r.session;
 c.chargerCacheVerif(s1b);
-
-// --- Code responsable « à part » : créé par un compte connecté, sans code d'activation ---
-const adm1b = { j: J(c.ouvrirSessionAdmin("", s1b)).jeton, c: s1b };
-assert.ok(J(c.definirPin("135790", null, s1b)).ok, "création du code par un compte connecté");
-assert.strictEqual(c.etatAdmin().pinDefini, true);
-assert.match(J(c.ouvrirSessionAdmin("", s1b)).message, /Code faux/, "désormais le code est demandé");
 sansPause();
-r = J(c.ouvrirSessionAdmin("135790", s1b));
-assert.ok(r.ok);
-assert.ok(!P["PIN_ESSAIS_C_" + id1], "compteur du code propre au compte");
-// retirer le code : seulement un compte connecté, espace ouvert
-assert.throws(() => c.retirerCodeResponsable(null, s1b), /ADMIN_REQUIS/);
-assert.ok(J(c.retirerCodeResponsable({ j: r.jeton, c: s1b }, s1b)).ok);
-assert.strictEqual(c.etatAdmin().pinDefini, false);
-assert.ok(J(c.ouvrirSessionAdmin("", s1b)).ok);
+const adm1b = { j: J(c.ouvrirSessionAdmin("135790", s1b)).jeton, c: s1b };
 
-// --- Retirer un compte : ses sessions tombent ; jamais le dernier ---
+// --- Réduire à un seul compte : ses sessions tombent ; jamais le dernier ---
 const s2b = J(c.connexion("Caisse centrale 2", "nouveau-mdp2")).session;
 assert.ok(J(c.retirerCompte(id2, adm1b)).ok);
 refuse(() => c.chargerCacheVerif(s2b));
@@ -205,7 +254,7 @@ const s3 = J(c.connexion("Caisse centrale 1", "motdepasse1")).session;
 const dem = J(c.demarrage(s3));
 assert.ok(dem.config && dem.config.PASSAGES_MAX, "réglages envoyés à la page");
 assert.ok(!JSON.stringify(dem).includes("docs.google.com"), "pas d'adresse du Sheet");
-assert.ok(J(c.genererDonneesImpression("offre", "", s3)).length >= 1);
+assert.throws(() => c.genererDonneesImpression("offre", "", s3), /ADMIN_REQUIS/, "offre entière : espace");
 assert.strictEqual(J(c.chargerCacheVerif(s3, true)).annuaire, null, "rechargement léger sans l'annuaire");
 assert.notStrictEqual(J(c.chargerCacheVerif(s3)).annuaire, null);
 // Aperçu de l'espace responsable (avant le code) : lectures seulement, rien de la sécurité
@@ -220,7 +269,9 @@ assert.ok(!("robots" in ap), "rien de la sécurité avant le code");
 assert.ok(!/hash|"sel"|SESSION/.test(JSON.stringify(ap)), "ni empreinte, ni sel, ni secret");
 assert.strictEqual(c.ScriptApp.getProjectTriggers().length, nbRobots, "aucun robot recréé");
 // Jeton responsable seul (sans la session) : refusé
-const jt = J(c.ouvrirSessionAdmin("", s3)).jeton;
+assert.ok(J(c.definirPin("135790", null, s3)).ok); // code effacé avec le compte : rechoisi
+const jt = J(c.ouvrirSessionAdmin("135790", s3)).jeton;
+assert.ok(J(c.genererDonneesImpression("offre", "", s3, { j: jt, c: s3 })).length >= 1);
 assert.ok(J(c.getInfosAdmin({ j: jt, c: s3 })).config);
 assert.throws(() => c.getInfosAdmin(jt), /ADMIN_REQUIS/);
 
@@ -233,7 +284,7 @@ const env2 = makeEnv({ repo: process.argv[2], sessionReelle: true });
 env2.activeEmail = "editeur@example.com";
 env2.props._store.ADMIN_PIN_HASH = "ancien-code"; // ancien Sheet : code responsable déjà là, aucun compte
 env2.ctx.afficherCodeActivation();
-assert.match(env2.alertes[0], /Code d'activation : \d{4}-\d{4}[\s\S]*créer le compte de la caisse centrale/);
+assert.match(env2.alertes[0], /Code d'activation : \d{4}-\d{4}[\s\S]*créer le compte du magasin/);
 env.activeEmail = "";
 
 // --- 1re installation sur un Sheet qui a déjà un code responsable : il reste exigé ---
@@ -248,7 +299,6 @@ assert.throws(
   /ADMIN_REQUIS/,
   "pas de remplacement sans le code"
 );
-assert.throws(() => env3.ctx.retirerCodeResponsable(null, s3b), /ADMIN_REQUIS/);
 for (const k in env3.props._store) if (k.indexOf("PIN_ESSAIS_") === 0) delete env3.props._store[k];
 assert.ok(J(env3.ctx.ouvrirSessionAdmin("111111", s3b)).ok, "avec le code d'avant : ouvert");
 
@@ -256,10 +306,9 @@ assert.ok(J(env3.ctx.ouvrirSessionAdmin("111111", s3b)).ok, "avec le code d'avan
 {
   const e4 = makeEnv({ repo: process.argv[2], sessionReelle: true });
   const sa = e4.connecter();
-  const sb = J(
-    e4.ctx.creerCompte("Caisse 2", "motdepasse2", { j: J(e4.ctx.ouvrirSessionAdmin("", sa)).jeton, c: sa })
+  e4.props._store.COMPTES = JSON.stringify(
+    e4.ctx.lireComptes_().concat([e4.ctx.nouveauCompte_("Caisse 2", "motdepasse2")]) // version précédente
   );
-  assert.ok(sb.ok);
   const sessB = J(e4.ctx.connexion("Caisse 2", "motdepasse2")).session;
   assert.ok(J(e4.ctx.definirPin("135790", null, sa)).ok);
   const ja = { j: J(e4.ctx.ouvrirSessionAdmin("135790", sa)).jeton, c: sa };
@@ -277,8 +326,8 @@ assert.ok(J(env3.ctx.ouvrirSessionAdmin("111111", s3b)).ok, "avec le code d'avan
   e4.activeEmail = "";
   assert.throws(() => e4.ctx.getInfosAdmin(ja2), /ADMIN_REQUIS/);
   e4.ctx.chargerCacheVerif(sa); // toujours connecté
-  assert.ok(J(e4.ctx.ouvrirSessionAdmin("", sa)).ok, "sans code : rouvert directement");
-  // Comptes réinitialisés : plus personne n'est connecté
+  assert.ok(J(e4.ctx.ouvrirSessionAdmin("", sa)).codeACreer, "sans code : un nouveau code d'abord");
+  // Compte réinitialisé : plus personne n'est connecté
   e4.activeEmail = "editeur@example.com";
   e4.ctx.reinitialiserComptesPanneau();
   e4.activeEmail = "";

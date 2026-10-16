@@ -32,7 +32,7 @@ const nuit = () => {
 const session = env.connecter();
 const jeton = env.creerCode("258025").jeton;
 c.basculerModeWebApp(jeton);
-c.creerCompte("Caisse 2", "motdepasse2", jeton);
+c.basculerModeAnnuaire(jeton);
 c.setConfig({ PASSAGES_MAX: "2" }, jeton);
 const j = env.sheets._Journal;
 assert.deepStrictEqual(j.getRange(1, 1, 1, 5).getValues()[0], [
@@ -182,21 +182,20 @@ env.activeEmail = "";
 env = nouvelEnv({ sessionReelle: true });
 c = env.ctx;
 const sa = env.connecter();
-const ja = { j: J(c.ouvrirSessionAdmin("", sa)).jeton, c: sa };
 // début attendu (expression régulière), puis « — le jj/mm à hh h mm par … »
 function lignesTexte(t, debut) {
   assert.match(t, new RegExp("^" + debut + " — le \\d\\d/\\d\\d à \\d\\d h \\d\\d par "));
 }
-let ch = J(c.getInfosAdmin(ja)).changements;
+let ch = c.changementsRecents_();
 assert.strictEqual(ch.lignes.length, 1);
 lignesTexte(ch.lignes[0], "Premier compte créé \\(code d'activation\\) : Caisse test");
 assert.match(ch.lignes[0], / par Caisse test$/);
-c.basculerModeWebApp(ja); // pas un changement de « qui peut faire quoi »
-c.setConfig({ PASSAGES_MAX: "3" }, ja);
-assert.strictEqual(J(c.getInfosAdmin(ja)).changements.lignes.length, 1, "mode, réglages : journal seulement");
 assert.ok(J(c.passerCodesPersonnels("Marie", "111111", null, sa)).ok);
 const noms = J(c.personnesResponsables(sa));
 const jm = { j: J(c.ouvrirSessionAdmin("111111", sa, noms[0].id)).jeton, c: sa };
+c.basculerModeWebApp(jm); // pas un changement de « qui peut faire quoi »
+c.setConfig({ PASSAGES_MAX: "3" }, jm);
+assert.strictEqual(J(c.getInfosAdmin(jm)).changements.lignes.length, 2, "mode, réglages : journal seulement");
 assert.ok(J(c.ajouterPersonne("Paul", "222222", jm)).ok);
 ch = J(c.getInfosAdmin(jm)).changements;
 lignesTexte(ch.lignes[0], "Personne ajoutée \\(code personnel\\) : Paul");
@@ -212,12 +211,12 @@ env.sheets._Journal.deleteRow(env.sheets._Journal.getLastRow());
 const jc = { j: J(c.ouvrirSessionAdmin("333333", sa)).jeton, c: sa };
 assert.strictEqual(J(c.getInfosAdmin(jc)).changements.lignes.length, 4);
 // 5 lignes au plus, les autres comptées
-c.creerCompte("Caisse 2", "motdepasse2", jc);
-c.creerCompte("Caisse 3", "motdepasse3", jc);
-ch = J(c.getInfosAdmin(jc)).changements;
+const jz = { j: J(c.passerCodesPersonnels("Marie", "111111", jc)).jeton, c: sa };
+c.ajouterPersonne("Zoé", "444444", jz);
+ch = J(c.getInfosAdmin(jz)).changements;
 assert.strictEqual(ch.lignes.length, 5);
 assert.strictEqual(ch.autres, 1);
-lignesTexte(ch.lignes[0], "Compte créé : Caisse 3");
+lignesTexte(ch.lignes[0], "Personne ajoutée \\(code personnel\\) : Zoé");
 // panneau du Sheet : mêmes changements, et ses propres gestes y figurent
 env.activeEmail = "editeur@example.com";
 c.reinitialiserPinPanneau();

@@ -369,12 +369,7 @@ const ETATS = [
     "28-code-a-part",
     async (p) => {
       await p.evaluate(
-        "document.getElementById('formConnexion').style.display='none';" +
-          "document.getElementById('titreConnexion').textContent='Compte créé';" +
-          "document.getElementById('txtConnexion').textContent='« Caisse centrale 1 » est connecté sur cet appareil.';" +
-          "document.getElementById('txtCodeAPart').textContent='Protéger l\\'espace responsable par un code à part (6 chiffres) ? Sans code, tout compte connecté l\\'ouvre directement.';" +
-          "document.getElementById('btnCodeAPartNon').textContent='Non, pas de code';" +
-          "document.getElementById('blocCodeAPart').style.display='block'; choisirCodeAPart('choisir')"
+        "pinDefini = false; COMPTE = 'Caisse centrale'; afficherChoixCode(false); choisirCodeAPart('choisir')"
       );
     },
   ],

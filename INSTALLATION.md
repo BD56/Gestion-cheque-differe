@@ -55,10 +55,12 @@ Aucun copier-coller de code.
 ## B. Installer pour une nouvelle structure (~5 minutes)
 
 ### Qui fait quoi (règle de sécurité, à respecter)
-- Le **manager de caisse** installe et **détient** le Google Sheets et l'application.
-  De préférence sur un **compte Google du magasin** (ex. une adresse « caisse
-  centrale ») plutôt que sur son compte personnel : les données clients restent au
-  magasin si le manager change de poste.
+- Le **manager de caisse** installe et **détient** le Google Sheets et l'application,
+  **avec un compte Google du MAGASIN** (ex. « direction.magasinX@… »), **pas** avec
+  son compte personnel : les données clients restent au magasin quand le manager
+  change de poste ou part à la retraite (voir « Changement de manager » plus bas).
+  Ce compte est celui de la direction / du manager, **pas** celui de l'équipe de la
+  caisse centrale.
 - L'**équipe de caisse** ne reçoit **que le lien de l'application** (adresse en
   `…/exec`), **jamais** le lien du Google Sheets.
 - Le manager **ne se connecte jamais avec ce compte Google sur une tablette de
@@ -136,7 +138,87 @@ quelqu'un d'autre. Les **données** (feuilles) ne sont jamais effacées.
 Ce nettoyage a lieu à l'installation ou à la première ouverture de l'application
 — jamais sur un classeur déjà installé.
 
+## Changement de manager (départ, mutation, retraite)
+
+> **Le mieux, de loin : un compte Google du magasin.** Le Google Sheets et
+> l'application appartiennent alors au magasin, pas à une personne : au départ du
+> manager, **rien à transférer, rien à redéployer**, l'adresse des tablettes ne change
+> pas. Un transfert depuis un compte personnel, lui, comporte des étapes techniques
+> qu'il est facile d'oublier, et un risque de **tout perdre**.
+
+### Cas 1 (recommandé) : le Sheet est sur un compte Google du magasin
+À la création du compte (une seule fois) :
+- adresse au nom du magasin ou de la fonction (ex. « direction.magasinX@… »), jamais
+  au nom d'une personne ;
+- **téléphone et adresse de récupération du magasin** (pas ceux du manager) ;
+- si la validation en deux étapes est activée : téléphone du magasin, et **codes de
+  secours imprimés** rangés au coffre avec le mot de passe.
+
+Au départ du manager :
+1. Remettre le mot de passe (et les codes de secours) au successeur.
+2. Le successeur **change aussitôt le mot de passe**, vérifie le téléphone et
+   l'adresse de récupération, et contrôle la liste des personnes qui peuvent
+   modifier le Sheet (bouton **Partager**) : direction / manager seulement.
+
+C'est tout : même propriétaire, même application, même robot de nuit, même adresse
+`/exec` sur les tablettes, journal et empreintes intacts.
+
+### Cas 2 : le Sheet est sur le compte PERSONNEL du manager
+⚠️ **À faire AVANT son départ, et avant toute fermeture de son compte** : si le compte
+propriétaire est supprimé, le Sheet (saisies, archives, journal) est supprimé avec
+lui. Dans une entreprise sous Google Workspace, l'administrateur peut transférer les
+fichiers d'un compte avant de le supprimer, mais seulement au sein de l'organisation.
+
+**Ce que Google permet** (aide Google Drive, « Transférer la propriété ») :
+- d'un compte personnel vers un autre compte personnel : oui, **le nouveau
+  propriétaire doit accepter** (e-mail reçu ; ou recherche `pendingowner:me` dans
+  Drive). L'ancien propriétaire le reste tant que ce n'est pas accepté ;
+- d'un compte personnel vers un compte professionnel ou scolaire : **non** ;
+- entre comptes d'une même organisation Google Workspace : oui (ou par
+  l'administrateur) ; vers une autre organisation : **non**.
+  ⇒ Si le transfert est impossible, le successeur crée une **nouvelle installation**
+  à partir du modèle (les données de l'ancienne restent consultables tant que
+  l'ancien compte existe).
+
+**Ce que Google ne transfère PAS** :
+- **le robot de nuit** (déclencheurs) : il appartient au compte qui l'a créé et
+  continue de tourner sous l'ancien compte, puis s'arrête quand ce compte perd
+  l'accès ou disparaît ;
+- **le compte sous lequel tourne l'application** : avec « Exécuter en tant que :
+  Moi », l'application tourne sous le compte de **celui qui l'a déployée**, qui
+  n'est pas forcément le propriétaire.
+
+**Marche à suivre** (avec l'ancien manager encore présent) :
+1. **Ancien manager** : dans le Sheet, **Partager** → ajouter le successeur en
+   **Éditeur** → puis, sur sa ligne, **Transférer la propriété**.
+2. **Successeur** : accepter le transfert (e-mail de Google).
+3. **Successeur** : menu **🚀 APPLICATION → 🧰 Installer / vérifier l'installation** →
+   accepter les autorisations. Le robot de nuit est recréé **à son nom**.
+4. **Successeur** : *Extensions → Apps Script → Déployer → **Gérer les
+   déploiements*** → crayon sur le déploiement existant → *Version* : **Nouvelle
+   version** → **Déployer**. Vérifier dans la fenêtre que « Exécuter en tant que »
+   affiche **son** adresse et que l'URL `…/exec` n'a pas changé.
+   - Si l'URL ou le compte ne sont pas les bons : *Nouveau déploiement* (comme à
+     l'installation, étape 3), puis donner la **nouvelle adresse** à chaque
+     appareil (les comptes et mots de passe de l'application ne changent pas).
+5. **Ancien manager** : *Extensions → Apps Script → **Déclencheurs*** (icône réveil)
+   → supprimer **ses** déclencheurs (sinon le robot de nuit tourne deux fois, sous
+   les deux comptes). Puis se retirer de **Partager** (ou le successeur le retire).
+6. **Vérifier le lendemain** : ouvrir l'espace responsable (⚙️). Aucun message
+   « robot de nuit absent » ni « n'a pas fonctionné » ne doit apparaître.
+
+Ce qui suit le Sheet sans rien faire : les données, le code, les comptes et mots de
+passe de l'application, le code responsable / les codes personnels, le journal (et
+la clé de ses empreintes), les réglages et les dates.
+
+> Non vérifié en vrai à ce jour (16/10/2026) : le comportement exact de Google à
+> l'étape 4 quand une autre personne met à jour un déploiement existant (compte
+> d'exécution, URL). À essayer sur un Sheet de test avec un second compte Google
+> avant de s'y fier.
+
 ## Bon à savoir
+- **Départ du manager** (propriétaire du Sheet) : voir « Changement de manager »
+  ci-dessus.
 - **Départ d'un membre de la caisse centrale, appareil perdu ou volé** : ⚙️ → Code &
   comptes → **Mot de passe** (changer celui du compte : ses connexions ouvertes sont
   terminées) ou **Retirer** le compte. Changer aussi le code responsable s'il existe.

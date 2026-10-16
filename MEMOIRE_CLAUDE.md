@@ -799,6 +799,17 @@ quand Bryan le demande.
   Plus tard (non décidé) : `_Journal` réservé au propriétaire (lignes du panneau mises
   de côté puis écrites par l'appli, sinon perdues en silence) ; avertissement aussi
   sur `_Journal` (idée, non proposée encore).
+- **Changement de manager** (question de Bryan, 16/10) : INSTALLATION.md, section du
+  même nom. Message clé demandé par Bryan : le MIEUX = un compte Google du MAGASIN
+  (rien à transférer). Sinon (compte personnel) : transférer AVANT le départ (compte
+  supprimé = Sheet supprimé) ; perso → perso avec acceptation ; perso → pro
+  impossible ; Workspace : même organisation seulement ; le robot de nuit
+  (déclencheurs) et le compte d'exécution de la web app (« celui qui a déployé ») ne
+  suivent PAS ⇒ « Installer » + mettre à jour le déploiement par le successeur,
+  l'ancien supprime ses déclencheurs. NON VÉRIFIÉ : mise à jour d'un déploiement
+  existant par une autre personne (compte d'exécution, URL) → essai à proposer à
+  Bryan avec un 2e compte Google. Sources : aide Google Drive (transfert de
+  propriété), référence API Apps Script (USER_DEPLOYING), docs des déclencheurs.
 - Pull request `generalisation` → `main` : à ouvrir **après** le test de Bryan (il n'a pas
   encore demandé).
 - **Nom de l'application** (en pause, à la demande de Bryan) : acronymes retenus CLÉO

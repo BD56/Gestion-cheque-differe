@@ -43,10 +43,8 @@ const { FakeSheet } = require("./fakesheet");
       !(await page.isVisible("#modalParametres")),
       "panneau fermé (et reverrouillé) après impression"
     );
-    // Impression libre du jour (sans code) : aucune saisie aujourd'hui -> alerte
-    await page.click('button[title="Panneau de contrôle"]');
-    await page.waitForTimeout(100);
-    await page.click(".btn-print-jour");
+    // Impression de la journée (journal, sans code) : aucune saisie aujourd'hui -> alerte
+    await page.evaluate(() => preparerImpression("jour", "aujourdhui", "Impression du Jour"));
     await page.waitForTimeout(150);
     assert.ok(await page.isVisible("#toast"), "message dans la page");
     assert.match(await page.textContent("#toast"), /Rien à imprimer/);

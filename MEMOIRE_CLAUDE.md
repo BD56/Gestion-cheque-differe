@@ -2,7 +2,7 @@
 
 > Fichier de reprise après compactage du contexte. À lire **avec** `AGENTS.md` (référence
 > canonique) et `docs/retours-vibe/decisions/2026-10-11_generalisation.md` (décisions).
-> Dernière mise à jour : 2026-10-16 (version 2026.10.15-2224, COMPTES faits, option A ;
+> Dernière mise à jour : 2026-10-16 (version 2026.10.16-0853, COMPTES faits, option A, impression réservée ;
 > questions ouvertes : bouton de remise à zéro, impression réservée).
 
 ## ▶️ ÉTAT ACTUEL — à lire d'abord
@@ -12,7 +12,7 @@
   « Comptoir » (branche de travail actuelle, tout est poussé)**. Aucune fusion faite,
   aucune pull request. Ordre prévu (sur demande de Bryan seulement) : `design` →
   `refonte` → `generalisation` → `main` / migration Vannes.
-- **Version actuelle sur `design`** : 2026.10.15-2224 (40 séries de tests vertes,
+- **Version actuelle sur `design`** : 2026.10.16-0853 (40 séries de tests vertes,
   ESLint et Prettier propres). Numéro renouvelé par Claude à chaque push de code
   (`npm run nouvelle-version`).
 - **Bryan teste** sur le Sheet « Gestion Chèques Différés — REFONTE (test) » depuis
@@ -35,11 +35,26 @@
   Claude = menu du Sheet réservé à un classeur de test (nom contenant « test »),
   double confirmation, effacer propriétés + données (Saisies, archives, annuaire) ;
   en attente du « go » / des choix de Bryan ;
-  (2) IMPRESSION : « Toute l'offre » à réserver à l'espace responsable ? et « un jour
-  précédent » ? (décision du 14/10 : « Toute l'offre » libre — Bryan la remet en
-  question). Avis de Claude : « Aujourd'hui » libre ; « Toute l'offre » et « jour
-  précédent » dans l'espace responsable ; honnêteté : la copie de détection contient
-  déjà l'offre dans le navigateur (le gain = pas d'export papier en un clic).
+  (2) IMPRESSION — ✅ FAIT (version 2026.10.16-0853, décision Bryan) : avec un code, rien sous
+  le code ; hors espace, seul « Imprimer la journée » (journal) ; offre entière et jour
+  précédent dans l'espace, imposé par le serveur (jeton). Bryan a corrigé l'avis de
+  Claude (« gain limité ») : la barrière est réelle pour les vrais utilisateurs
+  (pas d'outils de développeur sur tablette), le papier échappe à tout contrôle
+  (3 h, retrait, mot de passe), geste d'extraction volontaire, moindre accès / RGPD.
+  (1 bis) Remise à zéro : « on verra après ».
+  (3) PROBLÈME signalé par Bryan (16/10) : après « Réinitialiser le code » ET
+  « Réinitialiser les comptes » (panneau du Sheet), le site reste connecté. Cause
+  PROBABLE (à confirmer) : `exigerSession_` / `exigerAdmin_` laissent passer un
+  ÉDITEUR du classeur (`estEditeurDuClasseur_`, prévu pour le panneau du Sheet) ;
+  dans la web app « exécuter en tant que moi », l'e-mail du visiteur est connu quand
+  c'est le PROPRIÉTAIRE (Bryan, connecté à Google dans Safari) ⇒ tout passe sans
+  session. Risque réel aussi en magasin si un compte Google éditeur du Sheet est
+  ouvert sur un appareil de caisse (Workspace). Correctif proposé : ne laisser passer
+  l'éditeur que si l'appel ne fournit AUCUNE session (panneau du Sheet : argument
+  absent) ; la page envoie toujours sa session. Comportement proposé : comptes
+  réinitialisés ⇒ déconnecté partout (au prochain échange avec le serveur) ; code
+  réinitialisé seul ⇒ comptes restent connectés, espace responsable refermé (jetons
+  ouverts annulés via un compteur de génération). En attente du « go ».
 - **Fil des échanges sur Safari (14-15/10)** : perte d'autorisation des appareils →
   §0 ter ; code responsable = caisse centrale ; page d'essai du trousseau
   (`docs/essais/trousseau/`) réussie sur Mac (méthode 2 : vrai envoi) ⇒ comptes.

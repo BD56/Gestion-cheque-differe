@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr" data-version="2026.10.15-2224">
+<html lang="fr" data-version="2026.10.16-0853">
   <head>
     <base target="_top">
     <?!= include_('Style') ?>
@@ -125,7 +125,7 @@
               <button class="tuile" data-action="allerAide" data-args='["saisir"]'><svg class="ico"><use href="#i-stylo"/></svg>Saisir un client<small>formulaire, validation</small></button>
               <button class="tuile" data-action="allerAide" data-args='["alertes"]'><svg class="ico"><use href="#i-alerte"/></svg>Les alertes<small>doublon, usurpation, homonyme</small></button>
               <button class="tuile" data-action="allerAide" data-args='["numero"]'><svg class="ico"><use href="#i-loupe"/></svg>Vérification du N°<small>dès la saisie du numéro</small></button>
-              <button class="tuile" data-action="allerAide" data-args='["imprimer"]'><svg class="ico"><use href="#i-imprimer"/></svg>Imprimer<small>jour, jour précédent</small></button>
+              <button class="tuile" data-action="allerAide" data-args='["imprimer"]'><svg class="ico"><use href="#i-imprimer"/></svg>Imprimer<small>la journée, l'offre</small></button>
               <button class="tuile" id="aideOCR" style="display: none" data-action="allerAide" data-args='["scan"]'><svg class="ico"><use href="#i-appareil-photo"/></svg>Scanner une pièce<small>lecture automatique</small></button>
             </div>
             <div class="groupe-aide resp"><svg class="ico"><use href="#i-cadenas"/></svg> Pour le responsable (code)</div>
@@ -179,9 +179,7 @@
             <h3 class="titre-ecran"><svg class="ico"><use href="#i-imprimer"/></svg> Imprimer</h3>
             <ul>
               <li><strong>La journée</strong> : dans le journal du jour (à droite), touchez <strong>Imprimer la journée →</strong>.</li>
-              <li>Ou touchez <strong><svg class="ico"><use href="#i-reglages"/></svg></strong> (en haut à droite) : <strong>Aujourd'hui</strong>, ou <strong>Toute l'offre</strong> pour toute l'offre en cours.</li>
-              <li><strong>Un jour oublié</strong> : au même endroit, choisissez la date sous « Un jour précédent » puis <strong>Imprimer ce jour</strong>.</li>
-              <li>Aucun code n'est demandé pour imprimer.</li>
+              <li><strong>Toute l'offre</strong> ou <strong>un jour précédent</strong> (jour oublié) : espace responsable <strong><svg class="ico"><use href="#i-reglages"/></svg></strong> → <strong>Impression</strong>. S'il existe un code responsable, il est demandé : ces impressions sortent de nombreux clients sur papier.</li>
             </ul>
           </div>
 
@@ -253,7 +251,7 @@
       <header class="haut">
         <div class="marque">
           <div class="logo"><svg class="ico"><use href="#i-cadenas"/></svg></div>
-          <div><b>Espace responsable</b><small id="adminSous">Impression libre · le reste demande le code</small></div>
+          <div><b>Espace responsable</b><small id="adminSous">Code responsable demandé</small></div>
         </div>
         <div class="espace"></div>
         <button class="icone-btn btn-close-modal" data-action="fermerPanneau" title="Revenir à la saisie" aria-label="Revenir à la saisie"><svg class="ico"><use href="#i-fermer"/></svg></button>
@@ -467,9 +465,10 @@
             </div>
           </div>
 
-          <!-- Impression : libre (sans code), affichée sous le code ou dans le menu -->
+          <!-- Impression (espace responsable) : jour, offre entière, jour précédent. Hors de
+               l'espace, seule la journée du jour s'imprime (journal). -->
           <div class="sous-ecran" data-ecran="impression">
-            <h2 class="titre-vue">Imprimer <small>sans code</small></h2>
+            <h2 class="titre-vue">Imprimer</h2>
             <div class="boite">
               <div class="rangee-btn">
                 <button class="sec accent btn-print-jour" data-action="preparerImpression" data-args='["jour","aujourdhui","Impression du Jour"]'><svg class="ico"><use href="#i-imprimer"/></svg>Aujourd'hui</button>

@@ -3,7 +3,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Application_() {
-  return "2026.10.15-2224";
+  return "2026.10.16-0853";
 }
 
 // Fuseau horaire de référence (réglage du projet Apps Script : Europe/Paris par défaut).
@@ -185,12 +185,18 @@ function infosPanneau_() {
 //              "yyyy-MM-dd"), date en jj/mm/aaaa — comme A_IMPRIMER.
 //  - 'offre' : toutes les lignes non vides, date + heure — comme OFFRE_COMPLETE.
 // Renvoie [] s'il n'y a aucune ligne à imprimer.
-function genererDonneesImpression(type, dateChoisieStr, cle) {
+// Avec un code responsable, l'offre entière et les jours passés (export de nombreux
+// clients sur papier) sont réservés à l'espace responsable (jeton) ; la journée du jour
+// reste possible avec la seule connexion (journal). Sans code : connexion seule.
+function genererDonneesImpression(type, dateChoisieStr, cle, jeton) {
   exigerSession_(cle);
   const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const tz = ss.getSpreadsheetTimeZone(); // même référence que INT()/TODAY() dans A_IMPRIMER
+  const aujourdhui = Utilities.formatDate(new Date(), tz, "yyyy-MM-dd");
+  const reserve = type !== "jour" || (dateChoisieStr !== "aujourdhui" && dateChoisieStr !== aujourdhui);
+  if (reserve && PropertiesService.getDocumentProperties().getProperty("ADMIN_PIN_HASH")) exigerAdmin_(jeton);
   const feuille = ss.getSheetByName(FEUILLE_SAISIES);
   if (!feuille) return [];
-  const tz = ss.getSpreadsheetTimeZone(); // même référence que INT()/TODAY() dans A_IMPRIMER
   let jour = null;
   if (type === "jour") {
     jour =

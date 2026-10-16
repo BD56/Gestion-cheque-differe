@@ -295,6 +295,12 @@ Décision : `docs/retours-vibe/decisions/2026-10-11_generalisation.md`.
   bouton Continuer). Le code d'activation ne donne QUE le 1er compte : jamais de
   remplacement d'un code existant sans le connaître (décision de Bryan, 15/10 : une
   fuite du code d'activation ne doit pas ouvrir l'espace responsable).
+- **Impression réservée** (décision Bryan, 16/10) : avec un code responsable, l'écran
+  verrouillé ne propose PLUS d'impression ; hors de l'espace, seule « Imprimer la
+  journée » (journal) reste ; « Toute l'offre » et « Un jour précédent » sont dans
+  l'espace (écran Impression). Le SERVEUR l'impose : `genererDonneesImpression(type,
+  date, cle, jeton)` exige le jeton responsable pour l'offre entière ou un jour passé
+  quand un code existe. Sans code à part : connexion seule (l'espace s'ouvre direct).
 - **Code d'activation** (lot 1 de l'audit) : créer le code responsable (aucun code :
   1re installation ou après « Réinitialiser ») exige un code à 8 chiffres affiché
   **uniquement dans le Google Sheets** (menu « 🧰 Installer », « 🔑 Code d'activation »,

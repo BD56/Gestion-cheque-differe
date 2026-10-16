@@ -18,7 +18,18 @@ const { ouvrir } = require("./navigateur");
     assert.ok(env.creerCode("258025").ok);
     await page.click('button[title="Panneau de contrôle"]');
     await page.waitForTimeout(150);
-    assert.ok((await vis(".btn-print-jour")) && (await vis("#zoneVerrou")) && !(await vis("#zoneAdmin")));
+    assert.ok((await vis("#zoneVerrou")) && !(await vis("#zoneAdmin")));
+    assert.ok(
+      !(await vis(".btn-print-jour")),
+      "code demandé : aucune impression sous le code (journal seulement)"
+    );
+    // … et le serveur refuse l'offre entière / un jour passé sans l'espace responsable
+    assert.throws(() => env.ctx.genererDonneesImpression("offre", "", env.session, null), /ADMIN_REQUIS/);
+    assert.throws(
+      () => env.ctx.genererDonneesImpression("jour", "2000-01-01", env.session, null),
+      /ADMIN_REQUIS/
+    );
+    assert.ok(Array.isArray(env.ctx.genererDonneesImpression("jour", "aujourdhui", env.session, null)));
     assert.match(await txt("#txtVerrou"), /Saisissez le code responsable/);
     assert.match(await txt("#compteVerrou"), /Connecté : Caisse test/);
     await page.fill("#pinSaisi", "2580");
@@ -68,9 +79,16 @@ const { ouvrir } = require("./navigateur");
     assert.ok(await vis("#confirmerCloture"));
     await page.click("#confirmerCloture >> text=Annuler");
     assert.ok(!(await vis("#confirmerCloture")));
-    // Impression (menu) : libre
+    // Impression (menu de l'espace) : jour, offre entière, jour précédent
     await page.click('[data-ecran-lien="impression"]');
     assert.ok((await vis(".btn-print-jour")) && !(await vis('[data-ecran="ensemble"]')));
+    await page.click('[data-ecran="impression"] [data-args*="offre"]');
+    await page.waitForTimeout(150);
+    assert.match(
+      await page.textContent("#toast"),
+      /Rien à imprimer/,
+      "offre entière : acceptée par le serveur"
+    );
     // Réglages -> appliqués à l'écran
     await page.click('[data-ecran-lien="reglages"]');
     assert.strictEqual(await page.inputValue("#cfg_NOM_STRUCTURE"), "l'Hypermarché Carrefour Vannes");
@@ -87,7 +105,7 @@ const { ouvrir } = require("./navigateur");
     await page.waitForTimeout(100);
     await page.click('button[title="Panneau de contrôle"]');
     await page.waitForTimeout(100);
-    assert.ok(await page.isVisible(".btn-print-jour"), "réouverture : impression libre");
+    assert.ok(!(await page.isVisible(".btn-print-jour")), "réouverture : pas d'impression sous le code");
     assert.ok(!(await vis("#railAdmin")), "verrouillé : pas de menu");
     assert.ok(await vis("#zoneVerrou"));
     assert.strictEqual(await txt("#btnDeverrouiller"), "Déverrouiller");
@@ -105,7 +123,7 @@ const { ouvrir } = require("./navigateur");
     await page.click('[data-ecran-lien="securite"]');
     await page.click("#modeSignaler");
     await page.waitForTimeout(200);
-    assert.ok(await page.isVisible(".btn-print-jour"), "session expirée : retour au code");
+    assert.ok(!(await page.isVisible("#zoneAdmin")), "session expirée : retour au code");
     assert.ok(await vis("#zoneVerrou"));
     assert.match(await txt("#msgVerrou"), /expirée/);
     // Saisie toujours libre, montant désormais facultatif

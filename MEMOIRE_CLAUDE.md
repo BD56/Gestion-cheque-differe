@@ -2,8 +2,8 @@
 
 > Fichier de reprise après compactage du contexte. À lire **avec** `AGENTS.md` (référence
 > canonique) et `docs/retours-vibe/decisions/2026-10-11_generalisation.md` (décisions).
-> Dernière mise à jour : 2026-10-15 (version 2026.10.15-2224, comptes étapes 1-4 FAITES, modèle
-> « code responsable = caisse centrale »).
+> Dernière mise à jour : 2026-10-16 (version 2026.10.15-2224, COMPTES faits, option A ;
+> questions ouvertes : bouton de remise à zéro, impression réservée).
 
 ## ▶️ ÉTAT ACTUEL — à lire d'abord
 - **Branches** : `main` = prod Vannes (non touchée) ; `generalisation` = version
@@ -23,20 +23,27 @@
   navigateur : Safari / Chrome) après mise à jour ; confirmer si « Saisies :
   Chargement… » reste bloqué (sa capture venait d'une version antérieure) ; essai sur
   vraie tablette (rotation, clavier, journal, alertes, espace responsable, panneau).
-- **FAIT (15/10)** : passage aux COMPTES (identifiant + mot de passe) en 4 étapes, voir
-  §0 ter et AGENTS.md « Comptes ». Les « tablettes autorisées » n'existent plus.
+- **FAIT (15/10)** : passage aux COMPTES (identifiant + mot de passe) en 4 étapes, puis
+  option A (code d'avant seulement signalé à la 1re installation) — voir §0 ter et
+  AGENTS.md « Comptes ». Les « tablettes autorisées » n'existent plus. Modèle validé :
+  comptes = caisse(s) centrale(s) ; code responsable facultatif ; direction = Sheet.
   ATTENDU de Bryan : essai sur le Sheet de test (1re installation avec le code
   d'activation, connexion Safari + trousseau, Cmd+Q, Code & comptes, iPad, Chrome) ;
   temps de connexion (MDP_TOURS = 500).
-- **Dernier échange (15/10)** : perte d'autorisation des appareils sous SAFARI → voir
-  **§0 ter**. DÉCIDÉ par Bryan : **code responsable = code de l'équipe de caisse
-  centrale** (elle réautorise elle-même ses Mac / iPad) ; RIEN à coder pour ça
-  (documentation seulement, plus tard). Journal des actions sensibles : proposé, NON
-  décidé. Ne rien coder sans « go ». Puis piste « gestionnaire de mots de passe »
-  (trousseau Safari) : **page d'essai faite** (`docs/essais/trousseau/`, « go » de
-  Bryan) ; ATTENDU : résultats de Bryan (voir §0 ter). Avant (14/10) : remplacement sous le même nom fait (1645) ; phrase
-  « Noms abrégés et N° masqués… » et diagnostic d'autorisation retirés du site
-  (1653). Rien en cours de codage.
+- **Dernier échange (16/10) — EN DISCUSSION, rien codé** :
+  (1) bouton de REMISE À ZÉRO pour le développement (dans le Sheet) : proposé par
+  Claude = menu du Sheet réservé à un classeur de test (nom contenant « test »),
+  double confirmation, effacer propriétés + données (Saisies, archives, annuaire) ;
+  en attente du « go » / des choix de Bryan ;
+  (2) IMPRESSION : « Toute l'offre » à réserver à l'espace responsable ? et « un jour
+  précédent » ? (décision du 14/10 : « Toute l'offre » libre — Bryan la remet en
+  question). Avis de Claude : « Aujourd'hui » libre ; « Toute l'offre » et « jour
+  précédent » dans l'espace responsable ; honnêteté : la copie de détection contient
+  déjà l'offre dans le navigateur (le gain = pas d'export papier en un clic).
+- **Fil des échanges sur Safari (14-15/10)** : perte d'autorisation des appareils →
+  §0 ter ; code responsable = caisse centrale ; page d'essai du trousseau
+  (`docs/essais/trousseau/`) réussie sur Mac (méthode 2 : vrai envoi) ⇒ comptes.
+  Journal des actions sensibles : proposé, NON décidé.
 - **Ensuite (sur demande)** : fusions, documentation (`docs/A_REDIGER.md`, captures via
   `outils/captures.js`), migration de Vannes (`DEPLOIEMENT.md`).
 - **Leçons de cette période** : (1) ne pas réorganiser des écrans sans validation (la
@@ -50,8 +57,10 @@
   le serveur, puis le défaut corrigé semblait tout expliquer ; la vraie cause
   (Safari) n'est apparue qu'avec un test simple et reproductible (Cmd+Q). Proposer
   ce genre de test TÔT.
+  (7) annoncer EXACTEMENT ce qu'un raccourci de sécurité permet (« changer le code »
+  cachait « tout l'espace 10 min ») ; Bryan a raison de demander « est-ce sûr ? ».
 
-## 0 ter. Clé d'appareil et Safari (14-15/10) — dossier, RIEN codé
+## 0 ter. Clé d'appareil et Safari (14-15/10) → COMPTES (faits, voir fin de section)
 **Constat** : le Mac de Bryan (Safari) redemandait « Autoriser cet appareil » après
 une mise à jour / le lendemain. **Cause CONFIRMÉE** : la page Apps Script tourne dans
 un cadre `…-script.googleusercontent.com` à l'intérieur de `script.google.com` ⇒

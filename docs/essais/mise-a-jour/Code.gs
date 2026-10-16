@@ -16,9 +16,13 @@ const SOURCE_ID = "COLLER_ICI_L_ID_DU_PROJET_SOURCE";
 
 const API = "https://script.googleapis.com/v1/projects/";
 
+function estLaSource_() {
+  return ScriptApp.getScriptId() === SOURCE_ID.trim();
+}
+
 function onOpen() {
   const menu = SpreadsheetApp.getUi().createMenu("🧪 Essai MAJ");
-  if (ScriptApp.getScriptId() === SOURCE_ID) {
+  if (estLaSource_()) {
     menu.addItem("ℹ️ Je suis la SOURCE (version " + VERSION + ")", "infoSource");
   } else {
     menu
@@ -26,7 +30,34 @@ function onOpen() {
       .addItem("↩️ Revenir à la version précédente", "revenirEnArriere")
       .addItem("📋 Résultat de l'essai", "voirResultat");
   }
-  menu.addToUi();
+  menu.addSeparator().addItem("🔎 Diagnostic (identifiants)", "diagnostic").addToUi();
+}
+
+// Compare l'ID de CE projet et SOURCE_ID écrit dans le code (SOURCE pas reconnue ?).
+function diagnostic() {
+  const ui = SpreadsheetApp.getUi();
+  const ici = ScriptApp.getScriptId();
+  ui.alert(
+    "Diagnostic",
+    "ID de ce projet :\n" +
+      ici +
+      " (" +
+      ici.length +
+      " caractères)\n\nSOURCE_ID dans Code.gs :\n" +
+      SOURCE_ID +
+      " (" +
+      SOURCE_ID.length +
+      " caractères)\n\n" +
+      (estLaSource_()
+        ? "Identiques : ce Sheet est la SOURCE."
+        : SOURCE_ID.indexOf("COLLER_ICI") === 0
+          ? "SOURCE_ID n'est pas rempli (ou Code.gs n'est pas enregistré)."
+          : "Différents : ce Sheet est un MAGASIN (normal pour la copie ; pour la SOURCE, " +
+            "recopier l'ID de ce projet dans SOURCE_ID, enregistrer, recharger le Sheet).") +
+      "\nVersion du code : " +
+      VERSION,
+    ui.ButtonSet.OK
+  );
 }
 
 // Page web : affiche la version du serveur ET celle de la page (les deux fichiers ont-ils
@@ -81,7 +112,7 @@ function explication_(code, texte, methode, chemin) {
       code +
       "]"
     );
-  if (code === 404 && chemin.indexOf(SOURCE_ID) === 0)
+  if (code === 404 && chemin.indexOf(SOURCE_ID.trim()) === 0)
     return "Projet SOURCE introuvable ou non partagé avec ce compte (SOURCE_ID correct ?). [404]";
   return "Erreur " + code + " (" + methode.toUpperCase() + " " + chemin + ") : " + texte.slice(0, 600);
 }
@@ -147,7 +178,7 @@ function verifierEtMettreAJour() {
   const ui = SpreadsheetApp.getUi();
   const id = ScriptApp.getScriptId();
   const t0 = Date.now();
-  const source = api_("get", SOURCE_ID + "/content");
+  const source = api_("get", SOURCE_ID.trim() + "/content");
   const dispo = versionDesFichiers_(source.files || []);
   if (dispo === VERSION) {
     ui.alert("Essai MAJ", "Déjà à jour (version " + VERSION + ").", ui.ButtonSet.OK);

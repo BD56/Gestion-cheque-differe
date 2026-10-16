@@ -802,8 +802,12 @@ quand Bryan le demande.
   not been used in project 70457900746 before or it is disabled » MALGRÉ le réglage
   usersettings activé ⇒ l'API doit aussi être activée dans le projet Google Cloud
   (caché, par défaut) du script. En cours : le lien console.developers.google.com du
-  message est-il accessible au propriétaire ? Si non ⇒ projet Google Cloud standard
-  par magasin = trop technique ⇒ piste « un clic » remise en cause. Documentation utilisateurs : aide intégrée + onglet
+  message ⇒ « Vous avez besoin d'une autorisation d'accès supplémentaire »
+  (resourcemanager.projects.get manquante) : le projet caché est géré par Google,
+  inaccessible. CONCLUSION : la mise à jour en un clic exige un projet Google Cloud
+  STANDARD par magasin (créer, activer l'API, relier le script) = trop technique pour
+  des magasins autonomes ⇒ piste ABANDONNÉE pour les magasins (possible seulement pour
+  un installateur technique). Reste à décider avec Bryan (voir la discussion du 16/10). Documentation utilisateurs : aide intégrée + onglet
   « Mode d'emploi » dans le modèle + guide illustré, Markdown = source (à décider).
 - ~~Safari perd l'autorisation~~ : RÉGLÉ par les comptes (15/10). ~~Journal des
   actions~~ : FAIT (16/10). ~~Code par personne~~ : FAIT (codes personnels, 16/10).

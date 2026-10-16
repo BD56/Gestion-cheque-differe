@@ -1,5 +1,12 @@
 # Essai « mise à jour en un clic »
 
+> **Résultat (16/10/2026) : ÉCHEC pour un usage par les magasins.** Même avec le
+> réglage « API Google Apps Script » activé, Google répond 403 « Apps Script API has
+> not been used in project … » : l'API doit aussi être activée dans le projet Google
+> Cloud du script ; le projet créé par défaut est caché et inaccessible (« Vous avez
+> besoin d'une autorisation d'accès supplémentaire »). Il faudrait un projet Google
+> Cloud standard par magasin : trop technique. Essai gardé pour mémoire.
+
 But : savoir si une copie du modèle (un magasin) peut **se mettre à jour toute seule**,
 en un clic depuis le menu du Sheet : remplacer son code par celui du modèle, créer une
 version, mettre à jour son déploiement **sans changer l'adresse `/exec`**, et **revenir

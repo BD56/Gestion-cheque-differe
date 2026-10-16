@@ -280,15 +280,16 @@ const ETATS = [
   ],
   [
     "16-responsable-code",
-    async (p) => {
+    async (p, env) => {
+      env.creerCode("258025"); // code obligatoire : sans lui, ⚙️ ferait d'abord le choisir (état 28)
       await p.click('button[title="Panneau de contrôle"]');
     },
   ],
   [
     "17-responsable-ensemble",
     async (p, env) => {
-      const j = env.creerCode("258025").jeton;
-      await p.evaluate("jetonAdmin = " + JSON.stringify(j.j) + "; afficherZoneAdmin()");
+      const j = env.ctx.ouvrirSessionAdmin("258025", env.session).jeton;
+      await p.evaluate("jetonAdmin = " + JSON.stringify(j) + "; afficherZoneAdmin()");
     },
   ],
   [

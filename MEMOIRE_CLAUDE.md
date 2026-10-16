@@ -775,16 +775,21 @@ quand Bryan le demande.
   actions~~ : FAIT (16/10). ~~Code par personne~~ : FAIT (codes personnels, 16/10).
 - ~~À valider~~ : jeton 3 min en codes personnels et ajouts forcés tracés au niveau
   du compte — VALIDÉS par Bryan (16/10).
-- **Option C CHOISIE (Bryan, 16/10)** : en codes personnels, quitter ce mode (retour au
-  code commun, « ne plus demander de code ») seulement par le panneau du Sheet
-  (direction) ; ajouter / retirer des personnes reste dans l'appli (journalisé). A
-  (simple trace) et B (double validation, de façade) écartées. Détail PROPOSÉ, en
-  attente du « go » : le panneau permet de choisir le code commun directement (2
-  champs + second appui) ; serveur : `definirPin` / `retirerCodeResponsable` refusés
-  depuis l'appli en mode personnel ; appli : formulaire remplacé par un renvoi au
-  Sheet. Journal : actions du panneau déjà notées « Panneau du Sheet (e-mail) » ;
-  les modifications à la main des cellules du Sheet ne le sont pas (historique des
-  versions de Google).
+- **Décision finale (Bryan, 16/10) : A+ avec l'empreinte** (C abandonnée : elle ne
+  fermait qu'une porte — ajouter une personne fictive « Paul 2 » donne le même
+  anonymat ; la protection est la TRACE nominative, à rendre FIABLE et VISIBLE).
+  Le retour au code commun reste possible dans l'appli. À coder :
+  1. Journal à empreintes chaînées (5e colonne ; dernière empreinte + nombre de lignes
+     gardés à part ; ancre après la purge des 12 mois ; vérifié par le robot de nuit ;
+     alerte « journal modifié à la main »). Limite dite : un éditeur qui programme
+     peut refaire les empreintes (historique des versions Google reste).
+  2. Bandeau des changements sensibles (« Codes personnels retirés le … par Marie »),
+     visible de tous pendant une durée À DÉFINIR avec Bryan (proposé : 7 jours).
+  3. Avertissement posé sur « Saisies » par « Installer » (généralisation : chaque
+     magasin a son Sheet ⇒ protections automatiques ; INSTALLATION.md : conseiller
+     qu'un compte de la direction copie le modèle = propriétaire).
+  Plus tard (non décidé) : `_Journal` réservé au propriétaire (lignes du panneau mises
+  de côté puis écrites par l'appli, sinon perdues en silence).
 - Pull request `generalisation` → `main` : à ouvrir **après** le test de Bryan (il n'a pas
   encore demandé).
 - **Nom de l'application** (en pause, à la demande de Bryan) : acronymes retenus CLÉO

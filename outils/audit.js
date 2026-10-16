@@ -383,7 +383,16 @@ const ETATS = [
     async (p, env) => {
       env.props.setProperty("COMPTES", JSON.stringify([{ id: "c1", identifiant: "Caisse centrale 1" }]));
       await p.evaluate(
-        "afficherEcranConnexion('Session terminée : reconnectez-vous. La saisie sera envoyée ensuite.')"
+        "afficherEcranConnexion('Session terminée : reconnectez-vous. 2 saisies en attente vous seront proposées ensuite.')"
+      );
+    },
+  ],
+  [
+    "30-saisies-en-attente",
+    async (p) => {
+      await p.evaluate(
+        "saisiesARenvoyer = [{heure:'14:32', nom:'LEROY-BEAULIEU DE LA TOUR', prenom:'ANNE-SOPHIE', piece:'555666777', montant:'12 345,67 €'}," +
+          "{heure:'14:35', nom:'MARTIN', prenom:'PAUL', piece:'123456789012', montant:'40,00 €'}]; afficherSaisiesARenvoyer()"
       );
     },
   ],

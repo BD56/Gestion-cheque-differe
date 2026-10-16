@@ -307,6 +307,12 @@ Décision : `docs/retours-vibe/decisions/2026-10-11_generalisation.md`.
   « Réinitialiser le code » ou « Réinitialiser les comptes » la fait avancer ⇒ les
   espaces ouverts se referment. Réinitialiser les comptes ⇒ toutes les sessions
   tombent (nouveau secret) ; le code seul ⇒ comptes toujours connectés.
+- **Saisies validées après la fin de la session** (décision Bryan, 16/10) : refusées
+  par le serveur, gardées dans `saisiesARenvoyer` et JAMAIS envoyées seules : après la
+  reconnexion, écran « Saisies en attente » (heure, nom abrégé, N° masqué, montant) →
+  « Enregistrer » (recontrôlées par le serveur) ou « Ne pas enregistrer » (second
+  appui). **Vérification de la session toutes les 5 min** (`verifierSessionPeriodique`,
+  page à l'écran ; serveur `verifierSession`) : la déconnexion se voit sans action.
 - **Impression réservée** (décision Bryan, 16/10) : avec un code responsable, l'écran
   verrouillé ne propose PLUS d'impression ; hors de l'espace, seule « Imprimer la
   journée » (journal) reste ; « Toute l'offre » et « Un jour précédent » sont dans

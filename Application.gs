@@ -3,7 +3,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Application_() {
-  return "2026.10.16-0904";
+  return "2026.10.16-0943";
 }
 
 // Fuseau horaire de référence (réglage du projet Apps Script : Europe/Paris par défaut).

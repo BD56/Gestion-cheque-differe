@@ -3,7 +3,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Securite_() {
-  return "2026.10.16-0904";
+  return "2026.10.16-0943";
 }
 
 // =================================================================
@@ -350,6 +350,12 @@ function exigerSession_(cle) {
   throw new Error(
     "CONNEXION_REQUISE : session terminée (3 h du matin), mot de passe changé ou compte retiré."
   );
+}
+
+// Vérification périodique de la page (toutes les 5 min) : la session vaut-elle encore ?
+function verifierSession(cle) {
+  exigerSession_(cle);
+  return true;
 }
 
 function noterVue_(cle) {

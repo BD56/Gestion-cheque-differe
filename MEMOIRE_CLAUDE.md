@@ -2,7 +2,7 @@
 
 > Fichier de reprise après compactage du contexte. À lire **avec** `AGENTS.md` (référence
 > canonique) et `docs/retours-vibe/decisions/2026-10-11_generalisation.md` (décisions).
-> Dernière mise à jour : 2026-10-16 (version 2026.10.16-0904, COMPTES faits, option A, impression réservée, passe-droit corrigé ;
+> Dernière mise à jour : 2026-10-16 (version 2026.10.16-0943, COMPTES faits, option A, impression réservée, passe-droit corrigé ;
 > questions ouvertes : bouton de remise à zéro, impression réservée).
 
 ## ▶️ ÉTAT ACTUEL — à lire d'abord
@@ -12,7 +12,7 @@
   « Comptoir » (branche de travail actuelle, tout est poussé)**. Aucune fusion faite,
   aucune pull request. Ordre prévu (sur demande de Bryan seulement) : `design` →
   `refonte` → `generalisation` → `main` / migration Vannes.
-- **Version actuelle sur `design`** : 2026.10.16-0904 (40 séries de tests vertes,
+- **Version actuelle sur `design`** : 2026.10.16-0943 (40 séries de tests vertes,
   ESLint et Prettier propres). Numéro renouvelé par Claude à chaque push de code
   (`npm run nouvelle-version`).
 - **Bryan teste** sur le Sheet « Gestion Chèques Différés — REFONTE (test) » depuis
@@ -45,8 +45,13 @@
   (4) JOURNAL DES ACTIONS SENSIBLES : accord de principe de Bryan (16/10) « avec une
   date de péremption pour ne pas alourdir ». Proposition de Claude en attente de
   validation (durée, où le voir, liste des actions) — rien codé.
-  (5) VÉRIFICATION PÉRIODIQUE de la session (déconnexion visible sans rien toucher) :
-  Bryan avait oublié, rappel fait le 16/10 ; en attente de sa décision.
+  (5) ✅ FAIT (version 2026.10.16-0943, « go » de Bryan) : vérification de la session toutes
+  les 5 min ; et (gêne de Bryan) une saisie validée après la fin de session n'est plus
+  envoyée seule à la reconnexion : écran « Saisies en attente » → Enregistrer / Ne pas
+  enregistrer (second appui). Ne pas la jeter d'office : saisie perdue = doublon futur
+  manqué (pire échec). Tests : test_ui_connexion ; audit : état 30.
+  (4 bis) Journal des actions : Bryan a choisi 12 mois ? (proposé), « le Sheet seul » ;
+  colonnes à discuter (identité, date, heure à la seconde…) — proposition faite.
   (3) PROBLÈME signalé par Bryan (16/10) : après « Réinitialiser le code » ET
   « Réinitialiser les comptes » (panneau du Sheet), le site reste connecté. Cause
   PROBABLE (à confirmer) : `exigerSession_` / `exigerAdmin_` laissent passer un

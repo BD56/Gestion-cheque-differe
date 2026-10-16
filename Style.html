@@ -1,5 +1,5 @@
 <!-- Styles de la page (Index.html). -->
-<style data-version="2026.10.16-0904">
+<style data-version="2026.10.16-0943">
   /* Palette « Comptoir » (clair uniquement). Les couleurs d'alerte (danger rouge,
      orange) ne sont jamais adoucies. Police du système : rien à télécharger. */
   :root {
@@ -1545,13 +1545,22 @@
   #msgConnexion:empty {
     display: none;
   }
-  #blocCodeAPart > p {
-    margin-top: 0;
-  }
+  #blocARenvoyer button,
   #blocCodeAPart button {
     width: 100%;
     justify-content: center;
     margin-top: 8px;
+  }
+  .liste-a-renvoyer {
+    margin: 8px 0;
+    padding-left: 18px;
+    font-size: 14px;
+    max-height: 30vh;
+    overflow: auto;
+  }
+  #blocARenvoyer > p,
+  #blocCodeAPart > p {
+    margin-top: 0;
   }
   /* Cadre qui reçoit l'envoi réel du formulaire de connexion (jamais visible) */
   .cible-envoi {

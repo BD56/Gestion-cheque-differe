@@ -52,6 +52,7 @@ for (const f of [
   () => c.getDatesOperation(),
   () => c.getInfosPanneau(),
   () => c.demarrage(),
+  () => c.verifierSession(""),
   () => c.ouvrirSessionAdmin("258025", "x".repeat(64)),
   () => c.apercuResponsable("x".repeat(64)),
 ])

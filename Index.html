@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr" data-version="2026.10.16-0904">
+<html lang="fr" data-version="2026.10.16-0943">
   <head>
     <base target="_top">
     <?!= include_('Style') ?>
@@ -555,6 +555,14 @@
           <button class="plein" id="btnCodeAPartGarder" data-action="choisirCodeAPart" data-args='["garder"]' style="display: none">Continuer</button>
           <button class="sec" id="btnCodeAPartNon" data-action="choisirCodeAPart" data-args='["aucun"]'></button>
           <div class="message-erreur" id="msgCodeAPart"></div>
+        </div>
+        <!-- Saisies validées pendant une session déjà terminée : jamais envoyées sans
+             l'accord de la personne qui vient de se connecter. -->
+        <div id="blocARenvoyer" style="display: none">
+          <p class="texte-connexion" id="txtARenvoyer"></p>
+          <ul class="liste-a-renvoyer" id="listeARenvoyer"></ul>
+          <button class="plein" id="btnARenvoyerOui" data-action="deciderSaisiesARenvoyer" data-args="[true]">Enregistrer</button>
+          <button class="sec danger" id="btnARenvoyerNon" data-action="deciderSaisiesARenvoyer" data-args="[false]">Ne pas enregistrer</button>
         </div>
       </div>
     </div>

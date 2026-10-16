@@ -1,5 +1,5 @@
 <!-- Connexion (comptes), démarrage, aide, panneau, mentions légales. -->
-<script data-version="2026.10.16-0904">
+<script data-version="2026.10.16-0943">
   // =================================================================
   // --- CONNEXION (compte de la caisse centrale) ---
   // La session reçue à la connexion est gardée dans le navigateur et envoyée à
@@ -56,18 +56,38 @@
     const n = saisiesARenvoyer.length;
     afficherEcranConnexion(
       "Session terminée : reconnectez-vous." +
-        (n > 1 ? " " + n + " saisies seront envoyées ensuite." : n ? " La saisie sera envoyée ensuite." : "")
+        (n > 1
+          ? " " + n + " saisies en attente vous seront proposées ensuite."
+          : n
+            ? " Une saisie en attente vous sera proposée ensuite."
+            : "")
     );
     return true;
   }
-  // Saisies refusées faute de session : envoyées (et recontrôlées) dès la reconnexion
+  // Saisies refusées faute de session : proposées après la reconnexion (jamais envoyées
+  // sans l'accord de la personne connectée), puis recontrôlées par le serveur.
   let saisiesARenvoyer = [];
+
+  // Toutes les 5 min, page à l'écran : la connexion est-elle toujours valable (compte
+  // retiré, comptes réinitialisés, 3 h du matin…) ? Sinon : écran de connexion, sans
+  // attendre une action. Une panne de réseau ne déconnecte pas.
+  const VERIF_SESSION_MS = 5 * 60000;
+  function verifierSessionPeriodique() {
+    if (!SESSION || document.hidden) return;
+    if (document.getElementById("ecranConnexion").style.display === "flex") return;
+    google.script.run
+      .withSuccessHandler(function () {})
+      .withFailureHandler(siNonAutorisee)
+      .verifierSession(SESSION);
+  }
+  setInterval(verifierSessionPeriodique, VERIF_SESSION_MS);
 
   let installation = false; // aucun compte : 1re installation
   function afficherEcranConnexion(message) {
     document.getElementById("ecranConnexion").style.display = "flex";
     document.getElementById("formConnexion").style.display = "";
     document.getElementById("blocCodeAPart").style.display = "none";
+    document.getElementById("blocARenvoyer").style.display = "none";
     document.getElementById("msgConnexion").textContent = message || "";
     document.getElementById("txtConnexion").textContent = "…";
     document.getElementById("btnConnexion").disabled = false;
@@ -182,11 +202,57 @@
     fermerEcranConnexion();
   }
   function fermerEcranConnexion() {
+    if (saisiesARenvoyer.length) {
+      afficherSaisiesARenvoyer();
+      return;
+    }
+    document.getElementById("blocARenvoyer").style.display = "none";
     document.getElementById("ecranConnexion").style.display = "none";
     demarrerApplication();
-    const a = saisiesARenvoyer;
-    saisiesARenvoyer = [];
-    a.forEach(envoyerEnArrierePlan);
+  }
+  // Saisies validées pendant une session déjà terminée : la personne connectée décide.
+  function afficherSaisiesARenvoyer() {
+    const n = saisiesARenvoyer.length;
+    document.getElementById("formConnexion").style.display = "none";
+    document.getElementById("blocCodeAPart").style.display = "none";
+    document.getElementById("msgConnexion").textContent = "";
+    document.getElementById("titreConnexion").textContent = "Saisies en attente";
+    document.getElementById("txtConnexion").textContent = "« " + COMPTE + " » est connecté.";
+    document.getElementById("txtARenvoyer").textContent =
+      (n > 1 ? n + " saisies validées" : "Une saisie validée") +
+      " après la fin de la session précédente " +
+      (n > 1 ? "n'ont pas été enregistrées" : "n'a pas été enregistrée") +
+      (n > 1
+        ? ". Les enregistrer maintenant ? Le serveur les vérifie comme toujours (doublons, période)."
+        : ". L'enregistrer maintenant ? Le serveur la vérifie comme toujours (doublons, période).");
+    const liste = document.getElementById("listeARenvoyer");
+    liste.textContent = "";
+    saisiesARenvoyer.forEach(function (s) {
+      const li = document.createElement("li");
+      li.textContent = [s.heure || "", nomAbrege(s), pieceMasquee(s.piece), s.montant || ""]
+        .filter(function (x) {
+          return x;
+        })
+        .join(" · ");
+      liste.appendChild(li);
+    });
+    document.getElementById("btnARenvoyerOui").textContent = n > 1 ? "Enregistrer les " + n : "Enregistrer";
+    document.getElementById("blocARenvoyer").style.display = "block";
+  }
+  function deciderSaisiesARenvoyer(envoyer) {
+    const terminer = function () {
+      const a = envoyer ? saisiesARenvoyer : [];
+      saisiesARenvoyer = [];
+      fermerEcranConnexion();
+      a.forEach(envoyerEnArrierePlan);
+    };
+    if (envoyer) terminer();
+    else
+      confirmerEnDeuxTemps(
+        document.getElementById("btnARenvoyerNon"),
+        "Confirmer : ne pas enregistrer",
+        terminer
+      );
   }
 
   // Après le 1er compte, sans code d'avant : « choisir » le code (2 fois) ou « aucun ».

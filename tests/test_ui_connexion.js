@@ -115,20 +115,49 @@ const { ouvrir, J } = require("./navigateur");
     await connecter("Caisse centrale 1", "motdepasse1");
     assert.strictEqual(await page.inputValue("#nom"), "DURAND", "saisie en cours gardée");
     assert.strictEqual(await page.inputValue("#piece"), "CD2");
-    // … et une saisie validée juste avant la fin de session part après la reconnexion
-    await page.fill("#piece", "");
-    await page.fill("#nom", "");
-    await page.evaluate(() => rechargerCacheVerif());
-    await attendre();
-    P.SESSION_SECRET = "encore-change";
-    await saisir("EF3", "MARTIN");
-    assert.ok(await vis("#ecranConnexion"));
-    assert.match(await txt("#msgConnexion"), /La saisie sera envoyée ensuite/);
+    // … une saisie validée après la fin de session n'est JAMAIS envoyée sans accord :
+    // elle est proposée à la personne qui se reconnecte
+    const saisieApresFin = async (piece, nom) => {
+      await page.fill("#piece", "");
+      await page.fill("#nom", "");
+      await page.evaluate(() => rechargerCacheVerif());
+      await attendre();
+      P.SESSION_SECRET = "change-" + piece;
+      await saisir(piece, nom);
+      assert.ok(await vis("#ecranConnexion"));
+      assert.match(await txt("#msgConnexion"), /Une saisie en attente vous sera proposée ensuite/);
+      await connecter("Caisse centrale 1", "motdepasse1");
+      assert.ok(await vis("#blocARenvoyer"), "proposée, pas envoyée");
+      assert.strictEqual(await txt("#titreConnexion"), "Saisies en attente");
+      assert.match(await txt("#listeARenvoyer"), new RegExp(nom + " J\\. · " + piece));
+    };
+    await saisieApresFin("EF3", "MARTIN");
     assert.strictEqual(env.sheets.Saisies.getLastRow(), 2, "pas encore écrite");
-    await connecter("Caisse centrale 1", "motdepasse1");
+    await page.click("#btnARenvoyerOui");
     await attendre(300);
-    assert.strictEqual(env.sheets.Saisies.getLastRow(), 3, "écrite après la reconnexion");
+    assert.ok(!(await vis("#ecranConnexion")));
+    assert.strictEqual(env.sheets.Saisies.getLastRow(), 3, "écrite avec l'accord de la personne connectée");
     assert.strictEqual(env.sheets.Saisies.getRange(3, 2).getValue(), "MARTIN");
+    // refus (second appui) : abandonnée
+    await saisieApresFin("GH4", "PETIT");
+    await page.click("#btnARenvoyerNon");
+    assert.ok(await vis("#blocARenvoyer"), "rien au premier appui");
+    await page.click("#btnARenvoyerNon");
+    await attendre(300);
+    assert.ok(!(await vis("#ecranConnexion")));
+    assert.strictEqual(env.sheets.Saisies.getLastRow(), 3, "non enregistrée");
+    assert.strictEqual(await page.evaluate(() => saisiesARenvoyer.length), 0);
+
+    // --- Vérification toutes les 5 min : déconnexion visible sans action ---
+    assert.strictEqual(await page.evaluate(() => VERIF_SESSION_MS), 300000);
+    await page.evaluate(() => verifierSessionPeriodique());
+    await attendre();
+    assert.ok(!(await vis("#ecranConnexion")), "session valable : rien ne change");
+    P.SESSION_SECRET = "periodique";
+    await page.evaluate(() => verifierSessionPeriodique());
+    await attendre();
+    assert.ok(await vis("#ecranConnexion"), "session tombée : écran de connexion");
+    await connecter("Caisse centrale 1", "motdepasse1");
 
     // --- Code à part choisi à l'installation ---
     env.activeEmail = "editeur@example.com";

@@ -86,9 +86,22 @@ refuse(() => c.chargerCacheVerif(s1.slice(0, -2) + "xx"));
 // session échue (signée, mais 3 h passé)
 const corpsEchu = ["S1", id1, 1, Date.now() - 1000].join(".");
 refuse(() => c.chargerCacheVerif(corpsEchu + "." + c.signatureSession_(P.SESSION_SECRET, corpsEchu)));
-// le panneau du Sheet (éditeur) passe toujours
+// Éditeur / propriétaire du classeur : le panneau du Sheet (appel SANS session) passe ;
+// la page (qui envoie toujours sa session, "" sans connexion) n'en profite JAMAIS — sinon
+// le propriétaire connecté à Google dans le navigateur passerait sans compte.
 env.activeEmail = "editeur@example.com";
-c.chargerCacheVerif("S1.bidon");
+c.chargerCacheVerif(); // panneau du Sheet
+c.getInfosPanneau();
+refuse(() => c.chargerCacheVerif("S1.bidon"));
+refuse(() => c.chargerCacheVerif(""));
+refuse(() => c.chargerCacheVerif(null));
+assert.throws(
+  () => c.getInfosAdmin({ j: null, c: "" }),
+  /ADMIN_REQUIS/,
+  "jeton de la page : pas de passe-droit"
+);
+assert.ok(J(c.getInfosAdmin()).config, "panneau du Sheet : sans jeton");
+assert.match(J(c.definirPin("135790", null, "")).message, /Connectez-vous avec un compte/);
 env.activeEmail = "";
 
 // --- Connexion ---
@@ -225,7 +238,7 @@ env.activeEmail = "";
 // --- 1re installation sur un Sheet qui a déjà un code responsable : il reste exigé ---
 const env3 = makeEnv({ repo: process.argv[2], sessionReelle: true });
 env3.activeEmail = "editeur@example.com";
-assert.ok(J(env3.ctx.definirPin("111111", null, null)).ok, "code d'avant (panneau du Sheet)");
+assert.ok(J(env3.ctx.definirPin("111111")).ok, "code d'avant (panneau du Sheet)");
 env3.activeEmail = "";
 const s3b = J(env3.ctx.premierCompte(env3.activation(), "Caisse centrale 1", "motdepasse1")).session;
 assert.match(J(env3.ctx.ouvrirSessionAdmin("", s3b)).message, /Code faux/, "code toujours demandé");
@@ -237,5 +250,39 @@ assert.throws(
 assert.throws(() => env3.ctx.retirerCodeResponsable(null, s3b), /ADMIN_REQUIS/);
 for (const k in env3.props._store) if (k.indexOf("PIN_ESSAIS_") === 0) delete env3.props._store[k];
 assert.ok(J(env3.ctx.ouvrirSessionAdmin("111111", s3b)).ok, "avec le code d'avant : ouvert");
+
+// --- Code changé / réinitialisé : les espaces responsables ouverts se referment ---
+{
+  const e4 = makeEnv({ repo: process.argv[2], sessionReelle: true });
+  const sa = e4.connecter();
+  const sb = J(
+    e4.ctx.creerCompte("Caisse 2", "motdepasse2", { j: J(e4.ctx.ouvrirSessionAdmin("", sa)).jeton, c: sa })
+  );
+  assert.ok(sb.ok);
+  const sessB = J(e4.ctx.connexion("Caisse 2", "motdepasse2")).session;
+  assert.ok(J(e4.ctx.definirPin("135790", null, sa)).ok);
+  const ja = { j: J(e4.ctx.ouvrirSessionAdmin("135790", sa)).jeton, c: sa };
+  const jb = { j: J(e4.ctx.ouvrirSessionAdmin("135790", sessB)).jeton, c: sessB };
+  // A change le code : B est refermé, A reçoit un jeton neuf
+  const ch = J(e4.ctx.definirPin("246802", ja));
+  assert.ok(ch.ok && ch.jeton);
+  assert.throws(() => e4.ctx.getInfosAdmin(jb), /ADMIN_REQUIS/, "l'autre espace ouvert est refermé");
+  assert.throws(() => e4.ctx.getInfosAdmin(ja), /ADMIN_REQUIS/, "l'ancien jeton de A aussi");
+  const ja2 = { j: ch.jeton, c: sa };
+  assert.ok(J(e4.ctx.getInfosAdmin(ja2)).config, "A garde la main avec le jeton neuf");
+  // Code réinitialisé (Sheet) : espaces refermés, comptes toujours connectés
+  e4.activeEmail = "editeur@example.com";
+  e4.ctx.reinitialiserPinPanneau();
+  e4.activeEmail = "";
+  assert.throws(() => e4.ctx.getInfosAdmin(ja2), /ADMIN_REQUIS/);
+  e4.ctx.chargerCacheVerif(sa); // toujours connecté
+  assert.ok(J(e4.ctx.ouvrirSessionAdmin("", sa)).ok, "sans code : rouvert directement");
+  // Comptes réinitialisés : plus personne n'est connecté
+  e4.activeEmail = "editeur@example.com";
+  e4.ctx.reinitialiserComptesPanneau();
+  e4.activeEmail = "";
+  assert.throws(() => e4.ctx.chargerCacheVerif(sa), /CONNEXION_REQUISE/);
+  assert.throws(() => e4.ctx.chargerCacheVerif(sessB), /CONNEXION_REQUISE/);
+}
 
 console.log("✅ test_comptes : OK");

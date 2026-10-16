@@ -251,7 +251,7 @@ const { ouvrir, J } = require("./navigateur");
     // On le dit seulement : le code d'activation ne permet PAS de le remplacer.
     env.activeEmail = "editeur@example.com";
     env.ctx.reinitialiserComptesPanneau();
-    assert.ok(J(env.ctx.definirPin("111111", null, null)).ok, "code d'avant (panneau du Sheet)");
+    assert.ok(J(env.ctx.definirPin("111111")).ok, "code d'avant (panneau du Sheet)");
     env.activeEmail = "";
     await page.evaluate(() => {
       fermerPanneau();

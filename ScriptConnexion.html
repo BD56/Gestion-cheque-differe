@@ -1,5 +1,5 @@
 <!-- Connexion (comptes), démarrage, aide, panneau, mentions légales. -->
-<script data-version="2026.10.16-0853">
+<script data-version="2026.10.16-0904">
   // =================================================================
   // --- CONNEXION (compte de la caisse centrale) ---
   // La session reçue à la connexion est gardée dans le navigateur et envoyée à
@@ -27,14 +27,16 @@
       return false;
     }
   }
-  let SESSION = lireStockage("cdSession");
+  // Jamais null / absente vers le serveur : "" = « pas de session » (seul un appel SANS
+  // argument, celui du panneau du Sheet, profite du passe-droit des éditeurs).
+  let SESSION = lireStockage("cdSession") || "";
   let COMPTE = lireStockage("cdCompte") || "";
   // Ancienne autorisation d'appareil (remplacée par les comptes) : effacée du navigateur
   ecrireStockage("cdTabletteCle", null);
   ecrireStockage("cdTabletteId", null);
 
   function oublierSession() {
-    SESSION = null;
+    SESSION = "";
     COMPTE = "";
     ecrireStockage("cdSession", null);
     ecrireStockage("cdCompte", null);

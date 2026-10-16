@@ -2,7 +2,7 @@
 
 > Fichier de reprise après compactage du contexte. À lire **avec** `AGENTS.md` (référence
 > canonique) et `docs/retours-vibe/decisions/2026-10-11_generalisation.md` (décisions).
-> Dernière mise à jour : 2026-10-16 (version 2026.10.16-0853, COMPTES faits, option A, impression réservée ;
+> Dernière mise à jour : 2026-10-16 (version 2026.10.16-0904, COMPTES faits, option A, impression réservée, passe-droit corrigé ;
 > questions ouvertes : bouton de remise à zéro, impression réservée).
 
 ## ▶️ ÉTAT ACTUEL — à lire d'abord
@@ -12,7 +12,7 @@
   « Comptoir » (branche de travail actuelle, tout est poussé)**. Aucune fusion faite,
   aucune pull request. Ordre prévu (sur demande de Bryan seulement) : `design` →
   `refonte` → `generalisation` → `main` / migration Vannes.
-- **Version actuelle sur `design`** : 2026.10.16-0853 (40 séries de tests vertes,
+- **Version actuelle sur `design`** : 2026.10.16-0904 (40 séries de tests vertes,
   ESLint et Prettier propres). Numéro renouvelé par Claude à chaque push de code
   (`npm run nouvelle-version`).
 - **Bryan teste** sur le Sheet « Gestion Chèques Différés — REFONTE (test) » depuis
@@ -54,7 +54,13 @@
   absent) ; la page envoie toujours sa session. Comportement proposé : comptes
   réinitialisés ⇒ déconnecté partout (au prochain échange avec le serveur) ; code
   réinitialisé seul ⇒ comptes restent connectés, espace responsable refermé (jetons
-  ouverts annulés via un compteur de génération). En attente du « go ».
+  ouverts annulés via un compteur de génération). → CONFIRMÉ par Bryan (rafraîchir :
+  toujours connecté ; navigation privée : connexion demandée) ; « go » ⇒ FAIT (version
+  2026.10.16-0904) : passe-droit seulement sans session (argument absent), SESSION jamais
+  null côté page, génération des jetons (`ADMIN_GENERATION`). Tests : test_comptes.
+  Vérification périodique (voir la déconnexion sans rien toucher) : proposée, pas de
+  réponse de Bryan. NB : tous les essais de Bryan AVANT ce correctif sur son Mac
+  (propriétaire connecté à Google) passaient le serveur sans compte : à refaire.
 - **Fil des échanges sur Safari (14-15/10)** : perte d'autorisation des appareils →
   §0 ter ; code responsable = caisse centrale ; page d'essai du trousseau
   (`docs/essais/trousseau/`) réussie sur Mac (méthode 2 : vrai envoi) ⇒ comptes.

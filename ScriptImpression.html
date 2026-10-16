@@ -1,5 +1,5 @@
 <!-- Impression et lecture des montants. -->
-<script data-version="2026.10.16-0853">
+<script data-version="2026.10.16-0904">
   function preparerImpressionAncien() {
     const d = document.getElementById("dateImpression").value;
     if (!d) {
@@ -63,7 +63,7 @@
         if (!siNonAutorisee(err)) afficherToast("Impression impossible : " + err.message, "error");
       })
       // jeton de l'espace responsable s'il est ouvert (offre entière, jours passés)
-      .genererDonneesImpression(type, dateStr, SESSION, jetonAdmin ? { j: jetonAdmin, c: SESSION } : null);
+      .genererDonneesImpression(type, dateStr, SESSION, { j: jetonAdmin, c: SESSION });
   }
 
   // Met en page un tableau [en-tête, lignes...] + ligne TOTAL, puis imprime

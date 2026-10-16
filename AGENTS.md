@@ -295,6 +295,18 @@ Décision : `docs/retours-vibe/decisions/2026-10-11_generalisation.md`.
   bouton Continuer). Le code d'activation ne donne QUE le 1er compte : jamais de
   remplacement d'un code existant sans le connaître (décision de Bryan, 15/10 : une
   fuite du code d'activation ne doit pas ouvrir l'espace responsable).
+- **Passe-droit des éditeurs du Sheet** (corrigé le 16/10, problème vu par Bryan) :
+  `estEditeurDuClasseur_` est VRAI dans la web app quand le visiteur est le
+  PROPRIÉTAIRE connecté à Google (ou un compte du même domaine Workspace). Il ne vaut
+  donc que pour un appel SANS session ni jeton (argument `undefined` = panneau du
+  Sheet) : `exigerSession_(cle)`, `exigerAdmin_(jeton)`, création du code par le
+  panneau. La page envoie TOUJOURS sa session (`SESSION`, "" sans connexion, jamais
+  null) et un jeton `{ j, c }`. Avant : le propriétaire passait partout sans compte.
+- **Jetons responsables et génération** : `ADMIN_GENERATION` (propriété) entre dans
+  chaque jeton ; changer le code (`definirPin`, nouveau jeton pour l'appelant),
+  « Réinitialiser le code » ou « Réinitialiser les comptes » la fait avancer ⇒ les
+  espaces ouverts se referment. Réinitialiser les comptes ⇒ toutes les sessions
+  tombent (nouveau secret) ; le code seul ⇒ comptes toujours connectés.
 - **Impression réservée** (décision Bryan, 16/10) : avec un code responsable, l'écran
   verrouillé ne propose PLUS d'impression ; hors de l'espace, seule « Imprimer la
   journée » (journal) reste ; « Toute l'offre » et « Un jour précédent » sont dans

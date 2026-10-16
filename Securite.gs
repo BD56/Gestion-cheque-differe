@@ -3,7 +3,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Securite_() {
-  return "2026.10.16-0853";
+  return "2026.10.16-0904";
 }
 
 // =================================================================
@@ -42,9 +42,25 @@ function cleAppelant_(cle, jeton) {
   return cle || (jeton && typeof jeton === "object" ? jeton.c : null);
 }
 
+// Génération des jetons responsables : réinitialiser ou changer le code (ou les comptes)
+// la fait avancer, ce qui annule tous les jetons ouverts avant (espaces refermés).
+function generationAdmin_() {
+  return PropertiesService.getDocumentProperties().getProperty("ADMIN_GENERATION") || "0";
+}
+function nouvelleGenerationAdmin_() {
+  PropertiesService.getDocumentProperties().setProperty(
+    "ADMIN_GENERATION",
+    String(Number(generationAdmin_()) + 1)
+  );
+}
+
 function creerJetonAdmin_(appelant) {
   const jeton = Utilities.getUuid();
-  CacheService.getScriptCache().put("ADM_" + jeton, appelant ? appelant.lien : "E", ADMIN_SESSION_SEC);
+  CacheService.getScriptCache().put(
+    "ADM_" + jeton,
+    (appelant ? appelant.lien : "E") + "|" + generationAdmin_(),
+    ADMIN_SESSION_SEC
+  );
   return jeton;
 }
 
@@ -57,18 +73,25 @@ function jetonValide_(jeton) {
   }
   if (!j || typeof j !== "string") return false;
   const cache = CacheService.getScriptCache();
-  const lien = cache.get("ADM_" + j);
-  if (!lien) return false;
+  const valeur = cache.get("ADM_" + j);
+  if (!valeur) return false;
+  const morceaux = valeur.split("|");
+  if (morceaux[1] !== generationAdmin_()) return false; // code changé / réinitialisé depuis
+  const lien = morceaux[0];
   if (lien !== "E") {
     const a = appelantDeCle_(cle);
     if (!a || lien !== a.lien) return false;
   }
-  cache.put("ADM_" + j, lien, ADMIN_SESSION_SEC); // prolonge (10 min d'inactivité)
+  cache.put("ADM_" + j, valeur, ADMIN_SESSION_SEC); // prolonge (10 min d'inactivité)
   return true;
 }
 
 // L'utilisateur courant est-il propriétaire/éditeur du classeur ? (panneau du Sheet)
-// Dans la web app, l'e-mail du visiteur n'est en général pas disponible -> false.
+// ⚠️ Dans la web app (« exécuter en tant que moi »), Google donne l'e-mail du visiteur
+// quand c'est le PROPRIÉTAIRE (ou un compte du même domaine Workspace) : ce n'est donc
+// PAS une preuve que l'appel vient du panneau. Le passe-droit des éditeurs ne vaut que
+// pour un appel SANS session / jeton (le panneau ne les envoie jamais ; la page,
+// toujours) : voir exigerSession_ et exigerAdmin_.
 function estEditeurDuClasseur_() {
   try {
     const email = Session.getActiveUser().getEmail();
@@ -85,7 +108,7 @@ function estEditeurDuClasseur_() {
 }
 
 function exigerAdmin_(jeton) {
-  if (jetonValide_(jeton) || estEditeurDuClasseur_()) return;
+  if (jetonValide_(jeton) || (jeton === undefined && estEditeurDuClasseur_())) return;
   throw new Error("ADMIN_REQUIS : code responsable requis (session expirée ?)");
 }
 
@@ -268,16 +291,15 @@ function definirPin(nouveauPin, jeton, cle) {
     if (!ADMIN_PIN_REGEX.test(nouveauPin))
       return { ok: false, message: "Le code doit contenir exactement 6 chiffres." };
     const appelant = appelantDeCle_(cleAppelant_(cle, jeton));
-    if (creation && !estEditeurDuClasseur_() && !(appelant && appelant.compte))
+    const panneau = jeton === undefined && cle === undefined && estEditeurDuClasseur_();
+    if (creation && !panneau && !(appelant && appelant.compte))
       return { ok: false, message: "Connectez-vous avec un compte pour créer le code." };
     const sel = Utilities.getUuid();
     props.setProperties({ ADMIN_PIN_SEL: sel, ADMIN_PIN_HASH: empreintePin_(sel, nouveauPin) });
     effacerEssais_(props);
-    const garde = !creation && jetonValide_(jeton);
-    return {
-      ok: true,
-      jeton: garde ? (typeof jeton === "object" ? jeton.j : jeton) : creerJetonAdmin_(appelant),
-    };
+    // code changé : les autres espaces ouverts se referment ; l'appelant reçoit un jeton neuf
+    if (!creation) nouvelleGenerationAdmin_();
+    return { ok: true, jeton: creerJetonAdmin_(appelant) };
   } finally {
     lock.releaseLock();
   }
@@ -294,6 +316,7 @@ function fermerSessionAdmin(jeton) {
 function reinitialiserPinPanneau() {
   exigerEditeur_();
   const props = PropertiesService.getDocumentProperties();
+  nouvelleGenerationAdmin_(); // espaces ouverts refermés (ils rouvriront sans code)
   ["ADMIN_PIN_HASH", "ADMIN_PIN_SEL", "ADMIN_ECHECS", "ADMIN_BLOQUE_JUSQUA", "ADMIN_DERNIER_ECHEC"].forEach(
     function (k) {
       props.deleteProperty(k);
@@ -323,7 +346,7 @@ function exigerSession_(cle) {
     noterVue_("COMPTE_VUE_" + compte.id);
     return;
   }
-  if (estEditeurDuClasseur_()) return;
+  if (cle === undefined && estEditeurDuClasseur_()) return; // panneau du Sheet (sans session)
   throw new Error(
     "CONNEXION_REQUISE : session terminée (3 h du matin), mot de passe changé ou compte retiré."
   );
@@ -692,6 +715,7 @@ function reinitialiserComptesPanneau() {
   lock.waitLock(10000);
   try {
     const props = PropertiesService.getDocumentProperties();
+    nouvelleGenerationAdmin_(); // espaces ouverts refermés
     const tout = props.getProperties();
     for (const k in tout)
       if (/^(COMPTE_VUE_|CPT_ESSAIS_)/.test(k) || k === "SESSION_SECRET" || k === "COMPTES")

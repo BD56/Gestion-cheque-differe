@@ -64,6 +64,10 @@ class FakeSheet {
     this.cells.splice(r - 1, 1);
     this.bg.splice(r - 1, 1);
   }
+  deleteRows(r, n) {
+    this.cells.splice(r - 1, n);
+    this.bg.splice(r - 1, n);
+  }
   hideSheet() {
     this.hidden = true;
   }

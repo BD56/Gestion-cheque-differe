@@ -3,7 +3,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Saisie_() {
-  return "2026.10.16-0943";
+  return "2026.10.16-0955";
 }
 
 // =================================================================
@@ -263,6 +263,12 @@ function forcerSaisie(nom, prenom, piece, montant, notes, messageErreur, flagIde
     // Usurpation : la pièce figure déjà sous un AUTRE nom (même si le pire cas est A,
     // ex. l'usurpateur qui revient) -> on ne remplace pas le nom du titulaire
     if (!aUneUsurpation_(det)) majAnnuaire_(nom, prenom, piece);
+    if (pireCas)
+      journaliser_(
+        quiSession_(cle),
+        "Ajout forcé (cas " + pireCas + ")",
+        nom + " " + prenom + " · pièce " + piece + " · " + (montant || "sans montant")
+      );
     return {
       status: "SUCCES",
       cas: pireCas,
@@ -443,9 +449,35 @@ function modifierSaisie(ligne, attendu, nouveau, forcer, jeton) {
         };
     }
 
+    const avant = feuille.getRange(ligne, 1, 1, NB_COLONNES).getDisplayValues()[0];
     feuille
       .getRange(ligne, COL.NOM, 1, NB_COLONNES_SAISIE)
       .setValues([[texte_(nom), texte_(prenom), texte_(piece), montantSur_(montant), texte_(notesPropres)]]);
+    // Journal : seulement les champs changés, avant → après
+    const changes = [
+      ["Nom", avant[IDX.NOM], nom],
+      ["Prénom", avant[IDX.PRENOM], prenom],
+      ["N° de pièce", avant[IDX.PIECE], piece],
+      ["Montant", avant[IDX.MONTANT], montant],
+      ["Notes", avant[IDX.NOTES].replace(NOTES_SYSTEME_REGEX, "").trim(), notesPropres],
+    ]
+      .filter(function (c) {
+        return String(c[1]).trim() !== String(c[2]).trim();
+      })
+      .map(function (c) {
+        return c[0] + " : « " + c[1] + " » → « " + c[2] + " »";
+      });
+    journaliser_(
+      quiJeton_(jeton),
+      "Correction d'une saisie" + (pireCas ? " (forcée, cas " + pireCas + ")" : ""),
+      avant[IDX.NOM] +
+        " " +
+        avant[IDX.PRENOM] +
+        " (saisie le " +
+        avant[IDX.DATE] +
+        ") : " +
+        (changes.length ? changes.join(" ; ") : "aucun changement")
+    );
     // Note d'alerte + rouge recalculés pour TOUTES les lignes (la correction peut créer
     // ou faire disparaître un doublon ailleurs dans l'offre)
     recalculerMarquages_(feuille);
@@ -469,7 +501,9 @@ function supprimerSaisie(ligne, attendu, jeton) {
     const feuille = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FEUILLE_SAISIES);
     if (!feuille) throw new Error("La feuille '" + FEUILLE_SAISIES + "' est introuvable.");
     ligne = verifierLigneAttendue_(feuille, ligne, attendu);
+    const supprimee = feuille.getRange(ligne, 1, 1, NB_COLONNES).getDisplayValues()[0];
     feuille.deleteRow(ligne);
+    journaliser_(quiJeton_(jeton), "Suppression d'une saisie", ligneLisible_(supprimee));
     recalculerMarquages_(feuille); // un doublon de la ligne supprimée n'en est peut-être plus un
     return "🗑️ Saisie supprimée.";
   } finally {
@@ -484,5 +518,7 @@ function basculerModeWebApp(jeton) {
   const modeActuel = modeSecurite_(feuille);
   const nouveauMode = modeActuel === "SIGNALER" ? "BLOQUANT" : "SIGNALER";
   feuille.getRange(CELLULE_MODE).setValue(nouveauMode);
+  const lisible = { SIGNALER: "Signaler", BLOQUANT: "Bloquant" };
+  journaliser_(quiJeton_(jeton), "Mode de sécurité", lisible[modeActuel] + " → " + lisible[nouveauMode]);
   return nouveauMode;
 }

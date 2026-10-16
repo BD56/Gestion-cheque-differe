@@ -307,6 +307,17 @@ Décision : `docs/retours-vibe/decisions/2026-10-11_generalisation.md`.
   « Réinitialiser le code » ou « Réinitialiser les comptes » la fait avancer ⇒ les
   espaces ouverts se referment. Réinitialiser les comptes ⇒ toutes les sessions
   tombent (nouveau secret) ; le code seul ⇒ comptes toujours connectés.
+- **Journal des actions sensibles** (`Journal.gs`, décision Bryan 16/10) : onglet masqué
+  `_Journal` (date et heure à la seconde, qui, action, détail) — ajout forcé (compte),
+  correction (champs changés avant → après), suppression (contenu), mode, réglages
+  changés, dates, clôture (espace ou robot), pré-remplissage, comptes (créé, retiré,
+  mot de passe changé, bloqué après 5 erreurs), code (créé, changé, retiré,
+  réinitialisé), réinitialisation des comptes. Qui : identifiant du compte
+  (`quiSession_` / `quiJeton_`), « Panneau du Sheet (e-mail) », « Robot de nuit »,
+  « Écran de connexion ». Jamais : mots de passe, codes, sessions, connexions réussies.
+  `journaliser_` n'empêche jamais l'action (panne seulement notée). Lignes de plus de
+  `JOURNAL_RETENTION_MOIS` (12) effacées chaque nuit (`purgerJournal_` dans le robot).
+  Lecture : dans le Sheet seulement (afficher l'onglet masqué). Test : `test_journal`.
 - **Saisies validées après la fin de la session** (décision Bryan, 16/10) : refusées
   par le serveur, gardées dans `saisiesARenvoyer` et JAMAIS envoyées seules : après la
   reconnexion, écran « Saisies en attente » (heure, nom abrégé, N° masqué, montant) →

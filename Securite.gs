@@ -3,7 +3,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Securite_() {
-  return "2026.10.16-0943";
+  return "2026.10.16-0955";
 }
 
 // =================================================================
@@ -299,6 +299,11 @@ function definirPin(nouveauPin, jeton, cle) {
     effacerEssais_(props);
     // code changé : les autres espaces ouverts se referment ; l'appelant reçoit un jeton neuf
     if (!creation) nouvelleGenerationAdmin_();
+    journaliser_(
+      appelant ? appelant.nom : quiPanneau_(),
+      creation ? "Code responsable créé" : "Code responsable changé",
+      ""
+    );
     return { ok: true, jeton: creerJetonAdmin_(appelant) };
   } finally {
     lock.releaseLock();
@@ -317,6 +322,7 @@ function reinitialiserPinPanneau() {
   exigerEditeur_();
   const props = PropertiesService.getDocumentProperties();
   nouvelleGenerationAdmin_(); // espaces ouverts refermés (ils rouvriront sans code)
+  journaliser_(quiPanneau_(), "Code responsable réinitialisé", "");
   ["ADMIN_PIN_HASH", "ADMIN_PIN_SEL", "ADMIN_ECHECS", "ADMIN_BLOQUE_JUSQUA", "ADMIN_DERNIER_ECHEC"].forEach(
     function (k) {
       props.deleteProperty(k);
@@ -530,6 +536,11 @@ function verifierMdp_(props, compte, mdp) {
       cleEtat,
       JSON.stringify({ echecs: 0, dernier: maintenant, bloque: maintenant + ADMIN_BLOCAGE_MIN * 60000 })
     );
+    journaliser_(
+      "Écran de connexion",
+      "Compte bloqué " + ADMIN_BLOCAGE_MIN + " min (" + ADMIN_ESSAIS_MAX + " mots de passe faux)",
+      compte.identifiant
+    );
     return {
       ok: false,
       message: "Mot de passe incorrect. Trop d'essais : compte bloqué " + ADMIN_BLOCAGE_MIN + " min.",
@@ -587,6 +598,7 @@ function premierCompte(activation, identifiant, mdp) {
     const compte = nouveauCompte_(identifiant, mdp);
     ecrireComptes_([compte]);
     effacerActivation_(props);
+    journaliser_(identifiant, "Premier compte créé (code d'activation)", identifiant);
     return reponseConnexion_(compte);
   } finally {
     lock.releaseLock();
@@ -631,6 +643,7 @@ function creerCompte(identifiant, mdp, jeton) {
     const compte = nouveauCompte_(identifiant, mdp);
     liste.push(compte);
     ecrireComptes_(liste);
+    journaliser_(quiJeton_(jeton), "Compte créé", identifiant);
     return { ok: true, compte: { id: compte.id, identifiant: compte.identifiant } };
   } finally {
     lock.releaseLock();
@@ -658,6 +671,7 @@ function changerMotDePasse(id, mdp, jeton, cle) {
     compte.v = (Number(compte.v) || 1) + 1;
     ecrireComptes_(liste);
     PropertiesService.getDocumentProperties().deleteProperty("CPT_ESSAIS_" + id);
+    journaliser_(quiJeton_(jeton), "Mot de passe changé", compte.identifiant);
     const r = { ok: true, message: "Mot de passe de « " + compte.identifiant + " » changé." };
     if (appelant && appelant.compte && appelant.id === id) r.session = creerSession_(compte);
     return r;
@@ -679,7 +693,11 @@ function retirerCompte(id, jeton) {
     });
     if (reste.length === liste.length) return { ok: false, message: "Ce compte n'existe plus." };
     if (reste.length === 0) return { ok: false, message: "Impossible de retirer le dernier compte." };
+    const retire = liste.filter(function (c) {
+      return c.id === id;
+    })[0];
     ecrireComptes_(reste);
+    journaliser_(quiJeton_(jeton), "Compte retiré", retire.identifiant);
     const props = PropertiesService.getDocumentProperties();
     ["COMPTE_VUE_", "CPT_ESSAIS_", "PIN_ESSAIS_C_"].forEach(function (k) {
       props.deleteProperty(k + id);
@@ -705,6 +723,7 @@ function retirerCodeResponsable(jeton, cle) {
       props.deleteProperty(k);
     });
     effacerEssais_(props);
+    journaliser_(a.nom, "Code responsable retiré", "");
     return { ok: true, message: "Code responsable retiré : un compte connecté ouvre l'espace responsable." };
   } finally {
     lock.releaseLock();
@@ -722,6 +741,15 @@ function reinitialiserComptesPanneau() {
   try {
     const props = PropertiesService.getDocumentProperties();
     nouvelleGenerationAdmin_(); // espaces ouverts refermés
+    journaliser_(
+      quiPanneau_(),
+      "Comptes réinitialisés (retour à la première installation)",
+      lireComptes_()
+        .map(function (c) {
+          return c.identifiant;
+        })
+        .join(", ") + " retiré(s)"
+    );
     const tout = props.getProperties();
     for (const k in tout)
       if (/^(COMPTE_VUE_|CPT_ESSAIS_)/.test(k) || k === "SESSION_SECRET" || k === "COMPTES")

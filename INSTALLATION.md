@@ -140,6 +140,10 @@ Ce nettoyage a lieu à l'installation ou à la première ouverture de l'applicat
   fichier) : tous les comptes et le code sont retirés, un **code d'activation**
   s'affiche et l'application revient à la « Première installation ». **Réinitialiser
   le code responsable** n'efface que le code (code oublié).
+- **Journal des actions** : onglet masqué « _Journal » du Google Sheets (clic droit sur
+  la barre des onglets → afficher). Qui a supprimé, corrigé, forcé une saisie, changé un
+  réglage, les dates, le mode, les comptes ou le code — avec la date à la seconde.
+  Gardé 12 mois. Ne pas le modifier : il sert de contrôle.
 - **Mode SIGNALER / BLOQUANT** : il est **conservé** d'une offre à l'autre (la clôture
   ne le change pas).
 - **Navigateur** : la connexion est gardée par le navigateur jusqu'à 3 h du matin.

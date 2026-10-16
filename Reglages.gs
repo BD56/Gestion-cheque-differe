@@ -2,7 +2,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Reglages_() {
-  return "2026.10.16-0943";
+  return "2026.10.16-0955";
 }
 
 // =================================================================
@@ -58,6 +58,15 @@ function setConfig(valeurs, jeton) {
   const lock = LockService.getScriptLock();
   lock.waitLock(10000); // réglage + marquages changés ensemble (pas de saisie entre les deux)
   try {
+    const ancien = getConfig();
+    const changes = Object.keys(aEcrire)
+      .filter(function (k) {
+        return String(ancien[k.slice(4)]) !== aEcrire[k];
+      })
+      .map(function (k) {
+        return k.slice(4) + " : « " + ancien[k.slice(4)] + " » → « " + aEcrire[k] + " »";
+      });
+    if (changes.length) journaliser_(quiJeton_(jeton), "Réglages", changes.join(" ; "));
     const ancienMax = passagesMax_();
     PropertiesService.getDocumentProperties().setProperties(aEcrire);
     // Limite de passages changée : marquages de l'offre recalculés avec la nouvelle règle

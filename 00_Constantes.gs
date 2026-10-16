@@ -3,7 +3,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_00_Constantes_() {
-  return "2026.10.16-0943";
+  return "2026.10.16-0955";
 }
 
 // =================================================================
@@ -53,6 +53,11 @@ const ANNUAIRE_FEUILLE = "_Annuaire";
 // Archives supprimées ARCHIVES_RETENTION_ANS ans après leur clôture (RGPD)
 const ARCHIVES_RETENTION_ANS = 3;
 
+// Journal des actions sensibles (voir Journal.gs) : onglet masqué, lignes effacées après
+// JOURNAL_RETENTION_MOIS mois (il contient des données de clients : saisies supprimées…)
+const JOURNAL_FEUILLE = "_Journal";
+const JOURNAL_RETENTION_MOIS = 12;
+
 // Fichiers de l'application : tous doivent être présents et porter le même numéro de
 // version (contrôle au démarrage et dans « Installer », cf. Installation.gs).
 const FICHIERS_SERVEUR = [
@@ -62,6 +67,7 @@ const FICHIERS_SERVEUR = [
   "Archives",
   "Detection",
   "Installation",
+  "Journal",
   "Reglages",
   "Robots",
   "Saisie",

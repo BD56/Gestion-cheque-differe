@@ -2,7 +2,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Archives_() {
-  return "2026.10.16-0943";
+  return "2026.10.16-0955";
 }
 
 // =================================================================
@@ -152,7 +152,9 @@ function donneesArchive(nom, jeton) {
 
 function archiverOffreWebApp(jeton) {
   exigerAdmin_(jeton);
-  return archiverOffre_();
+  const message = archiverOffre_();
+  journaliser_(quiJeton_(jeton), "Clôture de l'offre", message);
+  return message;
 }
 
 // Clôture réelle (sans contrôle d'accès : appelée aussi par le robot de nuit).

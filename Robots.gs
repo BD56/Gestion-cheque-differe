@@ -2,7 +2,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Robots_() {
-  return "2026.10.16-0943";
+  return "2026.10.16-0955";
 }
 
 // =================================================================
@@ -18,11 +18,17 @@ function verificationClotureNocturne(e) {
     DERNIERE_NUIT_MS: String(Date.now()),
   });
 
-  // Archives de plus de 3 ans : supprimées (n'empêche jamais la clôture)
+  // Archives de plus de 3 ans, journal de plus de 12 mois : supprimés (n'empêche
+  // jamais la clôture)
   try {
     purgerArchives_();
   } catch (e) {
     Logger.log("Purge des archives : " + e);
+  }
+  try {
+    purgerJournal_();
+  } catch (e) {
+    Logger.log("Purge du journal : " + e);
   }
 
   const dates = lireDates_();
@@ -40,7 +46,7 @@ function verificationClotureNocturne(e) {
   // Ça veut dire que l'offre s'est terminée hier. On archive !
   if (aujourdhui > dates.fin) {
     // On appelle ta fonction d'archivage existante
-    archiverOffre_();
+    journaliser_("Robot de nuit", "Clôture automatique de l'offre", archiverOffre_());
 
     // On efface les dates en mémoire pour verrouiller la tablette le matin
     enregistrerDates_("", "");
@@ -76,7 +82,17 @@ function setDatesOperation(dateDebut, dateFin, jeton) {
       );
     if (dateDebut > dateFin) throw new Error("La date de début doit précéder la date de fin.");
   }
+  const avant = lireDates_();
   let message = enregistrerDates_(dateDebut, dateFin);
+  journaliser_(
+    quiJeton_(jeton),
+    "Dates de l'offre",
+    (avant.debut ? "du " + jourLisible_(avant.debut) + " au " + jourLisible_(avant.fin) : "aucune") +
+      " → " +
+      (dateDebut
+        ? "du " + jourLisible_(dateDebut) + " au " + jourLisible_(dateFin)
+        : "aucune (offre arrêtée)")
+  );
   // Offre qui commence plus tard alors que « Saisies » contient encore des lignes :
   // l'ancienne offre n'a pas été clôturée -> elles seraient mélangées avec la nouvelle.
   const f = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FEUILLE_SAISIES);

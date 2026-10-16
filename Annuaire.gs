@@ -2,7 +2,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Annuaire_() {
-  return "2026.10.16-0943";
+  return "2026.10.16-0955";
 }
 
 // =================================================================
@@ -62,6 +62,11 @@ function basculerModeAnnuaire(jeton) {
   exigerAdmin_(jeton);
   const m = getModeAnnuaire() === "C" ? "B" : "C";
   PropertiesService.getDocumentProperties().setProperty("MODE_ANNUAIRE", m);
+  journaliser_(
+    quiJeton_(jeton),
+    "Pré-remplissage (anciens clients)",
+    "mode " + (m === "C" ? "B → C" : "C → B")
+  );
   return m;
 }
 

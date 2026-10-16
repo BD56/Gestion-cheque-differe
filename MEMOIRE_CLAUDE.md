@@ -2,7 +2,7 @@
 
 > Fichier de reprise après compactage du contexte. À lire **avec** `AGENTS.md` (référence
 > canonique) et `docs/retours-vibe/decisions/2026-10-11_generalisation.md` (décisions).
-> Dernière mise à jour : 2026-10-16 (version 2026.10.16-1147 : journal à empreintes,
+> Dernière mise à jour : 2026-10-16 (version 2026.10.16-1243 : « Passer la main », journal à empreintes,
 > changements récents des accès, avertissement sur « Saisies » ; avant : comptes, codes
 > personnels, journal, impression réservée). Rien en cours de codage ; attendu : essais
 > de Bryan.
@@ -14,7 +14,7 @@
   « Comptoir » (branche de travail actuelle, tout est poussé)**. Aucune fusion faite,
   aucune pull request. Ordre prévu (sur demande de Bryan seulement) : `design` →
   `refonte` → `generalisation` → `main` / migration Vannes.
-- **Version actuelle sur `design`** : 2026.10.16-1147 (45 séries de tests vertes,
+- **Version actuelle sur `design`** : 2026.10.16-1243 (46 séries de tests vertes,
   ESLint et Prettier propres). Numéro renouvelé par Claude à chaque push de code
   (`npm run nouvelle-version`).
 - **Bryan teste** sur le Sheet « Gestion Chèques Différés — REFONTE (test) » depuis
@@ -810,6 +810,16 @@ quand Bryan le demande.
   existant par une autre personne (compte d'exécution, URL) → essai à proposer à
   Bryan avec un 2e compte Google. Sources : aide Google Drive (transfert de
   propriété), référence API Apps Script (USER_DEPLOYING), docs des déclencheurs.
+  Essai de Bryan (16/10, transfert du MODÈLE vers un autre compte) : éditeur Apps
+  Script « Impossible d'ouvrir le fichier » = plusieurs comptes Google dans le
+  navigateur (fenêtre privée) ; déploiements et URL restent ; « Exécuter en tant que :
+  Moi » affiche la nouvelle adresse (libellé peut-être celui du lecteur : à confirmer
+  par l'historique d'une cellule) ; Déclencheurs : 2 « Moi » (recréés) + 2 « Autre
+  utilisateur » (ancien compte, non supprimables par le nouveau). Bryan : « trop de
+  technique pour des non-techniciens » ⇒ FAIT (version 2026.10.16-1243) : menu
+  « 🔁 Passer la main » (supprime les robots du compte qui part, gestes restants
+  affichés), journal vérifié/purgé SOUS VERROU dans le robot (robots en double sans
+  danger), INSTALLATION.md cas 2 réécrit en 6 gestes + annexe technique.
 - Pull request `generalisation` → `main` : à ouvrir **après** le test de Bryan (il n'a pas
   encore demandé).
 - **Nom de l'application** (en pause, à la demande de Bryan) : acronymes retenus CLÉO

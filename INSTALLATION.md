@@ -164,57 +164,62 @@ C'est tout : même propriétaire, même application, même robot de nuit, même 
 `/exec` sur les tablettes, journal et empreintes intacts.
 
 ### Cas 2 : le Sheet est sur le compte PERSONNEL du manager
-⚠️ **À faire AVANT son départ, et avant toute fermeture de son compte** : si le compte
-propriétaire est supprimé, le Sheet (saisies, archives, journal) est supprimé avec
-lui. Dans une entreprise sous Google Workspace, l'administrateur peut transférer les
-fichiers d'un compte avant de le supprimer, mais seulement au sein de l'organisation.
+⚠️ **À faire AVANT son départ** : si le compte propriétaire est supprimé, le Sheet
+(saisies, archives, journal) est supprimé avec lui.
 
-**Ce que Google permet** (aide Google Drive, « Transférer la propriété ») :
-- d'un compte personnel vers un autre compte personnel : oui, **le nouveau
-  propriétaire doit accepter** (e-mail reçu ; ou recherche `pendingowner:me` dans
-  Drive). L'ancien propriétaire le reste tant que ce n'est pas accepté ;
-- d'un compte personnel vers un compte professionnel ou scolaire : **non** ;
-- entre comptes d'une même organisation Google Workspace : oui (ou par
-  l'administrateur) ; vers une autre organisation : **non**.
-  ⇒ Si le transfert est impossible, le successeur crée une **nouvelle installation**
-  à partir du modèle (les données de l'ancienne restent consultables tant que
-  l'ancien compte existe).
+**Avant de partir — l'ancien manager** (dans le Google Sheets) :
+1. Menu **🚀 APPLICATION → 🔁 Passer la main** → **Oui**. Ses robots de nuit sont
+   supprimés et la fenêtre rappelle la suite.
+2. Bouton **Partager** (en haut à droite) → ajouter le successeur comme **Éditeur**
+   s'il n'y est pas → sur sa ligne, **Transférer la propriété**.
 
-**Ce que Google ne transfère PAS** :
-- **le robot de nuit** (déclencheurs) : il appartient au compte qui l'a créé et
-  continue de tourner sous l'ancien compte, puis s'arrête quand ce compte perd
-  l'accès ou disparaît ;
-- **le compte sous lequel tourne l'application** : avec « Exécuter en tant que :
-  Moi », l'application tourne sous le compte de **celui qui l'a déployée**, qui
-  n'est pas forcément le propriétaire.
+**En arrivant — le successeur** :
+3. Accepter l'**e-mail de Google** (« … souhaite vous transférer la propriété »).
+4. Ouvrir le Google Sheets → menu **🚀 APPLICATION → 🧰 Installer** → accepter les
+   autorisations. Ses robots de nuit sont créés.
+5. Si c'est l'ancien manager qui avait mis l'application en ligne : *Extensions →
+   Apps Script → Déployer → Gérer les déploiements* → crayon → *Version* : **Nouvelle
+   version** → **Déployer** (même geste qu'une mise à jour ; l'adresse des tablettes
+   ne change pas).
+6. **Partager** → retirer l'ancien manager.
 
-**Marche à suivre** (avec l'ancien manager encore présent) :
-1. **Ancien manager** : dans le Sheet, **Partager** → ajouter le successeur en
-   **Éditeur** → puis, sur sa ligne, **Transférer la propriété**.
-2. **Successeur** : accepter le transfert (e-mail de Google).
-3. **Successeur** : menu **🚀 APPLICATION → 🧰 Installer / vérifier l'installation** →
-   accepter les autorisations. Le robot de nuit est recréé **à son nom**.
-4. **Successeur** : *Extensions → Apps Script → Déployer → **Gérer les
-   déploiements*** → crayon sur le déploiement existant → *Version* : **Nouvelle
-   version** → **Déployer**. Vérifier dans la fenêtre que « Exécuter en tant que »
-   affiche **son** adresse et que l'URL `…/exec` n'a pas changé.
-   - Si l'URL ou le compte ne sont pas les bons : *Nouveau déploiement* (comme à
-     l'installation, étape 3), puis donner la **nouvelle adresse** à chaque
-     appareil (les comptes et mots de passe de l'application ne changent pas).
-5. **Ancien manager** : *Extensions → Apps Script → **Déclencheurs*** (icône réveil)
-   → supprimer **ses** déclencheurs (sinon le robot de nuit tourne deux fois, sous
-   les deux comptes). Puis se retirer de **Partager** (ou le successeur le retire).
-6. **Vérifier le lendemain** : ouvrir l'espace responsable (⚙️). Aucun message
-   « robot de nuit absent » ni « n'a pas fonctionné » ne doit apparaître.
+Le lendemain, ouvrir l'espace responsable (⚙️) : aucun message « robot de nuit » ne
+doit apparaître. Rien d'autre à faire : les données, les comptes et mots de passe de
+l'application, les codes responsables, le journal et les réglages suivent le Sheet.
 
-Ce qui suit le Sheet sans rien faire : les données, le code, les comptes et mots de
-passe de l'application, le code responsable / les codes personnels, le journal (et
-la clé de ses empreintes), les réglages et les dates.
+**Oublis** : « Passer la main » oublié → sans danger (voir l'annexe) ; étape 4 oubliée
+→ l'espace responsable recrée les robots à sa prochaine ouverture ; étape 5 oubliée →
+**l'application s'arrêtera** quand l'ancien compte perdra l'accès (à faire alors).
 
-> Non vérifié en vrai à ce jour (16/10/2026) : le comportement exact de Google à
-> l'étape 4 quand une autre personne met à jour un déploiement existant (compte
-> d'exécution, URL). À essayer sur un Sheet de test avec un second compte Google
-> avant de s'y fier.
+#### Annexe technique (pour en savoir plus)
+- **Ce que Google permet** (aide Google Drive, « Transférer la propriété ») : d'un
+  compte personnel vers un autre compte personnel, avec **acceptation** du nouveau
+  propriétaire (e-mail, ou recherche `pendingowner:me` dans Drive ; l'ancien reste
+  propriétaire tant que ce n'est pas accepté) ; d'un compte personnel vers un compte
+  professionnel ou scolaire : **non** ; entre comptes d'une même organisation Google
+  Workspace : oui (ou par l'administrateur, avant de supprimer le compte) ; vers une
+  autre organisation : **non**. Transfert impossible ⇒ le successeur crée une
+  **nouvelle installation** à partir du modèle.
+- **Ce qui ne suit pas le transfert** : les **robots de nuit** (déclencheurs)
+  appartiennent au compte qui les a créés ; **seul ce compte peut les supprimer**
+  (d'où « Passer la main », à faire tant qu'il a accès). Oubliés, ils continuent de
+  tourner sous l'ancien compte : le robot passe alors deux fois par nuit, **sans
+  danger** (le second passage ne trouve plus rien à clôturer ni à purger ; journal
+  vérifié et purgé sous verrou). Une fois l'accès retiré, ils échouent chaque nuit
+  (sans effet sur les données ; Google envoie des e-mails d'erreur à l'ancien compte)
+  et disparaissent avec la suppression de ce compte. Pour les supprimer quand même :
+  redonner l'accès quelques minutes à l'ancien compte, qui les supprime (Apps Script
+  → Déclencheurs, icône réveil → ⋮ → Supprimer le déclencheur).
+- **Le compte sous lequel tourne l'application** : avec « Exécuter en tant que :
+  Moi », c'est celui de **la personne qui l'a déployée**, pas forcément le
+  propriétaire. Les déploiements et l'adresse `…/exec` restent après le transfert
+  (constaté le 16/10/2026). Pour savoir sous quel compte elle tourne : faire une
+  saisie, puis dans le Sheet clic droit sur la cellule → **Afficher l'historique des
+  modifications**.
+- **Plusieurs comptes Google dans le même navigateur** : *Extensions → Apps Script*
+  peut s'ouvrir avec le mauvais compte (« Impossible d'ouvrir le fichier pour le
+  moment »). Utiliser une **fenêtre de navigation privée** connectée au seul bon
+  compte.
 
 ## Bon à savoir
 - **Départ du manager** (propriétaire du Sheet) : voir « Changement de manager »

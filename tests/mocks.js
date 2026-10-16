@@ -45,6 +45,9 @@ function makeEnv(opts = {}) {
     ScriptApp: {
       getProjectTriggers: () =>
         env.triggers.map((h) => ({ getHandlerFunction: () => h, getUniqueId: () => "uid-" + h })),
+      deleteTrigger: (t) => {
+        env.triggers.splice(env.triggers.indexOf(t.getHandlerFunction()), 1);
+      },
       newTrigger: (h) => {
         const b = {
           timeBased: () => b,
@@ -79,8 +82,10 @@ function makeEnv(opts = {}) {
         },
         alert: (titre, msg) => {
           env.alertes.push(titre + " | " + msg);
+          return env.reponseUi || "OK";
         },
-        ButtonSet: { OK: "OK" },
+        ButtonSet: { OK: "OK", YES_NO: "YES_NO" },
+        Button: { OK: "OK", YES: "YES", NO: "NO" },
         showSidebar: () => {
           env.sidebars++;
         },

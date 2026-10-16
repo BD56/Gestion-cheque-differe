@@ -2,7 +2,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Robots_() {
-  return "2026.10.16-1147";
+  return "2026.10.16-1243";
 }
 
 // =================================================================
@@ -18,22 +18,34 @@ function verificationClotureNocturne(e) {
     DERNIERE_NUIT_MS: String(Date.now()),
   });
 
-  // Journal vérifié (empreintes) AVANT sa purge ; archives de plus de 3 ans, journal de
-  // plus de 12 mois : supprimés (n'empêche jamais la clôture)
+  // Journal vérifié (empreintes) AVANT sa purge, sous verrou : deux robots lancés en même
+  // temps (ex. ceux de l'ancien manager oubliés après un transfert) ne purgent jamais
+  // deux fois. Archives de plus de 3 ans, journal de plus de 12 mois : supprimés
+  // (n'empêche jamais la clôture).
   try {
-    verifierJournalNuit_();
+    const lock = LockService.getScriptLock();
+    lock.waitLock(30000);
+    try {
+      try {
+        verifierJournalNuit_();
+      } catch (e) {
+        Logger.log("Vérification du journal : " + e);
+      }
+      try {
+        purgerJournal_();
+      } catch (e) {
+        Logger.log("Purge du journal : " + e);
+      }
+    } finally {
+      lock.releaseLock();
+    }
   } catch (e) {
-    Logger.log("Vérification du journal : " + e);
+    Logger.log("Journal (verrou) : " + e);
   }
   try {
     purgerArchives_();
   } catch (e) {
     Logger.log("Purge des archives : " + e);
-  }
-  try {
-    purgerJournal_();
-  } catch (e) {
-    Logger.log("Purge du journal : " + e);
   }
 
   const dates = lireDates_();

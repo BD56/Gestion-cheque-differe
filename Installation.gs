@@ -2,7 +2,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Installation_() {
-  return "2026.10.16-1147";
+  return "2026.10.16-1243";
 }
 
 // =================================================================
@@ -125,6 +125,58 @@ function afficherCodeActivation() {
     return;
   }
   ui.alert("🔑 Code d'activation", texteActivation_(genererCodeActivation_()), ui.ButtonSet.OK);
+}
+
+// Menu « 🔁 Passer la main » (départ du manager qui détient le Sheet sur son compte) :
+// supprime les robots de nuit DE CE COMPTE (Google ne laisse supprimer un déclencheur
+// que par son propriétaire, et il ne suit pas le transfert de propriété), puis affiche
+// les gestes qui restent. Le successeur recrée les siens avec « Installer » ; oublié,
+// ce menu est sans danger (robot de nuit sous verrou).
+function passerLaMainDepuisMenu() {
+  const ui = SpreadsheetApp.getUi();
+  exigerEditeur_();
+  const reponse = ui.alert(
+    "🔁 Passer la main",
+    "Vous quittez la gestion de ce Google Sheets (départ, mutation, retraite) ?\n\n" +
+      "Vos robots de nuit (clôture et purges, sous votre compte Google) vont être supprimés ; " +
+      "votre successeur les recréera avec « Installer ». Rien d'autre n'est touché.\n\n" +
+      "Inutile si ce Google Sheets est sur un compte Google du magasin : il suffit alors de " +
+      "remettre le mot de passe du compte à votre successeur.",
+    ui.ButtonSet.YES_NO
+  );
+  if (reponse !== ui.Button.YES) return;
+  const n = supprimerMesRobots_();
+  ui.alert("🔁 Passer la main", texteApresPasserLaMain_(n), ui.ButtonSet.OK);
+}
+function supprimerMesRobots_() {
+  const robots = ["verificationClotureNocturne", "purgerAnnuaire"];
+  let n = 0;
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (robots.indexOf(t.getHandlerFunction()) === -1) return;
+    ScriptApp.deleteTrigger(t);
+    n++;
+  });
+  journaliser_(
+    quiPanneau_(),
+    "Passer la main (robots de nuit de ce compte supprimés)",
+    n + " robot(s)",
+    true
+  );
+  return n;
+}
+function texteApresPasserLaMain_(n) {
+  return (
+    (n ? "✅ Vos robots de nuit sont supprimés." : "Vous n'aviez aucun robot de nuit sous votre compte.") +
+    "\n\nIl reste 2 gestes :\n" +
+    "1. VOUS, maintenant : bouton « Partager » (en haut à droite) → ajoutez votre successeur " +
+    "comme « Éditeur » s'il n'y est pas → sur sa ligne, « Transférer la propriété ».\n" +
+    "2. VOTRE SUCCESSEUR : accepter l'e-mail de Google, puis ouvrir ce Google Sheets → menu " +
+    "🚀 APPLICATION → 🧰 Installer.\n\n" +
+    "Si c'est vous qui aviez mis l'application en ligne (« Déployer »), votre successeur fait " +
+    "aussi : Extensions → Apps Script → Déployer → Gérer les déploiements → crayon → Version : " +
+    "Nouvelle version → Déployer (l'adresse des tablettes ne change pas).\n\n" +
+    "Enfin, votre successeur vous retire du bouton « Partager »."
+  );
 }
 
 // Les réglages (PropertiesService du document) sont marqués avec l'ID du

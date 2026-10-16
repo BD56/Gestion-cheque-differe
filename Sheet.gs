@@ -2,7 +2,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Sheet_() {
-  return "2026.10.16-1147";
+  return "2026.10.16-1243";
 }
 
 function onOpen() {
@@ -11,6 +11,7 @@ function onOpen() {
     .addItem("⚙️ Ouvrir le panneau de contrôle", "afficherPanneau")
     .addItem("🧰 Installer / vérifier l'installation", "installerDepuisMenu")
     .addItem("🔑 Code d'activation (créer le code responsable)", "afficherCodeActivation")
+    .addItem("🔁 Passer la main (changement de manager)", "passerLaMainDepuisMenu")
     .addToUi();
   if (estCopieNonInstallee_()) {
     try {

@@ -23,7 +23,12 @@ let env = makeEnv({
 });
 env.ctx.onOpen();
 assert.strictEqual(env.sidebars, 1, "Vannes : panneau ouvert comme avant");
-assert.deepStrictEqual(env.menus, ["afficherPanneau", "installerDepuisMenu", "afficherCodeActivation"]);
+assert.deepStrictEqual(env.menus, [
+  "afficherPanneau",
+  "installerDepuisMenu",
+  "afficherCodeActivation",
+  "passerLaMainDepuisMenu",
+]);
 assert.strictEqual(
   env.ctx.installer().replace(/\nVersion .*$/, ""),
   "« Saisies » : avertissement avant toute modification à la main."

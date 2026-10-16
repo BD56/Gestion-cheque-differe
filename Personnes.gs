@@ -10,7 +10,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Personnes_() {
-  return "2026.10.16-1147";
+  return "2026.10.16-1243";
 }
 
 // Erreur passagère de Google : remontée telle quelle (jamais lue comme « aucune personne »,

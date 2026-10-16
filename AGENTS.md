@@ -97,6 +97,15 @@ Même détection via `onEdit` (édition manuelle directe dans le Sheets).
 - `genererDonneesImpression` / `listerArchives` / `donneesArchive` — impression.
 - `installer` / `installerDepuisMenu` — installation idempotente (feuilles +
   déclencheurs), via le menu du Sheet « 🧰 Installer / vérifier l'installation ».
+- `passerLaMainDepuisMenu` — menu du Sheet « 🔁 Passer la main » (changement de
+  manager, Sheet sur un compte personnel) : supprime les robots de nuit DU compte qui
+  clique (`supprimerMesRobots_` ; Google ne laisse supprimer un déclencheur que par
+  son propriétaire et il ne suit pas le transfert), journalisé + bandeau, puis
+  affiche les gestes restants (transférer la propriété ; successeur : Installer,
+  nouvelle version du déploiement s'il n'avait pas déployé). Oublié : sans danger,
+  car `verificationClotureNocturne` vérifie et purge le journal SOUS VERROU (robots
+  en double : le second ne trouve plus rien). Voir INSTALLATION.md « Changement de
+  manager ». Test : `test_passation`.
 - `nettoyerSiCopie_` — les propriétés du document sont marquées `ID_CLASSEUR` ; si la
   marque ≠ ID du classeur (= copie), elles sont **toutes effacées** (code responsable,
   dates, réglages hérités). Appelée par `installer` et `doGet`. Classeur jamais marqué

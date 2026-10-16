@@ -69,8 +69,9 @@
   bandeau, compteur remis à zéro (succès ou 24 h) ; pas de refus des mots de passe
   « évidents » (Bryan : « ils sont grands ») ; ajouts forcés : aucune traçabilité (la
   trace, c'est l'espace responsable) ; impression offre entière / jour passé :
-  toujours l'espace ; tuile « Responsables » au lieu de « Comptes ». AUDIT
-  D'AFFICHAGE NON PASSÉ (interrompu par Bryan : long) : à faire.
+  toujours l'espace ; tuile « Responsables » au lieu de « Comptes ». Audit
+  d'affichage (10 tailles) : rien à signaler, après correction de l'outil (il ouvrait
+  l'espace sans code ; 98a5cc8).
 - **Décision mises à jour (Bryan, 16/10)** : stabilité d'abord (versions rares,
   éprouvées à Vannes) ; filet de sécurité = nouvelle installation avec reprise des
   données (à concevoir plus tard avec Bryan).

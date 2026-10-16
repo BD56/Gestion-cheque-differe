@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="fr" data-version="1">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body {
+        margin: 0;
+        padding: 24px 16px;
+        background: #f6f5f1;
+        color: #1d1d1b;
+        font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        text-align: center;
+      }
+      .carte {
+        max-width: 420px;
+        margin: 0 auto;
+        background: #fff;
+        border: 1px solid #e3e1d9;
+        border-radius: 14px;
+        padding: 24px 20px;
+      }
+      .version {
+        font-size: 64px;
+        font-weight: 700;
+        margin: 8px 0;
+      }
+      .ok {
+        color: #17703a;
+        font-weight: 600;
+      }
+      .ko {
+        color: #b3261e;
+        font-weight: 600;
+      }
+      .doux {
+        color: #5f5e58;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="carte">
+      <p class="doux">Essai « mise à jour en un clic »</p>
+      <p>Version</p>
+      <p class="version" id="version"></p>
+      <p id="accord"></p>
+      <p class="doux">Serveur (Code.gs) : <b id="serveur"><?= versionServeur ?></b> · Page (Page.html) : <b id="page"></b></p>
+      <p class="doux">Ouvertures de cette page : <b><?= compteur ?></b> (doit continuer après une mise à jour)</p>
+    </div>
+    <script>
+      const page = document.documentElement.getAttribute("data-version");
+      const serveur = document.getElementById("serveur").textContent;
+      document.getElementById("page").textContent = page;
+      document.getElementById("version").textContent = page;
+      const accord = document.getElementById("accord");
+      accord.textContent =
+        page === serveur ? "Les deux fichiers sont de la même version ✅" : "⚠️ Fichiers de versions différentes";
+      accord.className = page === serveur ? "ok" : "ko";
+    </script>
+  </body>
+</html>

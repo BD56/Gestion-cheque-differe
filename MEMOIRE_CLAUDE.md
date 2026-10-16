@@ -790,8 +790,14 @@ quand Bryan le demande.
   proposée à la place : « mise à jour en un clic » par l'API Apps Script
   (projects.getContent/updateContent, versions, deployments.update ; réglage « API
   Google Apps Script » à activer une fois ; autorisations plus larges ; retour
-  arrière = redéployer la version précédente) — NON vérifiée, essai à proposer
-  (comme docs/essais/trousseau). Documentation utilisateurs : aide intégrée + onglet
+  arrière = redéployer la version précédente) — NON vérifiée. ESSAI PRÉPARÉ (16/10,
+  go de Bryan) : `docs/essais/mise-a-jour/` (Code.gs, Page.html, appsscript.json,
+  README.md) — Sheet SOURCE (= modèle) + copie MAGASIN ; menu « 🧪 Essai MAJ » :
+  vérifier/mettre à jour (getContent source → updateContent → versions.create →
+  deployments.update, adresse inchangée contrôlée), déclencheur ponctuel qui prouve
+  que le nouveau code tourne seul, retour arrière, refus si Code/Page de versions
+  différentes ; étape 7 : 2e compte lecteur du modèle. Logique vérifiée en
+  simulation seulement (script jetable, non versionné). ATTENDU : essai de Bryan. Documentation utilisateurs : aide intégrée + onglet
   « Mode d'emploi » dans le modèle + guide illustré, Markdown = source (à décider).
 - ~~Safari perd l'autorisation~~ : RÉGLÉ par les comptes (15/10). ~~Journal des
   actions~~ : FAIT (16/10). ~~Code par personne~~ : FAIT (codes personnels, 16/10).

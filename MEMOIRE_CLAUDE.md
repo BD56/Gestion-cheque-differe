@@ -775,6 +775,14 @@ quand Bryan le demande.
   actions~~ : FAIT (16/10). ~~Code par personne~~ : FAIT (codes personnels, 16/10).
 - ~~À valider~~ : jeton 3 min en codes personnels et ajouts forcés tracés au niveau
   du compte — VALIDÉS par Bryan (16/10).
+- **En réflexion (Bryan, 16/10)** : en codes personnels, une seule personne peut revenir
+  au code commun (ou « ne plus demander de code »). Constat : dans l'espace, une
+  personne peut déjà tout (retirer les autres, ajouter une personne fictive…) ⇒ une
+  double validation sur cette seule action serait de façade (option B écartée).
+  A = garder (le journal nomme qui l'a fait ; faiblesse : il faut le lire) ;
+  C = sortir des codes personnels seulement par le panneau du Sheet (direction),
+  ajouter / retirer des personnes restant dans l'appli. Bryan hésite entre A et C ;
+  rien à coder avant sa décision.
 - Pull request `generalisation` → `main` : à ouvrir **après** le test de Bryan (il n'a pas
   encore demandé).
 - **Nom de l'application** (en pause, à la demande de Bryan) : acronymes retenus CLÉO

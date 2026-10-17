@@ -41,8 +41,12 @@
      l'installation » ⇒ **ASSISTANT D'INSTALLATION** proposé (bouton vert sur un onglet
      « Démarrer » du modèle ; 4 écrans : autorisations vérifiées, magasin + dates, mise en
      ligne guidée et VÉRIFIÉE (getService().getUrl + appel anonyme), QR code adresse + code
-     d'activation). Maquette : https://claude.ai/artifact/W5oY8E6ckf3BeJHP69g67i. Questions
-     ouvertes : code d'activation dans le QR ? réglages dans l'assistant ? mode S/B ?
+     d'activation). Maquette (v3) : https://claude.ai/artifact/W5oY8E6ckf3BeJHP69g67i. DÉCIDÉ (Bryan,
+     17/10) : le clic sur le bouton déclenche d'abord les écrans Google (annoncés sur
+     l'onglet), l'écran 1 VÉRIFIE les autorisations (« Corriger » si une case manque) ;
+     « Votre magasin » = nom avec l'article SEULEMENT (offre, dates, mode S/B : dans
+     l'application) ; QR code = ADRESSE SEULE + lien affiché avec « Copier » ; code
+     d'activation TAPÉ à la main (pas dans le QR) ; bouton Retour sur chaque écran.
      Ordre proposé : 12 essais d'abord, puis assistant, puis guide raccourci. Impossible à
      automatiser (Google) : compte, /copy, écrans d'autorisation, clics de déploiement
      (API bloquée, cf. essai mise à jour).

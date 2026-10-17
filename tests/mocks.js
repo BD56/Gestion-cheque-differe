@@ -26,6 +26,18 @@ function makeEnv(opts = {}) {
   };
   const accordee = (s) => env.autorisations === null || env.autorisations.indexOf(s) !== -1;
   const ss = require("./fakesheet").makeSpreadsheet(env);
+  // Sans l'autorisation Google Sheets, propriétaire et éditeurs sont illisibles (vrai Google)
+  for (const m of ["getOwner", "getEditors"]) {
+    const vrai = ss[m];
+    ss[m] = function () {
+      if (
+        env.autorisations !== null &&
+        env.autorisations.indexOf("https://www.googleapis.com/auth/spreadsheets") === -1
+      )
+        throw new Error("Vous n'êtes pas autorisé à appeler " + m + ".");
+      return vrai.apply(ss, arguments);
+    };
+  }
   env.ctx = loadCode(opts.repo, {
     PropertiesService: { getDocumentProperties: () => props },
     CacheService: {

@@ -7,6 +7,8 @@ const repo = process.argv[2];
 const J = (x) => JSON.parse(JSON.stringify(x));
 const EMAIL = "https://www.googleapis.com/auth/userinfo.email";
 const DECLENCHEURS = "https://www.googleapis.com/auth/script.scriptapp";
+const SHEETS = "https://www.googleapis.com/auth/spreadsheets";
+const FENETRES = "https://www.googleapis.com/auth/script.container.ui";
 const ADRESSE = "https://script.google.com/macros/s/AKfycbTEST_magasin-X/exec";
 const erreur = (f) => {
   try {
@@ -93,14 +95,28 @@ c.ouvrirTablettes();
 assert.strictEqual(env.dialogues[1].titre, "📱 Connecter une tablette");
 assert.match(env.dialogues[1].contenu, /<body data-mode="tablettes">/);
 
-// --- 3) Autorisation incomplète : la case « adresse e-mail » n'a pas été cochée ---
+// --- 3) Autorisation incomplète ---
+// a) l'adresse e-mail manque (Sheet de test, 17/10)
 env = copie();
 c = env.ctx;
-env.autorisations = [DECLENCHEURS];
+env.autorisations = [SHEETS, DECLENCHEURS, FENETRES];
 assert.match(erreur(c.ouvrirAssistant), /ÉCRAN DE GOOGLE/, "Google réaffiche son écran");
 assert.deepStrictEqual(J(env.demandesAutorisation), [[EMAIL]], "seulement la case manquante");
 assert.strictEqual(env.dialogues.length, 0);
 assert.match(erreur(c.installerDepuisMenu), /ÉCRAN DE GOOGLE/, "« Installer » aussi");
+// b) Google Sheets a sauté (autorisation redemandée au déploiement, essai du 18/10)
+env = copie();
+env.autorisations = [EMAIL, DECLENCHEURS, FENETRES];
+assert.match(erreur(env.ctx.ouvrirAssistant), /ÉCRAN DE GOOGLE/);
+assert.deepStrictEqual(J(env.demandesAutorisation), [[SHEETS]]);
+// c) « exécution en votre absence » décochée (robot de nuit)
+env = copie();
+env.autorisations = [SHEETS, EMAIL, FENETRES];
+assert.match(erreur(env.ctx.ouvrirAssistant), /ÉCRAN DE GOOGLE/);
+assert.deepStrictEqual(J(env.demandesAutorisation), [[DECLENCHEURS]]);
+env = copie();
+c = env.ctx;
+env.autorisations = [SHEETS, DECLENCHEURS, FENETRES];
 // plateforme sans requireScopes : message clair au lieu de « Réservé… »
 delete c.ScriptApp.requireScopes;
 const MSG =
@@ -109,7 +125,7 @@ assert.match(erreur(c.ouvrirAssistant), MSG);
 assert.match(erreur(c.preparerInstallation), MSG, "fenêtre déjà ouverte : même message");
 // le panneau du Sheet (sans session) le dit aussi, au lieu de CONNEXION_REQUISE
 env = copie({ sessionReelle: true });
-env.autorisations = [DECLENCHEURS];
+env.autorisations = [EMAIL, DECLENCHEURS, FENETRES];
 assert.match(
   erreur(() => env.ctx.getDatesOperation()),
   MSG

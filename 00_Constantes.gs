@@ -3,7 +3,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_00_Constantes_() {
-  return "2026.10.18-0019";
+  return "2026.10.18-0103";
 }
 
 // =================================================================
@@ -56,11 +56,15 @@ const SESSION_HEURE_FIN = 3; // toutes les sessions se terminent à 3 h du matin
 // Assistant d'installation (voir Assistant.gs) : onglet d'accueil du modèle, retiré à la fin.
 const FEUILLE_DEMARRER = "Démarrer";
 // Autorisations Google vérifiées (consentement case par case : une case peut rester
-// décochée). Sans l'adresse e-mail, le programme ne reconnaît plus le propriétaire ; sans
-// les déclencheurs, pas de robot de nuit.
+// décochée, ou sauter lors d'une nouvelle autorisation, par ex. au déploiement — vu le
+// 18/10 pour Google Sheets). Sans Google Sheets ou sans l'adresse e-mail (accordée
+// d'office, sans case), le programme ne reconnaît plus le propriétaire ; sans les
+// déclencheurs, pas de robot de nuit ; sans les fenêtres, ni panneau ni assistant.
 const AUTORISATIONS_VERIFIEES = [
+  "https://www.googleapis.com/auth/spreadsheets",
   "https://www.googleapis.com/auth/userinfo.email",
   "https://www.googleapis.com/auth/script.scriptapp",
+  "https://www.googleapis.com/auth/script.container.ui",
 ];
 const MESSAGE_AUTORISATION_INCOMPLETE =
   "Autorisation Google incomplète (une case n'a pas été cochée) : menu 🚀 APPLICATION → " +

@@ -2,7 +2,7 @@
 
 > Fichier de reprise après compactage du contexte. À lire **avec** `AGENTS.md` (référence
 > canonique) et `docs/retours-vibe/decisions/2026-10-11_generalisation.md` (décisions).
-> Dernière mise à jour : 2026-10-17 (version 2026.10.18-0019). Code : ASSISTANT
+> Dernière mise à jour : 2026-10-17 (version 2026.10.18-0103). Code : ASSISTANT
 > D'INSTALLATION fait (simulation verte), essai sur un vrai Sheet attendu de Bryan.
 > En cours : DOCUMENTATION UTILISATEURS (guide d'installation RÉDIGÉ dans
 > `docs/guide/installation/`, à relire par Bryan ; captures Google à faire par lui).
@@ -108,7 +108,7 @@
   « Comptoir » (branche de travail actuelle, tout est poussé)**. Aucune fusion faite,
   aucune pull request. Ordre prévu (sur demande de Bryan seulement) : `design` →
   `refonte` → `generalisation` → `main` / migration Vannes.
-- **Version actuelle sur `design`** : 2026.10.18-0019 (50 séries de tests vertes,
+- **Version actuelle sur `design`** : 2026.10.18-0103 (50 séries de tests vertes,
   ESLint et Prettier propres). Numéro renouvelé par Claude à chaque push de code
   (`npm run nouvelle-version`).
 - **Bryan teste** sur le Sheet « Gestion Chèques Différés — REFONTE (test) » depuis
@@ -235,6 +235,11 @@
   (copie) qui ne menait nulle part ⇒ FAUX POSITIF corrigé (2026.10.18-0019) : seule l'adresse COLLÉE
   (7e geste « Copier ») ou notée par doGet est crue ; fenêtre 660 × 720. Suite de l'essai
   (déploiement, QR sur iPad, création du compte détectée) : ATTENDUE.
+  **18/10 (2026.10.18-0103)** : après le déploiement, « Valider » l'adresse ⇒ « Autorisation Google
+  incomplète » : l'autorisation redemandée AU DÉPLOIEMENT avait fait sauter la case Google
+  Sheets (écran Google « accès supplémentaire », case Sheets vide, « déjà 2 services »).
+  AUTORISATIONS_VERIFIEES = les 4 (spreadsheets, userinfo.email, script.scriptapp,
+  script.container.ui) ; écran 3 : « cochez TOUTES les cases » si Google redemande.
 - **Leçon (17/10, 2353)** : Apps Script ne distingue PAS les extensions : un `.gs` et un
   `.html` de même nom (Assistant.gs / Assistant.html) ⇒ `clasp push` refusé en entier
   (« A file with this name already exists »). Page renommée `FenetreAssistant.html` ;

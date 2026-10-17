@@ -2,13 +2,43 @@
 
 > Fichier de reprise après compactage du contexte. À lire **avec** `AGENTS.md` (référence
 > canonique) et `docs/retours-vibe/decisions/2026-10-11_generalisation.md` (décisions).
-> Dernière mise à jour : 2026-10-17 (version 2026.10.17-1359 : roue pendant la pause, collage du code d'activation ; affichage sans attente (connexion, verrou) ; bandeau des accès en bas, replié ; UN SEUL compte du magasin,
-> code responsable obligatoire, blocage progressif ; avant : « Passer la main », journal à empreintes,
-> changements récents des accès, avertissement sur « Saisies » ; avant : comptes, codes
-> personnels, journal, impression réservée). Rien en cours de codage ; attendu : essais
-> de Bryan.
+> Dernière mise à jour : 2026-10-17 (version 2026.10.17-1359). Code : rien en cours.
+> En cours : DOCUMENTATION UTILISATEURS (plan du guide d'installation proposé, à valider
+> par Bryan). Attendu aussi : essais de Bryan sur le Sheet de test (liste plus bas).
 
 ## ▶️ ÉTAT ACTUEL — à lire d'abord
+- **REPRISE (17/10) — où on en est** :
+  1. **Prochaine étape** : documentation utilisateurs, CONTENU d'abord. Bryan doit
+     valider le plan du **guide d'installation** (ci-dessous) ; puis rédaction en
+     Markdown dans `docs/guide/` ; puis mode d'emploi, fiches « En cas de problème »,
+     guide de déploiement technique (DEPLOIEMENT.md). Captures : application ⇒
+     `outils/captures.js` ; écrans GOOGLE (copie, autorisations, déploiement) ⇒ faites
+     par Bryan sur le Sheet de test (lui donner la liste exacte).
+  2. **Site** : publié hors Claude ; dépôt GitHub PUBLIC ⇒ GitHub Pages (`github.io`)
+     ou Firebase (`web.app`), CHOIX PLUS TARD. **Navigation par chapitres** (arbre ou
+     menu latéral, demande de Bryan 17/10). Pages générées depuis le Markdown, aux
+     couleurs de l'application ; lien depuis le menu 🚀 du Sheet et l'aide de l'appli.
+  3. **Plan proposé du guide d'installation** (pour le manager / la direction) :
+     0 En une minute (but, qui fait quoi, ~30 min) · 1 Avant de commencer (accord
+     écrit de l'auteur ; compte Google DU MAGASIN, récupération, codes de secours ;
+     matériel et navigateurs ; règles d'accès : seule la direction modifie le Sheet,
+     l'équipe n'a que le lien /exec) · 2 Copier le modèle (/copy) · 3 Installer
+     (autorisations Google, lire le compte rendu, code d'activation) · 4 Mettre en
+     ligne (Déployer → Application Web, Moi, Tout le monde ; adresse /exec ; étape la
+     plus technique, capture à chaque clic) · 5 Première connexion (code d'activation,
+     compte du magasin, trousseau, choix du code : commun ou personnels + encadré
+     « lequel choisir ? ») · 6 Autres appareils (même lien, même compte ; écran
+     d'accueil iPad / Android) · 7 Régler (nom avec l'article, offre, montant,
+     passages, mode) + dates · 8 Vérifier (liste à cocher : saisie d'essai, doublon
+     d'essai, suppression, robot de nuit le lendemain) · 9 Et ensuite (renvois) ·
+     Annexe données (conservation, journal, RGPD, protections). Principes : une
+     étape = une action, termes exacts des boutons, encadré « Si ça ne marche pas »
+     aux étapes à risque.
+  4. **Décisions récentes à respecter** : un SEUL compte du magasin ; code responsable
+     OBLIGATOIRE (commun ou personnels, choisi sans défaut) ; mises à jour = stabilité
+     d'abord, filet = nouvelle installation avec reprise des données (à concevoir) ;
+     bandeau des accès en bas de la vue d'ensemble, replié ; pas de mémorisation des
+     noms dans le navigateur (laissé tel quel, 17/10).
 - **Branches** : `main` = prod Vannes (non touchée) ; `generalisation` = version
   généralisée testée en simulation ; `refonte` = même code réorganisé (11 .gs,
   Script*.html, outillage npm/clasp) ; **`design` = refonte + refonte graphique
@@ -24,8 +54,8 @@
   petits écrans (audit), carte du code collée à gauche sous Safari.
 - **FAIT (15/10)** : passage aux COMPTES (identifiant + mot de passe) en 4 étapes — voir
   §0 ter et AGENTS.md « Comptes ». Les « tablettes autorisées » (clé d'appareil)
-  n'existent plus. Modèle validé : comptes = caisse(s) centrale(s) ; code responsable
-  facultatif ; direction = Sheet.
+  n'existent plus. Direction = Sheet. (Depuis 1512 : UN SEUL compte du magasin et code
+  responsable OBLIGATOIRE — voir plus bas.)
 - **FAIT le 16/10** (détails dans AGENTS.md, sections du même nom) :
   1. **Option A** : à la 1re installation, un code responsable d'avant est seulement
      SIGNALÉ ; le code d'activation ne donne que le 1er compte (Bryan : « est-ce sûr ? »).
@@ -107,21 +137,25 @@
 - **Décision mises à jour (Bryan, 16/10)** : stabilité d'abord (versions rares,
   éprouvées à Vannes) ; filet de sécurité = nouvelle installation avec reprise des
   données (à concevoir plus tard avec Bryan).
-- **ATTENDU de Bryan** (une seule liste) : essais sur le Sheet de test avec la version
-  en ligne 1031 —
-  1. réinitialiser les comptes puis rafraîchir (écran de connexion attendu, même
-     connecté à Google) ; 1re installation avec le code d'activation ;
-  2. Safari + trousseau (Mac, puis Cmd+Q et retour ; iPad), Chrome ;
-  3. Code & comptes ; codes personnels ; journal (onglet `_Journal`) ;
-  4. temps de connexion (MDP_TOURS = 500) ;
-  5. captures en précisant le navigateur (Safari / Chrome) si un affichage cloche ;
-     « Saisies : Chargement… » ne doit plus rester bloqué ;
-  6. vraie tablette (rotation, clavier, journal, alertes, espace responsable) ;
-  7. (1147) bandeau « Changements récents des accès » (espace + panneau du Sheet) ;
-     modifier une cellule de `_Journal` à la main, lancer le robot de nuit à la main
-     (`verificationClotureNocturne` depuis l'éditeur Apps Script) ⇒ alerte, puis
-     « J'ai vérifié : marquer comme vue » dans le panneau ; avertissement en modifiant
-     « Saisies » à la main (après « Installer »).
+- **ATTENDU de Bryan** (une seule liste, version 2026.10.17-1359 à mettre en ligne :
+  `git pull`, `npm run push`, « Installer », « Nouvelle version ») :
+  1. « Installer » signale 2 comptes ⇒ retirer « test 1 » (Code & compte) ; changer le
+     mot de passe (autres appareils déconnectés, trousseau mis à jour) ;
+  2. Réinitialiser le compte (panneau) ⇒ 1re installation, code obligatoire (2 choix,
+     pas de « plus tard ») ; Réinitialiser le code ⇒ ⚙️ fait choisir (« Plus tard ») ;
+  3. codes personnels (ajout, doublon de nom refusé, retour au code commun ; tuile
+     « Responsables ») ;
+  4. 10 mots de passe faux ⇒ blocage 5 min, appareil connecté non touché, bandeau ;
+     roue sur le bouton pendant la pause ; collage du code d'activation ;
+  5. bandeau des accès (en bas, replié ; panneau du Sheet) ;
+  6. journal : 5e colonne « Empreinte », modification à la main + robot lancé à la
+     main ⇒ alerte, « marquer comme vue » ;
+  7. avertissement en modifiant « Saisies » à la main ;
+  8. impression : journée hors espace, offre / jour passé dans l'espace ;
+  9. saisies en attente après fin de session ;
+  10. « Passer la main » (Non ; puis Oui avec l'ancien compte du MODÈLE) ;
+  11. transfert du MODÈLE : historique d'une cellule ⇒ compte d'exécution ;
+  12. Safari Mac (Cmd+Q) / iPad / Chrome, temps de connexion, vraie tablette.
 - **Fil des échanges sur Safari (14-15/10)** : perte d'autorisation des appareils →
   §0 ter ; code responsable = caisse centrale ; page d'essai du trousseau
   (`docs/essais/trousseau/`) réussie sur Mac (méthode 2 : vrai envoi) ⇒ comptes.

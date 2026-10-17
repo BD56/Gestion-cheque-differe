@@ -3,22 +3,32 @@
 > Fichier de reprise après compactage du contexte. À lire **avec** `AGENTS.md` (référence
 > canonique) et `docs/retours-vibe/decisions/2026-10-11_generalisation.md` (décisions).
 > Dernière mise à jour : 2026-10-17 (version 2026.10.17-1359). Code : rien en cours.
-> En cours : DOCUMENTATION UTILISATEURS (plan du guide d'installation proposé, à valider
-> par Bryan). Attendu aussi : essais de Bryan sur le Sheet de test (liste plus bas).
+> En cours : DOCUMENTATION UTILISATEURS (guide d'installation RÉDIGÉ dans
+> `docs/guide/installation/`, à relire par Bryan ; captures Google à faire par lui).
+> Attendu aussi : essais de Bryan sur le Sheet de test (liste plus bas).
 
 ## ▶️ ÉTAT ACTUEL — à lire d'abord
 - **REPRISE (17/10) — où on en est** :
-  1. **Prochaine étape** : documentation utilisateurs, CONTENU d'abord. Bryan doit
-     valider le plan du **guide d'installation** (ci-dessous) ; puis rédaction en
-     Markdown dans `docs/guide/` ; puis mode d'emploi, fiches « En cas de problème »,
-     guide de déploiement technique (DEPLOIEMENT.md). Captures : application ⇒
+  1. **Prochaine étape** : documentation utilisateurs, CONTENU d'abord. Plan du
+     **guide d'installation** validé (« ça me parait pas mal », 17/10) et RÉDIGÉ :
+     `docs/guide/README.md` (index des 4 documents + conventions : un fichier = un
+     chapitre, numéro = ordre du menu, `> 📷 **Capture**` = emplacement d'image),
+     `docs/guide/installation/00-…` à `10-annexe-donnees.md`, liste des 14 captures
+     Google pour Bryan : `docs/guide/CAPTURES_GOOGLE.md`. Attendu : relecture de
+     Bryan. Puis mode d'emploi (`utilisation/`), fiches « En cas de problème »
+     (`problemes/`), guide technique (`technique/`, remplacera DEPLOIEMENT.md).
+     Textes périmés repérés dans le CODE (pas corrigés, attendre le go) : menu
+     « 🔑 Code d'activation (créer le code responsable) » (il crée le COMPTE) et son
+     message « D'autres comptes se créent dans l'espace responsable » (un seul
+     compte) ; `NOM_STRUCTURE` par défaut = « l'Hypermarché Carrefour Vannes » sur
+     une copie neuve (le guide dit de le remplacer ; défaut vide à discuter). Captures : application ⇒
      `outils/captures.js` ; écrans GOOGLE (copie, autorisations, déploiement) ⇒ faites
      par Bryan sur le Sheet de test (lui donner la liste exacte).
   2. **Site** : publié hors Claude ; dépôt GitHub PUBLIC ⇒ GitHub Pages (`github.io`)
      ou Firebase (`web.app`), CHOIX PLUS TARD. **Navigation par chapitres** (arbre ou
      menu latéral, demande de Bryan 17/10). Pages générées depuis le Markdown, aux
      couleurs de l'application ; lien depuis le menu 🚀 du Sheet et l'aide de l'appli.
-  3. **Plan proposé du guide d'installation** (pour le manager / la direction) :
+  3. **Plan (validé) du guide d'installation** (pour le manager / la direction) :
      0 En une minute (but, qui fait quoi, ~30 min) · 1 Avant de commencer (accord
      écrit de l'auteur ; compte Google DU MAGASIN, récupération, codes de secours ;
      matériel et navigateurs ; règles d'accès : seule la direction modifie le Sheet,

@@ -22,12 +22,14 @@ Sur le Mac, dans un dossier à part (le dossier du Sheet de test garde son `.cla
    aussitôt avec `git restore appsscript.json` (vérifier : `git status` propre).
 3. `npm run push` (répondre **oui** pour écraser le manifeste) : 30 fichiers envoyés.
 4. Ouvrir le Sheet créé, puis **Extensions → Apps Script** → choisir la fonction
-   **`preparerModele`** en haut → **Exécuter** → accepter les autorisations (**Tout
+   **`preparerModele`** en haut (fichier `Assistant.gs`) → **Exécuter** → accepter les autorisations (**Tout
    sélectionner**). Le journal d'exécution doit afficher « Modèle prêt (version …) ».
    Ça contrôle les fichiers, crée « Saisies », **marque** le modèle (voir « Sécurité » plus
    bas), retire l'onglet vide « Feuille 1 » et pose l'onglet **« Démarrer »** avec le
    **bouton vert** « ▶ Installer l'application ». Ni robots de nuit ni code d'activation :
-   le modèle reste vierge. (Ne PAS lancer « Installer » sur le modèle.)
+   le modèle reste vierge. **Recharger le Sheet** : le bouton n'apparaît qu'après. (Ne PAS
+   lancer « Installer » ni cliquer sur le bouton vert sur le modèle : ça y créerait les
+   robots de nuit — à supprimer alors dans Apps Script → Déclencheurs.)
 5. **Partager** le modèle : *Partager → Accès général → « Tous les utilisateurs
    disposant du lien » → Lecteur*.
 6. Le **lien à donner aux structures** : celui du modèle, en remplaçant la fin
@@ -63,18 +65,20 @@ bouton. L'assistant guide ensuite en 4 écrans :
    ce que fait « Installer » (feuilles, protections, robots de nuit, contrôle des fichiers).
 2. **Votre magasin** : le nom, avec l'article.
 3. **Mise en ligne** : le seul passage manuel (6 clics dans Apps Script, montrés à
-   l'écran) ; l'assistant voit seul quand c'est fait. S'il ne le voit pas : coller
-   l'adresse `…/exec`.
+   l'écran), puis **Copier** l'« URL de l'application Web » et la **coller** dans
+   l'assistant. (L'adresse que Google donne au programme n'est pas crue : sur une copie
+   pas encore déployée, elle ne menait nulle part — essai du 17/10.)
 4. **Les tablettes** : QR code et lien de l'application, **code d'activation à taper** sur
    la tablette de la caisse centrale ; l'assistant voit la création du compte du magasin.
 À la fin, l'onglet « Démarrer » disparaît. Ensuite : dates de l'offre dans l'application
 (espace responsable → Opération). Lien et QR code à tout moment : menu 🚀 APPLICATION →
 📱 Connecter une tablette.
 
-> À vérifier sur un vrai Sheet (17/10/2026) : le clic sur l'image-bouton d'une copie
-> déclenche bien les autorisations ; Google redemande bien une case oubliée
-> (`ScriptApp.requireScopes`) ; l'adresse `/exec` est bien trouvée seule
-> (`ScriptApp.getService().getUrl()`, plusieurs déploiements).
+> Essai sur un vrai Sheet (17/10/2026) : le bouton apparaît après `preparerModele` une
+> fois le Sheet **rechargé** ; le clic sur le bouton d'une copie déclenche les
+> autorisations ; une case décochée (« exécution en votre absence ») est redemandée.
+> Google ne propose pas de case pour l'adresse e-mail (accordée d'office) et envoie un
+> e-mail « Alerte de sécurité » (normal).
 
 
 ### Qui fait quoi (règle de sécurité, à respecter)

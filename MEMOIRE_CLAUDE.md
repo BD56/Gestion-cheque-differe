@@ -2,7 +2,7 @@
 
 > Fichier de reprise après compactage du contexte. À lire **avec** `AGENTS.md` (référence
 > canonique) et `docs/retours-vibe/decisions/2026-10-11_generalisation.md` (décisions).
-> Dernière mise à jour : 2026-10-17 (version 2026.10.17-2353). Code : ASSISTANT
+> Dernière mise à jour : 2026-10-17 (version 2026.10.18-0019). Code : ASSISTANT
 > D'INSTALLATION fait (simulation verte), essai sur un vrai Sheet attendu de Bryan.
 > En cours : DOCUMENTATION UTILISATEURS (guide d'installation RÉDIGÉ dans
 > `docs/guide/installation/`, à relire par Bryan ; captures Google à faire par lui).
@@ -108,7 +108,7 @@
   « Comptoir » (branche de travail actuelle, tout est poussé)**. Aucune fusion faite,
   aucune pull request. Ordre prévu (sur demande de Bryan seulement) : `design` →
   `refonte` → `generalisation` → `main` / migration Vannes.
-- **Version actuelle sur `design`** : 2026.10.17-2353 (50 séries de tests vertes,
+- **Version actuelle sur `design`** : 2026.10.18-0019 (50 séries de tests vertes,
   ESLint et Prettier propres). Numéro renouvelé par Claude à chaque push de code
   (`npm run nouvelle-version`).
 - **Bryan teste** sur le Sheet « Gestion Chèques Différés — REFONTE (test) » depuis
@@ -224,6 +224,17 @@
   (`docs/essais/trousseau/`) réussie sur Mac (méthode 2 : vrai envoi) ⇒ comptes.
 - **Ensuite (sur demande)** : fusions, documentation (`docs/A_REDIGER.md`, captures via
   `outils/captures.js`), migration de Vannes (`DEPLOIEMENT.md`).
+- **ESSAI RÉEL de l'assistant (Bryan, 17/10 nuit)** : bouton visible après RECHARGEMENT du
+  Sheet ; clic sur le bouton du modèle ⇒ « Préparation » a créé les robots sur le modèle
+  (supprimés à la main ; protection « refuser sur le modèle » PROPOSÉE, pas encore validée) ;
+  Google ne montre PAS de case pour l'e-mail (accordé d'office ; 3 cases : Sheets,
+  exécution en votre absence, contenu dans les fenêtres) ; case « exécution en votre
+  absence » décochée ⇒ « Autorisation requise » réaffichée (à confirmer : seule la case
+  manquante ?) ; e-mail « Alerte de sécurité » de Google (normal, ligne ajoutée à
+  « Démarrer ») ; **getService().getUrl() a donné une adresse /exec SANS déploiement**
+  (copie) qui ne menait nulle part ⇒ FAUX POSITIF corrigé (2026.10.18-0019) : seule l'adresse COLLÉE
+  (7e geste « Copier ») ou notée par doGet est crue ; fenêtre 660 × 720. Suite de l'essai
+  (déploiement, QR sur iPad, création du compte détectée) : ATTENDUE.
 - **Leçon (17/10, 2353)** : Apps Script ne distingue PAS les extensions : un `.gs` et un
   `.html` de même nom (Assistant.gs / Assistant.html) ⇒ `clasp push` refusé en entier
   (« A file with this name already exists »). Page renommée `FenetreAssistant.html` ;

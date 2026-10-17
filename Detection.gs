@@ -3,7 +3,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Detection_() {
-  return "2026.10.17-2353";
+  return "2026.10.18-0019";
 }
 
 // Notes ajoutées automatiquement par l'application (retirées avant toute réécriture)

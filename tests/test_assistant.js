@@ -143,24 +143,24 @@ assert.match(
 assert.strictEqual(c.enregistrerNomMagasin("  l'Hypermarché Test "), "l'Hypermarché Test");
 assert.strictEqual(c.getConfig().NOM_STRUCTURE, "l'Hypermarché Test");
 assert.strictEqual(c.lireNomMagasin(), "l'Hypermarché Test");
-// 3. Mise en ligne : pas encore déployée ; adresse /dev ignorée ; puis trouvée seule
+// 3. Mise en ligne : pas encore déployée. L'adresse que donne getService().getUrl() hors
+//    de l'application n'est JAMAIS crue (essai du 17/10 : adresse sans déploiement)
 const ml = J(c.etatMiseEnLigne());
 assert.deepStrictEqual(ml, { adresse: "", lienEditeur: "https://script.google.com/d/ID-SCRIPT/edit" });
-env.urlService = "https://script.google.com/macros/s/AKfycbTEST/dev";
-assert.strictEqual(c.etatMiseEnLigne().adresse, "");
 env.urlService = ADRESSE;
-assert.strictEqual(c.etatMiseEnLigne().adresse, ADRESSE);
-// adresse collée par le manager (si l'assistant ne la trouve pas)
+assert.strictEqual(c.etatMiseEnLigne().adresse, "", "getUrl seul : pas cru");
+// adresse collée par le manager (bouton « Copier » de Google)
 assert.match(
   erreur(() => c.enregistrerAdresseApplication("https://example.com/exec")),
   /finit par \/exec/
 );
 const ADRESSE_PRO = "https://script.google.com/a/macros/magasin.fr/s/AKfycbPRO/exec";
 assert.strictEqual(c.enregistrerAdresseApplication(" " + ADRESSE_PRO + " "), ADRESSE_PRO);
-assert.strictEqual(c.etatMiseEnLigne().adresse, ADRESSE_PRO, "l'adresse notée passe avant");
-// celle qu'un appareil a vraiment ouverte (doGet) est notée
+assert.strictEqual(c.etatMiseEnLigne().adresse, ADRESSE_PRO);
+// celle qu'un appareil a vraiment ouverte (doGet) est notée, et prend la place
 c.noterAdresseApplication_(ADRESSE);
 assert.strictEqual(env.props._store.ADRESSE_APP, ADRESSE);
+assert.strictEqual(c.etatMiseEnLigne().adresse, ADRESSE);
 c.noterAdresseApplication_("https://script.google.com/macros/s/AKfycbTEST/dev");
 assert.strictEqual(env.props._store.ADRESSE_APP, ADRESSE, "jamais l'adresse /dev");
 // 4. Tablettes : code d'activation neuf au premier affichage seulement

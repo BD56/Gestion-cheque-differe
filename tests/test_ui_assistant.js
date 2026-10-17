@@ -11,6 +11,7 @@ const repo = process.argv[2];
 const captures = process.argv[3];
 const J = (x) => (x === undefined ? null : JSON.parse(JSON.stringify(x)));
 const ADRESSE = "https://script.google.com/macros/s/AKfycbTEST_magasin-X/exec";
+const ADRESSE_AUTRE = "https://script.google.com/macros/s/AKfycbAUTRE/exec";
 
 const RUNNER = `
   (function () {
@@ -115,8 +116,12 @@ async function lireQr(page) {
       "https://script.google.com/d/ID-SCRIPT/edit"
     );
     assert.strictEqual(await page.getAttribute("#lienDeploiement", "target"), "_blank");
-    assert.ok(await vis(page, "#enLigneAttente"));
+    assert.ok(await vis(page, "#adresseCollee"), "champ de l'adresse visible d'emblée");
     assert.ok(await page.isDisabled("#btnSuite2"));
+    // getUrl seul (copie pas encore déployée) : pas cru
+    env.urlService = ADRESSE;
+    await page.waitForTimeout(4500);
+    assert.ok(!(await vis(page, "#enLigneOk")), "adresse de getUrl ignorée");
     if (captures) await page.screenshot({ path: captures + "/assistant-3.png", fullPage: true });
     // Retour puis revenir : le nom est gardé
     await page.click("[data-ecran='2'] [data-retour='1']");
@@ -124,16 +129,25 @@ async function lireQr(page) {
     await page.click("#btnMagasin");
     await page.waitForSelector("[data-ecran='2']:not([hidden])");
     // adresse collée fausse : refusée
-    await page.click("#enLigneColler summary");
     await page.fill("#adresseCollee", "https://example.com/exec");
     await page.click("#btnAdresse");
     await page.waitForFunction(() => document.getElementById("msgAdresse").textContent !== "");
     assert.match(await page.textContent("#msgAdresse"), /finit par \/exec/);
-    // le manager déploie : l'assistant le voit seul (interrogation toutes les 4 s)
-    env.urlService = ADRESSE;
-    await page.waitForSelector("#enLigneOk:not([hidden])", { timeout: 6000 });
-    assert.strictEqual(await page.textContent("#enLigneAdresse"), ADRESSE);
+    // le manager colle l'adresse copiée (Entrée)
+    await page.fill("#adresseCollee", " " + ADRESSE_AUTRE + " ");
+    await page.press("#adresseCollee", "Enter");
+    await page.waitForSelector("#enLigneOk:not([hidden])");
+    assert.strictEqual(await page.textContent("#enLigneAdresse"), ADRESSE_AUTRE);
     assert.ok(!(await vis(page, "#enLigneGuide")) && !(await vis(page, "#lienDeploiement")));
+    assert.ok(!(await page.isDisabled("#btnSuite2")));
+    // « Changer l'adresse » : le champ revient, prérempli ; la bonne adresse remplace l'autre
+    await page.click("#btnChangerAdresse");
+    assert.strictEqual(await page.inputValue("#adresseCollee"), ADRESSE_AUTRE);
+    assert.ok(await page.isDisabled("#btnSuite2"));
+    await page.fill("#adresseCollee", ADRESSE);
+    await page.click("#btnAdresse");
+    await page.waitForSelector("#enLigneOk:not([hidden])");
+    assert.strictEqual(env.props._store.ADRESSE_APP, ADRESSE);
     await page.click("#btnSuite2");
     // 4. Tablettes : QR code lisible = adresse ; lien ; code d'activation à taper
     await page.waitForSelector("#tabZone:not([hidden])");

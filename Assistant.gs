@@ -5,7 +5,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Assistant_() {
-  return "2026.10.17-2353";
+  return "2026.10.18-0019";
 }
 
 // Adresse de l'application en ligne (déploiement « Application Web »), compte Google
@@ -60,7 +60,7 @@ function ouvrirFenetreAssistant_(mode) {
   const page = HtmlService.createTemplateFromFile("FenetreAssistant");
   page.mode = mode;
   SpreadsheetApp.getUi().showModalDialog(
-    page.evaluate().setWidth(660).setHeight(640),
+    page.evaluate().setWidth(660).setHeight(720),
     mode === "tablettes" ? "📱 Connecter une tablette" : "▶ Installation de l'application"
   );
 }
@@ -93,8 +93,8 @@ function enregistrerNomMagasin(nom) {
   return setConfig({ NOM_STRUCTURE: nom }).NOM_STRUCTURE;
 }
 
-// 3. Mise en ligne : l'adresse /exec dès que le déploiement existe ; le lien ouvre le
-//    projet Apps Script, où se trouve le bouton « Déployer ».
+// 3. Mise en ligne : le lien ouvre le projet Apps Script (bouton « Déployer ») ; l'adresse
+//    /exec est celle que le manager colle (ou qu'un appareil a déjà ouverte).
 function etatMiseEnLigne() {
   exigerEditeur_();
   return {
@@ -102,7 +102,7 @@ function etatMiseEnLigne() {
     lienEditeur: "https://script.google.com/d/" + ScriptApp.getScriptId() + "/edit",
   };
 }
-// Adresse collée par le manager (si l'assistant ne la trouve pas seul).
+// Adresse collée par le manager (bouton « Copier » de Google à la fin du déploiement).
 function enregistrerAdresseApplication(url) {
   exigerEditeur_();
   url = (url || "").toString().trim();
@@ -142,18 +142,12 @@ function terminerAssistant() {
 // =================================================================
 // --- ADRESSE DE L'APPLICATION ---
 // =================================================================
-// Celle qu'un appareil a vraiment ouverte (notée par doGet) d'abord, sinon celle que
-// Google donne pour ce projet.
+// Collée par le manager ou notée par doGet (un appareil l'a vraiment ouverte). JAMAIS celle
+// que donne ScriptApp.getService().getUrl() hors de l'application : sur une copie pas
+// encore déployée, elle renvoyait une adresse qui ne menait nulle part (essai du 17/10).
 function adresseApplication_() {
   const notee = PropertiesService.getDocumentProperties().getProperty("ADRESSE_APP") || "";
-  if (RE_ADRESSE_APP.test(notee)) return notee;
-  let url = "";
-  try {
-    url = ScriptApp.getService().getUrl() || "";
-  } catch (e) {
-    url = "";
-  }
-  return RE_ADRESSE_APP.test(url) ? url : "";
+  return RE_ADRESSE_APP.test(notee) ? notee : "";
 }
 // Appelée par doGet avec sa propre adresse.
 function noterAdresseApplication_(url) {
@@ -213,7 +207,13 @@ function creerOngletDemarrer_() {
       11,
       "normal",
     ],
-    [11, "Si rien ne s'ouvre ensuite, cliquez une seconde fois sur le bouton vert.", 11, "normal"],
+    [
+      11,
+      "Si rien ne s'ouvre ensuite, cliquez une seconde fois sur le bouton vert. Google vous enverra un " +
+        "e-mail « Alerte de sécurité » : c'est normal.",
+      11,
+      "normal",
+    ],
     [
       13,
       "Le même assistant se trouve dans le menu 🚀 APPLICATION → ▶ Assistant d'installation.",

@@ -1,9 +1,9 @@
 <!doctype html>
-<html data-version="2026.10.17-2353">
+<html data-version="2026.10.18-0019">
   <head>
     <base target="_top" />
     <style>
-      /* Assistant d'installation (fenêtre du Google Sheets, ~660 × 640) : palette « Comptoir ». */
+      /* Assistant d'installation (fenêtre du Google Sheets, 660 × 720) : palette « Comptoir ». */
       :root {
         --fond: #f5f3f0;
         --surface: #ffffff;
@@ -362,8 +362,8 @@
         <h1>Mettre l'application en ligne</h1>
         <div id="enLigneGuide">
           <p>
-            Google demande de faire cette étape vous-même. Le bouton ouvre la bonne page ; faites ces 6 clics,
-            puis revenez ici.
+            Google demande de faire cette étape vous-même. Le bouton « Ouvrir la page de mise en ligne » ouvre
+            la bonne page ; faites ces 7 gestes, puis revenez ici.
           </p>
           <ol class="clics" style="margin-top: 12px">
             <li><span>En haut à droite</span><span class="mini bleu">Déployer ▾</span></li>
@@ -372,25 +372,14 @@
             <li><span>Exécuter en tant que</span><span class="mini">Moi</span></li>
             <li><span>Qui a accès</span><span class="mini">Tout le monde</span></li>
             <li><span>En bas à droite</span><span class="mini bleu">Déployer</span></li>
+            <li><span>Sous « URL de l'application Web »</span><span class="mini">Copier</span></li>
           </ol>
           <p class="doux" style="margin-top: 10px">
             Si Google redemande une autorisation, acceptez-la comme au début. Ne choisissez pas « Utilisateur
             accédant à l'application Web » : chaque tablette aurait besoin d'un compte Google.
           </p>
-        </div>
-        <div class="info attente" id="enLigneAttente">
-          <span class="roue" aria-hidden="true"></span
-          ><span>L'assistant attend la mise en ligne et la verra tout seul.</span>
-        </div>
-        <div class="info ok" id="enLigneOk" hidden>
-          <b>✓ L'application est en ligne.</b> Son adresse : <span id="enLigneAdresse"></span>
-        </div>
-        <details id="enLigneColler">
-          <summary>C'est fait, mais l'assistant ne le voit pas ?</summary>
-          <div class="champ" style="margin-top: 10px">
-            <label for="adresseCollee"
-              >Collez l'adresse copiée à la fin du déploiement (elle finit par /exec)</label
-            >
+          <div class="champ" style="margin-top: 12px">
+            <label for="adresseCollee">Collez ici l'adresse copiée (elle finit par /exec)</label>
             <div class="lien-app">
               <input
                 id="adresseCollee"
@@ -401,7 +390,13 @@
             </div>
             <p class="message" id="msgAdresse" role="status"></p>
           </div>
-        </details>
+        </div>
+        <div class="info ok" id="enLigneOk" hidden>
+          <b>✓ Adresse de l'application enregistrée :</b> <span id="enLigneAdresse"></span>
+          <button class="btn" id="btnChangerAdresse" type="button" style="margin-top: 8px">
+            Changer l'adresse
+          </button>
+        </div>
       </div>
       <div class="pied">
         <button class="btn" type="button" data-retour="1">Retour</button>
@@ -596,8 +591,6 @@
       function afficherEnLigne(adresse) {
         const ok = !!adresse;
         $("enLigneGuide").hidden = ok;
-        $("enLigneAttente").hidden = ok;
-        $("enLigneColler").hidden = ok;
         $("lienDeploiement").hidden = ok;
         $("enLigneOk").hidden = !ok;
         $("enLigneAdresse").textContent = adresse;
@@ -689,6 +682,14 @@
         if (e.key === "Enter") enregistrerMagasin();
       });
       $("btnAdresse").addEventListener("click", validerAdresse);
+      $("adresseCollee").addEventListener("keydown", function (e) {
+        if (e.key === "Enter") validerAdresse();
+      });
+      $("btnChangerAdresse").addEventListener("click", function () {
+        $("adresseCollee").value = $("enLigneAdresse").textContent;
+        afficherEnLigne("");
+        $("adresseCollee").focus();
+      });
       $("btnSuite2").addEventListener("click", function () {
         aller(3);
       });

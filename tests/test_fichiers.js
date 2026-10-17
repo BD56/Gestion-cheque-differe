@@ -21,6 +21,15 @@ try {
   const fichiers = fichiersGs(repo);
   assert.ok(fichiers.length > 1 && fichiers[0] === "00_Constantes.gs", "00_Constantes.gs lu en premier");
   assert.ok(!fichiers.includes("Code.gs"), "l'ancien Code.gs ne doit plus exister");
+  // Apps Script ne distingue pas les extensions : « Assistant.gs » + « Assistant.html » =
+  // deux fichiers « Assistant », et clasp push est refusé en entier (17/10/2026)
+  const envoyes = fs.readdirSync(repo).filter((f) => /\.(gs|html)$/.test(f));
+  const parNom = {};
+  for (const f of envoyes) {
+    const nom = f.replace(/\.(gs|html)$/, "");
+    assert.ok(!parNom[nom], "même nom pour Apps Script : " + parNom[nom] + " et " + f);
+    parNom[nom] = f;
+  }
   function sansDoublon(declarations, extra) {
     const vus = Object.assign({}, extra);
     for (const [f, noms] of Object.entries(declarations)) {

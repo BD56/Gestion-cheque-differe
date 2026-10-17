@@ -3,7 +3,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_00_Constantes_() {
-  return "2026.10.17-2337";
+  return "2026.10.17-2353";
 }
 
 // =================================================================
@@ -122,6 +122,6 @@ const FICHIERS_PAGE = [
   "ScriptSaisie",
   "ScriptConnexion",
   "Panneau",
-  "Assistant",
+  "FenetreAssistant",
   "Qrcode",
 ];

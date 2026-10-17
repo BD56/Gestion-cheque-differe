@@ -51,7 +51,8 @@ Page de la tablette :
   Saisie, Alertes, Impression, Offre, Formulaire, Journal (journal du jour),
   Responsable, Actions (boutons `data-action`), Ocr (dormant).
 - **Panneau.html** — sidebar admin dans le Sheets (menu `🚀 APPLICATION`).
-- **Assistant.html** — fenêtre de l'assistant d'installation (4 écrans) ; inclut
+- **FenetreAssistant.html** — fenêtre (Apps Script ne distingue pas les extensions :
+  jamais le même nom pour un .gs et un .html) de l'assistant d'installation (4 écrans) ; inclut
   **Qrcode.html** (bibliothèque « QR Code Generator », MIT, reprise telle quelle : hors
   ESLint et Prettier).
 
@@ -115,7 +116,7 @@ Même détection via `onEdit` (édition manuelle directe dans le Sheets).
   manager ». Test : `test_passation`.
 - `ouvrirAssistant` / `ouvrirTablettes` (Assistant.gs) — assistant d'installation (bouton
   vert de l'onglet « Démarrer » posé sur le modèle par `preparerModele`, ou menu) : fenêtre
-  `Assistant.html` en 4 écrans (`preparerInstallation` = `installer` ; nom du magasin ;
+  `FenetreAssistant.html` en 4 écrans (`preparerInstallation` = `installer` ; nom du magasin ;
   mise en ligne guidée, adresse `/exec` trouvée seule ou collée ; QR code + lien + code
   d'activation À TAPER), puis `terminerAssistant` retire « Démarrer ». Avant tout :
   `exigerAutorisations_` (Google donne les autorisations case par case ; une case

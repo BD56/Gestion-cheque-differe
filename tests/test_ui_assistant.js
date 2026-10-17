@@ -1,4 +1,4 @@
-// Fenêtre de l'assistant d'installation (Assistant.html, rendue comme par Apps Script) :
+// Fenêtre de l'assistant d'installation (FenetreAssistant.html, rendue comme par Apps Script) :
 // les 4 écrans dans Chromium, google.script.run -> faux serveur ; le QR code dessiné est
 // décodé (jsQR) et doit donner l'adresse de l'application.
 // Usage : node tests/test_ui_assistant.js <dépôt> [dossier des captures]

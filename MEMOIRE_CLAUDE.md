@@ -2,7 +2,7 @@
 
 > Fichier de reprise après compactage du contexte. À lire **avec** `AGENTS.md` (référence
 > canonique) et `docs/retours-vibe/decisions/2026-10-11_generalisation.md` (décisions).
-> Dernière mise à jour : 2026-10-17 (version 2026.10.17-2337). Code : ASSISTANT
+> Dernière mise à jour : 2026-10-17 (version 2026.10.17-2353). Code : ASSISTANT
 > D'INSTALLATION fait (simulation verte), essai sur un vrai Sheet attendu de Bryan.
 > En cours : DOCUMENTATION UTILISATEURS (guide d'installation RÉDIGÉ dans
 > `docs/guide/installation/`, à relire par Bryan ; captures Google à faire par lui).
@@ -10,7 +10,7 @@
 
 ## ▶️ ÉTAT ACTUEL — à lire d'abord
 - **FAIT (2337) : ASSISTANT D'INSTALLATION** (go de Bryan « commence l'assistant », maquette v3
-  validée). `Assistant.gs` + `Assistant.html` + `Qrcode.html` (lib MIT reprise telle quelle,
+  validée). `Assistant.gs` + `FenetreAssistant.html` (PAS `Assistant.html` : Apps Script refuse un .gs et un .html de même nom, clasp push refusé le 17/10 ; test ajouté) + `Qrcode.html` (lib MIT reprise telle quelle,
   hors ESLint/Prettier) ; `outils/bouton-installer.js` dessine l'image du bouton (constante
   base64). Modèle : `preparerModele` (éditeur Apps Script → Exécuter) pose l'onglet
   « Démarrer » + image-bouton (`assignScript("ouvrirAssistant")`), « Saisies », marque, retire
@@ -108,7 +108,7 @@
   « Comptoir » (branche de travail actuelle, tout est poussé)**. Aucune fusion faite,
   aucune pull request. Ordre prévu (sur demande de Bryan seulement) : `design` →
   `refonte` → `generalisation` → `main` / migration Vannes.
-- **Version actuelle sur `design`** : 2026.10.17-2337 (50 séries de tests vertes,
+- **Version actuelle sur `design`** : 2026.10.17-2353 (50 séries de tests vertes,
   ESLint et Prettier propres). Numéro renouvelé par Claude à chaque push de code
   (`npm run nouvelle-version`).
 - **Bryan teste** sur le Sheet « Gestion Chèques Différés — REFONTE (test) » depuis
@@ -224,6 +224,11 @@
   (`docs/essais/trousseau/`) réussie sur Mac (méthode 2 : vrai envoi) ⇒ comptes.
 - **Ensuite (sur demande)** : fusions, documentation (`docs/A_REDIGER.md`, captures via
   `outils/captures.js`), migration de Vannes (`DEPLOIEMENT.md`).
+- **Leçon (17/10, 2353)** : Apps Script ne distingue PAS les extensions : un `.gs` et un
+  `.html` de même nom (Assistant.gs / Assistant.html) ⇒ `clasp push` refusé en entier
+  (« A file with this name already exists »). Page renommée `FenetreAssistant.html` ;
+  `test_fichiers` le vérifie désormais. La simulation ne le voyait pas : penser aux
+  contraintes de Google, pas seulement au code.
 - **Leçons de cette période** : (1) ne pas réorganiser des écrans sans validation (la
   fusion Opération/Sécurité a été refusée → maquette des 2 idées, idée 2 retenue) ;
   (2) Chromium ≠ Safari : un `display` écrit par script qui écrase une grille passait

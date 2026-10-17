@@ -136,7 +136,7 @@ function makeEnv(opts = {}) {
           },
         };
       },
-      // Modèle (Assistant.html) : <?= ?> et <?!= include_() ?> rendus comme par Apps Script
+      // Modèle (FenetreAssistant.html) : <?= ?> et <?!= include_() ?> rendus comme par Apps Script
       createTemplateFromFile: (nom) => {
         const fs = require("fs");
         const modele = {

@@ -5,7 +5,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Assistant_() {
-  return "2026.10.17-2337";
+  return "2026.10.17-2353";
 }
 
 // Adresse de l'application en ligne (déploiement « Application Web »), compte Google
@@ -57,7 +57,7 @@ function ouvrirTablettes() {
 function ouvrirFenetreAssistant_(mode) {
   exigerAutorisations_();
   exigerEditeur_();
-  const page = HtmlService.createTemplateFromFile("Assistant");
+  const page = HtmlService.createTemplateFromFile("FenetreAssistant");
   page.mode = mode;
   SpreadsheetApp.getUi().showModalDialog(
     page.evaluate().setWidth(660).setHeight(640),

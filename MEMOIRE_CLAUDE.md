@@ -24,6 +24,28 @@
      une copie neuve (le guide dit de le remplacer ; défaut vide à discuter). Captures : application ⇒
      `outils/captures.js` ; écrans GOOGLE (copie, autorisations, déploiement) ⇒ faites
      par Bryan sur le Sheet de test (lui donner la liste exacte).
+  1 bis. **17/10 soir** : (a) aperçu du site (menu des chapitres) :
+     https://claude.ai/artifact/U97bvPtAWjo6tYz6dbQokd (générateur `build.js` + gabarit dans le
+     scratchpad, à mettre dans `outils/` quand l'hébergement sera choisi). (b) **Nouveau
+     MODÈLE créé par Bryan avec clasp** (dossier `~/cheques-modele`, branche design) :
+     `clasp create --type sheets --title …` a ÉCRASÉ `appsscript.json` sans demander (« Cloned
+     one file ») ⇒ `git restore appsscript.json` puis `npm run push` (28 fichiers). Reste :
+     Installer sur le modèle, supprimer « Feuille 1 », Partager (lecteur), lien /copy. (c)
+     **Panne trouvée** sur le Sheet « Test Gestion Chèques Différés » (Bryan propriétaire) :
+     « Réservé aux personnes ayant accès » + CONNEXION_REQUISE au panneau. Cause : case
+     « adresse e-mail » (scope userinfo.email) NON cochée à l'autorisation (consentement
+     granulaire de Google) ⇒ `Session.getActiveUser()` lève une exception, attrapée par
+     `estEditeurDuClasseur_` ⇒ faux refus. Réparation : Examiner les autorisations → Tout
+     sélectionner. À proposer (go requis) : message clair + redemander les autorisations
+     (ScriptApp.requireAllScopes, à vérifier). (d) Bryan : « simplifier au maximum
+     l'installation » ⇒ **ASSISTANT D'INSTALLATION** proposé (bouton vert sur un onglet
+     « Démarrer » du modèle ; 4 écrans : autorisations vérifiées, magasin + dates, mise en
+     ligne guidée et VÉRIFIÉE (getService().getUrl + appel anonyme), QR code adresse + code
+     d'activation). Maquette : https://claude.ai/artifact/W5oY8E6ckf3BeJHP69g67i. Questions
+     ouvertes : code d'activation dans le QR ? réglages dans l'assistant ? mode S/B ?
+     Ordre proposé : 12 essais d'abord, puis assistant, puis guide raccourci. Impossible à
+     automatiser (Google) : compte, /copy, écrans d'autorisation, clics de déploiement
+     (API bloquée, cf. essai mise à jour).
   2. **Site** : publié hors Claude ; dépôt GitHub PUBLIC ⇒ GitHub Pages (`github.io`)
      ou Firebase (`web.app`), CHOIX PLUS TARD. **Navigation par chapitres** (arbre ou
      menu latéral, demande de Bryan 17/10). Pages générées depuis le Markdown, aux

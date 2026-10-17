@@ -32,6 +32,21 @@ const { ouvrir, J } = require("./navigateur");
       /^Premier compte créé \(code d'activation\) : Caisse test — le \d\d\/\d\d à \d\d h \d\d par Caisse test$/
     );
     assert.match(await page.textContent("#noteChangements"), /pendant 2 jours/);
+    // en BAS de la vue d'ensemble (après « Imprimer »), replié sur une ligne
+    assert.ok(
+      await page.$eval("#changementsRecents", (e) => e === e.parentNode.lastElementChild),
+      "dernier bloc de la vue"
+    );
+    assert.strictEqual(
+      (await page.textContent(".resume-changements")).trim(),
+      "3 changements des accès depuis 2 jours · dernier : " + li[0]
+    );
+    assert.ok(!(await vis("#listeChangements")), "liste repliée");
+    await page.click("#btnVoirChangements");
+    assert.ok(await vis("#listeChangements"));
+    assert.strictEqual((await page.textContent("#btnVoirChangements")).trim(), "Replier ▴");
+    await page.click("#btnVoirChangements");
+    assert.ok(!(await vis("#listeChangements")));
     assert.ok(!(await vis("#alerteAdmin")), "pas d'alerte : journal intact");
 
     // Changements faits ailleurs (autre poste) : le plus récent en premier

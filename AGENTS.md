@@ -372,7 +372,8 @@ Décision : `docs/retours-vibe/decisions/2026-10-11_generalisation.md`.
   Changements de « qui peut faire quoi » (`journaliser_(…, true)` : codes commun /
   personnels / retiré / réinitialisé, personne ajoutée / retirée, compte créé / retiré,
   comptes réinitialisés) gardés à part (`CHANGEMENTS_RECENTS`, 20 au plus) : bandeau
-  « Changements récents des accès » (vue d'ensemble de l'espace + panneau du Sheet,
+  « Changements récents des accès » (vue d'ensemble de l'espace, EN BAS et replié sur
+  une ligne avec « Voir tout » — choix de Bryan 17/10 —, + panneau du Sheet en entier,
   `getSurveillancePanneau`), `CHANGEMENTS_DUREE_H` = 48 h, non fermable,
   `CHANGEMENTS_AFFICHES` = 5 lignes (+ « Et N autre(s) »). « Installer » pose aussi un
   avertissement (protection `setWarningOnly`) sur « Saisies » s'il n'y a aucune

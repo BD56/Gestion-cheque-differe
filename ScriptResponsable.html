@@ -1,5 +1,5 @@
 <!-- Espace responsable : code, corrections, archives, réglages, comptes. -->
-<script data-version="2026.10.16-1512">
+<script data-version="2026.10.17-1252">
   // =================================================================
   // --- ESPACE RESPONSABLE (code PIN) ---
   // Le jeton n'est gardé qu'en mémoire : il disparaît à la fermeture du
@@ -212,6 +212,7 @@
     if (jetonAdmin) google.script.run.withFailureHandler(function () {}).fermerSessionAdmin(jetonAdmin);
     jetonAdmin = null;
     personneAdmin = "";
+    changementsDeplies = false;
     saisieEnCours = null;
     listesAdmin = {};
     oublierApercuAdmin();
@@ -268,8 +269,18 @@
     if (infos.robots) afficherAlertesAdmin(infos); // pas dans l'aperçu (avant le code)
     if (infos.changements) afficherChangements(infos.changements);
   }
-  // Changements récents de « qui peut faire quoi » : visibles de tous 2 jours (serveur)
+  // Changements récents de « qui peut faire quoi » : visibles de tous 2 jours (serveur).
+  // En bas de la vue d'ensemble, replié sur une ligne (nombre + le dernier) ; « Voir
+  // tout » déplie la liste (5 au plus). Choix de Bryan (17/10, option A compacte).
+  let changementsDeplies = false;
   function afficherChangements(c) {
+    const total = c.lignes.length + (c.autres || 0);
+    document.getElementById("changementsRecents").style.display = total ? "" : "none";
+    if (!total) return;
+    document.getElementById("nbChangements").textContent =
+      total > 1 ? total + " changements des accès depuis 2 jours" : "1 changement des accès depuis 2 jours";
+    document.getElementById("dernierChangement").textContent =
+      (total > 1 ? "· dernier : " : "· ") + c.lignes[0];
     const ul = document.getElementById("listeChangements");
     ul.textContent = "";
     c.lignes.forEach(function (t) {
@@ -280,7 +291,19 @@
     document.getElementById("noteChangements").textContent =
       (c.autres ? "Et " + c.autres + " autre(s) : voir le journal du Google Sheets. " : "") +
       "Visibles de toute l'équipe pendant 2 jours ; tout reste dans le journal du Google Sheets.";
-    document.getElementById("changementsRecents").style.display = c.lignes.length ? "" : "none";
+    // un seul changement : la ligne dit déjà tout
+    document.getElementById("btnVoirChangements").style.display = total > 1 ? "" : "none";
+    majDeplieChangements(total > 1 && changementsDeplies);
+  }
+  function majDeplieChangements(ouvert) {
+    document.getElementById("detailChangements").style.display = ouvert ? "" : "none";
+    const b = document.getElementById("btnVoirChangements");
+    b.setAttribute("aria-expanded", String(ouvert));
+    b.textContent = ouvert ? "Replier ▴" : "Voir tout ▾";
+  }
+  function basculerChangements() {
+    changementsDeplies = !changementsDeplies;
+    majDeplieChangements(changementsDeplies);
   }
   function ouvrirEnsemble() {
     allerEcran("ensemble");

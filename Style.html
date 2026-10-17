@@ -1,5 +1,5 @@
 <!-- Styles de la page (Index.html). -->
-<style data-version="2026.10.16-1512">
+<style data-version="2026.10.17-1252">
   /* Palette « Comptoir » (clair uniquement). Les couleurs d'alerte (danger rouge,
      orange) ne sont jamais adoucies. Police du système : rien à télécharger. */
   :root {
@@ -1233,6 +1233,38 @@
   }
   .changements-recents {
     border-left: 4px solid var(--accent);
+    padding: 12px 14px;
+    gap: 8px;
+  }
+  .ligne-changements {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .ligne-changements .ico {
+    flex: none;
+    margin-top: 2px;
+    color: var(--accent);
+  }
+  .resume-changements {
+    flex: 1;
+    min-width: 0;
+    font-size: 14px;
+    overflow-wrap: anywhere;
+  }
+  #dernierChangement {
+    color: var(--doux);
+  }
+  .voir-changements {
+    flex: none;
+    border: 0;
+    background: none;
+    padding: 2px 4px;
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 13.5px;
+    white-space: nowrap;
+    cursor: pointer;
   }
   .liste-changements {
     margin: 0;

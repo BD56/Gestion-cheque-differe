@@ -4,7 +4,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Securite_() {
-  return "2026.10.16-1512";
+  return "2026.10.17-1252";
 }
 
 // =================================================================

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr" data-version="2026.10.16-1512">
+<html lang="fr" data-version="2026.10.17-1252">
   <head>
     <base target="_top">
     <?!= include_('Style') ?>
@@ -291,12 +291,6 @@
 
             <div class="sous-ecran" data-ecran="ensemble">
               <h2 class="titre-vue">Vue d'ensemble</h2>
-              <!-- Changements de « qui peut faire quoi » (codes, personnes, comptes) : 2 jours, non fermable -->
-              <div class="boite changements-recents" id="changementsRecents" style="display: none">
-                <h3>Changements récents des accès</h3>
-                <ul class="liste-changements" id="listeChangements"></ul>
-                <p class="note-doux" id="noteChangements"></p>
-              </div>
               <div class="kpis">
                 <div class="kpi"><span>Saisies sur l'offre</span><b id="kpiSaisies">—</b></div>
                 <div class="kpi"><span>Montant total</span><b id="kpiTotal">—</b></div>
@@ -322,6 +316,19 @@
                   <button class="sec accent" data-action="preparerImpression" data-args='["jour","aujourdhui","Impression du Jour"]'><svg class="ico"><use href="#i-imprimer"/></svg>Aujourd'hui</button>
                   <button class="sec" data-action="allerEcran" data-args='["impression"]'><svg class="ico"><use href="#i-calendrier"/></svg>Un autre jour…</button>
                   <button class="sec" data-action="preparerImpression" data-args='["offre","","Impression Offre Complète"]'><svg class="ico"><use href="#i-livre"/></svg>Toute l'offre</button>
+                </div>
+              </div>
+              <!-- Changements de « qui peut faire quoi » (codes, personnes, compte) : 2 jours, non
+                   fermable ; en bas de la vue, replié sur une ligne (« Voir tout » déplie) -->
+              <div class="boite changements-recents" id="changementsRecents" style="display: none">
+                <div class="ligne-changements">
+                  <svg class="ico"><use href="#i-cle"/></svg>
+                  <div class="resume-changements"><b id="nbChangements"></b> <span id="dernierChangement"></span></div>
+                  <button class="voir-changements" id="btnVoirChangements" data-action="basculerChangements" aria-expanded="false">Voir tout ▾</button>
+                </div>
+                <div id="detailChangements" style="display: none">
+                  <ul class="liste-changements" id="listeChangements"></ul>
+                  <p class="note-doux" id="noteChangements"></p>
                 </div>
               </div>
             </div>

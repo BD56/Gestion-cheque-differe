@@ -2,7 +2,7 @@
 
 > Fichier de reprise après compactage du contexte. À lire **avec** `AGENTS.md` (référence
 > canonique) et `docs/retours-vibe/decisions/2026-10-11_generalisation.md` (décisions).
-> Dernière mise à jour : 2026-10-16 (version 2026.10.16-1512 : UN SEUL compte du magasin,
+> Dernière mise à jour : 2026-10-17 (version 2026.10.17-1252 : bandeau des accès en bas, replié ; UN SEUL compte du magasin,
 > code responsable obligatoire, blocage progressif ; avant : « Passer la main », journal à empreintes,
 > changements récents des accès, avertissement sur « Saisies » ; avant : comptes, codes
 > personnels, journal, impression réservée). Rien en cours de codage ; attendu : essais
@@ -15,7 +15,7 @@
   « Comptoir » (branche de travail actuelle, tout est poussé)**. Aucune fusion faite,
   aucune pull request. Ordre prévu (sur demande de Bryan seulement) : `design` →
   `refonte` → `generalisation` → `main` / migration Vannes.
-- **Version actuelle sur `design`** : 2026.10.16-1512 (46 séries de tests vertes,
+- **Version actuelle sur `design`** : 2026.10.17-1252 (46 séries de tests vertes,
   ESLint et Prettier propres). Numéro renouvelé par Claude à chaque push de code
   (`npm run nouvelle-version`).
 - **Bryan teste** sur le Sheet « Gestion Chèques Différés — REFONTE (test) » depuis
@@ -72,6 +72,11 @@
   toujours l'espace ; tuile « Responsables » au lieu de « Comptes ». Audit
   d'affichage (10 tailles) : rien à signaler, après correction de l'outil (il ouvrait
   l'espace sans code ; 98a5cc8).
+- **FAIT (1252) : bandeau « Changements récents des accès »** déplacé EN BAS de la vue
+  d'ensemble (après « Imprimer ») et replié sur une ligne (« N changements des accès
+  depuis 2 jours · dernier : … », « Voir tout ▾ » déplie ; un seul : pas de bouton).
+  Choix de Bryan (17/10) sur maquette https://claude.ai/artifact/UAg9DCewtDMS3cQkx7hCXv
+  (B = en haut compact, A = en bas compact → A). Panneau du Sheet : liste complète.
 - **Décision mises à jour (Bryan, 16/10)** : stabilité d'abord (versions rares,
   éprouvées à Vannes) ; filet de sécurité = nouvelle installation avec reprise des
   données (à concevoir plus tard avec Bryan).

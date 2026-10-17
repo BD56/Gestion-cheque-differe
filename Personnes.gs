@@ -10,7 +10,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Personnes_() {
-  return "2026.10.17-1252";
+  return "2026.10.17-1326";
 }
 
 // Erreur passagère de Google : remontée telle quelle (jamais lue comme « aucune personne »,
@@ -47,6 +47,21 @@ function nouvellePersonne_(nom, code) {
     sel: sel,
     hash: empreintePin_(sel, code),
     creeLe: Utilities.formatDate(new Date(), fuseau_(), "dd/MM/yyyy HH:mm"),
+  };
+}
+
+// Verrou de l'espace responsable, en UNE question (compte connecté) : code ? codes
+// personnels ? et leurs noms. La page le garde en mémoire : ⚙️ affiche aussitôt le bon
+// écran, puis vérifie qu'il n'a pas changé.
+function etatVerrou(cle) {
+  exigerSession_(cle);
+  const personnes = lirePersonnes_();
+  return {
+    pinDefini: codeExige_(),
+    codePersonnel: personnes.length > 0,
+    personnes: personnes.map(function (p) {
+      return { id: p.id, nom: p.nom };
+    }),
   };
 }
 

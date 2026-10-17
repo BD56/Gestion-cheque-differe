@@ -58,7 +58,7 @@ function rendrePage(repo, vars) {
   return renderTemplate(
     fs.readFileSync(repo + "/Index.html", "utf8"),
     Object.assign(
-      { include_: (nom) => fs.readFileSync(repo + "/" + nom + ".html", "utf8"), urlAppli: "" },
+      { include_: (nom) => fs.readFileSync(repo + "/" + nom + ".html", "utf8"), urlAppli: "", etat: null },
       vars
     )
   );

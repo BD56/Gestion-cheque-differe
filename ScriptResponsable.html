@@ -1,5 +1,5 @@
 <!-- Espace responsable : code, corrections, archives, réglages, comptes. -->
-<script data-version="2026.10.17-1252">
+<script data-version="2026.10.17-1326">
   // =================================================================
   // --- ESPACE RESPONSABLE (code PIN) ---
   // Le jeton n'est gardé qu'en mémoire : il disparaît à la fermeture du
@@ -23,6 +23,12 @@
         afficherToast("Erreur : " + m, "error");
       }
     });
+    // codes ou personnes changés : l'état du verrou gardé en mémoire ne vaut plus
+    if (
+      ["definirPin", "passerCodesPersonnels", "ajouterPersonne", "retirerPersonne"].indexOf(nomFonction) !==
+      -1
+    )
+      oublierEtatVerrou();
     // jeton lié à cette tablette : il est envoyé avec sa clé
     runner[nomFonction].apply(runner, args.concat([{ j: jetonAdmin, c: SESSION }]));
   }
@@ -114,6 +120,31 @@
     appliquerInfosAdmin(a, true);
   }
 
+  // Verrou : dernier état connu (code ? codes personnels ? noms), gardé en mémoire depuis
+  // la connexion. ⚙️ affiche aussitôt le bon écran avec lui, puis le serveur confirme en
+  // UNE question (etatVerrou) ; s'il a changé, l'écran est corrigé. Sans état connu :
+  // « Chargement… », rien de faux (ni champ de code avant de savoir s'il faut un nom).
+  let etatVerrouConnu = null;
+  function lireEtatVerrou(suite) {
+    google.script.run
+      .withSuccessHandler(function (etat) {
+        etatVerrouConnu = etat;
+        if (suite) suite(etat);
+      })
+      .withFailureHandler(function (err) {
+        if (suite && !siNonAutorisee(err) && !etatVerrouConnu)
+          document.getElementById("txtVerrou").textContent = "Serveur injoignable : vérifiez le Wi-Fi.";
+      })
+      .etatVerrou(SESSION);
+  }
+  // Codes ou personnes changés depuis cet appareil : l'état gardé ne vaut plus
+  function oublierEtatVerrou() {
+    etatVerrouConnu = null;
+  }
+  function memeEtatVerrou(a, b) {
+    return !!a && !!b && JSON.stringify(a) === JSON.stringify(b);
+  }
+
   function afficherZoneVerrou(message) {
     document.getElementById("zoneAdmin").style.display = "none";
     document.getElementById("railAdmin").style.display = "none";
@@ -123,57 +154,66 @@
     allerEcran(null); // rien sous le code : imprimer la journée se fait dans le journal
     preparerApercuAdmin();
     document.getElementById("msgVerrou").textContent = message || "";
-    document.getElementById("txtVerrou").textContent = "…";
     document.getElementById("compteVerrou").textContent = COMPTE ? "Connecté : " + COMPTE + " ·" : "";
-    google.script.run
-      .withSuccessHandler(function (etat) {
-        pinDefini = etat.pinDefini;
-        codePersonnel = !!etat.codePersonnel;
-        // Pas encore de code (obligatoire) : le choisir d'abord, puis l'espace s'ouvre
-        if (!pinDefini) {
-          afficherChoixCode(true);
-          return;
-        }
-        document.getElementById("txtVerrou").textContent = codePersonnel
-          ? "Choisissez votre nom, puis tapez votre code."
-          : "Saisissez le code responsable.";
-        const choix = document.getElementById("personneVerrou");
-        choix.style.display = codePersonnel ? "" : "none";
-        if (codePersonnel) chargerPersonnesVerrou();
-      })
-      .withFailureHandler(function () {
-        document.getElementById("txtVerrou").textContent = "Serveur injoignable : vérifiez le Wi-Fi.";
-      })
-      .etatAdmin();
+    const montre = etatVerrouConnu;
+    if (montre) appliquerEtatVerrou(montre);
+    else attendreEtatVerrou();
+    lireEtatVerrou(function (etat) {
+      if (document.getElementById("zoneVerrou").style.display === "none") return; // déjà ouvert / fermé
+      if (!memeEtatVerrou(montre, etat)) appliquerEtatVerrou(etat);
+    });
+  }
+  function attendreEtatVerrou() {
+    document.getElementById("txtVerrou").textContent = "Chargement…";
+    ["personneVerrou", "pinSaisi", "btnDeverrouiller"].forEach(function (id) {
+      document.getElementById(id).style.display = "none";
+    });
+  }
+  function appliquerEtatVerrou(etat) {
+    pinDefini = etat.pinDefini;
+    codePersonnel = !!etat.codePersonnel;
+    // Pas encore de code (obligatoire) : le choisir d'abord, puis l'espace s'ouvre
+    if (!pinDefini) {
+      afficherChoixCode(true);
+      return;
+    }
+    // un code a été choisi entre-temps (autre appareil) : le choix affiché d'après l'état
+    // gardé se referme
+    if (choixCodeDepuisEspace && document.getElementById("blocCodeAPart").style.display !== "none")
+      document.getElementById("ecranConnexion").style.display = "none";
+    document.getElementById("txtVerrou").textContent = codePersonnel
+      ? "Choisissez votre nom, puis tapez votre code."
+      : "Saisissez le code responsable.";
+    document.getElementById("pinSaisi").style.display = "";
+    document.getElementById("btnDeverrouiller").style.display = "";
+    const choix = document.getElementById("personneVerrou");
+    choix.style.display = codePersonnel ? "" : "none";
+    if (codePersonnel) remplirPersonnesVerrou(etat.personnes || []);
   }
 
-  // « Qui êtes-vous ? » : noms des personnes (le dernier choisi sur cet appareil d'abord)
-  function chargerPersonnesVerrou() {
+  // « Qui êtes-vous ? » : noms des personnes (le nom déjà choisi, sinon le dernier choisi
+  // sur cet appareil)
+  function remplirPersonnesVerrou(liste) {
     const choix = document.getElementById("personneVerrou");
-    google.script.run
-      .withSuccessHandler(function (liste) {
-        const dernier = lireStockage("cdPersonne");
-        choix.textContent = "";
-        const vide = document.createElement("option");
-        vide.value = "";
-        vide.textContent = "Qui êtes-vous ?";
-        choix.appendChild(vide);
-        (liste || []).forEach(function (p) {
-          const o = document.createElement("option");
-          o.value = p.id;
-          o.textContent = p.nom;
-          choix.appendChild(o);
-        });
-        if (
-          dernier &&
-          (liste || []).some(function (p) {
-            return p.id === dernier;
-          })
-        )
-          choix.value = dernier;
+    const garde = choix.value || lireStockage("cdPersonne");
+    choix.textContent = "";
+    const vide = document.createElement("option");
+    vide.value = "";
+    vide.textContent = "Qui êtes-vous ?";
+    choix.appendChild(vide);
+    liste.forEach(function (p) {
+      const o = document.createElement("option");
+      o.value = p.id;
+      o.textContent = p.nom;
+      choix.appendChild(o);
+    });
+    if (
+      garde &&
+      liste.some(function (p) {
+        return p.id === garde;
       })
-      .withFailureHandler(siNonAutorisee)
-      .personnesResponsables(SESSION);
+    )
+      choix.value = garde;
   }
 
   function deverrouillerAdmin() {

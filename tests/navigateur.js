@@ -48,15 +48,18 @@ async function ouvrir(repo, envOpts) {
     ]);
     env.sheets.Saisies.getRange("Z1").setValue("SIGNALER");
   }
+  // comme doGet : la page reçoit l'état de l'accueil APRÈS la création du compte de test
+  const sessionInitiale = envOpts && envOpts.sansSession ? null : env.connecter();
   const html = rendrePage(repo, {
     cfg: env.ctx.getConfig(),
     dates: env.ctx.lireDates_(),
     urlAppli: (envOpts && envOpts.urlAppli) || "",
+    etat: env.ctx.etatAdmin(),
   }).replace(
     "<head>",
     // comme doGet (addMetaTag) : largeur de l'appareil sur tablette / téléphone
     '<head><meta name="viewport" content="width=device-width, initial-scale=1"><script>window.__SESSION=' +
-      JSON.stringify(envOpts && envOpts.sansSession ? null : env.connecter()) +
+      JSON.stringify(sessionInitiale) +
       ";" +
       PROXY +
       "</script>"

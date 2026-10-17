@@ -3,7 +3,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Application_() {
-  return "2026.10.17-1252";
+  return "2026.10.17-1326";
 }
 
 // Fuseau horaire de référence (réglage du projet Apps Script : Europe/Paris par défaut).
@@ -52,6 +52,13 @@ function doGet(e) {
     url = "";
   }
   page.urlAppli = url;
+  // État de l'accueil (compte ? code ? codes personnels ?) glissé dans la page : l'écran
+  // de connexion affiche tout de suite le bon texte (rien de secret : pas de nom).
+  try {
+    page.etat = etatAdmin();
+  } catch (e) {
+    page.etat = null; // la page le redemande
+  }
   return page
     .evaluate()
     .setTitle(cfg.TITRE_APP)
@@ -162,6 +169,7 @@ function demarrage(cle) {
     dates: lireDates_(),
     config: getConfig(),
     cache: controlerPeriode_() ? null : cacheVerif_(),
+    verrou: etatVerrou(cle), // ⚙️ s'affiche ensuite sans attendre (mode, noms)
   };
 }
 

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr" data-version="2026.10.17-1252">
+<html lang="fr" data-version="2026.10.17-1326">
   <head>
     <base target="_top">
     <?!= include_('Style') ?>
@@ -703,6 +703,8 @@
       const DATES_INITIALES = <?!= JSON.stringify(dates).replace(/</g, '\\u003c') ?>;
       // Adresse /exec (doGet) : cible de l'envoi réel du formulaire de connexion
       const URL_APPLI = <?!= JSON.stringify(urlAppli || "").replace(/</g, '\\u003c') ?>;
+      // État de l'accueil au chargement (compte ? code ?) : écran de connexion sans attente
+      const ETAT_INITIAL = <?!= JSON.stringify(etat || null).replace(/</g, '\\u003c') ?>;
     </script>
     <!-- Scripts de la page, insérés ici par le serveur (Application.gs::include_).
          Une seule portée globale : l'ordre compte pour ce qui s'exécute au chargement. -->

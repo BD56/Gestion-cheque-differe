@@ -1,5 +1,5 @@
 <!-- Connexion (comptes), démarrage, aide, panneau, mentions légales. -->
-<script data-version="2026.10.17-1252">
+<script data-version="2026.10.17-1326">
   // =================================================================
   // --- CONNEXION (compte de la caisse centrale) ---
   // La session reçue à la connexion est gardée dans le navigateur et envoyée à
@@ -38,6 +38,7 @@
   function oublierSession() {
     SESSION = "";
     COMPTE = "";
+    oublierEtatVerrou(); // noms des responsables : seulement pour un appareil connecté
     ecrireStockage("cdSession", null);
     ecrireStockage("cdCompte", null);
   }
@@ -83,39 +84,62 @@
   setInterval(verifierSessionPeriodique, VERIF_SESSION_MS);
 
   let installation = false; // aucun compte : 1re installation
+  // Dernier état connu de l'accueil (compte ? code ?) : glissé dans la page par doGet,
+  // puis mis à jour à chaque réponse du serveur. L'écran s'affiche tout de suite avec
+  // lui ; sans lui (rare), rien de faux : « Chargement… » jusqu'à la réponse.
+  let etatAccueil = typeof ETAT_INITIAL !== "undefined" && ETAT_INITIAL ? ETAT_INITIAL : null;
   function afficherEcranConnexion(message) {
     document.getElementById("ecranConnexion").style.display = "flex";
-    document.getElementById("formConnexion").style.display = "";
     document.getElementById("blocCodeAPart").style.display = "none";
     document.getElementById("blocARenvoyer").style.display = "none";
     document.getElementById("msgConnexion").textContent = message || "";
-    document.getElementById("txtConnexion").textContent = "…";
     document.getElementById("btnConnexion").disabled = false;
+    if (etatAccueil) appliquerEtatAccueil(etatAccueil);
+    else {
+      document.getElementById("formConnexion").style.display = "none";
+      document.getElementById("titreConnexion").textContent = "Connexion";
+      document.getElementById("txtConnexion").textContent = "Chargement…";
+    }
     google.script.run
       .withSuccessHandler(function (etat) {
-        installation = !etat.comptes;
+        const change =
+          !etatAccueil || etatAccueil.comptes !== etat.comptes || etatAccueil.pinDefini !== etat.pinDefini;
+        etatAccueil = etat;
         pinDefini = etat.pinDefini;
-        document.getElementById("titreConnexion").textContent = installation
-          ? "Première installation"
-          : "Connexion";
-        document.getElementById("txtConnexion").textContent = installation
-          ? "Saisissez le code d'activation affiché dans le Google Sheets (menu 🚀 APPLICATION → 🔑 Code d'activation), puis créez le compte du magasin : le même identifiant et le même mot de passe serviront sur tous les appareils."
-          : "Connectez-vous avec le compte du magasin. Le navigateur peut retenir le mot de passe.";
-        document.getElementById("blocActivation").style.display = installation ? "block" : "none";
-        document.getElementById("blocMotDePasse2").style.display = installation ? "block" : "none";
-        document
-          .getElementById("motDePasse")
-          .setAttribute("autocomplete", installation ? "new-password" : "current-password");
-        document.getElementById("btnConnexion").textContent = installation ? "Créer le compte" : "Connexion";
-        if (!STOCKAGE_OK)
-          document.getElementById("msgConnexion").textContent =
-            "Ce navigateur ne peut pas garder la connexion : elle sera redemandée à chaque ouverture.";
+        // formulaire encore à l'écran (pas déjà au choix du code ni aux saisies en attente)
+        // et différent de ce qui était montré : corrigé
+        const surFormulaire =
+          document.getElementById("ecranConnexion").style.display === "flex" &&
+          document.getElementById("blocCodeAPart").style.display === "none" &&
+          document.getElementById("blocARenvoyer").style.display === "none";
+        if (change && surFormulaire) appliquerEtatAccueil(etat);
       })
       .withFailureHandler(function () {
-        document.getElementById("txtConnexion").textContent =
-          "Serveur injoignable : vérifiez le Wi-Fi puis rechargez la page.";
+        if (!etatAccueil)
+          document.getElementById("txtConnexion").textContent =
+            "Serveur injoignable : vérifiez le Wi-Fi puis rechargez la page.";
       })
       .etatAdmin();
+  }
+  function appliquerEtatAccueil(etat) {
+    installation = !etat.comptes;
+    pinDefini = etat.pinDefini;
+    document.getElementById("formConnexion").style.display = "";
+    document.getElementById("titreConnexion").textContent = installation
+      ? "Première installation"
+      : "Connexion";
+    document.getElementById("txtConnexion").textContent = installation
+      ? "Saisissez le code d'activation affiché dans le Google Sheets (menu 🚀 APPLICATION → 🔑 Code d'activation), puis créez le compte du magasin : le même identifiant et le même mot de passe serviront sur tous les appareils."
+      : "Connectez-vous avec le compte du magasin. Le navigateur peut retenir le mot de passe.";
+    document.getElementById("blocActivation").style.display = installation ? "block" : "none";
+    document.getElementById("blocMotDePasse2").style.display = installation ? "block" : "none";
+    document
+      .getElementById("motDePasse")
+      .setAttribute("autocomplete", installation ? "new-password" : "current-password");
+    document.getElementById("btnConnexion").textContent = installation ? "Créer le compte" : "Connexion";
+    if (!STOCKAGE_OK && !document.getElementById("msgConnexion").textContent)
+      document.getElementById("msgConnexion").textContent =
+        "Ce navigateur ne peut pas garder la connexion : elle sera redemandée à chaque ouverture.";
   }
 
   // Envoi du formulaire (bouton ou touche Entrée). Formulaire correct : envoi RÉEL vers
@@ -327,6 +351,7 @@
         document.getElementById("pinAPart").value = "";
         document.getElementById("pinAPart2").value = "";
         document.getElementById("nomAPart").value = "";
+        oublierEtatVerrou(); // code choisi : l'état du verrou est relu à la prochaine ouverture
         if (choixCodeDepuisEspace) {
           // choisi depuis ⚙️ : l'espace s'ouvre aussitôt (le serveur a donné le jeton)
           document.getElementById("ecranConnexion").style.display = "none";
@@ -364,6 +389,7 @@
           if (infos.annuaireActif) majAffichageModeAnnuaire(infos.modeAnnuaire);
         }
         if (rep.config) appliquerConfig(rep.config);
+        if (rep.verrou) etatVerrouConnu = rep.verrou; // ⚙️ : bon écran tout de suite
         if (rep.cache && seq >= seqCacheApplique) {
           seqCacheApplique = seq;
           appliquerCopie(rep.cache); // copie complète (annuaire compris)

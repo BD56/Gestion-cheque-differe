@@ -2,7 +2,7 @@
 
 > Fichier de reprise après compactage du contexte. À lire **avec** `AGENTS.md` (référence
 > canonique) et `docs/retours-vibe/decisions/2026-10-11_generalisation.md` (décisions).
-> Dernière mise à jour : 2026-10-17 (version 2026.10.17-1252 : bandeau des accès en bas, replié ; UN SEUL compte du magasin,
+> Dernière mise à jour : 2026-10-17 (version 2026.10.17-1326 : affichage sans attente (connexion, verrou) ; bandeau des accès en bas, replié ; UN SEUL compte du magasin,
 > code responsable obligatoire, blocage progressif ; avant : « Passer la main », journal à empreintes,
 > changements récents des accès, avertissement sur « Saisies » ; avant : comptes, codes
 > personnels, journal, impression réservée). Rien en cours de codage ; attendu : essais
@@ -15,7 +15,7 @@
   « Comptoir » (branche de travail actuelle, tout est poussé)**. Aucune fusion faite,
   aucune pull request. Ordre prévu (sur demande de Bryan seulement) : `design` →
   `refonte` → `generalisation` → `main` / migration Vannes.
-- **Version actuelle sur `design`** : 2026.10.17-1252 (46 séries de tests vertes,
+- **Version actuelle sur `design`** : 2026.10.17-1326 (47 séries de tests vertes,
   ESLint et Prettier propres). Numéro renouvelé par Claude à chaque push de code
   (`npm run nouvelle-version`).
 - **Bryan teste** sur le Sheet « Gestion Chèques Différés — REFONTE (test) » depuis
@@ -77,6 +77,18 @@
   depuis 2 jours · dernier : … », « Voir tout ▾ » déplie ; un seul : pas de bouton).
   Choix de Bryan (17/10) sur maquette https://claude.ai/artifact/UAg9DCewtDMS3cQkx7hCXv
   (B = en haut compact, A = en bas compact → A). Panneau du Sheet : liste complète.
+- **FAIT (1326) : « bizarreries d'affichage »** (Bryan, 17/10 : « … » avant le texte de
+  connexion ; en codes personnels, ⚙️ montrait le code puis, secondes après, le choix
+  du nom). Cause : la page affichait avant de connaître l'état (questions au serveur
+  de 0,5 à 3 s, deux à la suite pour le verrou). Remèdes 1-4 (go de Bryan) :
+  (1) `doGet` glisse `etatAdmin()` dans la page (`ETAT_INITIAL`, sans nom) ;
+  (2) l'état du verrou (code ? personnels ? noms) arrive avec `demarrage` et est
+  gardé en mémoire (`etatVerrouConnu`, oublié à la déconnexion et quand codes ou
+  personnes changent) : ⚙️ affiche aussitôt le bon écran ; (3) UNE question
+  (`etatVerrou`) au lieu de etatAdmin + personnesResponsables, l'écran est corrigé
+  s'il a changé ailleurs ; (4) sans état connu : « Chargement… », ni code ni nom.
+  Test `test_ui_affichage_immediat`. Bouton « Voir tout » du bandeau : 36 px de
+  haut (audit). « Autres bizarreries » : Bryan doit les décrire (captures).
 - **Décision mises à jour (Bryan, 16/10)** : stabilité d'abord (versions rares,
   éprouvées à Vannes) ; filet de sécurité = nouvelle installation avec reprise des
   données (à concevoir plus tard avec Bryan).

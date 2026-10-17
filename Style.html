@@ -1,5 +1,5 @@
 <!-- Styles de la page (Index.html). -->
-<style data-version="2026.10.17-1252">
+<style data-version="2026.10.17-1326">
   /* Palette « Comptoir » (clair uniquement). Les couleurs d'alerte (danger rouge,
      orange) ne sont jamais adoucies. Police du système : rien à télécharger. */
   :root {
@@ -1257,9 +1257,11 @@
   }
   .voir-changements {
     flex: none;
+    min-height: 36px; /* cible tactile (doigt) */
+    margin: -9px -4px -9px 0;
     border: 0;
     background: none;
-    padding: 2px 4px;
+    padding: 0 6px;
     color: var(--accent);
     font-weight: 700;
     font-size: 13.5px;

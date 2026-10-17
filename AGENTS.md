@@ -353,6 +353,13 @@ Décision : `docs/retours-vibe/decisions/2026-10-11_generalisation.md`.
   `journaliser_` n'empêche jamais l'action (panne seulement notée). Lignes de plus de
   `JOURNAL_RETENTION_MOIS` (12) effacées chaque nuit (`purgerJournal_` dans le robot).
   Lecture : dans le Sheet seulement (afficher l'onglet masqué). Test : `test_journal`.
+- **Affichage sans attente** (17/10) : `doGet` glisse `etatAdmin()` (`ETAT_INITIAL`) ;
+  `demarrage` renvoie aussi `verrou` = `etatVerrou(cle)` (code ? codes personnels ?
+  noms), gardé par la page (`etatVerrouConnu`) : l'écran de connexion et le verrou de
+  ⚙️ s'affichent aussitôt, puis UNE question (`etatAdmin` / `etatVerrou`) les
+  corrige s'ils ont changé ; sans état connu, « Chargement… » (jamais un écran faux).
+  État du verrou oublié à la déconnexion et après definirPin / passerCodesPersonnels
+  / ajouterPersonne / retirerPersonne (appelAdmin). Test : `test_ui_affichage_immediat`.
 - **Journal à empreintes + changements récents** (option « A+ », décision Bryan 16/10 :
   la protection est la TRACE nominative, à rendre FIABLE et VISIBLE ; le retour au code
   commun reste possible dans l'appli). 5e colonne « Empreinte » = HMAC (clé

@@ -1,0 +1,713 @@
+<!doctype html>
+<html data-version="2026.10.17-2337">
+  <head>
+    <base target="_top" />
+    <style>
+      /* Assistant d'installation (fenêtre du Google Sheets, ~660 × 640) : palette « Comptoir ». */
+      :root {
+        --fond: #f5f3f0;
+        --surface: #ffffff;
+        --encre: #1c1917;
+        --doux: #6f6863;
+        --trait: #e5dfd8;
+        --accent: #0f766e;
+        --accent-fonce: #0b5d57;
+        --accent-doux: #e3f1ef;
+        --ok: #15803d;
+        --ok-doux: #e7f4eb;
+        --danger: #c81e1e;
+        --danger-doux: #fcebea;
+        --orange: #b45309;
+        --orange-doux: #fdf1e2;
+        --bleu-google: #0b57d0;
+        color-scheme: light;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        font-size: 15px;
+        line-height: 1.5;
+        color: var(--encre);
+        background: var(--surface);
+        margin: 0;
+      }
+      button,
+      input {
+        font: inherit;
+        color: inherit;
+      }
+      :focus-visible {
+        outline: 3px solid var(--accent);
+        outline-offset: 2px;
+      }
+      .etapes {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+        list-style: none;
+        margin: 0;
+        padding: 6px 20px 14px;
+      }
+      .etapes li {
+        display: grid;
+        gap: 6px;
+        font-size: 12.5px;
+        color: var(--doux);
+      }
+      .etapes li::before {
+        content: "";
+        height: 4px;
+        border-radius: 4px;
+        background: var(--trait);
+      }
+      .etapes li.fait {
+        color: var(--ok);
+      }
+      .etapes li.fait::before {
+        background: var(--ok);
+      }
+      .etapes li.encours {
+        color: var(--encre);
+        font-weight: 600;
+      }
+      .etapes li.encours::before {
+        background: var(--accent);
+      }
+      .corps {
+        padding: 4px 20px 8px;
+        display: grid;
+        gap: 14px;
+      }
+      h1 {
+        margin: 0;
+        font-size: 20px;
+      }
+      p {
+        margin: 0;
+      }
+      .doux {
+        color: var(--doux);
+        font-size: 13.5px;
+      }
+      .pied {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        padding: 14px 20px 18px;
+        border-top: 1px solid var(--trait);
+        margin-top: 8px;
+      }
+      .btn {
+        border-radius: 10px;
+        padding: 11px 18px;
+        font-weight: 600;
+        border: 1px solid var(--trait);
+        background: var(--surface);
+        cursor: pointer;
+        text-decoration: none;
+        color: var(--encre);
+        display: inline-block;
+      }
+      .btn.principal {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #fff;
+      }
+      .btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+      .info {
+        border-radius: 10px;
+        padding: 12px 14px;
+        background: var(--accent-doux);
+      }
+      .info.ok {
+        background: var(--ok-doux);
+      }
+      .info.ok b {
+        color: var(--ok);
+      }
+      .info.erreur {
+        background: var(--danger-doux);
+      }
+      .info.erreur b {
+        color: var(--danger);
+      }
+      .info.attente {
+        background: var(--orange-doux);
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      .roue {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        border: 3px solid var(--orange);
+        border-right-color: transparent;
+        animation: tourner 0.9s linear infinite;
+        flex: none;
+      }
+      @keyframes tourner {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .roue {
+          animation: none;
+        }
+      }
+      .rapport {
+        white-space: pre-wrap;
+        font-size: 13px;
+        background: var(--fond);
+        border-radius: 8px;
+        padding: 10px 12px;
+        margin: 8px 0 0;
+      }
+      .champ {
+        display: grid;
+        gap: 4px;
+      }
+      .champ label {
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .champ input {
+        border: 1px solid var(--trait);
+        border-radius: 8px;
+        padding: 10px 12px;
+        background: var(--fond);
+        width: 100%;
+      }
+      .clics {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 6px;
+        counter-reset: clic;
+      }
+      .clics li {
+        counter-increment: clic;
+        display: grid;
+        grid-template-columns: 26px 1fr auto;
+        gap: 10px;
+        align-items: center;
+        padding: 6px 10px;
+        border: 1px solid var(--trait);
+        border-radius: 10px;
+      }
+      .clics li::before {
+        content: counter(clic);
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: var(--accent-doux);
+        color: var(--accent-fonce);
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+        font-size: 12.5px;
+      }
+      .mini {
+        font-size: 12px;
+        border-radius: 6px;
+        padding: 3px 8px;
+        white-space: nowrap;
+        border: 1px solid var(--trait);
+        color: var(--doux);
+      }
+      .mini.bleu {
+        background: var(--bleu-google);
+        border-color: var(--bleu-google);
+        color: #fff;
+      }
+      .qr-zone {
+        display: grid;
+        grid-template-columns: 180px 1fr;
+        gap: 18px;
+        align-items: start;
+      }
+      #qr {
+        width: 180px;
+        height: 180px;
+        image-rendering: pixelated;
+        border: 1px solid var(--trait);
+        border-radius: 10px;
+      }
+      .lien-app {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        min-width: 0;
+      }
+      .lien-app code {
+        font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+        font-size: 12px;
+        background: var(--fond);
+        border: 1px solid var(--trait);
+        border-radius: 8px;
+        padding: 8px 10px;
+        overflow-x: auto;
+        white-space: nowrap;
+        flex: 1;
+        min-width: 0;
+      }
+      .code-act {
+        font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+        font-size: 24px;
+        letter-spacing: 0.08em;
+        font-variant-numeric: tabular-nums;
+      }
+      details summary {
+        cursor: pointer;
+        color: var(--accent-fonce);
+        font-weight: 600;
+        font-size: 13.5px;
+      }
+      .fin {
+        text-align: center;
+        display: grid;
+        gap: 10px;
+        justify-items: center;
+        padding: 16px 0 6px;
+      }
+      .rond {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: var(--ok-doux);
+        color: var(--ok);
+        display: grid;
+        place-items: center;
+        font-size: 34px;
+      }
+      .message {
+        color: var(--danger);
+        font-size: 13.5px;
+        min-height: 1em;
+      }
+    </style>
+  </head>
+  <body data-mode="<?= mode ?>">
+    <ol class="etapes" id="etapes">
+      <li>Préparation</li>
+      <li>Votre magasin</li>
+      <li>Mise en ligne</li>
+      <li>Les tablettes</li>
+    </ol>
+
+    <!-- 1. Préparation : autorisations vérifiées, « Installer » -->
+    <section class="ecran" data-ecran="0" hidden>
+      <div class="corps">
+        <h1>Préparation</h1>
+        <div class="info attente" id="prepAttente">
+          <span class="roue" aria-hidden="true"></span
+          ><span>Vérification et préparation du Google Sheets…</span>
+        </div>
+        <div id="prepResultat" hidden>
+          <div class="info ok">
+            <b>✓ Autorisations accordées.</b> L'application vous reconnaît comme propriétaire de ce Google
+            Sheets.
+          </div>
+          <div class="info ok" style="margin-top: 10px">
+            <b>✓ Google Sheets prêt</b> : feuilles, protections et robot de nuit en place (version
+            <span id="prepVersion"></span>).
+          </div>
+          <details style="margin-top: 10px">
+            <summary>Voir le compte rendu</summary>
+            <p class="rapport" id="prepRapport"></p>
+          </details>
+        </div>
+        <div class="info erreur" id="prepErreur" hidden></div>
+      </div>
+      <div class="pied">
+        <button class="btn principal" id="btnSuite0" type="button" disabled>Continuer</button>
+      </div>
+    </section>
+
+    <!-- 2. Votre magasin -->
+    <section class="ecran" data-ecran="1" hidden>
+      <div class="corps">
+        <h1>Votre magasin</h1>
+        <div class="champ">
+          <label for="nomMagasin">Nom du magasin, avec l'article</label>
+          <input id="nomMagasin" maxlength="100" autocomplete="off" placeholder="l'Hypermarché …" />
+          <p class="doux">Lu dans les mentions de l'application : « L'auteur concède à l'Hypermarché … ».</p>
+        </div>
+        <p class="doux">
+          L'offre et ses dates se règlent ensuite dans l'application (espace responsable → Opération).
+        </p>
+        <p class="message" id="msgMagasin" role="status"></p>
+      </div>
+      <div class="pied">
+        <button class="btn" type="button" data-retour="0">Retour</button>
+        <button class="btn principal" id="btnMagasin" type="button">Enregistrer et continuer</button>
+      </div>
+    </section>
+
+    <!-- 3. Mise en ligne -->
+    <section class="ecran" data-ecran="2" hidden>
+      <div class="corps">
+        <h1>Mettre l'application en ligne</h1>
+        <div id="enLigneGuide">
+          <p>
+            Google demande de faire cette étape vous-même. Le bouton ouvre la bonne page ; faites ces 6 clics,
+            puis revenez ici.
+          </p>
+          <ol class="clics" style="margin-top: 12px">
+            <li><span>En haut à droite</span><span class="mini bleu">Déployer ▾</span></li>
+            <li><span>Dans le menu</span><span class="mini">Nouveau déploiement</span></li>
+            <li><span>Roue dentée ⚙️, puis</span><span class="mini">Application Web</span></li>
+            <li><span>Exécuter en tant que</span><span class="mini">Moi</span></li>
+            <li><span>Qui a accès</span><span class="mini">Tout le monde</span></li>
+            <li><span>En bas à droite</span><span class="mini bleu">Déployer</span></li>
+          </ol>
+          <p class="doux" style="margin-top: 10px">
+            Si Google redemande une autorisation, acceptez-la comme au début. Ne choisissez pas « Utilisateur
+            accédant à l'application Web » : chaque tablette aurait besoin d'un compte Google.
+          </p>
+        </div>
+        <div class="info attente" id="enLigneAttente">
+          <span class="roue" aria-hidden="true"></span
+          ><span>L'assistant attend la mise en ligne et la verra tout seul.</span>
+        </div>
+        <div class="info ok" id="enLigneOk" hidden>
+          <b>✓ L'application est en ligne.</b> Son adresse : <span id="enLigneAdresse"></span>
+        </div>
+        <details id="enLigneColler">
+          <summary>C'est fait, mais l'assistant ne le voit pas ?</summary>
+          <div class="champ" style="margin-top: 10px">
+            <label for="adresseCollee"
+              >Collez l'adresse copiée à la fin du déploiement (elle finit par /exec)</label
+            >
+            <div class="lien-app">
+              <input
+                id="adresseCollee"
+                autocomplete="off"
+                placeholder="https://script.google.com/macros/s/…/exec"
+              />
+              <button class="btn" id="btnAdresse" type="button">Valider</button>
+            </div>
+            <p class="message" id="msgAdresse" role="status"></p>
+          </div>
+        </details>
+      </div>
+      <div class="pied">
+        <button class="btn" type="button" data-retour="1">Retour</button>
+        <a class="btn" id="lienDeploiement" href="#" target="_blank" rel="noopener"
+          >Ouvrir la page de mise en ligne</a
+        >
+        <button class="btn principal" id="btnSuite2" type="button" disabled>Continuer</button>
+      </div>
+    </section>
+
+    <!-- 4. Les tablettes (aussi seul : menu « 📱 Connecter une tablette ») -->
+    <section class="ecran" data-ecran="3" hidden>
+      <div class="corps">
+        <h1>Connecter la tablette de la caisse centrale</h1>
+        <div class="info erreur" id="tabSansAdresse" hidden>
+          <b>L'application n'est pas encore en ligne.</b> Menu 🚀 APPLICATION → ▶ Assistant d'installation.
+        </div>
+        <div class="qr-zone" id="tabZone" hidden>
+          <canvas id="qr" width="1" height="1" aria-label="QR code de l'adresse de l'application"></canvas>
+          <div style="display: grid; gap: 8px; min-width: 0">
+            <p>Sur la tablette, ouvrez l'<b>appareil photo</b> et visez ce code : l'application s'ouvre.</p>
+            <p><b>Ou ouvrez ce lien</b> sur la tablette (envoyez-le par e-mail ou message) :</p>
+            <div class="lien-app">
+              <code id="tabLien"></code><button class="btn" id="btnCopier" type="button">Copier</button>
+            </div>
+            <div id="tabCode" hidden>
+              <p>Sur l'écran « Première installation », tapez le <b>code d'activation</b> :</p>
+              <div class="code-act" id="tabCodeValeur"></div>
+              <p class="doux">
+                Valable 24 h, une seule fois. Ne le donnez qu'à la caisse centrale. Puis créez le compte du
+                magasin (identifiant et mot de passe, les mêmes sur tous les appareils) et choisissez le code
+                responsable.
+              </p>
+            </div>
+            <p class="doux" id="tabDejaCompte" hidden>
+              Le compte du magasin existe : sur chaque appareil, connectez-vous avec son identifiant et son
+              mot de passe.
+            </p>
+          </div>
+        </div>
+        <div class="info attente" id="tabAttente" hidden>
+          <span class="roue" aria-hidden="true"></span
+          ><span>En attente de la tablette : l'assistant verra la création du compte du magasin.</span>
+        </div>
+        <div class="info ok" id="tabOk" hidden>
+          <b>✓ Le compte du magasin est créé : la tablette est connectée.</b> Les autres appareils : même QR
+          code ou même lien, puis l'identifiant et le mot de passe du magasin.
+        </div>
+        <details>
+          <summary>La tablette demande de se connecter à Google ?</summary>
+          <p class="doux" style="margin-top: 8px">
+            « Qui a accès » n'est pas sur « Tout le monde ». Dans Apps Script : Déployer → Gérer les
+            déploiements → crayon ✏️ → Qui a accès : Tout le monde → Déployer. L'adresse ne change pas.
+          </p>
+        </details>
+      </div>
+      <div class="pied">
+        <button class="btn" type="button" data-retour="2" id="btnRetour3">Retour</button>
+        <button class="btn principal" id="btnSuite3" type="button">Terminer</button>
+      </div>
+    </section>
+
+    <!-- Fin -->
+    <section class="ecran" data-ecran="4" hidden>
+      <div class="corps">
+        <div class="fin">
+          <div class="rond" aria-hidden="true">✓</div>
+          <h1>L'application est installée</h1>
+          <p>
+            L'onglet « Démarrer » va disparaître. Pour retrouver le lien et le QR code des tablettes : menu 🚀
+            APPLICATION → 📱 Connecter une tablette.
+          </p>
+          <p class="doux">
+            Il reste à régler l'offre et ses dates dans l'application (espace responsable → Opération). Demain
+            matin, l'espace responsable confirmera que le robot de nuit est passé.
+          </p>
+        </div>
+      </div>
+      <div class="pied">
+        <button class="btn" type="button" data-retour="3">Retour</button>
+        <button class="btn principal" id="btnFin" type="button">Fermer</button>
+      </div>
+    </section>
+
+    <?!= include_("Qrcode") ?>
+    <script>
+      /* global qrcode */
+      const MODE = document.body.dataset.mode === "tablettes" ? "tablettes" : "assistant";
+      let etape = 0;
+      let attente = null; // interrogation périodique du serveur (mise en ligne, tablette)
+
+      function $(id) {
+        return document.getElementById(id);
+      }
+      function serveur(ok, ko) {
+        return google.script.run.withSuccessHandler(ok).withFailureHandler(ko || erreurGenerale);
+      }
+      function erreurGenerale(e) {
+        alerterEcran((e && e.message) || String(e));
+      }
+      function alerterEcran(texte) {
+        const zone = document.querySelector(".ecran:not([hidden]) .message") || $("prepErreur");
+        zone.hidden = false;
+        zone.textContent = texte;
+      }
+      function arreterAttente() {
+        if (attente) clearInterval(attente);
+        attente = null;
+      }
+
+      function aller(i) {
+        arreterAttente();
+        etape = i;
+        document.querySelectorAll(".ecran").forEach(function (s) {
+          s.hidden = Number(s.dataset.ecran) !== i;
+        });
+        document.querySelectorAll("#etapes li").forEach(function (li, j) {
+          li.className = j < i ? "fait" : j === i ? "encours" : "";
+        });
+        [preparer, magasin, miseEnLigne, tablettes, function () {}][i]();
+      }
+
+      // --- 1. Préparation ---
+      function preparer() {
+        $("prepAttente").hidden = false;
+        $("prepResultat").hidden = true;
+        $("prepErreur").hidden = true;
+        $("btnSuite0").disabled = true;
+        serveur(
+          function (r) {
+            $("prepAttente").hidden = true;
+            if (r.incomplet) {
+              $("prepErreur").hidden = false;
+              $("prepErreur").textContent =
+                "Installation incomplète : la copie n'est pas complète. Envoyez une capture de ce message à l'auteur.\n\n" +
+                r.rapport;
+              $("prepErreur").style.whiteSpace = "pre-wrap";
+              return;
+            }
+            $("prepVersion").textContent = r.version;
+            $("prepRapport").textContent = r.rapport;
+            $("prepResultat").hidden = false;
+            $("btnSuite0").disabled = false;
+          },
+          function (e) {
+            $("prepAttente").hidden = true;
+            $("prepErreur").hidden = false;
+            $("prepErreur").textContent = (e && e.message) || String(e);
+          }
+        ).preparerInstallation();
+      }
+
+      // --- 2. Votre magasin ---
+      function magasin() {
+        $("msgMagasin").textContent = "";
+        serveur(function (nom) {
+          if (!$("nomMagasin").value) $("nomMagasin").value = nom;
+          $("nomMagasin").focus();
+        }).lireNomMagasin();
+      }
+      function enregistrerMagasin() {
+        const nom = $("nomMagasin").value.trim();
+        if (!nom) {
+          $("msgMagasin").textContent = "Écrivez le nom du magasin.";
+          return;
+        }
+        $("btnMagasin").disabled = true;
+        serveur(
+          function () {
+            $("btnMagasin").disabled = false;
+            aller(2);
+          },
+          function (e) {
+            $("btnMagasin").disabled = false;
+            $("msgMagasin").textContent = (e && e.message) || String(e);
+          }
+        ).enregistrerNomMagasin(nom);
+      }
+
+      // --- 3. Mise en ligne ---
+      function miseEnLigne() {
+        afficherEnLigne("");
+        const verifier = function () {
+          serveur(function (r) {
+            $("lienDeploiement").href = r.lienEditeur;
+            if (r.adresse) afficherEnLigne(r.adresse);
+          }).etatMiseEnLigne();
+        };
+        verifier();
+        attente = setInterval(verifier, 4000);
+      }
+      function afficherEnLigne(adresse) {
+        const ok = !!adresse;
+        $("enLigneGuide").hidden = ok;
+        $("enLigneAttente").hidden = ok;
+        $("enLigneColler").hidden = ok;
+        $("lienDeploiement").hidden = ok;
+        $("enLigneOk").hidden = !ok;
+        $("enLigneAdresse").textContent = adresse;
+        $("btnSuite2").disabled = !ok;
+        if (ok) arreterAttente();
+      }
+      function validerAdresse() {
+        $("msgAdresse").textContent = "";
+        serveur(afficherEnLigne, function (e) {
+          $("msgAdresse").textContent = (e && e.message) || String(e);
+        }).enregistrerAdresseApplication($("adresseCollee").value);
+      }
+
+      // --- 4. Les tablettes ---
+      function tablettes() {
+        $("btnRetour3").hidden = MODE === "tablettes";
+        $("btnSuite3").textContent = MODE === "tablettes" ? "Fermer" : "Terminer";
+        serveur(function (r) {
+          $("tabSansAdresse").hidden = !!r.adresse;
+          $("tabZone").hidden = !r.adresse;
+          if (!r.adresse) return;
+          $("tabLien").textContent = r.adresse;
+          dessinerQr(r.adresse);
+          $("tabCode").hidden = r.compte;
+          $("tabCodeValeur").textContent = r.code;
+          $("tabDejaCompte").hidden = !r.compte;
+          if (r.compte) return;
+          $("tabAttente").hidden = false;
+          attente = setInterval(function () {
+            serveur(function (etat) {
+              if (!etat.compte) return;
+              arreterAttente();
+              $("tabAttente").hidden = true;
+              $("tabOk").hidden = false;
+              $("tabCode").hidden = true;
+            }).etatTablettes(false);
+          }, 5000);
+        }).etatTablettes(true);
+      }
+      // QR code de l'adresse (un point du QR = un pixel, agrandi par le style ; marge blanche de 4)
+      function dessinerQr(texte) {
+        const qr = qrcode(0, "M");
+        qr.addData(texte);
+        qr.make();
+        const n = qr.getModuleCount();
+        const marge = 4;
+        const c = $("qr");
+        c.width = c.height = n + 2 * marge;
+        const x = c.getContext("2d");
+        x.fillStyle = "#fff";
+        x.fillRect(0, 0, c.width, c.height);
+        x.fillStyle = "#000";
+        for (let l = 0; l < n; l++)
+          for (let k = 0; k < n; k++) if (qr.isDark(l, k)) x.fillRect(k + marge, l + marge, 1, 1);
+      }
+      function copierLien() {
+        const texte = $("tabLien").textContent;
+        const fait = function () {
+          $("btnCopier").textContent = "Copié ✓";
+        };
+        const selectionner = function () {
+          const r = document.createRange();
+          r.selectNodeContents($("tabLien"));
+          const s = window.getSelection();
+          s.removeAllRanges();
+          s.addRange(r);
+          try {
+            if (document.execCommand("copy")) fait();
+          } catch (e) {}
+        };
+        try {
+          navigator.clipboard.writeText(texte).then(fait, selectionner);
+        } catch (e) {
+          selectionner();
+        }
+      }
+
+      // --- Boutons ---
+      document.querySelectorAll("[data-retour]").forEach(function (b) {
+        b.addEventListener("click", function () {
+          aller(Number(b.dataset.retour));
+        });
+      });
+      $("btnSuite0").addEventListener("click", function () {
+        aller(1);
+      });
+      $("btnMagasin").addEventListener("click", enregistrerMagasin);
+      $("nomMagasin").addEventListener("keydown", function (e) {
+        if (e.key === "Enter") enregistrerMagasin();
+      });
+      $("btnAdresse").addEventListener("click", validerAdresse);
+      $("btnSuite2").addEventListener("click", function () {
+        aller(3);
+      });
+      $("btnCopier").addEventListener("click", copierLien);
+      $("btnSuite3").addEventListener("click", function () {
+        if (MODE === "tablettes") google.script.host.close();
+        else aller(4);
+      });
+      $("btnFin").addEventListener("click", function () {
+        $("btnFin").disabled = true;
+        serveur(function () {
+          google.script.host.close();
+        }).terminerAssistant();
+      });
+
+      if (MODE === "tablettes") {
+        $("etapes").hidden = true;
+        aller(3);
+      } else aller(0);
+    </script>
+  </body>
+</html>

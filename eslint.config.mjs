@@ -62,7 +62,8 @@ const regles = {
 };
 
 export default [
-  { ignores: ["node_modules/**", "prototype-ocr/**", "tests/rendu_defaut.html"] },
+  // Qrcode.html : bibliothèque d'un tiers reprise telle quelle (licence MIT)
+  { ignores: ["node_modules/**", "prototype-ocr/**", "tests/rendu_defaut.html", "Qrcode.html"] },
   ...Object.keys(serveur).map((f) => ({
     files: [f],
     languageOptions: {

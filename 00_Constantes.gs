@@ -3,7 +3,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_00_Constantes_() {
-  return "2026.10.17-1359";
+  return "2026.10.17-2337";
 }
 
 // =================================================================
@@ -53,6 +53,19 @@ const MDP_MIN = 8; // longueur minimale du mot de passe
 const MDP_TOURS = 500; // empreinte répétée : ralentit les essais si les propriétés fuitent
 const SESSION_HEURE_FIN = 3; // toutes les sessions se terminent à 3 h du matin (fuseau du script)
 
+// Assistant d'installation (voir Assistant.gs) : onglet d'accueil du modèle, retiré à la fin.
+const FEUILLE_DEMARRER = "Démarrer";
+// Autorisations Google vérifiées (consentement case par case : une case peut rester
+// décochée). Sans l'adresse e-mail, le programme ne reconnaît plus le propriétaire ; sans
+// les déclencheurs, pas de robot de nuit.
+const AUTORISATIONS_VERIFIEES = [
+  "https://www.googleapis.com/auth/userinfo.email",
+  "https://www.googleapis.com/auth/script.scriptapp",
+];
+const MESSAGE_AUTORISATION_INCOMPLETE =
+  "Autorisation Google incomplète (une case n'a pas été cochée) : menu 🚀 APPLICATION → " +
+  "▶ Assistant d'installation, puis cochez « Tout sélectionner ».";
+
 // Annuaire inter-offres (voir Annuaire.gs). ANNUAIRE_ACTIF = false coupe tout.
 const ANNUAIRE_ACTIF = true;
 const ANNUAIRE_RETENTION_ANS = 3; // purge après X ans d'inactivité (dernière vue)
@@ -83,6 +96,7 @@ const FICHIERS_SERVEUR = [
   "Annuaire",
   "Application",
   "Archives",
+  "Assistant",
   "Detection",
   "Installation",
   "Journal",
@@ -108,4 +122,6 @@ const FICHIERS_PAGE = [
   "ScriptSaisie",
   "ScriptConnexion",
   "Panneau",
+  "Assistant",
+  "Qrcode",
 ];

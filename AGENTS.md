@@ -35,6 +35,10 @@ Serveur (une seule portée globale : **un nom déclaré dans deux .gs = erreur**
 - **Application.gs** — `doGet`, `include_`, démarrage tablette, copie locale, impression, outils.
 - **Reglages.gs** — réglages de la structure (`getConfig` / `setConfig`).
 - **Installation.gs** — « Installer », feuilles, robots de nuit, copie du modèle, contrôle de version.
+- **Assistant.gs** — assistant d'installation (bouton vert de l'onglet « Démarrer », menus
+  ▶ Assistant / 📱 Connecter une tablette), autorisations Google vérifiées case par case
+  (`autorisationsManquantes_`, `exigerAutorisations_`), adresse `/exec` (`ADRESSE_APP`),
+  `preparerModele` (pour l'auteur, sur le modèle). Image du bouton : `outils/bouton-installer.js`.
 - **Securite.gs** — comptes et sessions, code responsable, code d'activation, jetons.
 - **Saisie.gs** — `traiterSaisie`, `forcerSaisie`, `verifierPiece`, correction / suppression, mode.
 - **Detection.gs** — normalisation, doublons A/B/C, marquages (⚠️ miroir dans `ScriptSaisie.html` / `ScriptFormulaire.html`).
@@ -47,6 +51,9 @@ Page de la tablette :
   Saisie, Alertes, Impression, Offre, Formulaire, Journal (journal du jour),
   Responsable, Actions (boutons `data-action`), Ocr (dormant).
 - **Panneau.html** — sidebar admin dans le Sheets (menu `🚀 APPLICATION`).
+- **Assistant.html** — fenêtre de l'assistant d'installation (4 écrans) ; inclut
+  **Qrcode.html** (bibliothèque « QR Code Generator », MIT, reprise telle quelle : hors
+  ESLint et Prettier).
 
 Chaque fichier porte le même numéro de version (`npm run nouvelle-version`) ;
 outils : `npm test`, `npm run lint`, `npm run push` (clasp), dossier `outils/`.
@@ -54,8 +61,8 @@ Captures d'écran (avant / après) : `NODE_PATH=$(npm root -g) node outils/captu
 Audit d'affichage (9 tailles d'écran × 27 états : débordements, chevauchements, textes coupés, erreurs) :
 `NODE_PATH=$(npm root -g) npm run verifier-affichage -- <dossier> [taille]` → captures + `rapport.txt`.
 - **appsscript.json** — manifeste (V8, `Europe/Paris`, webapp `access: ANYONE_ANONYMOUS`).
-- **INSTALLATION.md** — créer le **modèle** (une fois) et installer l'appli pour une
-  nouvelle structure (copie du modèle → menu Installer → déploiement).
+- **INSTALLATION.md** — créer le **modèle** (clasp + `preparerModele`) et installer l'appli
+  pour une nouvelle structure (copie du modèle → bouton vert → assistant).
 - **prototype-ocr/** — banc d'essai OCR isolé (hors app, voir plus bas).
 
 ## Structure du Google Sheets
@@ -106,6 +113,15 @@ Même détection via `onEdit` (édition manuelle directe dans le Sheets).
   car `verificationClotureNocturne` vérifie et purge le journal SOUS VERROU (robots
   en double : le second ne trouve plus rien). Voir INSTALLATION.md « Changement de
   manager ». Test : `test_passation`.
+- `ouvrirAssistant` / `ouvrirTablettes` (Assistant.gs) — assistant d'installation (bouton
+  vert de l'onglet « Démarrer » posé sur le modèle par `preparerModele`, ou menu) : fenêtre
+  `Assistant.html` en 4 écrans (`preparerInstallation` = `installer` ; nom du magasin ;
+  mise en ligne guidée, adresse `/exec` trouvée seule ou collée ; QR code + lien + code
+  d'activation À TAPER), puis `terminerAssistant` retire « Démarrer ». Avant tout :
+  `exigerAutorisations_` (Google donne les autorisations case par case ; une case
+  oubliée est redemandée par `ScriptApp.requireScopes`) ; `exigerEditeur_` et le panneau
+  disent « Autorisation Google incomplète… » plutôt que « Réservé… ». Tests :
+  `test_assistant`, `test_ui_assistant`.
 - `nettoyerSiCopie_` — les propriétés du document sont marquées `ID_CLASSEUR` ; si la
   marque ≠ ID du classeur (= copie), elles sont **toutes effacées** (code responsable,
   dates, réglages hérités). Appelée par `installer` et `doGet`. Classeur jamais marqué

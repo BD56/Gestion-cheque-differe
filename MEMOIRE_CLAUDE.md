@@ -2,12 +2,39 @@
 
 > Fichier de reprise après compactage du contexte. À lire **avec** `AGENTS.md` (référence
 > canonique) et `docs/retours-vibe/decisions/2026-10-11_generalisation.md` (décisions).
-> Dernière mise à jour : 2026-10-17 (version 2026.10.17-1359). Code : rien en cours.
+> Dernière mise à jour : 2026-10-17 (version 2026.10.17-2337). Code : ASSISTANT
+> D'INSTALLATION fait (simulation verte), essai sur un vrai Sheet attendu de Bryan.
 > En cours : DOCUMENTATION UTILISATEURS (guide d'installation RÉDIGÉ dans
 > `docs/guide/installation/`, à relire par Bryan ; captures Google à faire par lui).
 > Attendu aussi : essais de Bryan sur le Sheet de test (liste plus bas).
 
 ## ▶️ ÉTAT ACTUEL — à lire d'abord
+- **FAIT (2337) : ASSISTANT D'INSTALLATION** (go de Bryan « commence l'assistant », maquette v3
+  validée). `Assistant.gs` + `Assistant.html` + `Qrcode.html` (lib MIT reprise telle quelle,
+  hors ESLint/Prettier) ; `outils/bouton-installer.js` dessine l'image du bouton (constante
+  base64). Modèle : `preparerModele` (éditeur Apps Script → Exécuter) pose l'onglet
+  « Démarrer » + image-bouton (`assignScript("ouvrirAssistant")`), « Saisies », marque, retire
+  « Feuille 1 » vide, SANS robots ni code. Copie : toast « onglet Démarrer, bouton vert » ;
+  clic ⇒ écrans Google ⇒ fenêtre 4 écrans : (1) `preparerInstallation` (= installer) ;
+  (2) nom avec l'article (`lireNomMagasin` vide si jamais réglé ; `enregistrerNomMagasin` via
+  setConfig) ; (3) mise en ligne : 6 clics montrés, lien vers le projet
+  (`script.google.com/d/<id>/edit`), attente toutes les 4 s de `etatMiseEnLigne` (adresse
+  notée `ADRESSE_APP` par doGet, sinon `getService().getUrl()`, jamais /dev ; adresse
+  collable) ; (4) QR (adresse seule) + lien + Copier + code d'activation À TAPER
+  (`etatTablettes(true)` en crée un neuf), attente du compte toutes les 5 s ; fin :
+  `terminerAssistant` retire « Démarrer » et « Feuille 1 ». Menus : ▶ Assistant
+  d'installation, 📱 Connecter une tablette ; « 🔑 Code d'activation (créer le compte du
+  magasin) » + message corrigé. **Autorisations case par case** : `autorisationsManquantes_`
+  (getAuthorizationInfo sur userinfo.email + script.scriptapp), `exigerAutorisations_`
+  (requireScopes ⇒ écran Google ; sinon message clair) dans l'assistant et « Installer » ;
+  `exigerEditeur_` / `exigerSession_` (panneau) disent « Autorisation Google incomplète… »
+  au lieu de « Réservé… » / CONNEXION_REQUISE. Tests : `test_assistant`, `test_ui_assistant`
+  (QR décodé par jsQR, devDependency). INSTALLATION.md : modèle par clasp + preparerModele,
+  installation par l'assistant (voie manuelle gardée en secours). **À VÉRIFIER SUR UN VRAI
+  SHEET** (docs Google non consultables d'ici) : clic sur l'image d'une copie ⇒
+  autorisations ; requireScopes redemande la case oubliée ; getUrl trouve /exec ; lien
+  _blank depuis la fenêtre ; presse-papiers. Guide utilisateurs (`docs/guide/`) à
+  raccourcir APRÈS cet essai.
 - **REPRISE (17/10) — où on en est** :
   1. **Prochaine étape** : documentation utilisateurs, CONTENU d'abord. Plan du
      **guide d'installation** validé (« ça me parait pas mal », 17/10) et RÉDIGÉ :
@@ -81,7 +108,7 @@
   « Comptoir » (branche de travail actuelle, tout est poussé)**. Aucune fusion faite,
   aucune pull request. Ordre prévu (sur demande de Bryan seulement) : `design` →
   `refonte` → `generalisation` → `main` / migration Vannes.
-- **Version actuelle sur `design`** : 2026.10.17-1359 (48 séries de tests vertes,
+- **Version actuelle sur `design`** : 2026.10.17-2337 (50 séries de tests vertes,
   ESLint et Prettier propres). Numéro renouvelé par Claude à chaque push de code
   (`npm run nouvelle-version`).
 - **Bryan teste** sur le Sheet « Gestion Chèques Différés — REFONTE (test) » depuis

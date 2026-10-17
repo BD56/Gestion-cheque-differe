@@ -2,21 +2,23 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Sheet_() {
-  return "2026.10.17-1359";
+  return "2026.10.17-2337";
 }
 
 function onOpen() {
   const ui = SpreadsheetApp.getUi();
   ui.createMenu("🚀 APPLICATION")
     .addItem("⚙️ Ouvrir le panneau de contrôle", "afficherPanneau")
+    .addItem("▶ Assistant d'installation", "ouvrirAssistant")
+    .addItem("📱 Connecter une tablette", "ouvrirTablettes")
     .addItem("🧰 Installer / vérifier l'installation", "installerDepuisMenu")
-    .addItem("🔑 Code d'activation (créer le code responsable)", "afficherCodeActivation")
+    .addItem("🔑 Code d'activation (créer le compte du magasin)", "afficherCodeActivation")
     .addItem("🔁 Passer la main (changement de manager)", "passerLaMainDepuisMenu")
     .addToUi();
   if (estCopieNonInstallee_()) {
     try {
       SpreadsheetApp.getActiveSpreadsheet().toast(
-        "Nouvelle copie : menu 🚀 APPLICATION → 🧰 Installer.",
+        "Nouvelle copie : onglet « Démarrer », bouton vert « Installer l'application ».",
         "Installation",
         20
       );

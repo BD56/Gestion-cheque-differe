@@ -279,7 +279,7 @@ assert.throws(() => c.getInfosAdmin(jt), /ADMIN_REQUIS/);
 env.activeEmail = "editeur@example.com";
 env.alertes.length = 0;
 c.afficherCodeActivation();
-assert.match(env.alertes[0], /Un compte existe déjà/);
+assert.match(env.alertes[0], /Le compte du magasin existe déjà/);
 const env2 = makeEnv({ repo: process.argv[2], sessionReelle: true });
 env2.activeEmail = "editeur@example.com";
 env2.props._store.ADMIN_PIN_HASH = "ancien-code"; // ancien Sheet : code responsable déjà là, aucun compte

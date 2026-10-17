@@ -4,7 +4,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Securite_() {
-  return "2026.10.17-1359";
+  return "2026.10.17-2337";
 }
 
 // =================================================================
@@ -148,7 +148,10 @@ function exigerAdmin_(jeton) {
 }
 
 function exigerEditeur_() {
-  if (!estEditeurDuClasseur_()) throw new Error("Réservé aux personnes ayant accès au Google Sheets.");
+  if (estEditeurDuClasseur_()) return;
+  // Propriétaire non reconnu faute d'autorisation (case « adresse e-mail » décochée) : le dire
+  if (autorisationsManquantes_().length) throw new Error(MESSAGE_AUTORISATION_INCOMPLETE);
+  throw new Error("Réservé aux personnes ayant accès au Google Sheets.");
 }
 
 // Robot de nuit : lancé par SON déclencheur (ou à la main par un éditeur). Un visiteur
@@ -416,6 +419,8 @@ function exigerSession_(cle) {
     return;
   }
   if (cle === undefined && estEditeurDuClasseur_()) return; // panneau du Sheet (sans session)
+  if (cle === undefined && autorisationsManquantes_().length)
+    throw new Error(MESSAGE_AUTORISATION_INCOMPLETE);
   throw new Error(
     "CONNEXION_REQUISE : session terminée (3 h du matin), mot de passe changé ou compte retiré."
   );

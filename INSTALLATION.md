@@ -14,25 +14,20 @@ Aucun copier-coller de code.
 ---
 
 ## A. Créer le modèle (Bryan, UNE SEULE FOIS)
-1. Sur ton compte Google, créer un **Google Sheets vierge** nommé par exemple
-   **« MODÈLE — Gestion Chèques Différés (ne pas utiliser) »**.
-2. **Extensions → Apps Script**, puis créer les fichiers et y coller le contenu
-   **intégral** du dépôt (bouton *Raw* sur GitHub) :
-
-   | Fichier GitHub | Dans l'éditeur Apps Script |
-   |---|---|
-   | `Code.gs` | le fichier `Code.gs` déjà présent (remplacer tout) |
-   | `Index.html` | **+ → HTML**, nommé `Index` |
-   | `Panneau.html` | **+ → HTML**, nommé `Panneau` |
-   | `appsscript.json` | ⚙️ Paramètres du projet → cocher « Afficher le fichier manifeste », puis remplacer son contenu |
-
-3. **Enregistrer**, revenir au classeur et **le recharger** (F5).
-4. Menu **🚀 APPLICATION → 🧰 Installer / vérifier l'installation** → accepter les
-   autorisations. *(« Google n'a pas validé cette application » → Paramètres avancés
-   → Accéder au projet : normal pour un script personnel.)*
-   Ça crée la feuille « Saisies » et **marque** le modèle (voir « Sécurité » plus bas).
-   *(Ça crée aussi les robots de nuit et affiche un code d'activation : sans effet sur
-   un modèle vide, à ignorer. Les copies n'héritent ni des robots ni du code.)*
+Sur le Mac, dans un dossier à part (le dossier du Sheet de test garde son `.clasp.json`) :
+1. `git clone -b design https://github.com/bd56/gestion-cheque-differe.git cheques-modele`,
+   puis `cd cheques-modele` et `npm install`.
+2. `npx clasp create --type sheets --title "MODÈLE — Gestion Chèques Différés (ne pas utiliser)"`.
+   ⚠️ clasp **remplace `appsscript.json` sans demander** (« Cloned one file ») : le remettre
+   aussitôt avec `git restore appsscript.json` (vérifier : `git status` propre).
+3. `npm run push` (répondre **oui** pour écraser le manifeste) : 30 fichiers envoyés.
+4. Ouvrir le Sheet créé, puis **Extensions → Apps Script** → choisir la fonction
+   **`preparerModele`** en haut → **Exécuter** → accepter les autorisations (**Tout
+   sélectionner**). Le journal d'exécution doit afficher « Modèle prêt (version …) ».
+   Ça contrôle les fichiers, crée « Saisies », **marque** le modèle (voir « Sécurité » plus
+   bas), retire l'onglet vide « Feuille 1 » et pose l'onglet **« Démarrer »** avec le
+   **bouton vert** « ▶ Installer l'application ». Ni robots de nuit ni code d'activation :
+   le modèle reste vierge. (Ne PAS lancer « Installer » sur le modèle.)
 5. **Partager** le modèle : *Partager → Accès général → « Tous les utilisateurs
    disposant du lien » → Lecteur*.
 6. Le **lien à donner aux structures** : celui du modèle, en remplaçant la fin
@@ -41,6 +36,9 @@ Aucun copier-coller de code.
    https://docs.google.com/spreadsheets/d/<ID-DU-MODÈLE>/copy
    ```
    Ce lien ne change jamais.
+
+**Mettre le modèle à jour** : dans `cheques-modele`, `git pull`, `npm run push`, puis
+relancer **`preparerModele`** (étape 4). Les copies déjà faites ne suivent pas.
 
 ### ⛔ Règles pour le modèle
 - Il reste **vierge pour toujours** : **ne pas le déployer**, ne pas ouvrir son
@@ -52,7 +50,32 @@ Aucun copier-coller de code.
 
 ---
 
-## B. Installer pour une nouvelle structure (~5 minutes)
+## B. Installer pour une nouvelle structure (~10 minutes)
+
+### Avec l'assistant (voie normale)
+Avec le **compte Google qui détiendra les données** (voir « Qui fait quoi » ci-dessous) :
+ouvrir le lien `/copy` → **Créer une copie** → la copie s'ouvre sur l'onglet
+**« Démarrer »** → cliquer sur le **bouton vert « ▶ Installer l'application »**. Google
+demande son autorisation (« Google n'a pas validé cette application » → Paramètres
+avancés → Accéder… → **Tout sélectionner**) ; si rien ne s'ouvre ensuite, recliquer sur le
+bouton. L'assistant guide ensuite en 4 écrans :
+1. **Préparation** : il vérifie les autorisations (une case oubliée est redemandée) et fait
+   ce que fait « Installer » (feuilles, protections, robots de nuit, contrôle des fichiers).
+2. **Votre magasin** : le nom, avec l'article.
+3. **Mise en ligne** : le seul passage manuel (6 clics dans Apps Script, montrés à
+   l'écran) ; l'assistant voit seul quand c'est fait. S'il ne le voit pas : coller
+   l'adresse `…/exec`.
+4. **Les tablettes** : QR code et lien de l'application, **code d'activation à taper** sur
+   la tablette de la caisse centrale ; l'assistant voit la création du compte du magasin.
+À la fin, l'onglet « Démarrer » disparaît. Ensuite : dates de l'offre dans l'application
+(espace responsable → Opération). Lien et QR code à tout moment : menu 🚀 APPLICATION →
+📱 Connecter une tablette.
+
+> À vérifier sur un vrai Sheet (17/10/2026) : le clic sur l'image-bouton d'une copie
+> déclenche bien les autorisations ; Google redemande bien une case oubliée
+> (`ScriptApp.requireScopes`) ; l'adresse `/exec` est bien trouvée seule
+> (`ScriptApp.getService().getUrl()`, plusieurs déploiements).
+
 
 ### Qui fait quoi (règle de sécurité, à respecter)
 - Le **manager de caisse** installe et **détient** le Google Sheets et l'application,
@@ -81,6 +104,8 @@ Aucun copier-coller de code.
   obligatoire** pour l'espace responsable : **code commun** ou **codes personnels**
   (un par personne : le journal note qui a fait quoi). Les appareils **n'ont besoin
   d'aucun compte Google**.
+
+### Sans l'assistant (secours, ou copie d'un ancien modèle)
 
 Avec le **compte Google qui détiendra les données** (voir ci-dessus) :
 

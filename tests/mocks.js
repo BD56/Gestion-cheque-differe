@@ -18,7 +18,13 @@ function makeEnv(opts = {}) {
     alertes: [],
     menus: [],
     sidebars: 0,
+    dialogues: [], // fenêtres (showModalDialog) : { titre, contenu }
+    // Autorisations Google accordées (null : toutes) ; demandes d'écran Google (requireScopes)
+    autorisations: null,
+    demandesAutorisation: [],
+    urlService: null, // adresse du déploiement « Application Web » (null : pas en ligne)
   };
+  const accordee = (s) => env.autorisations === null || env.autorisations.indexOf(s) !== -1;
   const ss = require("./fakesheet").makeSpreadsheet(env);
   env.ctx = loadCode(opts.repo, {
     PropertiesService: { getDocumentProperties: () => props },
@@ -43,6 +49,19 @@ function makeEnv(opts = {}) {
       }),
     },
     ScriptApp: {
+      AuthMode: { FULL: "FULL" },
+      AuthorizationStatus: { REQUIRED: "REQUIRED", NOT_REQUIRED: "NOT_REQUIRED" },
+      getAuthorizationInfo: (mode, scopes) => ({
+        getAuthorizationStatus: () => (scopes.every(accordee) ? "NOT_REQUIRED" : "REQUIRED"),
+        getAuthorizedScopes: () => scopes.filter(accordee),
+      }),
+      // Le vrai affiche l'écran de Google et arrête l'exécution
+      requireScopes: (mode, scopes) => {
+        env.demandesAutorisation.push(scopes);
+        throw new Error("ÉCRAN DE GOOGLE (exécution arrêtée)");
+      },
+      getService: () => ({ getUrl: () => env.urlService }),
+      getScriptId: () => "ID-SCRIPT",
       getProjectTriggers: () =>
         env.triggers.map((h) => ({ getHandlerFunction: () => h, getUniqueId: () => "uid-" + h })),
       deleteTrigger: (t) => {
@@ -62,7 +81,13 @@ function makeEnv(opts = {}) {
     },
     Logger: { log() {} },
     Session: {
-      getActiveUser: () => ({ getEmail: () => env.activeEmail }),
+      getActiveUser: () => ({
+        getEmail: () => {
+          if (!accordee("https://www.googleapis.com/auth/userinfo.email"))
+            throw new Error("Vous n'êtes pas autorisé à appeler Session.getActiveUser.");
+          return env.activeEmail;
+        },
+      }),
       getScriptTimeZone: () => "Europe/Paris",
     },
     SpreadsheetApp: {
@@ -89,6 +114,9 @@ function makeEnv(opts = {}) {
         showSidebar: () => {
           env.sidebars++;
         },
+        showModalDialog: (html, titre) => {
+          env.dialogues.push({ titre, contenu: html.getContent() });
+        },
       }),
     },
     // Fichiers .html du dépôt, comme dans le projet Apps Script (fichier absent -> erreur)
@@ -107,6 +135,35 @@ function makeEnv(opts = {}) {
             return this;
           },
         };
+      },
+      // Modèle (Assistant.html) : <?= ?> et <?!= include_() ?> rendus comme par Apps Script
+      createTemplateFromFile: (nom) => {
+        const fs = require("fs");
+        const modele = {
+          evaluate() {
+            const vars = Object.assign({ include_: (n) => env.ctx.include_(n) }, modele);
+            const contenu = require("./harness").renderTemplate(
+              fs.readFileSync(require("path").join(opts.repo, nom + ".html"), "utf8"),
+              vars
+            );
+            return {
+              getContent: () => contenu,
+              setWidth() {
+                return this;
+              },
+              setHeight() {
+                return this;
+              },
+              setTitle() {
+                return this;
+              },
+              addMetaTag() {
+                return this;
+              },
+            };
+          },
+        };
+        return modele;
       },
       createHtmlOutput: (html) => ({
         contenu: html,
@@ -131,6 +188,8 @@ function makeEnv(opts = {}) {
           b > 127 ? b - 256 : b
         ),
       getUuid: () => crypto.randomUUID(),
+      base64Decode: (s) => [...Buffer.from(s, "base64")].map((b) => (b > 127 ? b - 256 : b)),
+      newBlob: (octets, type, nom) => ({ octets, type, nom }),
       formatDate: opts.formatDate || require("./fmt").fmt,
     },
   });

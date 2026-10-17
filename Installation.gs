@@ -2,7 +2,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Installation_() {
-  return "2026.10.17-1359";
+  return "2026.10.17-2337";
 }
 
 // =================================================================
@@ -107,13 +107,13 @@ function etatRobots_() {
 // (et le code d'activation si aucun compte n'existe encore).
 function installerDepuisMenu() {
   const ui = SpreadsheetApp.getUi(); // échoue hors du Google Sheets : rien n'est fait
+  exigerAutorisations_(); // une case oubliée à l'autorisation : Google la redemande
   let rapport = installer();
   if (lireComptes_().length === 0) rapport += "\n\n" + texteActivation_(genererCodeActivation_());
   ui.alert(
     "🧰 Installation",
     rapport +
-      "\n\nSi l'application n'est pas encore en ligne : Extensions → Apps Script → " +
-      "Déployer → Nouveau déploiement → Application Web (voir INSTALLATION.md).",
+      "\n\nSi l'application n'est pas encore en ligne : menu 🚀 APPLICATION → ▶ Assistant d'installation.",
     ui.ButtonSet.OK
   );
 }
@@ -126,8 +126,8 @@ function afficherCodeActivation() {
   if (lireComptes_().length > 0) {
     ui.alert(
       "🔑 Code d'activation",
-      "Un compte existe déjà : connectez-vous dans l'application avec l'identifiant et le mot de passe " +
-        "de la caisse centrale. D'autres comptes se créent dans l'espace responsable.",
+      "Le compte du magasin existe déjà : connectez chaque appareil avec son identifiant et son mot de " +
+        "passe (menu 🚀 APPLICATION → 📱 Connecter une tablette).",
       ui.ButtonSet.OK
     );
     return;

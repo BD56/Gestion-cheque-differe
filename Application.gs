@@ -3,7 +3,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Application_() {
-  return "2026.10.17-1359";
+  return "2026.10.17-2337";
 }
 
 // Fuseau horaire de référence (réglage du projet Apps Script : Europe/Paris par défaut).
@@ -52,6 +52,7 @@ function doGet(e) {
     url = "";
   }
   page.urlAppli = url;
+  noterAdresseApplication_(url); // pour le lien et le QR code de « Connecter une tablette »
   // État de l'accueil (compte ? code ? codes personnels ?) glissé dans la page : l'écran
   // de connexion affiche tout de suite le bon texte (rien de secret : pas de nom).
   try {

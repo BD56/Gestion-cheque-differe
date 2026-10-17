@@ -8,3 +8,5 @@ tests/rendu_defaut.html
 # Squelette de la page : les balises de modèle Apps Script (<?= … ?>) ne doivent pas
 # être retouchées.
 Index.html
+# Bibliothèque d'un tiers (QR code), reprise telle quelle.
+Qrcode.html

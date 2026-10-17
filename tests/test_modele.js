@@ -25,6 +25,8 @@ env.ctx.onOpen();
 assert.strictEqual(env.sidebars, 1, "Vannes : panneau ouvert comme avant");
 assert.deepStrictEqual(env.menus, [
   "afficherPanneau",
+  "ouvrirAssistant",
+  "ouvrirTablettes",
   "installerDepuisMenu",
   "afficherCodeActivation",
   "passerLaMainDepuisMenu",
@@ -49,7 +51,7 @@ env = makeEnv({
 });
 env.ctx.installerDepuisMenu();
 assert.match(env.alertes[0], /Saisies/);
-assert.match(env.alertes[0], /Nouveau déploiement/);
+assert.match(env.alertes[0], /▶ Assistant d'installation/);
 assert.match(
   env.alertes[0],
   /Code d'activation : \d{4}-\d{4}/,
@@ -79,7 +81,7 @@ env = makeEnv({
 });
 env.ctx.onOpen();
 assert.strictEqual(env.sidebars, 0, "copie non installée : pas de panneau");
-assert.match(env.toasts[0], /Installer/);
+assert.match(env.toasts[0], /onglet « Démarrer », bouton vert « Installer l'application »/);
 const rap = env.ctx.installer();
 assert.match(rap, /Nouvelle copie détectée/);
 assert.match(rap, /clôture/);

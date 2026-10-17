@@ -96,6 +96,14 @@
   Code d'activation : champ jusqu'à 40 caractères, seuls les chiffres gardés et remis
   en forme 1234-5678 (cause : copie depuis le Sheet avec un espace, champ limité à 9 ⇒
   dernier chiffre coupé). Test `test_ui_pause`.
+- **Documentation utilisateurs (Bryan, 17/10)** : un SITE web à lui (pas Claude) —
+  GitHub Pages (dépôt public) ou Firebase Hosting, choix plus tard ; Apps Script
+  déconseillé (bandeau, lenteur). Markdown du dépôt = source, transformé en pages aux
+  couleurs de l'application + captures (`outils/captures.js`) ; lien depuis le menu du
+  Sheet et l'aide. 4 documents : (1) guide d'installation (manager / direction), (2)
+  mode d'emploi (caisse centrale, responsables), (3) fiches « En cas de problème »,
+  (4) guide de déploiement technique (Bryan : DEPLOIEMENT.md à réécrire). ON COMMENCE
+  PAR LE CONTENU du (1) : plan détaillé proposé, à valider avant rédaction.
 - **Décision mises à jour (Bryan, 16/10)** : stabilité d'abord (versions rares,
   éprouvées à Vannes) ; filet de sécurité = nouvelle installation avec reprise des
   données (à concevoir plus tard avec Bryan).

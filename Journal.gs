@@ -8,7 +8,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Journal_() {
-  return "2026.10.17-1326";
+  return "2026.10.17-1359";
 }
 
 function feuilleJournal_() {

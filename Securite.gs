@@ -4,7 +4,7 @@
 
 // Même numéro dans tous les fichiers : contrôle de l'installation (outils/version.js).
 function version_Securite_() {
-  return "2026.10.17-1326";
+  return "2026.10.17-1359";
 }
 
 // =================================================================
@@ -194,10 +194,8 @@ function verifierPin_(props, pin, groupe, personne) {
   if (maintenant - (etat.dernier || 0) < ADMIN_PAUSE_MS) {
     return {
       ok: false,
-      message:
-        "Patientez " +
-        Math.ceil((ADMIN_PAUSE_MS - (maintenant - etat.dernier)) / 1000) +
-        " s avant un nouvel essai.",
+      message: "Patientez avant un nouvel essai.",
+      pauseMs: ADMIN_PAUSE_MS - (maintenant - etat.dernier),
     };
   }
   if (empreintePin_(selCode, (pin || "").toString()) === hash) {
@@ -213,9 +211,11 @@ function verifierPin_(props, pin, groupe, personne) {
     return { ok: false, message: "Code faux. Trop d'essais : bloqué " + ADMIN_BLOCAGE_MIN + " min." };
   }
   props.setProperty(cleEtat, JSON.stringify({ echecs: echecs, dernier: maintenant, bloque: 0 }));
+  // pauseMs : la page grise le bouton (roue qui tourne) le temps de la pause
   return {
     ok: false,
-    message: "Code faux (" + (ADMIN_ESSAIS_MAX - echecs) + " essai(s) restant(s)). Patientez 10 s.",
+    message: "Code faux (" + (ADMIN_ESSAIS_MAX - echecs) + " essai(s) restant(s)).",
+    pauseMs: ADMIN_PAUSE_MS,
   };
 }
 
@@ -589,10 +589,8 @@ function verifierMdp_(props, compte, mdp) {
   if (maintenant - (etat.dernier || 0) < ADMIN_PAUSE_MS)
     return {
       ok: false,
-      message:
-        "Patientez " +
-        Math.ceil((ADMIN_PAUSE_MS - (maintenant - etat.dernier)) / 1000) +
-        " s avant un nouvel essai.",
+      message: "Patientez avant un nouvel essai.",
+      pauseMs: ADMIN_PAUSE_MS - (maintenant - etat.dernier),
     };
   if (empreinteMdp_(compte.sel, mdp) === compte.hash) {
     props.deleteProperty(cleEtat);
@@ -625,10 +623,8 @@ function verifierMdp_(props, compte, mdp) {
   props.setProperty(cleEtat, JSON.stringify({ echecs: echecs, dernier: maintenant, bloque: 0 }));
   return {
     ok: false,
-    message:
-      "Mot de passe incorrect (" +
-      (CPT_ESSAIS_LIBRES - echecs) +
-      " essai(s) avant un blocage). Patientez 10 s.",
+    message: "Mot de passe incorrect (" + (CPT_ESSAIS_LIBRES - echecs) + " essai(s) avant un blocage).",
+    pauseMs: ADMIN_PAUSE_MS,
   };
 }
 

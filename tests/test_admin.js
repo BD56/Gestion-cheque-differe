@@ -58,8 +58,16 @@ const sansPause = () => {
   env.props._store[ESSAIS] = JSON.stringify(e);
 };
 // Pause de 10 s imposée par le serveur après un code faux (même le bon code est refusé)
-assert.match(c.ouvrirSessionAdmin("000000").message, /essai/);
-assert.match(c.ouvrirSessionAdmin("258025").message, /Patientez \d+ s/);
+let rp = JSON.parse(JSON.stringify(c.ouvrirSessionAdmin("000000")));
+assert.match(
+  rp.message,
+  /^Code faux \(4 essai\(s\) restant\(s\)\)\.$/,
+  "pas de décompte : la page montre une roue"
+);
+assert.strictEqual(rp.pauseMs, 10000, "durée de la pause pour la roue");
+rp = JSON.parse(JSON.stringify(c.ouvrirSessionAdmin("258025")));
+assert.strictEqual(rp.message, "Patientez avant un nouvel essai.");
+assert.ok(rp.pauseMs > 0 && rp.pauseMs <= 10000, "temps restant");
 assert.match(c.ouvrirSessionAdmin("000000").message, /Patientez/, "un essai pendant la pause ne compte pas");
 for (let i = 2; i <= 4; i++) {
   sansPause();

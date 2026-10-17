@@ -1,5 +1,5 @@
 <!-- Connexion (comptes), démarrage, aide, panneau, mentions légales. -->
-<script data-version="2026.10.17-1326">
+<script data-version="2026.10.17-1359">
   // =================================================================
   // --- CONNEXION (compte de la caisse centrale) ---
   // La session reçue à la connexion est gardée dans le navigateur et envoyée à
@@ -146,6 +146,10 @@
   // le cadre caché (le navigateur propose alors d'enregistrer le mot de passe) et, en
   // même temps, vérification par le serveur.
   document.getElementById("formConnexion").addEventListener("submit", function (e) {
+    if (document.getElementById("btnConnexion").disabled) {
+      e.preventDefault(); // envoi en cours, ou pause après une erreur
+      return;
+    }
     const id = document.getElementById("identifiant").value.trim();
     const mdp = document.getElementById("motDePasse").value;
     const msg = document.getElementById("msgConnexion");
@@ -179,6 +183,7 @@
         btn.disabled = false;
         if (!r || !r.ok) {
           msg.textContent = (r && r.message) || "Refusé.";
+          if (r) pauseBouton(btn, r.pauseMs);
           return;
         }
         connecte(r, installation);
@@ -189,6 +194,32 @@
       });
     if (installation) runner.premierCompte(activation, id, mdp);
     else runner.connexion(id, mdp);
+  });
+
+  // Pause imposée par le serveur après un mot de passe ou un code faux (10 s) : le bouton
+  // est grisé avec une roue qui tourne, puis redevient actif tout seul (pas de décompte).
+  function pauseBouton(btn, ms) {
+    if (!ms || ms <= 0) return;
+    clearTimeout(Number(btn.dataset.pause || 0));
+    btn.disabled = true;
+    btn.classList.add("en-pause");
+    btn.setAttribute("aria-busy", "true");
+    btn.dataset.pause = String(
+      setTimeout(function () {
+        btn.disabled = false;
+        btn.classList.remove("en-pause");
+        btn.removeAttribute("aria-busy");
+        delete btn.dataset.pause;
+      }, ms)
+    );
+  }
+
+  // Code d'activation collé depuis le Google Sheets (espaces, texte autour, tiret ou
+  // pas) : seuls les chiffres sont gardés, remis en forme « 1234-5678 ».
+  document.getElementById("activationConnexion").addEventListener("input", function () {
+    const chiffres = this.value.replace(/\D/g, "").slice(0, 8);
+    const propre = chiffres.length > 4 ? chiffres.slice(0, 4) + "-" + chiffres.slice(4) : chiffres;
+    if (this.value !== propre) this.value = propre;
   });
 
   function connecte(r, premier) {

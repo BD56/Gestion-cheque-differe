@@ -1,5 +1,5 @@
 <!-- Espace responsable : code, corrections, archives, réglages, comptes. -->
-<script data-version="2026.10.17-1326">
+<script data-version="2026.10.17-1359">
   // =================================================================
   // --- ESPACE RESPONSABLE (code PIN) ---
   // Le jeton n'est gardé qu'en mémoire : il disparaît à la fermeture du
@@ -217,6 +217,7 @@
   }
 
   function deverrouillerAdmin() {
+    if (document.getElementById("btnDeverrouiller").disabled) return; // pause après un code faux
     const pin = document.getElementById("pinSaisi").value.trim();
     const msg = document.getElementById("msgVerrou");
     msg.textContent = "";
@@ -240,7 +241,10 @@
         } else if (r && r.codeACreer) {
           pinDefini = false; // code réinitialisé entre-temps dans le Sheet
           afficherChoixCode(true);
-        } else msg.textContent = (r && r.message) || "Refusé.";
+        } else {
+          msg.textContent = (r && r.message) || "Refusé.";
+          if (r) pauseBouton(document.getElementById("btnDeverrouiller"), r.pauseMs);
+        }
       })
       .withFailureHandler(function (err) {
         if (!siNonAutorisee(err)) msg.textContent = "Erreur : " + (err && err.message ? err.message : err);

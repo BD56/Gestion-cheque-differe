@@ -2,7 +2,7 @@
 
 > Fichier de reprise après compactage du contexte. À lire **avec** `AGENTS.md` (référence
 > canonique) et `docs/retours-vibe/decisions/2026-10-11_generalisation.md` (décisions).
-> Dernière mise à jour : 2026-10-17 (version 2026.10.17-1326 : affichage sans attente (connexion, verrou) ; bandeau des accès en bas, replié ; UN SEUL compte du magasin,
+> Dernière mise à jour : 2026-10-17 (version 2026.10.17-1359 : roue pendant la pause, collage du code d'activation ; affichage sans attente (connexion, verrou) ; bandeau des accès en bas, replié ; UN SEUL compte du magasin,
 > code responsable obligatoire, blocage progressif ; avant : « Passer la main », journal à empreintes,
 > changements récents des accès, avertissement sur « Saisies » ; avant : comptes, codes
 > personnels, journal, impression réservée). Rien en cours de codage ; attendu : essais
@@ -15,7 +15,7 @@
   « Comptoir » (branche de travail actuelle, tout est poussé)**. Aucune fusion faite,
   aucune pull request. Ordre prévu (sur demande de Bryan seulement) : `design` →
   `refonte` → `generalisation` → `main` / migration Vannes.
-- **Version actuelle sur `design`** : 2026.10.17-1326 (47 séries de tests vertes,
+- **Version actuelle sur `design`** : 2026.10.17-1359 (48 séries de tests vertes,
   ESLint et Prettier propres). Numéro renouvelé par Claude à chaque push de code
   (`npm run nouvelle-version`).
 - **Bryan teste** sur le Sheet « Gestion Chèques Différés — REFONTE (test) » depuis
@@ -89,6 +89,13 @@
   s'il a changé ailleurs ; (4) sans état connu : « Chargement… », ni code ni nom.
   Test `test_ui_affichage_immediat`. Bouton « Voir tout » du bandeau : 36 px de
   haut (audit). « Autres bizarreries » : Bryan doit les décrire (captures).
+- **FAIT (1359) : roue au lieu du décompte + collage du code d'activation** (Bryan,
+  17/10). Après un code / mot de passe faux, le serveur renvoie `pauseMs` (message sans
+  « Patientez N s ») ; la page grise le bouton avec une roue (`pauseBouton`, classe
+  `en-pause`) puis le réactive ; Entrée / clic pendant la pause : rien ne part.
+  Code d'activation : champ jusqu'à 40 caractères, seuls les chiffres gardés et remis
+  en forme 1234-5678 (cause : copie depuis le Sheet avec un espace, champ limité à 9 ⇒
+  dernier chiffre coupé). Test `test_ui_pause`.
 - **Décision mises à jour (Bryan, 16/10)** : stabilité d'abord (versions rares,
   éprouvées à Vannes) ; filet de sécurité = nouvelle installation avec reprise des
   données (à concevoir plus tard avec Bryan).

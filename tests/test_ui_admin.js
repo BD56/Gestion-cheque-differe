@@ -127,6 +127,8 @@ const { ouvrir } = require("./navigateur");
     await page.waitForTimeout(100);
     assert.match(await txt("#msgVerrou"), /Code faux/);
     for (const k in env.props._store) if (k.indexOf("PIN_ESSAIS_") === 0) delete env.props._store[k]; // on saute la pause de 10 s
+    await page.evaluate(() => pauseBouton(document.getElementById("btnDeverrouiller"), 1)); // et la roue de la page
+    await page.waitForSelector("#btnDeverrouiller:not([disabled])");
     await page.fill("#pinSaisi", "258025");
     await page.press("#pinSaisi", "Enter");
     await page.waitForTimeout(150);

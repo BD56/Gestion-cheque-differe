@@ -1,5 +1,5 @@
 <!-- Styles de la page (Index.html). -->
-<style data-version="2026.10.17-1326">
+<style data-version="2026.10.17-1359">
   /* Palette « Comptoir » (clair uniquement). Les couleurs d'alerte (danger rouge,
      orange) ne sont jamais adoucies. Police du système : rien à télécharger. */
   :root {
@@ -524,6 +524,33 @@
   }
   .valider:hover {
     background: var(--accent-fonce);
+  }
+  /* Pause après un code ou un mot de passe faux : bouton grisé, roue qui tourne */
+  button.en-pause {
+    opacity: 0.65;
+    cursor: wait;
+  }
+  button.en-pause::after {
+    content: "";
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    margin-left: 10px;
+    vertical-align: -0.15em;
+    border: 2.5px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: tourner 0.9s linear infinite;
+  }
+  @keyframes tourner {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    button.en-pause::after {
+      animation-duration: 3s;
+    }
   }
   .valider:disabled {
     opacity: 0.7;
